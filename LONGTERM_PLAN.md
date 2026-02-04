@@ -84,13 +84,13 @@
 
 - [x] **Unit tests** for `FlowerGameBrain.EvaluateFlower()` scoring logic — 24 NUnit tests in `Assets/Editor/Tests/FlowerGameBrainTests.cs` covering stem length, cut angle, parts, game-over conditions, weighted averages, and edge cases
 - [x] **Automated scene validation** — Editor tool (`Assets/Editor/SceneValidator.cs`) accessible via Window > Iris > Scene Validator. Checks singleton duplicates, required components, flower hierarchy wiring, UI references, cutting system, audio, and fluids.
-- [ ] **Accessibility** - Colorblind modes for grading UI
-- [ ] **Input rebinding** - Custom key/button mapping
-- [ ] **Performance quality presets** - Settings for particle counts, physics iteration counts
-- [ ] **Save/Load system** - Currently sessions are ephemeral (OK for thesis)
-- [ ] **Analytics hooks** - Telemetry for player behavior research
-- [ ] **Localization** - Multi-language text systems
-- [ ] **Crash reporting** - Remote error tracking
+- [x] **Accessibility** — `AccessibilitySettings` static utility with 4 colorblind palettes (Normal, Protanopia, Deuteranopia, Tritanopia), PlayerPrefs persistence, `AccessibilityDropdownUI` for TMP_Dropdown binding
+- [x] **Input rebinding** — `InputRebindManager` static utility with JSON override persistence, `InputOverrideLoader` MonoBehaviour for wiring, `InputRebindUI` with interactive rebinding rows
+- [x] **Performance quality presets** — `IrisQualityPreset` ScriptableObject (sap, decals, physics, UI tuning), `IrisQualityManager` scene-scoped singleton, `QualityDropdownUI` for TMP_Dropdown binding
+- [x] **Save/Load system** — `SessionSaveData` serializable container, `SaveManager` static utility persisting rolling 50-session history to `iris_sessions.json`
+- [x] **Analytics hooks** — `IrisAnalytics` static utility logging timestamped JSON-lines telemetry (cuts, detachments, sessions) to `iris_analytics.jsonl`
+- [x] **Localization** — `LocalizationTable` ScriptableObject for per-language string tables, `LocalizationManager` static utility with key-based lookup, language switching, English fallback, PlayerPrefs persistence
+- [x] **Crash reporting** — `CrashReporter` static utility hooking `Application.logMessageReceived`, captures errors/exceptions/asserts to rolling `iris_crashlog.txt` with dedup suppression
 
 ---
 
