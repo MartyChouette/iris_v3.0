@@ -82,6 +82,8 @@ public class SquishMove : MonoBehaviour
     private Vector3 lastWorldPos;
     private Vector3 dragMoveStep = Vector3.zero;
 
+    private InteractionEngagement _engagement;
+
     // ────────────────────────── Unity lifecycle ──────────────────────────
 
     void Awake()
@@ -93,6 +95,8 @@ public class SquishMove : MonoBehaviour
             if (addRigidbodyIfMissing)
                 rb = gameObject.AddComponent<Rigidbody>();
         }
+
+        _engagement = GetComponent<InteractionEngagement>();
 
         if (rb != null)
         {
@@ -180,6 +184,7 @@ public class SquishMove : MonoBehaviour
                         }
                     }
                     isDragging = true;
+                    if (_engagement != null) _engagement.isEngaged = true;
                 }
             }
         }
@@ -249,6 +254,7 @@ public class SquishMove : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             isDragging = false;
+            if (_engagement != null) _engagement.isEngaged = false;
             draggedVertices.Clear();
             dragOffsets.Clear();
             dragMoveStep = Vector3.zero;
