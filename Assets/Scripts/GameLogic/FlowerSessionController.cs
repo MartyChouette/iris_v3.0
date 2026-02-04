@@ -258,7 +258,9 @@ public class FlowerSessionController : MonoBehaviour
             if (freezeOnGameOver)
                 FreezeAllRigidbodies();
 
+#if UNITY_EDITOR
             Debug.Log($"[FlowerSessionController] GAME OVER (no brain): {reason}", this);
+#endif
             OnGameOver?.Invoke();
             OnResult?.Invoke(new FlowerGameBrain.EvaluationResult
             {
@@ -364,7 +366,9 @@ public class FlowerSessionController : MonoBehaviour
         if (fallTimeout < 0f)
             fallTimeout = crownFallTimeout;
 
+#if UNITY_EDITOR
         Debug.Log($"[FlowerSessionController] ReleaseCrownAndFall: {reason} (timeout={fallTimeout}s)", this);
+#endif
 
         // Release the held piece so it falls
         if (rebinder != null)
@@ -396,7 +400,9 @@ public class FlowerSessionController : MonoBehaviour
         // Safety net: crown landed on something and crownFailY never fired
         if (!sessionEnded && !endRequested)
         {
+#if UNITY_EDITOR
             Debug.Log($"[FlowerSessionController] CoCrownFallTimeout: safety-net triggered after {timeout}s. Forcing game over.", this);
+#endif
             ForceGameOver(reason);
         }
     }
@@ -459,7 +465,9 @@ public class FlowerSessionController : MonoBehaviour
 
         if (!finalIsGameOver)
         {
+#if UNITY_EDITOR
             Debug.Log($"[FlowerSessionController] EVALUATE OK → score={score}, days={days}, norm={result.scoreNormalized:0.###}", this);
+#endif
             OnSuccessfulEvaluation?.Invoke();
         }
         else
@@ -467,7 +475,9 @@ public class FlowerSessionController : MonoBehaviour
             if (freezeOnGameOver)
                 FreezeAllRigidbodies();
 
+#if UNITY_EDITOR
             Debug.Log($"[FlowerSessionController] GAME OVER → {finalReason} (score={score}, days={days}, norm={result.scoreNormalized:0.###})", this);
+#endif
             OnGameOver?.Invoke();
         }
 

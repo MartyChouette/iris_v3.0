@@ -72,4 +72,10 @@ public class BacklightPulse : MonoBehaviour
         // 5. Apply to the Emission Channel
         targetMaterial.SetColor(emissionColorID, finalColor);
     }
+
+    private void OnDestroy()
+    {
+        if (targetMaterial != null)
+            Destroy(targetMaterial);
+    }
 }

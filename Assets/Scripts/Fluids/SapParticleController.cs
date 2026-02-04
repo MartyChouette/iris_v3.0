@@ -23,6 +23,8 @@ public class SapParticleController : MonoBehaviour
 {
     public static SapParticleController Instance { get; private set; }
 
+    private static readonly WaitForSeconds s_pollWait = new WaitForSeconds(0.1f);
+
     [System.Serializable]
     public class SapBurstProfile
     {
@@ -315,7 +317,7 @@ public class SapParticleController : MonoBehaviour
         // Wait until all particles are gone
         while (ps.particleCount > 0)
         {
-            yield return new WaitForSeconds(0.1f);
+            yield return s_pollWait;
         }
 
         ReturnToPool(ps);

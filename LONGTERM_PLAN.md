@@ -1,8 +1,9 @@
-# Iris v2.0 - Long-Term Development Plan
+# Iris v3.0 - Long-Term Development Plan
 
-**Project:** Iris v2.0 - Contemplative Flower Trimming Game (Thesis)
+**Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
 **Last Updated:** February 3, 2026
+**Forked from:** Iris v2.0
 
 ---
 
@@ -69,15 +70,15 @@
 ### High Priority
 
 - [ ] **Memory profiling** - Run extended play sessions (20+ consecutive) watching for leaks. Historical concern from commit messages mentioning "memory leak!!!"
-- [ ] **Input gating over UI** - CuttingPlaneController only gates cut input over UI, not movement. Gate all input when pointer is over UI elements.
-- [ ] **Legacy Obi Fluid cleanup** - Remove all commented Obi code, delete `FluidMode.ObiFluid` enum option, remove unused Obi prefab references
+- [x] **Input gating over UI** - Movement + cutting both blocked when pointer is over UI (cached per-frame `IsPointerOverGameObject()` in CuttingPlaneController)
+- [x] **Legacy Obi Fluid cleanup** - Deleted ObiEditorSettings.asset, _Recovery folder, and 5 legacy scenes with Obi components. Scripts were already clean.
 
 ### Medium Priority
 
 - [ ] **Profile on target hardware** - Test on minimum-spec machine, profile memory during particle bursts, watch for frame spikes on stem cuts
-- [ ] **Material instance auditing** - Several scripts use `.material` (creates instances): SapDecal, BacklightPulse, TMP_MotionBlur. Consider MaterialPropertyBlock where appropriate.
-- [ ] **Coroutine WaitForSeconds caching** - Pool common wait durations (0.1s, 0.3s) to reduce GC pressure in SapParticleController, AudioManager
-- [ ] **Debug log compilation stripping** - Wrap verbose debug logs in `[System.Diagnostics.Conditional("UNITY_EDITOR")]` or `#if UNITY_EDITOR` for release builds
+- [x] **Material instance auditing** - Added OnDestroy cleanup to BacklightPulse and BookVolume. SapDecal and TMP_MotionBlur already had proper cleanup.
+- [x] **Coroutine WaitForSeconds caching** - Cached `WaitForSeconds(0.1f)` as static readonly in SapParticleController. Other usages are variable-delay (not cacheable).
+- [x] **Debug log compilation stripping** - Wrapped verbose Debug.Log calls in `#if UNITY_EDITOR` in MeshCreation, FlowerSessionController, CameraZoneTrigger, HorrorCameraManager. Other files already used `debugLogs` bool guards.
 
 ### Low Priority / Nice-to-Have
 

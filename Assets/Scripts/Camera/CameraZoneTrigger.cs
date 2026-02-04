@@ -36,8 +36,10 @@ namespace Iris.Camera
             if (!other.CompareTag("Player")) return;
 
             string label = string.IsNullOrEmpty(zoneName) ? gameObject.name : zoneName;
+#if UNITY_EDITOR
             Debug.Log($"[CameraZoneTrigger] Player entered zone: {label} " +
                       $"(camera={targetCamera?.name}, hardCut={hardCut}, blend={blendDuration}s)");
+#endif
 
             if (targetCamera == null)
             {

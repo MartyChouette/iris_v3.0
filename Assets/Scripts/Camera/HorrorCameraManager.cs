@@ -50,8 +50,10 @@ namespace Iris.Camera
         {
             if (cam == null || cam == _activeCamera) return;
 
+#if UNITY_EDITOR
             Debug.Log($"[HorrorCameraManager] Switching to {cam.name} " +
                       $"(hardCut={hardCut}, blend={blendDuration}s)");
+#endif
 
             // Override the brain's default blend for this transition
             if (brain != null)

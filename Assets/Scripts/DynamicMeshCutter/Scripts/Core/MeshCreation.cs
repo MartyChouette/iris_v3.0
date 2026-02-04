@@ -85,7 +85,9 @@ namespace DynamicMeshCutter
                 // Reject dust-sized pieces before allocating any Unity objects
                 if (vMesh.HasMeshBounds && vMesh.MeshBounds.size.magnitude < 0.005f)
                 {
+#if UNITY_EDITOR
                     Debug.Log($"[MeshCreation] Skipping dust-sized piece {i}: bounds magnitude {vMesh.MeshBounds.size.magnitude:F5} < 0.005");
+#endif
                     continue;
                 }
 
@@ -183,10 +185,12 @@ namespace DynamicMeshCutter
                     Bounds b = col ? col.bounds : new Bounds(parent.position, Vector3.zero);
                     Vector3 size = b.size;
 
+#if UNITY_EDITOR
                     Debug.Log(
                         $"[MeshCreation] Stem piece created: '{parent.name}' " +
                         $"size=({size.x:F3}, {size.y:F3}, {size.z:F3}) pos={parent.position}",
                         parent);
+#endif
                 }
 
 
@@ -286,7 +290,9 @@ namespace DynamicMeshCutter
                 if (rb == null) continue;
                 
                 float distSq = (rb.worldCenterOfMass - crownPos).sqrMagnitude;
+#if UNITY_EDITOR
                 Debug.Log($"[AnchorTopStemPiece] Piece '{go.name}' (rb on '{rb.gameObject.name}') distance to crown: {Mathf.Sqrt(distSq):F3}", go);
+#endif
                 
                 if (distSq > farthestDistSq)
                 {
@@ -298,7 +304,9 @@ namespace DynamicMeshCutter
             if (keeper == null)
                 return;
 
+#if UNITY_EDITOR
             Debug.Log($"[AnchorTopStemPiece] Selected keeper: '{keeper.name}' (farthest from crown)", keeper);
+#endif
 
             // Configure all pieces
             foreach (var go in createdObjects)
@@ -312,19 +320,21 @@ namespace DynamicMeshCutter
                     rb = go.GetComponentInChildren<Rigidbody>();
                     if (rb != null)
                     {
+#if UNITY_EDITOR
                         Debug.Log($"[AnchorTopStemPiece] Found Rigidbody on CHILD '{rb.gameObject.name}' for piece '{go.name}'", rb);
+#endif
                     }
                 }
                 if (rb == null) continue;
 
                 if (go == keeper)
                 {
-                    // Debug: trace the hierarchy and find ALL rigidbodies
-                    Debug.Log($"[AnchorTopStemPiece] KEEPER '{go.name}' hierarchy trace:", go);
-
                     // Find all rigidbodies in this piece (self and children)
                     var allRigidbodies = go.GetComponentsInChildren<Rigidbody>(true);
+#if UNITY_EDITOR
+                    Debug.Log($"[AnchorTopStemPiece] KEEPER '{go.name}' hierarchy trace:", go);
                     Debug.Log($"  - Found {allRigidbodies.Length} Rigidbodies in keeper hierarchy", go);
+#endif
 
                     // Configure ALL rigidbodies in this piece
                     // FIXED: Keep DYNAMIC (not kinematic) so joints to leaves/petals can still break.
@@ -336,7 +346,9 @@ namespace DynamicMeshCutter
                         pieceRb.constraints = RigidbodyConstraints.FreezePosition;
                         pieceRb.linearDamping = 5f;
                         pieceRb.angularDamping = 5f;
+#if UNITY_EDITOR
                         Debug.Log($"  - Configured rb on '{pieceRb.gameObject.name}': DYNAMIC, useGravity=false, FreezePosition (joints can break)", pieceRb);
+#endif
                     }
 
                     // Parent to stem runtime (keeps world position with true)
@@ -346,7 +358,9 @@ namespace DynamicMeshCutter
                     var marker = go.GetComponent<StemPieceMarker>();
                     if (marker != null) marker.isKeptPiece = true;
 
+#if UNITY_EDITOR
                     Debug.Log($"[AnchorTopStemPiece] KEEPER '{go.name}': rigidbodies DYNAMIC with position frozen, parented to '{stemRuntime.name}'", go);
+#endif
                 }
                 else
                 {
@@ -356,7 +370,9 @@ namespace DynamicMeshCutter
                     
                     if (size < 0.005f)
                     {
+#if UNITY_EDITOR
                         Debug.Log($"[AnchorTopStemPiece] Falling piece '{go.name}' too small ({size:F4} < 0.005), deleting", go);
+#endif
                         UnityEngine.Object.Destroy(go);
                         continue;
                     }
@@ -364,7 +380,9 @@ namespace DynamicMeshCutter
                     // Falling piece: enable gravity
                     rb.isKinematic = false;
                     rb.useGravity = true;
+#if UNITY_EDITOR
                     Debug.Log($"[AnchorTopStemPiece] FALLING '{go.name}': gravity ON", go);
+#endif
                 }
             }
         }

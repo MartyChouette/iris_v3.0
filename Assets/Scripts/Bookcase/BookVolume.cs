@@ -184,6 +184,12 @@ public class BookVolume : MonoBehaviour
         CurrentState = State.OnShelf;
     }
 
+    private void OnDestroy()
+    {
+        if (_instanceMaterial != null)
+            Destroy(_instanceMaterial);
+    }
+
     private static float Smoothstep(float t)
     {
         t = Mathf.Clamp01(t);

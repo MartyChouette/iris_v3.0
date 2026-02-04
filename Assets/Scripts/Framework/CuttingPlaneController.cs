@@ -35,8 +35,8 @@
  * (PlaneAngleTiltController) rotates the plane concurrently.
  *
  * ## UI safety
- * Cutting should not fire through UI clicks. This controller can block cuts when the pointer is over UI
- * (EventSystem.IsPointerOverGameObject()).
+ * Movement and cutting are both blocked when the pointer is over UI
+ * (EventSystem.IsPointerOverGameObject()). The check is cached once per frame.
  *
  * ## Performance notes
  * - Update() is hot: avoid allocations.
@@ -248,6 +248,9 @@ public class CuttingPlaneController : MonoBehaviour
     /// </summary>
     [SerializeField] private bool _suppressCutUntilRelease = false;
 
+    /// <summary>Cached per-frame to avoid redundant EventSystem queries.</summary>
+    private bool _isPointerOverUI;
+
     public bool IsToolEnabled => _toolEnabled;
 
     private void Reset()
@@ -366,88 +369,92 @@ public class CuttingPlaneController : MonoBehaviour
         if (!_toolEnabled) return;
         if (_planeTransform == null) return;
 
+        _isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+
         // ─────────────────────────────────────────────────────────────
-        // MOVEMENT
+        // MOVEMENT (blocked when pointer is over UI)
         // ─────────────────────────────────────────────────────────────
 
-        bool useAxis = false;
-        bool useMouseDelta = false;
-
-        switch (controlMode)
+        if (!_isPointerOverUI)
         {
-            case ControlMode.KeyboardWASD: useAxis = true; break;
-            case ControlMode.MouseOnly: useMouseDelta = true; break;
-            case ControlMode.MouseAndKeyboard: useAxis = true; useMouseDelta = true; break;
-            case ControlMode.Gamepad: useAxis = true; break;
-            case ControlMode.Touchscreen: useMouseDelta = true; break;
+            bool useAxis = false;
+            bool useMouseDelta = false;
+
+            switch (controlMode)
+            {
+                case ControlMode.KeyboardWASD: useAxis = true; break;
+                case ControlMode.MouseOnly: useMouseDelta = true; break;
+                case ControlMode.MouseAndKeyboard: useAxis = true; useMouseDelta = true; break;
+                case ControlMode.Gamepad: useAxis = true; break;
+                case ControlMode.Touchscreen: useMouseDelta = true; break;
+            }
+
+            // ── Spline-following mode ──
+            if (stemSpline != null)
+            {
+                float delta = 0f;
+
+                if (useAxis)
+                {
+                    float axis = ReadAxis(moveYAction);
+                    if (Mathf.Abs(axis) > 0.0001f)
+                        delta += axis * axisMoveSpeed * Time.deltaTime * splineTSpeed * 10f;
+                }
+
+                if (useMouseDelta && useMouseHeight)
+                {
+                    float dy = 0f;
+                    if (Mouse.current != null)
+                        dy = Mouse.current.delta.ReadValue().y;
+                    else
+                        dy = Input.GetAxisRaw("Mouse Y");
+
+                    float mult = (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed) ? fastMultiplier : 1f;
+                    float accel = 1f + Mathf.Abs(dy) * accelPerPixel;
+
+                    delta += dy * splineTSpeed * mult * accel;
+                }
+
+                _splineT = Mathf.Clamp01(_splineT + delta);
+
+                Vector3 worldPos = stemSpline.EvaluateWorld(_splineT);
+                _poseTransform.position = worldPos;
+            }
+            // ── Fallback: Y-rail mode (original behavior) ──
+            else
+            {
+                if (useAxis)
+                {
+                    float axis = ReadAxis(moveYAction);
+                    if (Mathf.Abs(axis) > 0.0001f)
+                        _targetY += axis * axisMoveSpeed * Time.deltaTime;
+                }
+
+                if (useMouseDelta && useMouseHeight)
+                {
+                    float dy = 0f;
+                    if (Mouse.current != null)
+                        dy = Mouse.current.delta.ReadValue().y;
+                    else
+                        dy = Input.GetAxisRaw("Mouse Y");
+
+                    float mult = (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed) ? fastMultiplier : 1f;
+                    float accel = 1f + Mathf.Abs(dy) * accelPerPixel;
+
+                    _targetY += dy * mouseYWorldPerPixel * mult * accel;
+                }
+
+                float minY = _authoredStartLocalY + minYOffset;
+                float maxY = _authoredStartLocalY + maxYOffset;
+                _targetY = Mathf.Clamp(_targetY, minY, maxY);
+
+                Vector3 lp = _poseTransform.localPosition;
+                lp.x = _lockedLocalX;
+                lp.z = _lockedLocalZ;
+                lp.y = Mathf.SmoothDamp(lp.y, _targetY, ref _yVel, ySmoothTime);
+                _poseTransform.localPosition = lp;
+            }
         }
-
-        // ── Spline-following mode ──
-        if (stemSpline != null)
-        {
-            float delta = 0f;
-
-            if (useAxis)
-            {
-                float axis = ReadAxis(moveYAction);
-                if (Mathf.Abs(axis) > 0.0001f)
-                    delta += axis * axisMoveSpeed * Time.deltaTime * splineTSpeed * 10f;
-            }
-
-            if (useMouseDelta && useMouseHeight)
-            {
-                float dy = 0f;
-                if (Mouse.current != null)
-                    dy = Mouse.current.delta.ReadValue().y;
-                else
-                    dy = Input.GetAxisRaw("Mouse Y");
-
-                float mult = (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed) ? fastMultiplier : 1f;
-                float accel = 1f + Mathf.Abs(dy) * accelPerPixel;
-
-                delta += dy * splineTSpeed * mult * accel;
-            }
-
-            _splineT = Mathf.Clamp01(_splineT + delta);
-
-            Vector3 worldPos = stemSpline.EvaluateWorld(_splineT);
-            _poseTransform.position = worldPos;
-        }
-        // ── Fallback: Y-rail mode (original behavior) ──
-        else
-        {
-            if (useAxis)
-            {
-                float axis = ReadAxis(moveYAction);
-                if (Mathf.Abs(axis) > 0.0001f)
-                    _targetY += axis * axisMoveSpeed * Time.deltaTime;
-            }
-
-            if (useMouseDelta && useMouseHeight)
-            {
-                float dy = 0f;
-                if (Mouse.current != null)
-                    dy = Mouse.current.delta.ReadValue().y;
-                else
-                    dy = Input.GetAxisRaw("Mouse Y");
-
-                float mult = (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed) ? fastMultiplier : 1f;
-                float accel = 1f + Mathf.Abs(dy) * accelPerPixel;
-
-                _targetY += dy * mouseYWorldPerPixel * mult * accel;
-            }
-
-            float minY = _authoredStartLocalY + minYOffset;
-            float maxY = _authoredStartLocalY + maxYOffset;
-            _targetY = Mathf.Clamp(_targetY, minY, maxY);
-
-            Vector3 lp = _poseTransform.localPosition;
-            lp.x = _lockedLocalX;
-            lp.z = _lockedLocalZ;
-            lp.y = Mathf.SmoothDamp(lp.y, _targetY, ref _yVel, ySmoothTime);
-            _poseTransform.localPosition = lp;
-        }
-
 
         // ─────────────────────────────────────────────────────────────
         // CUT LOGIC
@@ -456,8 +463,8 @@ public class CuttingPlaneController : MonoBehaviour
         if (cutAction?.action == null || !cutAction.action.enabled)
             return;
 
-        // UI block
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        // UI block (uses per-frame cached value)
+        if (_isPointerOverUI)
             return;
 
         // (1) Arm delay
