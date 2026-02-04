@@ -584,7 +584,11 @@ public class XYTetherJoint : MonoBehaviour
             var drive = joint.xDrive;
             drive.positionSpring = baseSpring * springMult * engageFactor;
             drive.positionDamper = baseDamper * damperMult * engageFactor;
-            drive.maximumForce = driveMaxForce * engageFactor;
+            // Spring/damper scale linearly with engagement (controls stiffness feel).
+            // The force CAP scales quadratically so the player can actually overpower
+            // the drive ceiling during a grab — without this, a cap of
+            // driveMaxForce * engagedMultiplier can still exceed the player's pull force.
+            drive.maximumForce = driveMaxForce * engageFactor * engageFactor;
             joint.xDrive = drive;
             joint.yDrive = drive;
         }
