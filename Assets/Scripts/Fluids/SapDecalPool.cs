@@ -40,10 +40,21 @@ public class SapDecalPool : MonoBehaviour
     private Queue<SapDecal> _activeQueue; // For recycling oldest when pool exhausted
     private Transform _poolRoot;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void DomainReset()
+    {
+        Instance = null;
+    }
+
     private void Awake()
     {
         Instance = this;
         InitializePool();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void InitializePool()
@@ -146,7 +157,6 @@ public class SapDecalPool : MonoBehaviour
         if (_pool.Count < maxPoolSize)
         {
             decal = CreateDecal();
-            _freeQueue.Dequeue(); // Remove the one we just added
             _activeQueue.Enqueue(decal);
             return decal;
         }

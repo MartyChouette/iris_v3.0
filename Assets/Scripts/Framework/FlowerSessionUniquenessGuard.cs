@@ -5,6 +5,12 @@ public class FlowerSessionUniquenessGuard : MonoBehaviour
 {
     private static int _activeCount = 0;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void DomainReset()
+    {
+        _activeCount = 0;
+    }
+
     private void Awake()
     {
         _activeCount++;

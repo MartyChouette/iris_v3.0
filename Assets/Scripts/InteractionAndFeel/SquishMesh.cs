@@ -122,6 +122,11 @@ public class SquishMesh : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        if (MeshClone != null) Destroy(MeshClone);
+    }
+
     void FixedUpdate()
     {
         vertexArray = OriginalMesh.vertices;

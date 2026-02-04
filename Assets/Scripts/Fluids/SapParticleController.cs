@@ -100,10 +100,21 @@ public class SapParticleController : MonoBehaviour
     private Queue<ParticleSystem> _freeQueue;
     private Transform _poolRoot;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void DomainReset()
+    {
+        Instance = null;
+    }
+
     private void Awake()
     {
         Instance = this;
         InitializePool();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void InitializePool()
@@ -215,7 +226,6 @@ public class SapParticleController : MonoBehaviour
         if (_pool.Count < maxPoolSize)
         {
             var newPs = CreatePooledParticleSystem();
-            _freeQueue.Dequeue(); // Remove the one we just added
             return newPs;
         }
 

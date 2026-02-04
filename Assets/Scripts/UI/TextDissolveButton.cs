@@ -125,6 +125,11 @@ public class TextDissolveButton : MonoBehaviour, IPointerEnterHandler, IPointerE
         SetTargets(normalSoftness, normalDilate, normalScale, normalAlpha);
     }
 
+    void OnDestroy()
+    {
+        if (textMat != null) Destroy(textMat);
+    }
+
     private void SetTargets(float soft, float dilate, float scale, float alpha)
     {
         targetSoftness = soft;

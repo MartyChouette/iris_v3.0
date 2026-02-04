@@ -43,7 +43,9 @@ public class TMP_MotionBlur : MonoBehaviour
 
     void Start()
     {
-        fontMat = GetComponent<TextMeshProUGUI>().fontMaterial;
+        var tmp = GetComponent<TextMeshProUGUI>();
+        fontMat = new Material(tmp.fontMaterial);
+        tmp.fontMaterial = fontMat;
         softnessID = Shader.PropertyToID("_UnderlaySoftness");
         lastMousePos = Input.mousePosition;
     }

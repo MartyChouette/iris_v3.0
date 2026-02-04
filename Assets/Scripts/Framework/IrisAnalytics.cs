@@ -47,7 +47,8 @@ public static class IrisAnalytics
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Init()
     {
-        s_sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
+        if (s_sessionId == null)
+            s_sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
     }
 
     // ── Public API ──

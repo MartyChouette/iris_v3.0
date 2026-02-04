@@ -255,9 +255,9 @@ namespace DynamicMeshCutter
             if (!obj) return;
 
             if (Application.isPlaying)
-                UnityEngine.Object.Destroy(obj);          // safe: end-of-frame
+                UnityEngine.Object.Destroy(obj);
             else
-                SafeDestroy(obj); // editor-time only
+                UnityEngine.Object.DestroyImmediate(obj);
         }
 
 

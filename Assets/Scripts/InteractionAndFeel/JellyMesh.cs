@@ -52,6 +52,11 @@ public class JellyMesh : MonoBehaviour
 
     }
 
+    void OnDestroy()
+    {
+        if (MeshClone != null) Destroy(MeshClone);
+    }
+
     void FixedUpdate()
     {
         vertexArray = OriginalMesh.vertices;

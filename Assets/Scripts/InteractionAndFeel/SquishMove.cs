@@ -148,6 +148,11 @@ public class SquishMove : MonoBehaviour
         lastWorldPos = transform.position;
     }
 
+    void OnDestroy()
+    {
+        if (meshClone != null) Destroy(meshClone);
+    }
+
     void Update()
     {
         dragMoveStep = Vector3.zero;
