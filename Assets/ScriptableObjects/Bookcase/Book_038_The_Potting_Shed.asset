@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_038_The_Potting_Shed
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: The Potting Shed
+  author: Rose Underhill
+  pageTexts:
+  - The potting shed smelled of damp earth and turpentine. Tools hung on nails, each
+    one a different kind of patience.
+  - He repotted the fern for the third time that year. It kept outgrowing its container.
+    He respected that.
+  - In the corner of the shed, a spider had built a web between two terra cotta pots.
+    He left it there.
+  spineColor: {r: 0.12, g: 0.35, b: 0.15, a: 1}
+  heightScale: 0.8760012
+  thicknessScale: 0.04212843

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_014_The_Pruner's_Almanac
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: The Pruner's Almanac
+  author: Sage Draper
+  pageTexts:
+  - 'January: Sharpen the shears. A clean cut heals faster than a ragged one. This
+    applies to most things.'
+  - 'June: The roses will try to take over. Let them think they''re winning, then
+    prune on the solstice.'
+  - 'October: Let the dead heads stand. The goldfinches need the seeds more than
+    you need tidiness.'
+  spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
+  heightScale: 0.9358062
+  thicknessScale: 0.04392629

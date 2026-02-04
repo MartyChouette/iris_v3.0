@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_035_Stem_Theory
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: Stem Theory
+  author: P.L. Greenshaw
+  pageTexts:
+  - 'Chapter 1: The stem is not merely a support structure. It is a highway, a messenger,
+    a spine.'
+  - "Consider the hollow stem of the dandelion \u2014 empty inside, yet strong enough
+    to hold a wish."
+  - 'All architecture aspires to the condition of the stem: vertical, purposeful,
+    alive.'
+  spineColor: {r: 0.35, g: 0.38, b: 0.18, a: 1}
+  heightScale: 0.7085475
+  thicknessScale: 0.031774648

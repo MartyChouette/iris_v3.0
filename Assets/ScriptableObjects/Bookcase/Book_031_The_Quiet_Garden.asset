@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_031_The_Quiet_Garden
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: The Quiet Garden
+  author: H. Fernwood
+  pageTexts:
+  - 'A garden is never quiet. Listen closely: the earthworms turning, the slow exhale
+    of opening buds, the patient drip.'
+  - She planted marigolds along the fence not for their color, but because they reminded
+    her of someone she'd rather not forget.
+  - By September the garden had its own ideas. She learned to stop arguing with it.
+  spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+  heightScale: 0.7712835
+  thicknessScale: 0.058656707

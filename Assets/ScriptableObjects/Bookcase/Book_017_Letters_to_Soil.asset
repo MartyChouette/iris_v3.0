@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_017_Letters_to_Soil
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: Letters to Soil
+  author: Clara Rootley
+  pageTexts:
+  - Dear Soil, I am writing to apologize. I have taken so much from you and returned
+    so little.
+  - The compost heap is a love letter written in eggshells and coffee grounds. Decomposition
+    as devotion.
+  - Perhaps we are all just soil, waiting patiently for something to take root.
+  spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+  heightScale: 0.8480321
+  thicknessScale: 0.025089469

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_028_Water_&_Light
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: Water & Light
+  author: Linden Clearwell
+  pageTexts:
+  - "Water finds the root the way memory finds the dreamer \u2014 without effort,
+    by gravity, in the dark."
+  - Too much light bleaches. Too little starves. The plant's whole life is a negotiation
+    between extremes.
+  - The best gardeners understand that water and light are not gifts. They are partnerships.
+  spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
+  heightScale: 0.8947837
+  thicknessScale: 0.049540564

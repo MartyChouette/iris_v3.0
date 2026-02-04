@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_027_Still_Life_with_Vase
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: Still Life with Vase
+  author: Olive Stillman
+  pageTexts:
+  - 'The vase held three stems: one straight, one curved, one broken. Together they
+    made a sentence.'
+  - 'Still life painters know: the flower in the painting will outlast the flower
+    on the table.'
+  - She arranged the flowers not for beauty but for conversation. The lily had something
+    to say to the rose.
+  spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+  heightScale: 0.794917
+  thicknessScale: 0.034393746

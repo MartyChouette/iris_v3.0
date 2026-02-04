@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_026_Seed_Catalog_No._7
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: Seed Catalog No. 7
+  author: Dahlia Greer
+  pageTexts:
+  - 'Item 7A: Moonflower seeds. Plant in evening. Do not expect results before midnight.'
+  - 'Item 12C: Forget-me-nots. Self-explanatory. Plant near things you wish to remember.'
+  - 'Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway.'
+  spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
+  heightScale: 0.78761965
+  thicknessScale: 0.03516492
