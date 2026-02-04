@@ -94,7 +94,6 @@ public class JuiceMomentController : MonoBehaviour
     [Tooltip("Behaviours to temporarily disable during the juice moment (e.g. input scripts).")]
     public UnityEngine.Behaviour[] behavioursToDisable;
 
-    bool _previousJointSuppression;
     #endregion
 
     #region Settings Classes
@@ -542,6 +541,18 @@ public class JuiceMomentController : MonoBehaviour
         CacheVolumeOverrides();
     }
 
+    private void OnDisable()
+    {
+        if (_currentRoutine != null)
+        {
+            StopCoroutine(_currentRoutine);
+            _currentRoutine = null;
+            XYTetherJoint.SetCutBreakSuppressed(false);
+            ResetAll();
+            SetBehavioursEnabled(true);
+        }
+    }
+
     private void CacheVolumeOverrides()
     {
         if (!postProcessVolume || !postProcessVolume.profile)
@@ -582,9 +593,10 @@ public class JuiceMomentController : MonoBehaviour
         if (_currentRoutine != null)
         {
             StopCoroutine(_currentRoutine);
-            // Restore joint suppression state before resetting (the routine set it true).
-            XYTetherJoint.SetCutBreakSuppressed(_previousJointSuppression);
+            // Always clear suppression — restoring previous state can race with PlaneBehaviour.
+            XYTetherJoint.SetCutBreakSuppressed(false);
             ResetAll();
+            SetBehavioursEnabled(true);
         }
 
         _currentRoutine = StartCoroutine(JuiceRoutine(timeline));
@@ -598,8 +610,7 @@ public class JuiceMomentController : MonoBehaviour
     {
         events.onJuiceStart?.Invoke();
 
-        // Remember previous joint suppression state and enable hard lock
-        _previousJointSuppression = XYTetherJoint.IsCutBreakSuppressed;
+        // Suppress joint breaks during the juice moment
         XYTetherJoint.SetCutBreakSuppressed(true);
 
         // Block inputs during the entire moment
@@ -670,8 +681,8 @@ public class JuiceMomentController : MonoBehaviour
         events.onRelease?.Invoke();
         events.onJuiceEnd?.Invoke();
 
-        // Restore joint suppression state to whatever it was before this juice
-        XYTetherJoint.SetCutBreakSuppressed(_previousJointSuppression);
+        // Always clear suppression — the juice moment is over.
+        XYTetherJoint.SetCutBreakSuppressed(false);
 
         // Restore camera/time/effects and re-enable input
         ResetAll();

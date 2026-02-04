@@ -5802,13 +5802,13 @@ MonoBehaviour:
   projectionDistance: 0.02
   enforceXYConstraints: 1
   useAdaptiveDrive: 0
-  softZoneFraction: 0.6
+  softZoneFraction: 0.115
   tensionCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
+      time: 0.43888855
+      value: 0.046020508
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5816,8 +5816,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 1
-      value: 1
+      time: 1.1055603
+      value: 0.98254013
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5835,13 +5835,13 @@ MonoBehaviour:
   pluckThresholdFraction: 0.869
   pluckDwellSeconds: 0.08
   breakOnReleaseFromHighStretch: 1
-  releasePopThresholdFraction: 0.811
+  releasePopThresholdFraction: 0.826
   onTensionChanged:
     m_PersistentCalls:
       m_Calls: []
   useEngagementScaling: 1
-  engagedMultiplier: 0.272
-  passiveMultiplierOverride: 0.49
+  engagedMultiplier: 0.317
+  passiveMultiplierOverride: 0.511
   onlyBreakWhenEngaged: 1
   enableAudio: 1
   enableFluid: 0

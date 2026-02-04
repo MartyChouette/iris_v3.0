@@ -13033,14 +13033,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
-      propertyPath: softZoneFraction
-      value: 0.135
-      objectReference: {fileID: 0}
-    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
-      propertyPath: releasePopThresholdFraction
-      value: 0.902
-      objectReference: {fileID: 0}
-    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: preferDeterministicSapDirection
       value: 0
       objectReference: {fileID: 0}
