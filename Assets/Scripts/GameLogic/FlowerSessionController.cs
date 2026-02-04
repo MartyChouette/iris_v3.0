@@ -168,7 +168,7 @@ public class FlowerSessionController : MonoBehaviour
         // 1) Manage cut grace window timer
         if (useCutGraceWindow && suppressDetachEvents)
         {
-            _cutGraceTimer -= Time.deltaTime;
+            _cutGraceTimer -= Time.unscaledDeltaTime;
             if (_cutGraceTimer <= 0f)
             {
                 suppressDetachEvents = false;
