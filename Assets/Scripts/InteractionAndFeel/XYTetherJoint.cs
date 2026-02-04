@@ -558,24 +558,35 @@ public class XYTetherJoint : MonoBehaviour
         if (maxDistance > 0.0001f)
             stretchNorm = Mathf.Clamp01(stretch / maxDistance);
 
-        if (useAdaptiveDrive && joint != null)
+        // Drive scaling: tension curve (adaptive) and/or engagement factor.
+        // These are independent features — engagement scaling must apply even
+        // when useAdaptiveDrive is off, otherwise engagedMultiplier /
+        // passiveMultiplierOverride have no effect on the joint drive.
+        if (joint != null && (useAdaptiveDrive || useEngagementScaling))
         {
-            float tension = tensionCurve != null ? tensionCurve.Evaluate(stretchNorm) : stretchNorm;
-            tension = Mathf.Clamp01(tension);
+            float springMult = 1f;
+            float damperMult = 1f;
 
-            float springMult = Mathf.Lerp(minSpringMultiplier, maxSpringMultiplier, tension);
-            float damperMult = Mathf.Lerp(minDamperMultiplier, maxDamperMultiplier, tension);
+            if (useAdaptiveDrive)
+            {
+                float tension = tensionCurve != null ? tensionCurve.Evaluate(stretchNorm) : stretchNorm;
+                tension = Mathf.Clamp01(tension);
 
-            float engageFactor = GetEngagementFactor();
+                springMult = Mathf.Lerp(minSpringMultiplier, maxSpringMultiplier, tension);
+                damperMult = Mathf.Lerp(minDamperMultiplier, maxDamperMultiplier, tension);
+
+                onTensionChanged?.Invoke(tension);
+                lastTension = tension;
+            }
+
+            float engageFactor = useEngagementScaling ? GetEngagementFactor() : 1f;
 
             var drive = joint.xDrive;
             drive.positionSpring = baseSpring * springMult * engageFactor;
             drive.positionDamper = baseDamper * damperMult * engageFactor;
+            drive.maximumForce = driveMaxForce * engageFactor;
             joint.xDrive = drive;
             joint.yDrive = drive;
-
-            onTensionChanged?.Invoke(tension);
-            lastTension = tension;
         }
 
         if (Time.time >= armedAt)
