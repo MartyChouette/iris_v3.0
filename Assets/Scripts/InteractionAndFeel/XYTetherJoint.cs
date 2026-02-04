@@ -558,48 +558,24 @@ public class XYTetherJoint : MonoBehaviour
         if (maxDistance > 0.0001f)
             stretchNorm = Mathf.Clamp01(stretch / maxDistance);
 
-        // Drive scaling: tension curve and/or engagement.
-        //
-        // Adaptive drive parts always run this block so the tension curve and
-        // passive engagement scaling keep them feeling "lively" (original behavior).
-        // Non-adaptive parts only enter when the player is actively grabbing,
-        // so passive drive stays at full strength and petals don't loosen.
-        bool isEngaged = _engagement != null && _engagement.isEngaged;
-        if (joint != null && (useAdaptiveDrive || (useEngagementScaling && isEngaged)))
+        if (useAdaptiveDrive && joint != null)
         {
-            float springMult = 1f;
-            float damperMult = 1f;
+            float tension = tensionCurve != null ? tensionCurve.Evaluate(stretchNorm) : stretchNorm;
+            tension = Mathf.Clamp01(tension);
 
-            if (useAdaptiveDrive)
-            {
-                float tension = tensionCurve != null ? tensionCurve.Evaluate(stretchNorm) : stretchNorm;
-                tension = Mathf.Clamp01(tension);
+            float springMult = Mathf.Lerp(minSpringMultiplier, maxSpringMultiplier, tension);
+            float damperMult = Mathf.Lerp(minDamperMultiplier, maxDamperMultiplier, tension);
 
-                springMult = Mathf.Lerp(minSpringMultiplier, maxSpringMultiplier, tension);
-                damperMult = Mathf.Lerp(minDamperMultiplier, maxDamperMultiplier, tension);
-
-                onTensionChanged?.Invoke(tension);
-                lastTension = tension;
-            }
-
-            // Adaptive drive parts: scale spring/damper by engagement always
-            // (passive + engaged) to preserve their designed feel.
-            // Non-adaptive parts: only scale when actively grabbed.
-            float driveFactor = 1f;
-            if (useEngagementScaling && (useAdaptiveDrive || isEngaged))
-                driveFactor = GetEngagementFactor();
+            float engageFactor = GetEngagementFactor();
 
             var drive = joint.xDrive;
-            drive.positionSpring = baseSpring * springMult * driveFactor;
-            drive.positionDamper = baseDamper * damperMult * driveFactor;
-            // Force cap only reduces when the player is actively engaged so
-            // passive parts keep full maxForce. Quadratic scaling ensures the
-            // player can overpower the drive ceiling during a grab.
-            drive.maximumForce = isEngaged
-                ? driveMaxForce * driveFactor * driveFactor
-                : driveMaxForce;
+            drive.positionSpring = baseSpring * springMult * engageFactor;
+            drive.positionDamper = baseDamper * damperMult * engageFactor;
             joint.xDrive = drive;
             joint.yDrive = drive;
+
+            onTensionChanged?.Invoke(tension);
+            lastTension = tension;
         }
 
         if (Time.time >= armedAt)
