@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using Unity.Cinemachine;
+using Iris.Camera;
 using System.Collections.Generic;
 
 /// <summary>
