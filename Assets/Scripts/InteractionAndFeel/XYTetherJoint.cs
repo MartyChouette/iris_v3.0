@@ -559,10 +559,11 @@ public class XYTetherJoint : MonoBehaviour
             stretchNorm = Mathf.Clamp01(stretch / maxDistance);
 
         // Drive scaling: tension curve (adaptive) and/or engagement factor.
-        // These are independent features — engagement scaling must apply even
-        // when useAdaptiveDrive is off, otherwise engagedMultiplier /
-        // passiveMultiplierOverride have no effect on the joint drive.
-        if (joint != null && (useAdaptiveDrive || useEngagementScaling))
+        // Engagement scaling only weakens the drive while the player is actively
+        // grabbing. Passive (not-engaged) parts keep full drive strength so
+        // petals don't loosen and fall off from minor physics bumps.
+        bool isEngaged = _engagement != null && _engagement.isEngaged;
+        if (joint != null && (useAdaptiveDrive || (useEngagementScaling && isEngaged)))
         {
             float springMult = 1f;
             float damperMult = 1f;
@@ -579,15 +580,14 @@ public class XYTetherJoint : MonoBehaviour
                 lastTension = tension;
             }
 
-            float engageFactor = useEngagementScaling ? GetEngagementFactor() : 1f;
+            float engageFactor = (useEngagementScaling && isEngaged) ? GetEngagementFactor() : 1f;
 
             var drive = joint.xDrive;
             drive.positionSpring = baseSpring * springMult * engageFactor;
             drive.positionDamper = baseDamper * damperMult * engageFactor;
-            // Spring/damper scale linearly with engagement (controls stiffness feel).
-            // The force CAP scales quadratically so the player can actually overpower
-            // the drive ceiling during a grab — without this, a cap of
-            // driveMaxForce * engagedMultiplier can still exceed the player's pull force.
+            // Force cap scales quadratically so the player can overpower the
+            // drive ceiling during a grab. Only applies when engaged — passive
+            // parts keep full maxForce.
             drive.maximumForce = driveMaxForce * engageFactor * engageFactor;
             joint.xDrive = drive;
             joint.yDrive = drive;
