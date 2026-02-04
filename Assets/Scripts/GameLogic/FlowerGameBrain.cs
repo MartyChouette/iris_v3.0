@@ -190,7 +190,7 @@ public class FlowerGameBrain : MonoBehaviour
             float rawAngle = stem.GetCurrentCutAngleDeg(Vector3.up);
 
             // Calibrated angle so that scoring and HUD share the same space.
-            float cutAngle = Mathf.DeltaAngle(rawAngle, angleOffsetDeg);
+            float cutAngle = Mathf.DeltaAngle(angleOffsetDeg, rawAngle);
 
             float idealAngle = ideal.idealCutAngleDeg;
             float delta = Mathf.Abs(Mathf.DeltaAngle(cutAngle, idealAngle));
