@@ -82,8 +82,8 @@
 
 ### Low Priority / Nice-to-Have
 
-- [ ] **Unit tests** for `FlowerGameBrain.EvaluateFlower()` scoring logic
-- [ ] **Automated scene validation** - Editor script that checks required references on scene load
+- [x] **Unit tests** for `FlowerGameBrain.EvaluateFlower()` scoring logic — 24 NUnit tests in `Assets/Editor/Tests/FlowerGameBrainTests.cs` covering stem length, cut angle, parts, game-over conditions, weighted averages, and edge cases
+- [x] **Automated scene validation** — Editor tool (`Assets/Editor/SceneValidator.cs`) accessible via Window > Iris > Scene Validator. Checks singleton duplicates, required components, flower hierarchy wiring, UI references, cutting system, audio, and fluids.
 - [ ] **Accessibility** - Colorblind modes for grading UI
 - [ ] **Input rebinding** - Custom key/button mapping
 - [ ] **Performance quality presets** - Settings for particle counts, physics iteration counts
