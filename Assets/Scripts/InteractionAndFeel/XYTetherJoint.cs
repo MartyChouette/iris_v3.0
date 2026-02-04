@@ -587,7 +587,7 @@ public class XYTetherJoint : MonoBehaviour
                     pluckTimer += dt;
                     if (pluckTimer >= pluckDwellSeconds)
                     {
-                        ForceBreak(debugLogs ? $"Pluck dwell (stretchNorm={stretchNorm:F2})" : "Pluck dwell");
+                        ForceBreak(debugLogs ? $"Pluck dwell (stretchNorm={stretchNorm:F2})" : "Pluck dwell", isAuthoredPhysics: true);
                         return;
                     }
                 }
@@ -603,7 +603,7 @@ public class XYTetherJoint : MonoBehaviour
                     wasAbovePluckThreshold = true;
                 else if (wasAbovePluckThreshold && stretchNorm <= releasePopThresholdFraction)
                 {
-                    ForceBreak(debugLogs ? $"Release pop (stretchNorm={stretchNorm:F2})" : "Release pop");
+                    ForceBreak(debugLogs ? $"Release pop (stretchNorm={stretchNorm:F2})" : "Release pop", isAuthoredPhysics: true);
                     return;
                 }
             }
@@ -629,7 +629,7 @@ public class XYTetherJoint : MonoBehaviour
         {
             if (stretch > Mathf.Max(0.0001f, maxDistance))
             {
-                ForceBreak(debugLogs ? $"Stretch {stretch:F3} > {maxDistance:F3}" : "Stretch");
+                ForceBreak(debugLogs ? $"Stretch {stretch:F3} > {maxDistance:F3}" : "Stretch", isAuthoredPhysics: true);
                 return;
             }
         }
@@ -639,7 +639,7 @@ public class XYTetherJoint : MonoBehaviour
             float relSpeed = Dist(ApplySpace(vA - vB));
             if (relSpeed > relativeSpeedThreshold)
             {
-                ForceBreak(debugLogs ? $"RelativeSpeed {relSpeed:F2} > {relativeSpeedThreshold:F2}" : "RelativeSpeed");
+                ForceBreak(debugLogs ? $"RelativeSpeed {relSpeed:F2} > {relativeSpeedThreshold:F2}" : "RelativeSpeed", isAuthoredPhysics: true);
                 return;
             }
         }
@@ -649,7 +649,7 @@ public class XYTetherJoint : MonoBehaviour
             float ownSpeed = Dist(ApplySpace(vA));
             if (ownSpeed > ownSpeedThreshold)
             {
-                ForceBreak(debugLogs ? $"OwnSpeed {ownSpeed:F2} > {ownSpeedThreshold:F2}" : "OwnSpeed");
+                ForceBreak(debugLogs ? $"OwnSpeed {ownSpeed:F2} > {ownSpeedThreshold:F2}" : "OwnSpeed", isAuthoredPhysics: true);
                 return;
             }
         }
@@ -658,7 +658,7 @@ public class XYTetherJoint : MonoBehaviour
         {
             if (absoluteTravel >= absoluteTravelThreshold)
             {
-                ForceBreak(debugLogs ? $"AbsoluteTravel {absoluteTravel:F2} >= {absoluteTravelThreshold:F2}" : "AbsoluteTravel");
+                ForceBreak(debugLogs ? $"AbsoluteTravel {absoluteTravel:F2} >= {absoluteTravelThreshold:F2}" : "AbsoluteTravel", isAuthoredPhysics: true);
                 return;
             }
         }
@@ -667,7 +667,7 @@ public class XYTetherJoint : MonoBehaviour
         {
             if (relativeTravel >= relativeTravelThreshold)
             {
-                ForceBreak(debugLogs ? $"RelativeTravel {relativeTravel:F2} >= {relativeTravelThreshold:F2}" : "RelativeTravel");
+                ForceBreak(debugLogs ? $"RelativeTravel {relativeTravel:F2} >= {relativeTravelThreshold:F2}" : "RelativeTravel", isAuthoredPhysics: true);
                 return;
             }
         }
@@ -766,7 +766,7 @@ public class XYTetherJoint : MonoBehaviour
      * - Triggers optional audio and fluid/sap feedback.
      * - Invokes @ref onBroke.
      */
-    public void ForceBreak(string reason = "Forced")
+    public void ForceBreak(string reason = "Forced", bool isAuthoredPhysics = false)
     {
         if (cutBreakSuppressed)
         {
@@ -775,7 +775,11 @@ public class XYTetherJoint : MonoBehaviour
             return;
         }
 
-        if (onlyBreakWhenEngaged && _engagement != null)
+        // Engagement gating only applies to player-initiated breaks, not
+        // authored physics breaks (distance / pluck / release-pop). After a
+        // stem cut the separated piece can stretch the joint past limits while
+        // the player is not actively grabbing the leaf.
+        if (!isAuthoredPhysics && onlyBreakWhenEngaged && _engagement != null)
         {
             if (!_engagement.isEngaged)
             {
@@ -789,8 +793,7 @@ public class XYTetherJoint : MonoBehaviour
 
         DestroyJoint();
 
-        // Authoritative permanent detach state (player intentional rip)
-        MarkPartDetachedAuthoritative(isPlayerAction: true, reasonText: reason);
+        MarkPartDetachedAuthoritative(isPlayerAction: !isAuthoredPhysics, reasonText: reason);
 
         TriggerBreakAudio();
         TriggerBreakFluidOrDeterministicSap();
