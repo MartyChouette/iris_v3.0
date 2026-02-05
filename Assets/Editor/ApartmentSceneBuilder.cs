@@ -46,10 +46,13 @@ public static class ApartmentSceneBuilder
         // ── 5. Placeable objects ───────────────────────────────────────
         var placeables = BuildPlaceableObjects(placeableLayer);
 
-        // ── 6. Cinemachine cameras ─────────────────────────────────────
-        var cameras = BuildCameras();
+        // ── 6. Area ScriptableObjects (created before cameras so we can position them) ─
+        var areaDefs = BuildAreaDefinitions();
 
-        // ── 7. ObjectGrabber ───────────────────────────────────────────
+        // ── 7. Cinemachine cameras (positioned at first area's vantage) ─
+        var cameras = BuildCameras(areaDefs[0]);
+
+        // ── 8. ObjectGrabber ───────────────────────────────────────────
         var grabberGO = new GameObject("ObjectGrabber");
         var grabber = grabberGO.AddComponent<ObjectGrabber>();
 
@@ -58,11 +61,10 @@ public static class ApartmentSceneBuilder
         grabberSO.FindProperty("placeableLayer").intValue = 1 << placeableLayer;
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 8. ApartmentManager + ScriptableObjects + UI ───────────────
-        var areaDefs = BuildAreaDefinitions();
+        // ── 9. ApartmentManager + UI ─────────────────────────────────
         BuildApartmentManager(cameras.browse, cameras.selected, grabber, areaDefs);
 
-        // ── 9. Save scene ──────────────────────────────────────────────
+        // ── 10. Save scene ─────────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -298,32 +300,34 @@ public static class ApartmentSceneBuilder
         public CinemachineCamera selected;
     }
 
-    private static CameraPair BuildCameras()
+    private static CameraPair BuildCameras(ApartmentAreaDefinition firstArea)
     {
         var parent = new GameObject("CinemachineCameras");
 
-        // Browse camera (starts active)
+        // Browse camera (starts active, positioned at first area)
         var browseGO = new GameObject("Cam_Browse");
         browseGO.transform.SetParent(parent.transform);
+        browseGO.transform.position = firstArea.browsePosition;
+        browseGO.transform.rotation = Quaternion.Euler(firstArea.browseRotation);
         var browse = browseGO.AddComponent<CinemachineCamera>();
-        browse.Lens = new LensSettings
-        {
-            FieldOfView = 60f,
-            NearClipPlane = 0.1f,
-            FarClipPlane = 500f,
-        };
+        var browseLens = LensSettings.Default;
+        browseLens.FieldOfView = firstArea.browseFOV;
+        browseLens.NearClipPlane = 0.1f;
+        browseLens.FarClipPlane = 500f;
+        browse.Lens = browseLens;
         browse.Priority = 20;
 
-        // Selected camera (starts inactive)
+        // Selected camera (starts inactive, parked at first area's selected view)
         var selectedGO = new GameObject("Cam_Selected");
         selectedGO.transform.SetParent(parent.transform);
+        selectedGO.transform.position = firstArea.selectedPosition;
+        selectedGO.transform.rotation = Quaternion.Euler(firstArea.selectedRotation);
         var selected = selectedGO.AddComponent<CinemachineCamera>();
-        selected.Lens = new LensSettings
-        {
-            FieldOfView = 50f,
-            NearClipPlane = 0.1f,
-            FarClipPlane = 500f,
-        };
+        var selectedLens = LensSettings.Default;
+        selectedLens.FieldOfView = firstArea.selectedFOV;
+        selectedLens.NearClipPlane = 0.1f;
+        selectedLens.FarClipPlane = 500f;
+        selected.Lens = selectedLens;
         selected.Priority = 0;
 
         return new CameraPair { browse = browse, selected = selected };
