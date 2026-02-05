@@ -12,6 +12,64 @@ using TMPro;
 public static class ApartmentSceneBuilder
 {
     private const string PlaceableLayerName = "Placeable";
+    private const string BooksLayerName = "Books";
+
+    // ── Book data for the book nook ──
+    private static readonly string[] BookTitles =
+    {
+        "Roots in Darkness", "The Quiet Garden", "Letters to Soil",
+        "Pressing Petals", "On Wilting", "Stem Theory",
+    };
+
+    private static readonly string[] BookAuthors =
+    {
+        "Eleanor Moss", "H. Fernwood", "Clara Rootley",
+        "Jasper Thorn", "Wren Dewdrop", "P.L. Greenshaw",
+    };
+
+    private static readonly string[][] BookPages =
+    {
+        new[] {
+            "The roots do not ask permission. They push through clay and stone, searching for what they need in total darkness.",
+            "I have often wondered if the flower knows it is beautiful, or if beauty is simply a side effect of reaching toward light.",
+            "When the last petal falls, the stem stands bare — not empty, but unburdened."
+        },
+        new[] {
+            "A garden is never quiet. Listen closely: the earthworms turning, the slow exhale of opening buds, the patient drip.",
+            "She planted marigolds along the fence not for their color, but because they reminded her of someone she'd rather not forget.",
+            "By September the garden had its own ideas. She learned to stop arguing with it."
+        },
+        new[] {
+            "Dear Soil, I am writing to apologize. I have taken so much from you and returned so little.",
+            "The compost heap is a love letter written in eggshells and coffee grounds. Decomposition as devotion.",
+            "Perhaps we are all just soil, waiting patiently for something to take root."
+        },
+        new[] {
+            "To press a flower is to stop time — or at least, to press pause. The color fades, but the shape remembers.",
+            "Page 47 of her journal: a flattened daisy, brown at the edges, still holding its circular argument.",
+            "Some flowers are better preserved in memory than in books. But we press them anyway."
+        },
+        new[] {
+            "Wilting is not failure. It is the flower's way of saying: I have given everything I had to give.",
+            "The drooping head of a sunflower in October carries more dignity than any spring bloom.",
+            "We fear wilting because we see ourselves in it. But the plant does not fear. It simply returns."
+        },
+        new[] {
+            "Chapter 1: The stem is not merely a support structure. It is a highway, a messenger, a spine.",
+            "Consider the hollow stem of the dandelion — empty inside, yet strong enough to hold a wish.",
+            "All architecture aspires to the condition of the stem: vertical, purposeful, alive."
+        },
+    };
+
+    private static readonly Color[] SpineColors =
+    {
+        new Color(0.55f, 0.15f, 0.15f),
+        new Color(0.12f, 0.15f, 0.40f),
+        new Color(0.12f, 0.35f, 0.15f),
+        new Color(0.70f, 0.62f, 0.48f),
+        new Color(0.45f, 0.20f, 0.40f),
+        new Color(0.25f, 0.25f, 0.25f),
+    };
 
     [MenuItem("Window/Iris/Build Apartment Scene")]
     public static void Build()
@@ -20,6 +78,7 @@ public static class ApartmentSceneBuilder
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         int placeableLayer = EnsureLayer(PlaceableLayerName);
+        int booksLayer = EnsureLayer(BooksLayerName);
 
         // ── 1. Directional light ───────────────────────────────────────
         var lightGO = new GameObject("Directional Light");
@@ -61,10 +120,16 @@ public static class ApartmentSceneBuilder
         grabberSO.FindProperty("placeableLayer").intValue = 1 << placeableLayer;
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 9. ApartmentManager + UI ─────────────────────────────────
-        BuildApartmentManager(cameras.browse, cameras.selected, grabber, areaDefs);
+        // ── 9. Books in book nook ────────────────────────────────────
+        BuildBookNookBooks(booksLayer);
 
-        // ── 10. Save scene ─────────────────────────────────────────────
+        // ── 10. BookInteractionManager ───────────────────────────────
+        var bookManager = BuildBookInteractionManager(camGO, booksLayer);
+
+        // ── 11. ApartmentManager + UI ─────────────────────────────────
+        BuildApartmentManager(cameras.browse, cameras.selected, grabber, areaDefs, bookManager);
+
+        // ── 12. Save scene ─────────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -89,10 +154,11 @@ public static class ApartmentSceneBuilder
         // |                  | (0..6,   |
         // |                  |  0..5)   |
         // +-------wall-------+--wall----+
-        // |          (2m doorway)       |
-        // |         Kitchen             |
-        // |     (-6..6, -5..0)          |
-        // +-----------------------------+
+        // |      (2m doorway)   |       |
+        // |     Kitchen         | Bath  |
+        // |   (-6..3, -5..0)    |(3..6) |
+        // |                     |(-5..0)|
+        // +---------------------+-------+
 
         var parent = new GameObject("Apartment");
 
@@ -139,15 +205,27 @@ public static class ApartmentSceneBuilder
             new Vector3(-3.5f, wallH / 2f, 0f), new Vector3(5f, wallH, wallT),
             new Color(0.78f, 0.75f, 0.70f));
 
-        // Divider between Living Room and Kitchen (Z=0): right segment (1 to 6)
-        // 2m doorway gap from X=-1 to X=1
+        // Divider between Living Room and Kitchen (Z=0): right segment (1 to 3)
+        // 2m doorway gap from X=-1 to X=1, bathroom wall starts at X=3
         CreateBox("Divider_LR_Kitchen_Right", parent.transform,
-            new Vector3(3.5f, wallH / 2f, 0f), new Vector3(5f, wallH, wallT),
+            new Vector3(2f, wallH / 2f, 0f), new Vector3(2f, wallH, wallT),
             new Color(0.78f, 0.75f, 0.70f));
 
         // Divider between Living Room and Book Nook (X=0, Z=0..5)
         CreateBox("Divider_LR_BookNook", parent.transform,
             new Vector3(0f, wallH / 2f, 2.5f), new Vector3(wallT, wallH, 5f),
+            new Color(0.78f, 0.75f, 0.70f));
+
+        // ── Bathroom divider (X=3, Z=-5..0) with 1.5m doorway gap ──
+
+        // Top segment: Z=-1.75 to Z=0
+        CreateBox("Divider_Bath_Top", parent.transform,
+            new Vector3(3f, wallH / 2f, -0.875f), new Vector3(wallT, wallH, 1.75f),
+            new Color(0.78f, 0.75f, 0.70f));
+
+        // Bottom segment: Z=-5 to Z=-3.25
+        CreateBox("Divider_Bath_Bottom", parent.transform,
+            new Vector3(3f, wallH / 2f, -4.125f), new Vector3(wallT, wallH, 1.75f),
             new Color(0.78f, 0.75f, 0.70f));
     }
 
@@ -234,6 +312,34 @@ public static class ApartmentSceneBuilder
         CreateBox("SideTable_Leg4", parent.transform,
             new Vector3(4.4f, 0.21f, 3.7f), new Vector3(0.05f, 0.42f, 0.05f),
             new Color(0.40f, 0.28f, 0.18f));
+
+        // ── Bathroom (3..6, -5..0) ──
+
+        // Sink counter (against east wall)
+        CreateBox("Sink_Counter_Base", parent.transform,
+            new Vector3(5.2f, 0.4f, -2.5f), new Vector3(0.7f, 0.8f, 0.5f),
+            new Color(0.50f, 0.40f, 0.30f));
+        CreateBox("Sink_Counter_Top", parent.transform,
+            new Vector3(5.2f, 0.85f, -2.5f), new Vector3(0.7f, 0.08f, 0.5f),
+            new Color(0.75f, 0.73f, 0.70f));
+
+        // Sink basin (inset)
+        CreateBox("Sink_Basin", parent.transform,
+            new Vector3(5.2f, 0.90f, -2.5f), new Vector3(0.35f, 0.05f, 0.3f),
+            new Color(0.70f, 0.80f, 0.88f));
+
+        // Mirror (on east wall above sink)
+        CreateBox("Mirror", parent.transform,
+            new Vector3(5.85f, 1.6f, -2.5f), new Vector3(0.05f, 0.6f, 0.5f),
+            new Color(0.80f, 0.85f, 0.90f));
+
+        // Toilet
+        CreateBox("Toilet_Bowl", parent.transform,
+            new Vector3(4.5f, 0.3f, -4f), new Vector3(0.4f, 0.6f, 0.5f),
+            new Color(0.90f, 0.90f, 0.90f));
+        CreateBox("Toilet_Tank", parent.transform,
+            new Vector3(4.5f, 0.55f, -4.2f), new Vector3(0.35f, 0.3f, 0.15f),
+            new Color(0.88f, 0.88f, 0.88f));
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -348,34 +454,44 @@ public static class ApartmentSceneBuilder
         var livingRoom = CreateAreaDefinition("LivingRoom", soDir,
             areaName: "Living Room",
             description: "Couch, coffee table, and a floor lamp.",
-            browsePos: new Vector3(-1f, 4f, 7f),
-            browseRot: new Vector3(40f, 180f, 0f),
+            browsePos: new Vector3(-1f, 6f, 8f),
+            browseRot: new Vector3(45f, 180f, 0f),
             browseFOV: 60f,
-            selectedPos: new Vector3(-3.2f, 2f, 4.5f),
+            selectedPos: new Vector3(-3.2f, 3f, 5f),
             selectedRot: new Vector3(35f, 180f, 0f),
             selectedFOV: 50f);
 
         var kitchen = CreateAreaDefinition("Kitchen", soDir,
             areaName: "Kitchen",
             description: "Counter, stove, and open floor.",
-            browsePos: new Vector3(0f, 4f, -2f),
-            browseRot: new Vector3(45f, 0f, 0f),
+            browsePos: new Vector3(0f, 6f, -3f),
+            browseRot: new Vector3(50f, 0f, 0f),
             browseFOV: 65f,
-            selectedPos: new Vector3(-1f, 2f, -2f),
-            selectedRot: new Vector3(30f, -20f, 0f),
+            selectedPos: new Vector3(-1f, 3f, -2.5f),
+            selectedRot: new Vector3(35f, -20f, 0f),
             selectedFOV: 50f);
 
         var bookNook = CreateAreaDefinition("BookNook", soDir,
             areaName: "Book Nook",
             description: "Bookshelf, reading chair, and side table.",
-            browsePos: new Vector3(5f, 4f, 7f),
-            browseRot: new Vector3(40f, 210f, 0f),
+            browsePos: new Vector3(5f, 6f, 8f),
+            browseRot: new Vector3(45f, 210f, 0f),
             browseFOV: 55f,
-            selectedPos: new Vector3(4f, 2f, 4.5f),
-            selectedRot: new Vector3(30f, 200f, 0f),
+            selectedPos: new Vector3(4f, 3f, 5f),
+            selectedRot: new Vector3(35f, 200f, 0f),
             selectedFOV: 48f);
 
-        return new[] { livingRoom, kitchen, bookNook };
+        var bathroom = CreateAreaDefinition("Bathroom", soDir,
+            areaName: "Bathroom",
+            description: "Sink, mirror, and toilet.",
+            browsePos: new Vector3(4.5f, 6f, -1f),
+            browseRot: new Vector3(55f, 180f, 0f),
+            browseFOV: 55f,
+            selectedPos: new Vector3(4.8f, 2.5f, -1.5f),
+            selectedRot: new Vector3(35f, 180f, 0f),
+            selectedFOV: 48f);
+
+        return new[] { livingRoom, kitchen, bookNook, bathroom };
     }
 
     private static ApartmentAreaDefinition CreateAreaDefinition(
@@ -408,7 +524,8 @@ public static class ApartmentSceneBuilder
 
     private static void BuildApartmentManager(
         CinemachineCamera browseCam, CinemachineCamera selectedCam,
-        ObjectGrabber grabber, ApartmentAreaDefinition[] areaDefs)
+        ObjectGrabber grabber, ApartmentAreaDefinition[] areaDefs,
+        BookInteractionManager bookManager)
     {
         var managerGO = new GameObject("ApartmentManager");
         var manager = managerGO.AddComponent<ApartmentManager>();
@@ -454,6 +571,10 @@ public static class ApartmentSceneBuilder
 
         // Interaction
         so.FindProperty("objectGrabber").objectReferenceValue = grabber;
+
+        // Bookshelf
+        so.FindProperty("bookInteractionManager").objectReferenceValue = bookManager;
+        so.FindProperty("bookNookAreaIndex").intValue = 2;
 
         // UI
         so.FindProperty("areaNamePanel").objectReferenceValue = areaNamePanel;
@@ -502,6 +623,221 @@ public static class ApartmentSceneBuilder
         tmp.color = Color.white;
 
         return panel;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Book Nook Books
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildBookNookBooks(int booksLayer)
+    {
+        string defDir = "Assets/ScriptableObjects/Bookcase";
+        if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects"))
+            AssetDatabase.CreateFolder("Assets", "ScriptableObjects");
+        if (!AssetDatabase.IsValidFolder(defDir))
+            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
+
+        var booksParent = new GameObject("BookNookBooks");
+        var furniture = GameObject.Find("Furniture");
+        if (furniture != null)
+            booksParent.transform.SetParent(furniture.transform);
+
+        // Bookshelf is at (5.3, 1.0, 2.5) with scale (0.5, 2.0, 1.5)
+        // Shelf front face is at X = 5.3 - 0.25 = 5.05
+        // Books sit on the shelf surface at Y = 1.0 (center of shelf)
+        // Shelf spans Z = 1.75 to 3.25
+        float bookY = 1.05f;        // just above shelf center
+        float bookX = 5.0f;         // in front of shelf back
+        float startZ = 1.85f;       // start position along shelf
+        float spacing = 0.22f;      // space between book centers
+
+        for (int i = 0; i < BookTitles.Length; i++)
+        {
+            float thickness = 0.04f;
+            float bookHeight = 0.3f;
+            float bookDepth = 0.2f;
+            Color color = SpineColors[i % SpineColors.Length];
+
+            // Create BookDefinition asset
+            var def = ScriptableObject.CreateInstance<BookDefinition>();
+            def.title = BookTitles[i];
+            def.author = BookAuthors[i];
+            def.pageTexts = BookPages[i];
+            def.spineColor = color;
+            def.heightScale = 0.85f;
+            def.thicknessScale = thickness;
+
+            string defPath = $"{defDir}/AptBook_{i:D2}_{BookTitles[i].Replace(" ", "_")}.asset";
+            AssetDatabase.CreateAsset(def, defPath);
+
+            float bookZ = startZ + i * spacing;
+
+            var bookGO = CreateBox($"AptBook_{i}", booksParent.transform,
+                new Vector3(bookX, bookY + bookHeight / 2f, bookZ),
+                new Vector3(thickness, bookHeight, bookDepth),
+                color);
+            bookGO.isStatic = false;
+            bookGO.layer = booksLayer;
+
+            // Add BookVolume component
+            var volume = bookGO.AddComponent<BookVolume>();
+
+            // Build pages child hierarchy
+            var pagesRoot = BuildBookPages(bookGO.transform, thickness, bookHeight, bookDepth);
+
+            // Wire serialized fields
+            var so = new SerializedObject(volume);
+            so.FindProperty("definition").objectReferenceValue = def;
+            so.FindProperty("pagesRoot").objectReferenceValue = pagesRoot;
+
+            var pageLabels = pagesRoot.GetComponentsInChildren<TMP_Text>(true);
+            var labelsProperty = so.FindProperty("pageLabels");
+            labelsProperty.arraySize = Mathf.Min(pageLabels.Length, 3);
+            for (int p = 0; p < labelsProperty.arraySize; p++)
+                labelsProperty.GetArrayElementAtIndex(p).objectReferenceValue = pageLabels[p];
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        Debug.Log($"[ApartmentSceneBuilder] Created {BookTitles.Length} books in book nook.");
+    }
+
+    private static GameObject BuildBookPages(Transform bookTransform,
+        float thickness, float height, float depth)
+    {
+        var pagesRoot = new GameObject("Pages");
+        pagesRoot.transform.SetParent(bookTransform);
+        pagesRoot.transform.localPosition = Vector3.zero;
+        pagesRoot.transform.localRotation = Quaternion.identity;
+
+        var canvasGO = new GameObject("PageCanvas");
+        canvasGO.transform.SetParent(pagesRoot.transform);
+        canvasGO.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.001f);
+        canvasGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+
+        var canvasRT = canvasGO.GetComponent<RectTransform>();
+        canvasRT.sizeDelta = new Vector2(900f, 400f);
+        canvasRT.localScale = new Vector3(0.0005f, 0.0005f, 0.0005f);
+
+        string[] pageNames = { "PageLeft", "PageCenter", "PageRight" };
+        float pageWidth = 280f;
+        float[] xPositions = { -300f, 0f, 300f };
+
+        for (int i = 0; i < 3; i++)
+        {
+            var pageGO = new GameObject(pageNames[i]);
+            pageGO.transform.SetParent(canvasGO.transform);
+
+            var rt = pageGO.AddComponent<RectTransform>();
+            rt.anchoredPosition = new Vector2(xPositions[i], 0f);
+            rt.sizeDelta = new Vector2(pageWidth, 380f);
+            rt.localScale = Vector3.one;
+            rt.localRotation = Quaternion.identity;
+
+            var bg = pageGO.AddComponent<UnityEngine.UI.Image>();
+            bg.color = new Color(0.95f, 0.93f, 0.88f, 0.95f);
+
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(pageGO.transform);
+
+            var textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = new Vector2(8f, 8f);
+            textRT.offsetMax = new Vector2(-8f, -8f);
+            textRT.localScale = Vector3.one;
+
+            var tmp = textGO.AddComponent<TextMeshProUGUI>();
+            tmp.text = "";
+            tmp.fontSize = 18f;
+            tmp.fontStyle = FontStyles.Normal;
+            tmp.alignment = TextAlignmentOptions.TopLeft;
+            tmp.color = new Color(0.12f, 0.10f, 0.08f);
+            tmp.enableWordWrapping = true;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        pagesRoot.SetActive(false);
+        return pagesRoot;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // BookInteractionManager (disabled by default, ApartmentManager enables)
+    // ════════════════════════════════════════════════════════════════════
+
+    private static BookInteractionManager BuildBookInteractionManager(
+        GameObject camGO, int booksLayer)
+    {
+        var managerGO = new GameObject("BookInteractionManager");
+        var manager = managerGO.AddComponent<BookInteractionManager>();
+
+        // Reading anchor — child of main camera
+        var anchorGO = new GameObject("ReadingAnchor");
+        anchorGO.transform.SetParent(camGO.transform);
+        anchorGO.transform.localPosition = new Vector3(0f, -0.1f, 0.5f);
+        anchorGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        // Title hint UI
+        var uiCanvasGO = new GameObject("BookUI_Canvas");
+        var uiCanvas = uiCanvasGO.AddComponent<Canvas>();
+        uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        uiCanvas.sortingOrder = 12;
+        uiCanvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
+        uiCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        var hintPanel = new GameObject("TitleHintPanel");
+        hintPanel.transform.SetParent(uiCanvasGO.transform);
+
+        var panelRT = hintPanel.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0f);
+        panelRT.anchorMax = new Vector2(0.5f, 0f);
+        panelRT.pivot = new Vector2(0.5f, 0f);
+        panelRT.sizeDelta = new Vector2(400f, 50f);
+        panelRT.anchoredPosition = new Vector2(0f, 30f);
+        panelRT.localScale = Vector3.one;
+
+        var bg = hintPanel.AddComponent<UnityEngine.UI.Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.6f);
+
+        var textGO = new GameObject("TitleText");
+        textGO.transform.SetParent(hintPanel.transform);
+
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = new Vector2(10f, 5f);
+        textRT.offsetMax = new Vector2(-10f, -5f);
+        textRT.localScale = Vector3.one;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = "Book Title";
+        tmp.fontSize = 24f;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+        tmp.fontStyle = FontStyles.Italic;
+
+        hintPanel.SetActive(false);
+
+        // Wire serialized fields
+        var cam = camGO.GetComponent<UnityEngine.Camera>();
+
+        var so = new SerializedObject(manager);
+        so.FindProperty("readingAnchor").objectReferenceValue = anchorGO.transform;
+        so.FindProperty("mainCamera").objectReferenceValue = cam;
+        // browseCamera left null — not used in apartment context
+        so.FindProperty("titleHintPanel").objectReferenceValue = hintPanel;
+        so.FindProperty("titleHintText").objectReferenceValue = tmp;
+        so.FindProperty("booksLayerMask").intValue = 1 << booksLayer;
+        so.FindProperty("maxRayDistance").floatValue = 10f;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        // Start disabled — ApartmentManager enables when book nook is selected
+        manager.enabled = false;
+
+        return manager;
     }
 
     // ════════════════════════════════════════════════════════════════════

@@ -26,9 +26,23 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("CinemachineBrain on the main camera. Auto-found if null.")]
     [SerializeField] private CinemachineBrain brain;
 
+    [Header("Cursor Parallax")]
+    [Tooltip("Maximum camera shift distance toward cursor.")]
+    [SerializeField, Range(0f, 2f)] private float parallaxMaxOffset = 0.3f;
+
+    [Tooltip("Smoothing speed for parallax follow.")]
+    [SerializeField, Range(1f, 20f)] private float parallaxSmoothing = 8f;
+
     [Header("Interaction")]
     [Tooltip("ObjectGrabber to enable/disable based on state.")]
     [SerializeField] private ObjectGrabber objectGrabber;
+
+    [Header("Bookshelf")]
+    [Tooltip("BookInteractionManager to enable when book nook is selected.")]
+    [SerializeField] private BookInteractionManager bookInteractionManager;
+
+    [Tooltip("Which area index is the book nook (0-indexed).")]
+    [SerializeField] private int bookNookAreaIndex = 2;
 
     [Header("UI")]
     [Tooltip("Panel showing the current area name during browsing.")]
@@ -56,6 +70,7 @@ public class ApartmentManager : MonoBehaviour
     private InputAction _navigateRightAction;
     private InputAction _selectAction;
     private InputAction _cancelAction;
+    private InputAction _mousePositionAction;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state
@@ -65,6 +80,8 @@ public class ApartmentManager : MonoBehaviour
     private int _currentAreaIndex;
     private float _blendTimer;
     private float _blendDuration;
+    private Vector3 _basePosition;
+    private Vector3 _currentParallaxOffset;
 
     private void Awake()
     {
@@ -97,6 +114,9 @@ public class ApartmentManager : MonoBehaviour
         _selectAction.AddBinding("<Keyboard>/space");
 
         _cancelAction = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
+
+        _mousePositionAction = new InputAction("MousePosition", InputActionType.Value,
+            "<Mouse>/position");
     }
 
     private void OnEnable()
@@ -105,6 +125,7 @@ public class ApartmentManager : MonoBehaviour
         _navigateRightAction.Enable();
         _selectAction.Enable();
         _cancelAction.Enable();
+        _mousePositionAction.Enable();
     }
 
     private void OnDisable()
@@ -113,6 +134,7 @@ public class ApartmentManager : MonoBehaviour
         _navigateRightAction.Disable();
         _selectAction.Disable();
         _cancelAction.Disable();
+        _mousePositionAction.Disable();
     }
 
     private void Start()
@@ -156,6 +178,8 @@ public class ApartmentManager : MonoBehaviour
                 HandleSelectedInput();
                 break;
         }
+
+        ApplyParallax();
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -193,6 +217,9 @@ public class ApartmentManager : MonoBehaviour
         var browseLens = browseCamera.Lens;
         browseLens.FieldOfView = area.browseFOV;
         browseCamera.Lens = browseLens;
+
+        _basePosition = area.browsePosition;
+        _currentParallaxOffset = Vector3.zero;
 
         // Set blend style on brain
         if (brain != null)
@@ -236,6 +263,9 @@ public class ApartmentManager : MonoBehaviour
             selectedCamera.Lens = selectedLens;
         }
 
+        _basePosition = area.selectedPosition;
+        _currentParallaxOffset = Vector3.zero;
+
         // Set blend duration and switch priority
         if (brain != null)
         {
@@ -266,6 +296,9 @@ public class ApartmentManager : MonoBehaviour
         if (objectGrabber != null)
             objectGrabber.SetEnabled(true);
 
+        if (bookInteractionManager != null && _currentAreaIndex == bookNookAreaIndex)
+            bookInteractionManager.enabled = true;
+
         UpdateUI();
 
         Debug.Log("[ApartmentManager] Entered Selected state.");
@@ -273,6 +306,11 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandleSelectedInput()
     {
+        // Don't process Esc while BookInteractionManager is reading/animating a book
+        if (BookInteractionManager.Instance != null
+            && BookInteractionManager.Instance.CurrentState != BookInteractionManager.State.Browsing)
+            return;
+
         if (_cancelAction.WasPressedThisFrame())
             ReturnToBrowsing();
     }
@@ -283,6 +321,9 @@ public class ApartmentManager : MonoBehaviour
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(false);
+
+        if (bookInteractionManager != null)
+            bookInteractionManager.enabled = false;
 
         // Return to browse camera
         ApplyBrowseCamera(areas[_currentAreaIndex], hardCut: false);
@@ -311,5 +352,36 @@ public class ApartmentManager : MonoBehaviour
 
         if (selectedHintsPanel != null)
             selectedHintsPanel.SetActive(selected);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Cursor Parallax
+    // ──────────────────────────────────────────────────────────────
+
+    private void ApplyParallax()
+    {
+        if (CurrentState == State.Selecting) return;
+        if (parallaxMaxOffset <= 0f) return;
+
+        // Determine which camera to shift
+        CinemachineCamera activeCam = CurrentState == State.Selected ? selectedCamera : browseCamera;
+        if (activeCam == null) return;
+
+        // Normalize mouse to [-1, 1] from screen center
+        Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
+        float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
+        float ny = (mousePos.y / Screen.height - 0.5f) * 2f;
+        nx = Mathf.Clamp(nx, -1f, 1f);
+        ny = Mathf.Clamp(ny, -1f, 1f);
+
+        // Compute offset along camera's local right/up axes
+        Transform camT = activeCam.transform;
+        Vector3 targetOffset = (camT.right * nx + camT.up * ny) * parallaxMaxOffset;
+
+        // Smooth-lerp
+        _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
+            Time.deltaTime * parallaxSmoothing);
+
+        camT.position = _basePosition + _currentParallaxOffset;
     }
 }
