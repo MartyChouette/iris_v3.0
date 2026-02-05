@@ -302,7 +302,7 @@ public class NewspaperManager : MonoBehaviour
         // Show calling UI
         if (callingUI != null) callingUI.SetActive(true);
         if (callingText != null)
-            callingText.SetText("Calling {0}...", _selectedDefinition.characterName);
+            callingText.text = $"Calling {_selectedDefinition.characterName}...";
 
         StartCoroutine(CallingSequence());
     }
