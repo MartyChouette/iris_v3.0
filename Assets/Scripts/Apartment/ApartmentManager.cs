@@ -190,7 +190,9 @@ public class ApartmentManager : MonoBehaviour
 
         browseCamera.transform.position = area.browsePosition;
         browseCamera.transform.rotation = Quaternion.Euler(area.browseRotation);
-        browseCamera.Lens = new LensSettings { FieldOfView = area.browseFOV };
+        var browseLens = browseCamera.Lens;
+        browseLens.FieldOfView = area.browseFOV;
+        browseCamera.Lens = browseLens;
 
         // Set blend style on brain
         if (brain != null)
@@ -229,7 +231,9 @@ public class ApartmentManager : MonoBehaviour
         {
             selectedCamera.transform.position = area.selectedPosition;
             selectedCamera.transform.rotation = Quaternion.Euler(area.selectedRotation);
-            selectedCamera.Lens = new LensSettings { FieldOfView = area.selectedFOV };
+            var selectedLens = selectedCamera.Lens;
+            selectedLens.FieldOfView = area.selectedFOV;
+            selectedCamera.Lens = selectedLens;
         }
 
         // Set blend duration and switch priority
