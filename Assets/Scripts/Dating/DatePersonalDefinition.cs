@@ -30,4 +30,25 @@ public class DatePersonalDefinition : ScriptableObject
 
     [Tooltip("Prefab to spawn when the date arrives (optional, for future use).")]
     public GameObject characterPrefab;
+
+    // ──────────────────────────────────────────────────────────────
+    // Phone Number Layout
+    // ──────────────────────────────────────────────────────────────
+    [Header("Phone Number Layout")]
+    [Tooltip("Normalized rect (0-1) of the phone number area within this ad slot.")]
+    public Rect phoneNumberRect = new Rect(0.1f, 0.05f, 0.8f, 0.15f);
+
+    // ──────────────────────────────────────────────────────────────
+    // Character Model
+    // ──────────────────────────────────────────────────────────────
+    [Header("Character Model")]
+    [Tooltip("Full character data prefab for the date scene.")]
+    public GameObject characterModelPrefab;
+
+    // ──────────────────────────────────────────────────────────────
+    // Ad Appearance
+    // ──────────────────────────────────────────────────────────────
+    [Header("Ad Appearance")]
+    [Tooltip("Font size variation for personality. 0 = use default.")]
+    public int fontSizeOverride;
 }

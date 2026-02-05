@@ -1,55 +1,86 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using TMPro;
+using Unity.Cinemachine;
 
 public class NewspaperManager : MonoBehaviour
 {
-    public enum State { Browsing, Calling, Waiting, DateArrived }
+    public enum State { TableView, PickingUp, ReadingPaper, Cutting, Calling, Waiting, DateArrived }
 
     public static NewspaperManager Instance { get; private set; }
 
+    // ─── References ───────────────────────────────────────────────
     [Header("References")]
-    [Tooltip("The marker controller to enable/disable during state transitions.")]
-    [SerializeField] private MarkerController markerController;
+    [SerializeField] private DayManager dayManager;
+    [SerializeField] private ScissorsCutController scissorsController;
+    [SerializeField] private NewspaperSurface surface;
+    [SerializeField] private CutPathEvaluator evaluator;
+    [SerializeField] private Camera mainCamera;
 
+    // ─── Cameras (Cinemachine 3) ──────────────────────────────────
+    [Header("Cameras")]
+    [Tooltip("Looking down at desk with paper.")]
+    [SerializeField] private CinemachineCamera tableCamera;
+
+    [Tooltip("Close-up first-person reading view.")]
+    [SerializeField] private CinemachineCamera paperCamera;
+
+    [SerializeField] private CinemachineBrain brain;
+
+    // ─── Newspaper Object ─────────────────────────────────────────
+    [Header("Newspaper Object")]
+    [Tooltip("The newspaper quad/plane on the desk.")]
+    [SerializeField] private Transform newspaperTransform;
+
+    [Tooltip("Click target when on table.")]
+    [SerializeField] private Collider newspaperClickCollider;
+
+    // ─── Ad Slots ─────────────────────────────────────────────────
+    [Header("Ad Slots")]
+    [SerializeField] private NewspaperAdSlot[] personalSlots;
+    [SerializeField] private NewspaperAdSlot[] commercialSlots;
+
+    // ─── Calling Phase ────────────────────────────────────────────
     [Header("Calling Phase")]
-    [Tooltip("Duration of the 'Calling...' overlay in seconds.")]
     [SerializeField] private float callingDuration = 2f;
-
-    [Tooltip("SFX played when calling starts (optional).")]
     [SerializeField] private AudioClip phoneRingSFX;
 
-    [Header("UI Panels")]
-    [Tooltip("Root GameObject for the 'Calling [Name]...' UI.")]
+    // ─── UI ───────────────────────────────────────────────────────
+    [Header("UI")]
     [SerializeField] private GameObject callingUI;
-
-    [Tooltip("TMP_Text for the calling message.")]
     [SerializeField] private TMP_Text callingText;
-
-    [Tooltip("Root GameObject for the countdown timer UI.")]
     [SerializeField] private GameObject timerUI;
-
-    [Tooltip("TMP_Text for the countdown display.")]
     [SerializeField] private TMP_Text timerText;
-
-    [Tooltip("Root GameObject for the '[Name] has arrived!' UI.")]
     [SerializeField] private GameObject arrivedUI;
-
-    [Tooltip("TMP_Text for the arrived message.")]
     [SerializeField] private TMP_Text arrivedText;
 
+    // ─── Events ───────────────────────────────────────────────────
     [Header("Events")]
+    public UnityEvent<DatePersonalDefinition> OnDateSelected;
     public UnityEvent OnDateArrived;
 
-    public State CurrentState { get; private set; } = State.Browsing;
+    // ─── Input ────────────────────────────────────────────────────
+    private InputAction _clickAction;
+    private InputAction _mousePositionAction;
+    private InputAction _cancelAction;
+
+    // ─── State ────────────────────────────────────────────────────
+    public State CurrentState { get; private set; } = State.TableView;
 
     private DatePersonalDefinition _selectedDefinition;
     private float _timeRemaining;
+    private bool _blendWaiting;
+
+    private const int PriorityActive = 20;
+    private const int PriorityInactive = 0;
+
+    // ─── Lifecycle ────────────────────────────────────────────────
 
     private void Awake()
     {
-        // Scene-scoped singleton (same pattern as HorrorCameraManager)
         if (Instance != null && Instance != this)
         {
             Debug.LogWarning("[NewspaperManager] Duplicate instance destroyed.");
@@ -58,7 +89,33 @@ public class NewspaperManager : MonoBehaviour
         }
         Instance = this;
 
+        // Inline input actions
+        _clickAction = new InputAction("Click", InputActionType.Button, "<Mouse>/leftButton");
+        _mousePositionAction = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
+        _cancelAction = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
+
         HideAllUI();
+    }
+
+    private void OnEnable()
+    {
+        _clickAction.Enable();
+        _mousePositionAction.Enable();
+        _cancelAction.Enable();
+
+        // Subscribe to scissors cut completion
+        if (scissorsController != null)
+            scissorsController.OnCutComplete.AddListener(OnCutCompleted);
+    }
+
+    private void OnDisable()
+    {
+        _clickAction.Disable();
+        _mousePositionAction.Disable();
+        _cancelAction.Disable();
+
+        if (scissorsController != null)
+            scissorsController.OnCutComplete.RemoveListener(OnCutCompleted);
     }
 
     private void OnDestroy()
@@ -66,10 +123,81 @@ public class NewspaperManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    private void Start()
+    {
+        // Subscribe to day manager
+        if (dayManager != null)
+            dayManager.OnNewNewspaper.AddListener(OnNewNewspaper);
+
+        // Initial camera setup
+        SetCamera(tableCamera);
+
+        if (scissorsController != null)
+            scissorsController.SetEnabled(false);
+    }
+
     private void Update()
     {
-        if (CurrentState != State.Waiting) return;
+        switch (CurrentState)
+        {
+            case State.TableView:
+                UpdateTableView();
+                break;
 
+            case State.PickingUp:
+                UpdatePickingUp();
+                break;
+
+            case State.ReadingPaper:
+                UpdateReadingPaper();
+                break;
+
+            case State.Waiting:
+                UpdateWaiting();
+                break;
+        }
+    }
+
+    // ─── State Updates ────────────────────────────────────────────
+
+    private void UpdateTableView()
+    {
+        if (!_clickAction.WasPressedThisFrame()) return;
+
+        // Raycast to check if player clicked the newspaper
+        Vector2 screenPos = _mousePositionAction.ReadValue<Vector2>();
+        if (mainCamera == null) return;
+
+        Ray ray = mainCamera.ScreenPointToRay(screenPos);
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
+        {
+            if (newspaperClickCollider != null && hit.collider == newspaperClickCollider)
+            {
+                EnterPickingUp();
+            }
+        }
+    }
+
+    private void UpdatePickingUp()
+    {
+        // Wait for Cinemachine blend to complete
+        if (brain != null && brain.IsBlending)
+            return;
+
+        EnterReadingPaper();
+    }
+
+    private void UpdateReadingPaper()
+    {
+        // Escape → put newspaper down
+        if (_cancelAction.WasPressedThisFrame())
+        {
+            ReturnToTable();
+        }
+    }
+
+    private void UpdateWaiting()
+    {
         _timeRemaining -= Time.deltaTime;
 
         if (_timeRemaining <= 0f)
@@ -84,25 +212,88 @@ public class NewspaperManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called by MarkerController when a listing's circle animation completes.
-    /// </summary>
-    public void OnListingSelected(PersonalListing listing)
-    {
-        if (CurrentState != State.Browsing) return;
-        if (listing == null || listing.Definition == null) return;
+    // ─── State Transitions ────────────────────────────────────────
 
-        _selectedDefinition = listing.Definition;
-        StartCoroutine(CallingSequence());
+    private void EnterPickingUp()
+    {
+        CurrentState = State.PickingUp;
+        Debug.Log("[NewspaperManager] Picking up newspaper...");
+
+        // Blend to paper camera
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut, 0.5f);
+        }
+        SetCamera(paperCamera);
     }
 
-    private IEnumerator CallingSequence()
+    private void EnterReadingPaper()
     {
-        // ── Enter Calling state ──
-        CurrentState = State.Calling;
+        CurrentState = State.ReadingPaper;
+        Debug.Log("[NewspaperManager] Reading paper. Draw to cut!");
 
-        if (markerController != null)
-            markerController.SetEnabled(false);
+        // Enable scissors
+        if (scissorsController != null)
+            scissorsController.SetEnabled(true);
+    }
+
+    private void ReturnToTable()
+    {
+        CurrentState = State.TableView;
+        Debug.Log("[NewspaperManager] Returning to table view.");
+
+        // Disable scissors
+        if (scissorsController != null)
+            scissorsController.SetEnabled(false);
+
+        // Blend back to table camera
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut, 0.5f);
+        }
+        SetCamera(tableCamera);
+    }
+
+    private void OnCutCompleted(List<Vector2> cutPolygonUV)
+    {
+        if (CurrentState != State.ReadingPaper) return;
+
+        // Evaluate which personal ad was cut
+        if (evaluator == null || personalSlots == null) return;
+
+        var winner = evaluator.Evaluate(cutPolygonUV, personalSlots);
+        if (winner == null)
+        {
+            Debug.Log("[NewspaperManager] Cut didn't cover any phone number sufficiently.");
+            return;
+        }
+
+        _selectedDefinition = winner;
+        OnDateSelected?.Invoke(winner);
+
+        // Disable scissors
+        if (scissorsController != null)
+            scissorsController.SetEnabled(false);
+
+        StartCoroutine(CuttingThenCalling());
+    }
+
+    private IEnumerator CuttingThenCalling()
+    {
+        // Brief pause for cut-out animation
+        CurrentState = State.Cutting;
+        Debug.Log($"[NewspaperManager] Cut out {_selectedDefinition.characterName}'s ad!");
+        yield return new WaitForSeconds(0.3f);
+
+        // Transition to calling
+        EnterCalling();
+    }
+
+    private void EnterCalling()
+    {
+        CurrentState = State.Calling;
 
         // Play phone ring SFX
         if (phoneRingSFX != null && AudioManager.Instance != null)
@@ -111,11 +302,15 @@ public class NewspaperManager : MonoBehaviour
         // Show calling UI
         if (callingUI != null) callingUI.SetActive(true);
         if (callingText != null)
-           // callingText.SetText("Calling {0}...", _selectedDefinition.characterName);
+            callingText.SetText("Calling {0}...", _selectedDefinition.characterName);
 
+        StartCoroutine(CallingSequence());
+    }
+
+    private IEnumerator CallingSequence()
+    {
         yield return new WaitForSeconds(callingDuration);
 
-        // ── Transition to Waiting state ──
         if (callingUI != null) callingUI.SetActive(false);
         EnterWaiting();
     }
@@ -132,14 +327,86 @@ public class NewspaperManager : MonoBehaviour
     private void EnterDateArrived()
     {
         CurrentState = State.DateArrived;
+        Debug.Log($"[NewspaperManager] {_selectedDefinition.characterName} has arrived!");
 
         if (timerUI != null) timerUI.SetActive(false);
-
         if (arrivedUI != null) arrivedUI.SetActive(true);
         if (arrivedText != null)
-            //arrivedText.SetText("{0} has arrived!", _selectedDefinition.characterName);
+            arrivedText.SetText("{0} has arrived!", _selectedDefinition.characterName);
+
+        // Spawn character model if set
+        if (_selectedDefinition.characterModelPrefab != null)
+            Instantiate(_selectedDefinition.characterModelPrefab);
 
         OnDateArrived?.Invoke();
+    }
+
+    // ─── Newspaper Regeneration ───────────────────────────────────
+
+    private void OnNewNewspaper()
+    {
+        if (dayManager == null) return;
+
+        Debug.Log($"[NewspaperManager] Generating newspaper for day {dayManager.CurrentDay}.");
+
+        // Assign personal ads to slots
+        var personals = dayManager.TodayPersonals;
+        if (personalSlots != null)
+        {
+            for (int i = 0; i < personalSlots.Length; i++)
+            {
+                if (personalSlots[i] == null) continue;
+
+                if (i < personals.Count)
+                    personalSlots[i].AssignPersonal(personals[i]);
+                else
+                    personalSlots[i].Clear();
+            }
+        }
+
+        // Assign commercial ads to slots
+        var commercials = dayManager.TodayCommercials;
+        if (commercialSlots != null)
+        {
+            for (int i = 0; i < commercialSlots.Length; i++)
+            {
+                if (commercialSlots[i] == null) continue;
+
+                if (i < commercials.Count)
+                    commercialSlots[i].AssignCommercial(commercials[i]);
+                else
+                    commercialSlots[i].Clear();
+            }
+        }
+
+        // Reset newspaper surface
+        if (surface != null)
+            surface.ResetSurface();
+
+        // Reset state
+        _selectedDefinition = null;
+        HideAllUI();
+
+        // Return to table view
+        if (scissorsController != null)
+            scissorsController.SetEnabled(false);
+
+        SetCamera(tableCamera);
+        CurrentState = State.TableView;
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────
+
+    private void SetCamera(CinemachineCamera cam)
+    {
+        if (cam == null) return;
+
+        if (tableCamera != null)
+            tableCamera.Priority = PriorityInactive;
+        if (paperCamera != null)
+            paperCamera.Priority = PriorityInactive;
+
+        cam.Priority = PriorityActive;
     }
 
     private void UpdateTimerDisplay()
@@ -149,7 +416,6 @@ public class NewspaperManager : MonoBehaviour
         int seconds = Mathf.CeilToInt(_timeRemaining);
         int min = seconds / 60;
         int sec = seconds % 60;
-        // Use SetText with format args to avoid string allocation
         timerText.SetText("{0}:{1:00}", min, sec);
     }
 
