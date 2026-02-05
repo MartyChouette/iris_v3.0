@@ -332,7 +332,7 @@ public class NewspaperManager : MonoBehaviour
         if (timerUI != null) timerUI.SetActive(false);
         if (arrivedUI != null) arrivedUI.SetActive(true);
         if (arrivedText != null)
-            arrivedText.SetText("{0} has arrived!", _selectedDefinition.characterName);
+            arrivedText.text = $"{_selectedDefinition.characterName} has arrived!";
 
         // Spawn character model if set
         if (_selectedDefinition.characterModelPrefab != null)
