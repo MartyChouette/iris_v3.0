@@ -26,7 +26,7 @@ public class QuickFlowerBuilder : EditorWindow
     [Header("Flower Type")]
     private FlowerTypeDefinition flowerType;
     private string flowerName = "NewFlower";
-    private Difficulty difficulty = Difficulty.Normal;
+    private FlowerTypeDefinition.Difficulty difficulty = FlowerTypeDefinition.Difficulty.Normal;
 
     [Header("Arrangement")]
     private float leafRadius = 0.15f;
@@ -95,7 +95,7 @@ public class QuickFlowerBuilder : EditorWindow
         EditorGUILayout.LabelField("Flower Type", EditorStyles.boldLabel);
         flowerType = (FlowerTypeDefinition)EditorGUILayout.ObjectField(
             "Type (or null = create new)", flowerType, typeof(FlowerTypeDefinition), false);
-        difficulty = (Difficulty)EditorGUILayout.EnumPopup("Difficulty", difficulty);
+        difficulty = (FlowerTypeDefinition.Difficulty)EditorGUILayout.EnumPopup("Difficulty", difficulty);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Arrangement", EditorStyles.boldLabel);
