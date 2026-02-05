@@ -300,7 +300,7 @@ public class ApartmentManager : MonoBehaviour
             areaNamePanel.SetActive(browsing || CurrentState == State.Selecting);
 
         if (areaNameText != null && areas != null && areas.Length > 0)
-            areaNameText.SetText("{0}", areas[_currentAreaIndex].areaName);
+            areaNameText.text = areas[_currentAreaIndex].areaName;
 
         if (browseHintsPanel != null)
             browseHintsPanel.SetActive(browsing);
