@@ -23,12 +23,12 @@ TagManager:
   - StemTrimZone
   - Fluids
   - Books
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Spill
+  - Newspaper
+  - Placeable
+  - Cleanable
+  - Face
+  - StickerPad
   - 
   - 
   - 

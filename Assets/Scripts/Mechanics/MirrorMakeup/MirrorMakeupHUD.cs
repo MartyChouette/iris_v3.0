@@ -78,7 +78,9 @@ public class MirrorMakeupHUD : MonoBehaviour
                 instructionLabel.text = "Draw along your eye line";
                 break;
             case MakeupToolDefinition.ToolType.StarSticker:
-                instructionLabel.text = "Click on a pimple to cover it with a star!";
+                instructionLabel.text = manager.HoldingSticker
+                    ? "Click on a pimple to place the star!"
+                    : "Click the sticker pad to peel off a star";
                 break;
         }
     }

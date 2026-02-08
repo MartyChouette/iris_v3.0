@@ -34,10 +34,18 @@ public class MirrorMakeupManager : MonoBehaviour
     [Tooltip("Layer mask for raycasting onto the face quad.")]
     [SerializeField] private LayerMask _faceLayer;
 
+    [Header("Sticker Pad")]
+    [Tooltip("Layer mask for the sticker pad on the shelf.")]
+    [SerializeField] private LayerMask _stickerPadLayer;
+
+    [Tooltip("Visual that follows the cursor while holding a sticker.")]
+    [SerializeField] private Transform _cursorSticker;
+
     [Header("Audio")]
     public AudioClip paintSFX;
     public AudioClip stickerSFX;
     public AudioClip smearSFX;
+    public AudioClip peelSFX;
 
     // Input
     private InputAction _clickAction;
@@ -46,6 +54,9 @@ public class MirrorMakeupManager : MonoBehaviour
     // Painting state
     private Vector2 _previousUV;
     private bool _wasPaintingLastFrame;
+
+    // Sticker pick-and-place state
+    private bool _holdingSticker;
 
     // ── Public API ──────────────────────────────────────────────────
 
@@ -62,6 +73,9 @@ public class MirrorMakeupManager : MonoBehaviour
     /// <summary>True while actively painting on the face.</summary>
     public bool IsPainting { get; private set; }
 
+    /// <summary>True when the player has peeled a sticker and is carrying it.</summary>
+    public bool HoldingSticker => _holdingSticker;
+
     /// <summary>The face canvas reference.</summary>
     public FaceCanvas Canvas => _faceCanvas;
 
@@ -72,6 +86,7 @@ public class MirrorMakeupManager : MonoBehaviour
     public void SelectTool(int index)
     {
         _selectedToolIndex = index;
+        ResetStickerState();
         Debug.Log($"[MirrorMakeupManager] Selected tool: {(ActiveTool != null ? ActiveTool.toolName : "None")}");
     }
 
@@ -79,6 +94,7 @@ public class MirrorMakeupManager : MonoBehaviour
     public void DeselectTool()
     {
         _selectedToolIndex = -1;
+        ResetStickerState();
         Debug.Log("[MirrorMakeupManager] Deselected tool (inspect mode)");
     }
 
@@ -133,20 +149,12 @@ public class MirrorMakeupManager : MonoBehaviour
 
         Vector2 pointer = _mousePosition.ReadValue<Vector2>();
 
-        // StarSticker: stamp on click
+        // StarSticker: two-phase pick-and-place
         if (tool.toolType == MakeupToolDefinition.ToolType.StarSticker)
         {
             IsPainting = false;
-            if (_clickAction.WasPressedThisFrame())
-            {
-                if (TryGetFaceUV(pointer, out Vector2 uv))
-                {
-                    _faceCanvas.StampStar(uv, tool.starSize, tool.starColor);
-                    if (AudioManager.Instance != null && stickerSFX != null)
-                        AudioManager.Instance.PlaySFX(stickerSFX);
-                }
-            }
             _wasPaintingLastFrame = false;
+            UpdateStickerPickAndPlace(pointer, tool);
             return;
         }
 
@@ -168,7 +176,7 @@ public class MirrorMakeupManager : MonoBehaviour
                         float smearRadius = tool.brushRadius * tool.smearWidthMultiplier;
                         float smearOpacity = tool.opacity * tool.smearOpacityFalloff;
 
-                        _faceCanvas.Paint(uv, tool.brushColor, smearRadius, smearOpacity, tool.softEdge);
+                        _faceCanvas.PaintStroke(_previousUV, uv, tool.brushColor, smearRadius, smearOpacity, tool.softEdge);
                         _faceCanvas.Smear(uv, dragDelta.normalized, smearRadius);
 
                         if (AudioManager.Instance != null && smearSFX != null)
@@ -176,7 +184,7 @@ public class MirrorMakeupManager : MonoBehaviour
                     }
                     else
                     {
-                        _faceCanvas.Paint(uv, tool.brushColor, tool.brushRadius, tool.opacity, tool.softEdge);
+                        _faceCanvas.PaintStroke(_previousUV, uv, tool.brushColor, tool.brushRadius, tool.opacity, tool.softEdge);
 
                         if (AudioManager.Instance != null && paintSFX != null)
                             AudioManager.Instance.PlaySFX(paintSFX);
@@ -202,6 +210,63 @@ public class MirrorMakeupManager : MonoBehaviour
             IsPainting = false;
             _wasPaintingLastFrame = false;
         }
+    }
+
+    // ── Sticker pick-and-place ──────────────────────────────────────
+
+    private void UpdateStickerPickAndPlace(Vector2 pointer, MakeupToolDefinition tool)
+    {
+        if (!_holdingSticker)
+        {
+            // Phase 1: click on the sticker pad to peel one off
+            if (_clickAction.WasPressedThisFrame())
+            {
+                Ray ray = _mainCamera.ScreenPointToRay(pointer);
+                if (Physics.Raycast(ray, out _, 100f, _stickerPadLayer))
+                {
+                    _holdingSticker = true;
+                    if (_cursorSticker != null) _cursorSticker.gameObject.SetActive(true);
+                    if (AudioManager.Instance != null && peelSFX != null)
+                        AudioManager.Instance.PlaySFX(peelSFX);
+                    Debug.Log("[MirrorMakeupManager] Peeled sticker from pad");
+                }
+            }
+        }
+        else
+        {
+            // Cursor sticker follows mouse — project onto a plane at face depth
+            if (_cursorSticker != null)
+            {
+                Ray ray = _mainCamera.ScreenPointToRay(pointer);
+                float faceZ = _faceCanvas.transform.position.z;
+                float dist = (faceZ - ray.origin.z) / ray.direction.z;
+                if (dist > 0f)
+                    _cursorSticker.position = ray.GetPoint(dist);
+            }
+
+            // Phase 2: click to place on face, or click miss to drop
+            if (_clickAction.WasPressedThisFrame())
+            {
+                if (TryGetFaceUV(pointer, out Vector2 uv))
+                {
+                    _faceCanvas.StampStar(uv, tool.starSize, tool.starColor);
+                    if (AudioManager.Instance != null && stickerSFX != null)
+                        AudioManager.Instance.PlaySFX(stickerSFX);
+                    Debug.Log("[MirrorMakeupManager] Placed sticker on face");
+                }
+                else
+                {
+                    Debug.Log("[MirrorMakeupManager] Dropped sticker (missed face)");
+                }
+                ResetStickerState();
+            }
+        }
+    }
+
+    private void ResetStickerState()
+    {
+        _holdingSticker = false;
+        if (_cursorSticker != null) _cursorSticker.gameObject.SetActive(false);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

@@ -5,14 +5,36 @@ using TMPro;
 
 /// <summary>
 /// Editor utility that builds a complete mirror makeup prototype scene.
-/// Creates SO assets, bathroom geometry, face quads, UI, and wires everything.
+/// Creates SO assets, bathroom geometry, face spheres, UI, and wires everything.
 /// Menu: Window > Iris > Build Mirror Makeup Scene
+/// Menu: Window > Iris > Build Mirror Makeup Scene (Import Head)
 /// </summary>
 public static class MirrorMakeupSceneBuilder
 {
     [MenuItem("Window/Iris/Build Mirror Makeup Scene")]
     public static void Build()
     {
+        BuildInternal(null);
+    }
+
+    [MenuItem("Window/Iris/Build Mirror Makeup Scene (Import Head)")]
+    public static void BuildWithImportedHead()
+    {
+        string path = EditorUtility.OpenFilePanel(
+            "Select Head Model", "Assets", "fbx,obj,prefab");
+        if (string.IsNullOrEmpty(path)) return;
+
+        // Convert absolute path to project-relative
+        if (path.StartsWith(Application.dataPath))
+            path = "Assets" + path.Substring(Application.dataPath.Length);
+
+        BuildInternal(path);
+    }
+
+    private static void BuildInternal(string headModelPath)
+    {
+        bool useImportedHead = !string.IsNullOrEmpty(headModelPath);
+
         // ── 0. New empty scene ─────────────────────────────────────────
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -120,51 +142,72 @@ public static class MirrorMakeupSceneBuilder
             new Vector3(0.1f, 1.04f, 0.45f), new Vector3(0.015f, 0.12f, 0.015f),
             new Color(0.08f, 0.06f, 0.06f));
 
-        // Star stickers (yellow box)
+        // Star stickers (yellow box — decorative, not the pad)
         CreateBox("Tool_StarSticker", roomParent.transform,
             new Vector3(0.3f, 1.04f, 0.45f), new Vector3(0.08f, 0.06f, 0.08f),
             new Color(1f, 0.9f, 0.2f));
 
+        // ── 6b. Sticker pad + cursor sticker ────────────────────────────
+        int stickerPadLayerIndex = EnsureLayer("StickerPad");
+
+        // Sticker pad on the shelf (pale yellow, StickerPad layer)
+        var stickerPadGO = CreateBox("StickerPad", roomParent.transform,
+            new Vector3(0.3f, 1.06f, 0.45f), new Vector3(0.1f, 0.02f, 0.1f),
+            new Color(1f, 0.96f, 0.7f));
+        stickerPadGO.layer = stickerPadLayerIndex;
+        stickerPadGO.isStatic = false;
+
+        // Cursor sticker visual (small yellow box, starts disabled, no collider)
+        var cursorStickerGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cursorStickerGO.name = "CursorSticker";
+        cursorStickerGO.transform.localScale = new Vector3(0.04f, 0.04f, 0.005f);
+        cursorStickerGO.isStatic = false;
+
+        // Remove collider — this is a visual only
+        var cursorCol = cursorStickerGO.GetComponent<Collider>();
+        if (cursorCol != null) Object.DestroyImmediate(cursorCol);
+
+        var cursorRend = cursorStickerGO.GetComponent<Renderer>();
+        if (cursorRend != null)
+        {
+            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                   ?? Shader.Find("Standard"));
+            mat.color = new Color(1f, 0.9f, 0.2f);
+            cursorRend.sharedMaterial = mat;
+        }
+        cursorStickerGO.SetActive(false);
+
         // ── 7. Face layer setup ────────────────────────────────────────
-        // Ensure "Face" layer exists (use layer 8 if available)
         int faceLayerIndex = EnsureLayer("Face");
 
-        // ── 8. Head parent + face quads ────────────────────────────────
+        // ── 8. Head parent + face ────────────────────────────────────
         var headParent = new GameObject("HeadParent");
         headParent.transform.position = new Vector3(0f, 1.6f, 0.2f);
+        headParent.transform.rotation = Quaternion.Euler(0f, 115f, 0f);
 
-        // Base face quad (opaque, skin + features + pimples)
-        var baseQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        baseQuad.name = "FaceBase";
-        baseQuad.transform.SetParent(headParent.transform);
-        baseQuad.transform.localPosition = Vector3.zero;
-        baseQuad.transform.localScale = new Vector3(0.6f, 0.8f, 1f);
-        baseQuad.transform.localRotation = Quaternion.identity;
-        baseQuad.layer = faceLayerIndex;
-        baseQuad.isStatic = false;
+        Renderer baseRenderer;
+        Renderer overlayRenderer;
+        bool useExternalBase;
 
-        // Overlay quad (transparent painting surface, slightly in front)
-        var overlayQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        overlayQuad.name = "FaceOverlay";
-        overlayQuad.transform.SetParent(headParent.transform);
-        overlayQuad.transform.localPosition = new Vector3(0f, 0f, -0.001f);
-        overlayQuad.transform.localScale = new Vector3(0.6f, 0.8f, 1f);
-        overlayQuad.transform.localRotation = Quaternion.identity;
-        overlayQuad.layer = faceLayerIndex;
-        overlayQuad.isStatic = false;
-
-        // Add collider on overlay for raycasting
-        // Quad already has a MeshCollider — replace with BoxCollider for reliability
-        var existingOverlayCollider = overlayQuad.GetComponent<Collider>();
-        if (existingOverlayCollider != null)
-            Object.DestroyImmediate(existingOverlayCollider);
-        overlayQuad.AddComponent<BoxCollider>();
+        if (useImportedHead)
+        {
+            BuildImportedHead(headModelPath, headParent.transform, faceLayerIndex,
+                out baseRenderer, out overlayRenderer);
+            useExternalBase = true;
+        }
+        else
+        {
+            BuildProceduralHead(headParent.transform, faceLayerIndex,
+                out baseRenderer, out overlayRenderer);
+            useExternalBase = false;
+        }
 
         // FaceCanvas component on the head parent
         var faceCanvas = headParent.AddComponent<FaceCanvas>();
         var faceCanvasSO = new SerializedObject(faceCanvas);
-        faceCanvasSO.FindProperty("_baseRenderer").objectReferenceValue = baseQuad.GetComponent<Renderer>();
-        faceCanvasSO.FindProperty("_overlayRenderer").objectReferenceValue = overlayQuad.GetComponent<Renderer>();
+        faceCanvasSO.FindProperty("_baseRenderer").objectReferenceValue = baseRenderer;
+        faceCanvasSO.FindProperty("_overlayRenderer").objectReferenceValue = overlayRenderer;
+        faceCanvasSO.FindProperty("_useExternalBase").boolValue = useExternalBase;
         faceCanvasSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── 9. Managers GO ─────────────────────────────────────────────
@@ -186,6 +229,8 @@ public static class MirrorMakeupSceneBuilder
         mgrSO.FindProperty("_mainCamera").objectReferenceValue = cam;
         mgrSO.FindProperty("_hud").objectReferenceValue = hud;
         mgrSO.FindProperty("_faceLayer").intValue = 1 << faceLayerIndex;
+        mgrSO.FindProperty("_stickerPadLayer").intValue = 1 << stickerPadLayerIndex;
+        mgrSO.FindProperty("_cursorSticker").objectReferenceValue = cursorStickerGO.transform;
 
         // Tools array
         var toolsProp = mgrSO.FindProperty("_tools");
@@ -273,9 +318,118 @@ public static class MirrorMakeupSceneBuilder
 
         // ── 11. Save scene ─────────────────────────────────────────────
         EnsureFolder("Assets", "Scenes");
-        string path = "Assets/Scenes/mirror_makeup.unity";
-        EditorSceneManager.SaveScene(scene, path);
-        Debug.Log($"[MirrorMakeupSceneBuilder] Scene saved to {path}");
+        string scenePath = "Assets/Scenes/mirror_makeup.unity";
+        EditorSceneManager.SaveScene(scene, scenePath);
+        Debug.Log($"[MirrorMakeupSceneBuilder] Scene saved to {scenePath}" +
+                  (useImportedHead ? $" (imported head: {headModelPath})" : ""));
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Head builders
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Builds the default procedural sphere head with base + overlay.
+    /// </summary>
+    private static void BuildProceduralHead(Transform headParent, int faceLayerIndex,
+        out Renderer baseRenderer, out Renderer overlayRenderer)
+    {
+        // Base face sphere (opaque, skin + features + pimples)
+        var baseQuad = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        baseQuad.name = "FaceBase";
+        baseQuad.transform.SetParent(headParent);
+        baseQuad.transform.localPosition = Vector3.zero;
+        baseQuad.transform.localScale = new Vector3(0.55f, 0.7f, 0.55f);
+        baseQuad.transform.localRotation = Quaternion.identity;
+        baseQuad.layer = faceLayerIndex;
+        baseQuad.isStatic = false;
+
+        // Overlay sphere (transparent painting surface, slightly larger to avoid Z-fighting)
+        var overlayQuad = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        overlayQuad.name = "FaceOverlay";
+        overlayQuad.transform.SetParent(headParent);
+        overlayQuad.transform.localPosition = Vector3.zero;
+        overlayQuad.transform.localScale = new Vector3(0.56f, 0.71f, 0.56f);
+        overlayQuad.transform.localRotation = Quaternion.identity;
+        overlayQuad.layer = faceLayerIndex;
+        overlayQuad.isStatic = false;
+
+        // Replace default collider with MeshCollider for UV raycasting on curved surface
+        var existingOverlayCollider = overlayQuad.GetComponent<Collider>();
+        if (existingOverlayCollider != null)
+            Object.DestroyImmediate(existingOverlayCollider);
+        overlayQuad.AddComponent<MeshCollider>();
+
+        baseRenderer = baseQuad.GetComponent<Renderer>();
+        overlayRenderer = overlayQuad.GetComponent<Renderer>();
+    }
+
+    /// <summary>
+    /// Instantiates an imported 3D head model and creates an overlay duplicate for painting.
+    /// The model keeps its own material; the overlay gets a transparent painting surface.
+    /// </summary>
+    private static void BuildImportedHead(string assetPath, Transform headParent, int faceLayerIndex,
+        out Renderer baseRenderer, out Renderer overlayRenderer)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"[MirrorMakeupSceneBuilder] Could not load model at '{assetPath}', falling back to sphere.");
+            BuildProceduralHead(headParent, faceLayerIndex, out baseRenderer, out overlayRenderer);
+            return;
+        }
+
+        // Instantiate the model as the base head
+        var baseGO = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        baseGO.name = "FaceBase_Imported";
+        baseGO.transform.SetParent(headParent);
+        baseGO.transform.localPosition = Vector3.zero;
+        baseGO.transform.localRotation = Quaternion.identity;
+        baseGO.isStatic = false;
+        SetLayerRecursive(baseGO, faceLayerIndex);
+
+        // Find the first renderer with a mesh
+        baseRenderer = baseGO.GetComponentInChildren<Renderer>();
+        if (baseRenderer == null)
+        {
+            Debug.LogError("[MirrorMakeupSceneBuilder] Imported model has no Renderer, falling back to sphere.");
+            Object.DestroyImmediate(baseGO);
+            BuildProceduralHead(headParent, faceLayerIndex, out baseRenderer, out overlayRenderer);
+            return;
+        }
+
+        // Ensure the base mesh has a MeshCollider for raycasting
+        var baseMeshFilter = baseRenderer.GetComponent<MeshFilter>();
+        if (baseMeshFilter != null && baseRenderer.GetComponent<MeshCollider>() == null)
+        {
+            // Remove any non-mesh collider
+            var existingCol = baseRenderer.GetComponent<Collider>();
+            if (existingCol != null) Object.DestroyImmediate(existingCol);
+            baseRenderer.gameObject.AddComponent<MeshCollider>();
+        }
+
+        // Create overlay duplicate — slightly scaled up to avoid Z-fighting
+        var overlayGO = Object.Instantiate(baseRenderer.gameObject, headParent);
+        overlayGO.name = "FaceOverlay_Imported";
+        overlayGO.transform.localScale = baseRenderer.transform.localScale * 1.002f;
+        overlayGO.layer = faceLayerIndex;
+        overlayGO.isStatic = false;
+
+        // Ensure overlay has MeshCollider for UV raycasting
+        var overlayCol = overlayGO.GetComponent<Collider>();
+        if (overlayCol != null && overlayCol is not MeshCollider)
+            Object.DestroyImmediate(overlayCol);
+        if (overlayGO.GetComponent<MeshCollider>() == null)
+            overlayGO.AddComponent<MeshCollider>();
+
+        overlayRenderer = overlayGO.GetComponent<Renderer>();
+    }
+
+    private static void SetLayerRecursive(GameObject go, int layer)
+    {
+        go.layer = layer;
+        foreach (Transform child in go.transform)
+            SetLayerRecursive(child.gameObject, layer);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -415,6 +569,14 @@ public static class MirrorMakeupSceneBuilder
 
         canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
         canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        // EventSystem for button clicks (required for UI interaction)
+        if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+        {
+            var esGO = new GameObject("EventSystem");
+            esGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            esGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+        }
 
         return canvasGO;
     }

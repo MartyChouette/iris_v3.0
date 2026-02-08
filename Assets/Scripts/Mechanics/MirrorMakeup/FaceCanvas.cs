@@ -31,6 +31,13 @@ public class FaceCanvas : MonoBehaviour
     [Tooltip("UV radius of each pimple dot.")]
     [SerializeField] private float _pimpleRadius = 0.008f;
 
+    [Header("Imported Head")]
+    [Tooltip("Skip procedural base texture — use the model's existing material.")]
+    [SerializeField] private bool _useExternalBase;
+
+    [Tooltip("Optional manual pimple UV positions for imported heads (overrides random scatter).")]
+    [SerializeField] private Vector2[] _manualPimpleUVs;
+
     [Header("References")]
     [Tooltip("The face quad renderer (opaque base).")]
     [SerializeField] private Renderer _baseRenderer;
@@ -83,9 +90,9 @@ public class FaceCanvas : MonoBehaviour
         float uvX = _pimpleUVs[index].x;
 
         // Edge pimples require head rotation to expose
-        if (uvX < 0.2f)
+        if (uvX < 0.32f)
             return headYaw < -5f; // need negative yaw (head turned right)
-        if (uvX > 0.8f)
+        if (uvX > 0.68f)
             return headYaw > 5f;  // need positive yaw (head turned left)
 
         // Center pimples always visible
@@ -96,6 +103,46 @@ public class FaceCanvas : MonoBehaviour
     /// Stamp a circle of coloured pixels onto the overlay.
     /// </summary>
     public void Paint(Vector2 uv, Color color, float radius, float opacity, bool softEdge)
+    {
+        if (PaintInternal(uv, color, radius, opacity, softEdge))
+        {
+            _overlayTex.SetPixels32(_overlayPixels);
+            _overlayTex.Apply();
+            CheckPimpleCoverage();
+        }
+    }
+
+    /// <summary>
+    /// Paint a continuous stroke between two UV positions with interpolated stamps.
+    /// Uses half-brush-radius spacing to eliminate gaps during fast mouse movement.
+    /// </summary>
+    public void PaintStroke(Vector2 fromUV, Vector2 toUV, Color color, float radius, float opacity, bool softEdge)
+    {
+        float dist = Vector2.Distance(fromUV, toUV);
+        float step = Mathf.Max(radius * 0.5f, 0.001f);
+        int stamps = Mathf.Max(1, Mathf.CeilToInt(dist / step));
+
+        bool dirty = false;
+        for (int i = 0; i <= stamps; i++)
+        {
+            float t = stamps > 0 ? (float)i / stamps : 0f;
+            Vector2 uv = Vector2.Lerp(fromUV, toUV, t);
+            dirty |= PaintInternal(uv, color, radius, opacity, softEdge);
+        }
+
+        if (dirty)
+        {
+            _overlayTex.SetPixels32(_overlayPixels);
+            _overlayTex.Apply();
+            CheckPimpleCoverage();
+        }
+    }
+
+    /// <summary>
+    /// Internal pixel-writing loop — stamps a circle but does NOT call Apply or coverage check.
+    /// Returns true if any pixels were modified.
+    /// </summary>
+    private bool PaintInternal(Vector2 uv, Color color, float radius, float opacity, bool softEdge)
     {
         int cx = Mathf.RoundToInt(uv.x * (_textureSize - 1));
         int cy = Mathf.RoundToInt(uv.y * (_textureSize - 1));
@@ -144,12 +191,7 @@ public class FaceCanvas : MonoBehaviour
             }
         }
 
-        if (dirty)
-        {
-            _overlayTex.SetPixels32(_overlayPixels);
-            _overlayTex.Apply();
-            CheckPimpleCoverage();
-        }
+        return dirty;
     }
 
     /// <summary>
@@ -278,14 +320,18 @@ public class FaceCanvas : MonoBehaviour
     void Awake()
     {
         GeneratePimplePositions();
-        GenerateBaseTexture();
+        if (!_useExternalBase)
+            GenerateBaseTexture();
         GenerateOverlayTexture();
     }
 
     void OnDestroy()
     {
-        if (_baseTex != null) Destroy(_baseTex);
-        if (_baseMat != null) Destroy(_baseMat);
+        if (!_useExternalBase)
+        {
+            if (_baseTex != null) Destroy(_baseTex);
+            if (_baseMat != null) Destroy(_baseMat);
+        }
         if (_overlayTex != null) Destroy(_overlayTex);
         if (_overlayMat != null) Destroy(_overlayMat);
     }
@@ -294,6 +340,16 @@ public class FaceCanvas : MonoBehaviour
 
     private void GeneratePimplePositions()
     {
+        // Use manual pimple UVs if provided (for imported heads)
+        if (_manualPimpleUVs != null && _manualPimpleUVs.Length > 0)
+        {
+            _pimpleCount = _manualPimpleUVs.Length;
+            _pimpleUVs = new Vector2[_pimpleCount];
+            _pimpleCovered = new bool[_pimpleCount];
+            System.Array.Copy(_manualPimpleUVs, _pimpleUVs, _pimpleCount);
+            return;
+        }
+
         _pimpleUVs = new Vector2[_pimpleCount];
         _pimpleCovered = new bool[_pimpleCount];
 
@@ -304,20 +360,20 @@ public class FaceCanvas : MonoBehaviour
             if (i < 3)
             {
                 // Edge pimples — only visible when head turned
-                x = Random.value > 0.5f ? Random.Range(0.82f, 0.92f) : Random.Range(0.08f, 0.18f);
+                x = Random.value > 0.5f ? Random.Range(0.68f, 0.75f) : Random.Range(0.25f, 0.32f);
                 y = Random.Range(0.3f, 0.7f);
             }
             else if (i < 7)
             {
                 // Cheek area
-                x = Random.value > 0.5f ? Random.Range(0.2f, 0.35f) : Random.Range(0.65f, 0.8f);
+                x = Random.value > 0.5f ? Random.Range(0.33f, 0.42f) : Random.Range(0.58f, 0.67f);
                 y = Random.Range(0.35f, 0.55f);
             }
             else
             {
                 // Forehead and random
-                x = Random.Range(0.25f, 0.75f);
-                y = Random.Range(0.65f, 0.85f);
+                x = Random.Range(0.35f, 0.65f);
+                y = Random.Range(0.62f, 0.72f);
             }
 
             _pimpleUVs[i] = new Vector2(x, y);
@@ -339,29 +395,29 @@ public class FaceCanvas : MonoBehaviour
             pixels[i] = skin;
 
         // Eyes — dark ovals
-        PaintOval(pixels, 0.35f, 0.6f, 0.06f, 0.025f, _featureColor);
-        PaintOval(pixels, 0.65f, 0.6f, 0.06f, 0.025f, _featureColor);
+        PaintOval(pixels, 0.40f, 0.58f, 0.06f, 0.025f, _featureColor);
+        PaintOval(pixels, 0.60f, 0.58f, 0.06f, 0.025f, _featureColor);
 
         // Pupils — smaller darker circles
         Color pupilColor = new Color(0.08f, 0.06f, 0.05f);
-        PaintCircle(pixels, 0.35f, 0.6f, 0.018f, pupilColor);
-        PaintCircle(pixels, 0.65f, 0.6f, 0.018f, pupilColor);
+        PaintCircle(pixels, 0.40f, 0.58f, 0.018f, pupilColor);
+        PaintCircle(pixels, 0.60f, 0.58f, 0.018f, pupilColor);
 
         // Eyebrows — arcs above eyes
-        PaintOval(pixels, 0.35f, 0.68f, 0.08f, 0.012f, _featureColor);
-        PaintOval(pixels, 0.65f, 0.68f, 0.08f, 0.012f, _featureColor);
+        PaintOval(pixels, 0.40f, 0.64f, 0.08f, 0.012f, _featureColor);
+        PaintOval(pixels, 0.60f, 0.64f, 0.08f, 0.012f, _featureColor);
 
         // Nose — subtle shadow
         Color noseShadow = Color.Lerp(_skinColor, _featureColor, 0.2f);
-        PaintOval(pixels, 0.5f, 0.45f, 0.02f, 0.04f, noseShadow);
+        PaintOval(pixels, 0.5f, 0.48f, 0.02f, 0.04f, noseShadow);
 
         // Mouth / lips
-        PaintOval(pixels, 0.5f, 0.3f, 0.08f, 0.025f, _lipColor);
+        PaintOval(pixels, 0.5f, 0.38f, 0.08f, 0.025f, _lipColor);
 
         // Ear bumps at edges
         Color earColor = Color.Lerp(_skinColor, _featureColor, 0.08f);
-        PaintOval(pixels, 0.05f, 0.55f, 0.035f, 0.06f, earColor);
-        PaintOval(pixels, 0.95f, 0.55f, 0.035f, 0.06f, earColor);
+        PaintOval(pixels, 0.28f, 0.52f, 0.035f, 0.06f, earColor);
+        PaintOval(pixels, 0.72f, 0.52f, 0.035f, 0.06f, earColor);
 
         // Pimples
         for (int i = 0; i < _pimpleCount; i++)
