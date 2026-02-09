@@ -6,11 +6,13 @@ using UnityEngine.InputSystem;
 using TMPro;
 using Unity.Cinemachine;
 
-public class NewspaperManager : MonoBehaviour
+public class NewspaperManager : MonoBehaviour, IStationManager
 {
     public enum State { TableView, PickingUp, ReadingPaper, Cutting, Calling, Waiting, DateArrived }
 
     public static NewspaperManager Instance { get; private set; }
+
+    public bool IsAtIdleState => CurrentState == State.TableView;
 
     // ─── References ───────────────────────────────────────────────
     [Header("References")]

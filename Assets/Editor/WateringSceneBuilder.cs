@@ -200,6 +200,46 @@ public static class WateringSceneBuilder
             new Color(0.2f, 0.4f, 0.9f, 0.8f));
         waterLineGO.isStatic = false;
 
+        // Water box (transparent blue, inside pot — starts inactive)
+        var waterGO = CreateBox("Water", stationParent.transform,
+            new Vector3(0f, 0.001f, 0f),
+            new Vector3(potWorldRadius * 2.2f, 0.001f, potWorldRadius * 2.2f),
+            new Color(0.3f, 0.5f, 0.8f, 0.4f));
+        waterGO.isStatic = false;
+        MakeTransparent(waterGO.GetComponent<Renderer>());
+        waterGO.SetActive(false);
+
+        // Overflow drip boxes (3 small boxes on pot exterior — start inactive)
+        float dripSize = 0.008f;
+        float rimOffset = potWorldRadius * 1.4f;
+        Vector3[] dripOffsets =
+        {
+            new Vector3(-rimOffset, potWorldHeight * 0.7f, 0f),
+            new Vector3(rimOffset * 0.5f, potWorldHeight * 0.65f, rimOffset * 0.85f),
+            new Vector3(rimOffset * 0.5f, potWorldHeight * 0.6f, -rimOffset * 0.85f)
+        };
+        var overflowDripGOs = new GameObject[3];
+        for (int i = 0; i < 3; i++)
+        {
+            var dripGO = CreateBox($"OverflowDrip_{i}", stationParent.transform,
+                dripOffsets[i],
+                new Vector3(dripSize, dripSize * 1.5f, dripSize),
+                new Color(0.35f, 0.30f, 0.55f, 0.5f));
+            dripGO.isStatic = false;
+            MakeTransparent(dripGO.GetComponent<Renderer>());
+            dripGO.SetActive(false);
+            overflowDripGOs[i] = dripGO;
+        }
+
+        // Drain drip box (small blue box below pot — starts inactive)
+        var drainDripGO = CreateBox("DrainDrip", stationParent.transform,
+            new Vector3(0f, -0.02f, 0f),
+            new Vector3(0.008f, 0.015f, 0.008f),
+            new Color(0.3f, 0.5f, 0.8f, 0.5f));
+        drainDripGO.isStatic = false;
+        MakeTransparent(drainDripGO.GetComponent<Renderer>());
+        drainDripGO.SetActive(false);
+
         // PotController component
         var potCtrl = stationParent.AddComponent<PotController>();
         var potCtrlSO = new SerializedObject(potCtrl);
@@ -210,6 +250,20 @@ public static class WateringSceneBuilder
         potCtrlSO.FindProperty("foamTransform").objectReferenceValue = foamGO.transform;
         potCtrlSO.FindProperty("fillLineMarker").objectReferenceValue = fillLineGO.transform;
         potCtrlSO.FindProperty("waterLineMarker").objectReferenceValue = waterLineGO.transform;
+        potCtrlSO.FindProperty("waterRenderer").objectReferenceValue = waterGO.GetComponent<Renderer>();
+        potCtrlSO.FindProperty("waterTransform").objectReferenceValue = waterGO.transform;
+
+        // Overflow drips array
+        var overflowDripsProp = potCtrlSO.FindProperty("overflowDrips");
+        overflowDripsProp.ClearArray();
+        for (int i = 0; i < overflowDripGOs.Length; i++)
+        {
+            overflowDripsProp.InsertArrayElementAtIndex(i);
+            overflowDripsProp.GetArrayElementAtIndex(i).objectReferenceValue = overflowDripGOs[i].transform;
+        }
+
+        potCtrlSO.FindProperty("drainDrip").objectReferenceValue = drainDripGO.transform;
+        potCtrlSO.FindProperty("drainThreshold").floatValue = 0.5f;
         potCtrlSO.FindProperty("potWorldHeight").floatValue = potWorldHeight;
         potCtrlSO.FindProperty("potWorldRadius").floatValue = potWorldRadius;
         potCtrlSO.ApplyModifiedPropertiesWithoutUndo();
@@ -229,6 +283,30 @@ public static class WateringSceneBuilder
             new Color(0.25f, 0.55f, 0.55f));
 
         canParent.SetActive(false); // hidden until watering state
+
+        // ── 10b. Water stream visual (thin blue cylinder from spout to pot) ──
+        var streamGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        streamGO.name = "WaterStream";
+        streamGO.transform.position = new Vector3(0.10f, 0.65f, 0.3f);
+        streamGO.transform.localScale = new Vector3(0.008f, 0.08f, 0.008f);
+        streamGO.isStatic = false;
+
+        // Remove default collider — it's just a visual
+        var streamCollider = streamGO.GetComponent<Collider>();
+        if (streamCollider != null)
+            Object.DestroyImmediate(streamCollider);
+
+        // Transparent blue material
+        var streamRend = streamGO.GetComponent<Renderer>();
+        if (streamRend != null)
+        {
+            var streamMat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                         ?? Shader.Find("Standard"));
+            streamMat.color = new Color(0.4f, 0.65f, 0.95f, 0.6f);
+            streamRend.sharedMaterial = streamMat;
+            MakeTransparent(streamRend);
+        }
+        streamGO.SetActive(false); // hidden until pouring
 
         // ── 11. Managers GO ──────────────────────────────────────────
         var managersGO = new GameObject("Managers");
@@ -269,6 +347,9 @@ public static class WateringSceneBuilder
         mgrSO.FindProperty("_cameraBlendSpeed").floatValue = 3f;
         mgrSO.FindProperty("_canIdleAngle").floatValue = 0f;
         mgrSO.FindProperty("_canPourAngle").floatValue = -45f;
+        mgrSO.FindProperty("_waterStreamVisual").objectReferenceValue = streamGO.transform;
+        mgrSO.FindProperty("_spoutTipOffset").vector3Value = new Vector3(-0.08f, 0f, 0f);
+        mgrSO.FindProperty("_streamWidth").floatValue = 0.008f;
         mgrSO.FindProperty("_overflowPenalty").floatValue = 30f;
         mgrSO.FindProperty("_hud").objectReferenceValue = hud;
         mgrSO.ApplyModifiedPropertiesWithoutUndo();
@@ -547,6 +628,23 @@ public static class WateringSceneBuilder
         tmp.enableWordWrapping = true;
 
         return go;
+    }
+
+    private static void MakeTransparent(Renderer rend)
+    {
+        if (rend == null) return;
+        var mat = rend.sharedMaterial;
+        if (mat == null) return;
+
+        mat.SetFloat("_Surface", 1f);
+        mat.SetFloat("_Blend", 0f);
+        mat.SetFloat("_AlphaClip", 0f);
+        mat.SetOverrideTag("RenderType", "Transparent");
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
     }
 
     private static void EnsureFolder(string parentFolder, string newFolder)

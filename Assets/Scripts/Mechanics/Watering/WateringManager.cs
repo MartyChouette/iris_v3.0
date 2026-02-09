@@ -8,8 +8,10 @@ using UnityEngine.InputSystem;
 /// and pours water — dirt foams up like the drink-making mechanic.
 /// </summary>
 [DisallowMultipleComponent]
-public class WateringManager : MonoBehaviour
+public class WateringManager : MonoBehaviour, IStationManager
 {
+    public bool IsAtIdleState => CurrentState == State.Browsing;
+
     public static WateringManager Instance { get; private set; }
 
     public enum State { Browsing, Watering, Scoring }
@@ -60,6 +62,16 @@ public class WateringManager : MonoBehaviour
 
     [Tooltip("Tilted angle (degrees) when pouring.")]
     [SerializeField] private float _canPourAngle = -45f;
+
+    [Header("Water Stream")]
+    [Tooltip("Thin visual that stretches from the can spout to the pot while pouring.")]
+    [SerializeField] private Transform _waterStreamVisual;
+
+    [Tooltip("World position of the spout tip (stream starts here).")]
+    [SerializeField] private Vector3 _spoutTipOffset = new Vector3(-0.08f, 0.0f, 0f);
+
+    [Tooltip("Width of the water stream.")]
+    [SerializeField] private float _streamWidth = 0.008f;
 
     [Header("HUD")]
     [Tooltip("HUD reference for state-driven display.")]
@@ -174,9 +186,11 @@ public class WateringManager : MonoBehaviour
 
         UpdateHighlight();
 
-        // Hide watering can initially
+        // Hide watering can and stream initially
         if (_wateringCanVisual != null)
             _wateringCanVisual.gameObject.SetActive(false);
+        if (_waterStreamVisual != null)
+            _waterStreamVisual.gameObject.SetActive(false);
     }
 
     // ── Update dispatch ──────────────────────────────────────────────
@@ -298,6 +312,8 @@ public class WateringManager : MonoBehaviour
             _wateringCanVisual.localRotation = Quaternion.Euler(0f, 0f, _currentCanAngle);
         }
 
+        UpdateWaterStream(_pourAction.IsPressed());
+
         if (_cancelAction.WasPressedThisFrame())
             ReturnToBrowsing();
     }
@@ -382,9 +398,11 @@ public class WateringManager : MonoBehaviour
         _targetCamPos = _browsePosition;
         _targetCamRot = Quaternion.Euler(_browseRotation);
 
-        // Hide watering can
+        // Hide watering can and stream
         if (_wateringCanVisual != null)
             _wateringCanVisual.gameObject.SetActive(false);
+        if (_waterStreamVisual != null)
+            _waterStreamVisual.gameObject.SetActive(false);
 
         if (_pot != null)
             _pot.StopPouring();
@@ -392,6 +410,38 @@ public class WateringManager : MonoBehaviour
         CurrentState = State.Browsing;
 
         Debug.Log("[WateringManager] Returned to Browsing.");
+    }
+
+    // ── Water Stream ────────────────────────────────────────────────
+
+    private void UpdateWaterStream(bool pouring)
+    {
+        if (_waterStreamVisual == null) return;
+
+        _waterStreamVisual.gameObject.SetActive(pouring);
+        if (!pouring) return;
+
+        // Spout tip in world space (relative to watering can)
+        Vector3 spoutWorld = _wateringCanVisual != null
+            ? _wateringCanVisual.TransformPoint(_spoutTipOffset)
+            : _waterStreamVisual.position;
+
+        // Target: top of the pot
+        Vector3 potTop = _pot != null
+            ? _pot.transform.position + Vector3.up * _pot.potWorldHeight
+            : spoutWorld + Vector3.down * 0.15f;
+
+        // Position stream at midpoint, orient along the gap
+        Vector3 midpoint = (spoutWorld + potTop) * 0.5f;
+        float height = Vector3.Distance(spoutWorld, potTop);
+
+        _waterStreamVisual.position = midpoint;
+        _waterStreamVisual.up = (spoutWorld - potTop).normalized;
+
+        // Wobble the width slightly for a hand-drawn look
+        float wobble = 1f + Mathf.Sin(Time.time * 12f) * 0.15f;
+        float w = _streamWidth * wobble;
+        _waterStreamVisual.localScale = new Vector3(w, height * 0.5f, w);
     }
 
     // ── Camera Lerp ──────────────────────────────────────────────────

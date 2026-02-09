@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 462d3db011147814d90c0b0861b87d5f, type: 3}
+  m_Name: Tool_Lipstick 8
+  m_EditorClassIdentifier: Assembly-CSharp::MakeupToolDefinition
+  toolName: Lipstick
+  toolType: 1
+  brushColor: {r: 0.85, g: 0.15, b: 0.2, a: 1}
+  brushRadius: 0.02
+  opacity: 0.9
+  softEdge: 0
+  canSmear: 1
+  smearSpeedThreshold: 0.002
+  smearWidthMultiplier: 2.5
+  smearOpacityFalloff: 0.4
+  starSize: 0
+  starColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}

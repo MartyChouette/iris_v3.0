@@ -27,6 +27,10 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Camera used for raycasting. Auto-finds MainCamera if null.")]
     [SerializeField] private Camera cam;
 
+    [Header("Placement Surfaces")]
+    [Tooltip("Valid surfaces for placing objects. If empty, no surface clamping is applied.")]
+    [SerializeField] private PlacementSurface[] surfaces;
+
     // Inline InputActions (same pattern as MarkerController)
     private InputAction _mousePosition;
     private InputAction _mouseClick;
@@ -103,6 +107,10 @@ public class ObjectGrabber : MonoBehaviour
         // Speed cap
         if (_heldRb.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
             _heldRb.linearVelocity = _heldRb.linearVelocity.normalized * maxSpeed;
+
+        // Validate position against surfaces while holding
+        if (surfaces != null && surfaces.Length > 0)
+            _held.ValidatePosition(surfaces);
     }
 
     private void TryPickUp()
@@ -141,6 +149,16 @@ public class ObjectGrabber : MonoBehaviour
             _heldRb.position = pos;
         }
 
+        // Clamp to nearest surface if surfaces are configured
+        if (surfaces != null && surfaces.Length > 0)
+        {
+            if (!IsOnAnySurface(pos))
+            {
+                pos = ClampToNearestSurface(pos);
+                _heldRb.position = pos;
+            }
+        }
+
         // Re-enable gravity so object settles on surface
         _heldRb.useGravity = true;
         _heldRb.linearVelocity = Vector3.zero;
@@ -159,6 +177,36 @@ public class ObjectGrabber : MonoBehaviour
         var plane = new Plane(-cam.transform.forward, _heldRb.worldCenterOfMass);
         if (plane.Raycast(ray, out float enter))
             _grabTarget = ray.GetPoint(enter);
+    }
+
+    private bool IsOnAnySurface(Vector3 worldPos)
+    {
+        foreach (var surface in surfaces)
+        {
+            if (surface != null && surface.ContainsWorldPoint(worldPos))
+                return true;
+        }
+        return false;
+    }
+
+    private Vector3 ClampToNearestSurface(Vector3 worldPos)
+    {
+        float bestDist = float.MaxValue;
+        Vector3 bestPos = worldPos;
+
+        foreach (var surface in surfaces)
+        {
+            if (surface == null) continue;
+            Vector3 clamped = surface.ClampToSurface(worldPos);
+            float dist = (clamped - worldPos).sqrMagnitude;
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestPos = clamped;
+            }
+        }
+
+        return bestPos;
     }
 
     /// <summary>

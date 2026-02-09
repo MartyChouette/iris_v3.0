@@ -7,8 +7,10 @@ using UnityEngine.InputSystem;
 /// painting to <see cref="FaceCanvas"/>.
 /// </summary>
 [DisallowMultipleComponent]
-public class MirrorMakeupManager : MonoBehaviour
+public class MirrorMakeupManager : MonoBehaviour, IStationManager
 {
+    public bool IsAtIdleState => !IsPainting && !HoldingSticker;
+
     public static MirrorMakeupManager Instance { get; private set; }
 
     [Header("References")]

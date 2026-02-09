@@ -71,12 +71,13 @@ public class SapDecalPool : MonoBehaviour
         // Create prefab if needed
         if (decalPrefab == null && autoCreatePrefab)
         {
+            Debug.Log("[SapDecalPool] No decal prefab assigned — auto-creating default quad decal.");
             CreateDefaultPrefab();
         }
 
         if (decalPrefab == null)
         {
-            Debug.LogError("[SapDecalPool] No decal prefab available!");
+            Debug.LogError("[SapDecalPool] No decal prefab available! Decals will NOT spawn.");
             return;
         }
 
@@ -85,29 +86,68 @@ public class SapDecalPool : MonoBehaviour
         {
             CreateDecal();
         }
+
+        Debug.Log($"[SapDecalPool] Initialized with {_pool.Count} decals (prefab='{decalPrefab.name}').");
     }
 
     private void CreateDefaultPrefab()
     {
-        // Create a simple quad-based decal
         var go = new GameObject("DefaultSapDecal");
 
-        // Use sprite renderer for simplicity (works well for decals)
-        var sr = go.AddComponent<SpriteRenderer>();
+        // Build a procedural quad mesh for URP-compatible decals
+        var mf = go.AddComponent<MeshFilter>();
+        var mr = go.AddComponent<MeshRenderer>();
 
-        if (decalSprite != null)
+        // Procedural quad
+        var mesh = new Mesh { name = "SapDecalQuad" };
+        mesh.vertices = new[]
         {
-            sr.sprite = decalSprite;
-        }
-        else
+            new Vector3(-0.5f, -0.5f, 0f),
+            new Vector3( 0.5f, -0.5f, 0f),
+            new Vector3( 0.5f,  0.5f, 0f),
+            new Vector3(-0.5f,  0.5f, 0f)
+        };
+        mesh.uv = new[]
         {
-            // Create a simple circle sprite procedurally
-            // For now, use a basic setup - user should assign proper sprite
-            sr.color = new Color(0.2f, 0.7f, 0.1f, 0.8f);
-        }
+            new Vector2(0f, 0f), new Vector2(1f, 0f),
+            new Vector2(1f, 1f), new Vector2(0f, 1f)
+        };
+        mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+        mesh.RecalculateNormals();
+        mf.sharedMesh = mesh;
 
-        // Set sorting order to render on top of surfaces
-        sr.sortingOrder = 100;
+        // Procedural soft-circle texture
+        int texSize = 32;
+        var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        float center = texSize * 0.5f;
+        float radius = center - 1f;
+        for (int y = 0; y < texSize; y++)
+        {
+            for (int x = 0; x < texSize; x++)
+            {
+                float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                float a = Mathf.Clamp01((radius - dist) / 2f);
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+        }
+        tex.Apply();
+
+        // URP Particles/Unlit shader with Sprites/Default fallback
+        var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader == null) shader = Shader.Find("Sprites/Default");
+        if (shader == null) shader = Shader.Find("Unlit/Transparent");
+        var mat = new Material(shader);
+        mat.mainTexture = tex;
+        mat.color = new Color(0.2f, 0.7f, 0.1f, 0.8f);
+        // Enable transparency
+        mat.SetFloat("_Surface", 1f); // Transparent
+        mat.SetFloat("_Blend", 0f);   // Alpha
+        mat.renderQueue = 3000;
+        mr.sharedMaterial = mat;
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        mr.receiveShadows = false;
 
         // Add SapDecal component
         var decal = go.AddComponent<SapDecal>();

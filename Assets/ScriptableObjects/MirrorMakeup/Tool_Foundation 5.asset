@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 462d3db011147814d90c0b0861b87d5f, type: 3}
+  m_Name: Tool_Foundation 5
+  m_EditorClassIdentifier: Assembly-CSharp::MakeupToolDefinition
+  toolName: Foundation
+  toolType: 0
+  brushColor: {r: 0.88, g: 0.74, b: 0.62, a: 1}
+  brushRadius: 0.035
+  opacity: 0.7
+  softEdge: 1
+  canSmear: 0
+  smearSpeedThreshold: 0
+  smearWidthMultiplier: 0
+  smearOpacityFalloff: 0
+  starSize: 0
+  starColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}

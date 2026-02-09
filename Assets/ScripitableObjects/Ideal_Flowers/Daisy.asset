@@ -15,13 +15,13 @@ MonoBehaviour:
   idealStemLength: 3.48
   stemHardFailDelta: 6.5
   stemPerfectDelta: 0.05
-  stemScoreWeight: 0.529
+  stemScoreWeight: 0.275
   stemCanCauseGameOver: 0
   stemContributesToScore: 1
   idealCutAngleDeg: 38.9
   cutAngleHardFailDelta: 15
   cutAnglePerfectDelta: 3
-  cutAngleScoreWeight: 0.4
+  cutAngleScoreWeight: 0.171
   cutAngleCanCauseGameOver: 0
   cutAngleContributesToScore: 1
   partRules:
@@ -29,9 +29,9 @@ MonoBehaviour:
     kind: 0
     idealCondition: 0
     canCauseGameOver: 0
-    isSpecial: 1
+    isSpecial: 0
     contributesToScore: 1
-    allowedWithered: 0
+    allowedWithered: 1
     allowedMissing: 1
     scoreWeight: 0.1
     idealLocalPosition: {x: -2.16, y: 8.312, z: -3.333}
@@ -174,7 +174,7 @@ MonoBehaviour:
     canCauseGameOver: 0
     isSpecial: 0
     contributesToScore: 1
-    allowedWithered: 0
+    allowedWithered: 1
     allowedMissing: 1
     scoreWeight: 1
     idealLocalPosition: {x: 5.416915, y: 9.956657, z: -0.7327814}

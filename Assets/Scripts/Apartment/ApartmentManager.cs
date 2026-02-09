@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
@@ -5,7 +6,7 @@ using TMPro;
 
 public class ApartmentManager : MonoBehaviour
 {
-    public enum State { Browsing, Selecting, Selected }
+    public enum State { Browsing, Selecting, Selected, InStation }
 
     public static ApartmentManager Instance { get; private set; }
 
@@ -17,7 +18,7 @@ public class ApartmentManager : MonoBehaviour
     [SerializeField] private ApartmentAreaDefinition[] areas;
 
     [Header("Cameras")]
-    [Tooltip("Cinemachine camera used for browse vantage points.")]
+    [Tooltip("Cinemachine camera used for browse vantage (should have CinemachineSplineDolly).")]
     [SerializeField] private CinemachineCamera browseCamera;
 
     [Tooltip("Cinemachine camera used for selected/interaction view.")]
@@ -25,6 +26,17 @@ public class ApartmentManager : MonoBehaviour
 
     [Tooltip("CinemachineBrain on the main camera. Auto-found if null.")]
     [SerializeField] private CinemachineBrain brain;
+
+    [Header("Spline Dolly")]
+    [Tooltip("CinemachineSplineDolly on the browse camera. Auto-found if null.")]
+    [SerializeField] private CinemachineSplineDolly browseDolly;
+
+    [Tooltip("Speed of spline-t animation (units per second in normalized space).")]
+    [SerializeField, Range(0.1f, 3f)] private float dollyAnimSpeed = 0.8f;
+
+    [Header("Look-At")]
+    [Tooltip("How fast the camera rotates to face the current area's look-at point.")]
+    [SerializeField, Range(1f, 20f)] private float lookAtSmoothing = 5f;
 
     [Header("Cursor Parallax")]
     [Tooltip("Maximum camera shift distance toward cursor.")]
@@ -36,13 +48,6 @@ public class ApartmentManager : MonoBehaviour
     [Header("Interaction")]
     [Tooltip("ObjectGrabber to enable/disable based on state.")]
     [SerializeField] private ObjectGrabber objectGrabber;
-
-    [Header("Bookshelf")]
-    [Tooltip("BookInteractionManager to enable when book nook is selected.")]
-    [SerializeField] private BookInteractionManager bookInteractionManager;
-
-    [Tooltip("Which area index is the book nook (0-indexed).")]
-    [SerializeField] private int bookNookAreaIndex = 2;
 
     [Header("UI")]
     [Tooltip("Panel showing the current area name during browsing.")]
@@ -82,10 +87,19 @@ public class ApartmentManager : MonoBehaviour
     private float _blendDuration;
     private Vector3 _basePosition;
     private Vector3 _currentParallaxOffset;
+    private Vector3 _currentLookAt;
+
+    // Spline dolly animation
+    private float _currentSplineT;
+    private float _targetSplineT;
+    private bool _isDollyAnimating;
+
+    // Station lookup
+    private Dictionary<StationType, StationRoot> _stationLookup;
+    private StationRoot _activeStation;
 
     private void Awake()
     {
-        // Scene-scoped singleton (same pattern as HorrorCameraManager)
         if (Instance != null && Instance != this)
         {
             Debug.LogWarning("[ApartmentManager] Duplicate instance destroyed.");
@@ -100,7 +114,10 @@ public class ApartmentManager : MonoBehaviour
         if (brain == null)
             Debug.LogError("[ApartmentManager] No CinemachineBrain found in scene.");
 
-        // Inline InputActions (same pattern as SimpleTestCharacter / MarkerController)
+        if (browseDolly == null && browseCamera != null)
+            browseDolly = browseCamera.GetComponent<CinemachineSplineDolly>();
+
+        // Inline InputActions
         _navigateLeftAction = new InputAction("NavLeft", InputActionType.Button);
         _navigateLeftAction.AddBinding("<Keyboard>/a");
         _navigateLeftAction.AddBinding("<Keyboard>/leftArrow");
@@ -145,12 +162,26 @@ public class ApartmentManager : MonoBehaviour
             return;
         }
 
-        // Initialize: show first area in browse mode
+        // Build station lookup from all StationRoot components in scene
+        _stationLookup = new Dictionary<StationType, StationRoot>();
+        var stations = FindObjectsByType<StationRoot>(FindObjectsSortMode.None);
+        foreach (var station in stations)
+        {
+            if (station.Type != StationType.None && !_stationLookup.ContainsKey(station.Type))
+            {
+                _stationLookup[station.Type] = station;
+                station.Deactivate(); // Ensure all start deactivated
+            }
+        }
+
         if (objectGrabber != null)
             objectGrabber.SetEnabled(false);
 
         _currentAreaIndex = 0;
-        ApplyBrowseCamera(areas[0], hardCut: true);
+        _currentSplineT = areas[0].splinePosition;
+        _targetSplineT = _currentSplineT;
+        _currentLookAt = areas[0].lookAtPosition;
+        ApplyDollyPosition(_currentSplineT, hardCut: true);
         UpdateUI();
     }
 
@@ -164,11 +195,11 @@ public class ApartmentManager : MonoBehaviour
         switch (CurrentState)
         {
             case State.Browsing:
+                UpdateDollyAnimation();
                 HandleBrowsingInput();
                 break;
 
             case State.Selecting:
-                // Wait for blend to complete
                 _blendTimer -= Time.deltaTime;
                 if (_blendTimer <= 0f)
                     EnterSelected();
@@ -177,9 +208,75 @@ public class ApartmentManager : MonoBehaviour
             case State.Selected:
                 HandleSelectedInput();
                 break;
+
+            case State.InStation:
+                HandleInStationInput();
+                break;
         }
 
         ApplyParallax();
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Spline Dolly Animation
+    // ──────────────────────────────────────────────────────────────
+
+    private void ApplyDollyPosition(float t, bool hardCut)
+    {
+        if (browseDolly != null)
+        {
+            browseDolly.CameraPosition = t;
+        }
+
+        if (brain != null)
+        {
+            if (hardCut)
+            {
+                brain.DefaultBlend = new CinemachineBlendDefinition(
+                    CinemachineBlendDefinition.Styles.Cut, 0f);
+            }
+        }
+
+        browseCamera.Priority = PriorityActive;
+        if (selectedCamera != null)
+            selectedCamera.Priority = PriorityInactive;
+    }
+
+    private void UpdateDollyAnimation()
+    {
+        if (!_isDollyAnimating) return;
+
+        float delta = ShortestSplineDelta(_currentSplineT, _targetSplineT);
+        if (Mathf.Abs(delta) < 0.001f)
+        {
+            _currentSplineT = _targetSplineT;
+            _isDollyAnimating = false;
+        }
+        else
+        {
+            float step = dollyAnimSpeed * Time.deltaTime;
+            if (Mathf.Abs(delta) <= step)
+                _currentSplineT = _targetSplineT;
+            else
+                _currentSplineT += Mathf.Sign(delta) * step;
+
+            // Wrap to [0, 1)
+            _currentSplineT = (_currentSplineT % 1f + 1f) % 1f;
+        }
+
+        if (browseDolly != null)
+            browseDolly.CameraPosition = _currentSplineT;
+    }
+
+    /// <summary>
+    /// Shortest signed delta on a closed [0,1) loop from 'from' to 'to'.
+    /// </summary>
+    private static float ShortestSplineDelta(float from, float to)
+    {
+        float delta = to - from;
+        if (delta > 0.5f) delta -= 1f;
+        else if (delta < -0.5f) delta += 1f;
+        return delta;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -193,7 +290,7 @@ public class ApartmentManager : MonoBehaviour
         else if (_navigateRightAction.WasPressedThisFrame())
             CycleArea(1);
 
-        if (_selectAction.WasPressedThisFrame())
+        if (_selectAction.WasPressedThisFrame() && !_isDollyAnimating)
             BeginSelecting();
     }
 
@@ -202,44 +299,19 @@ public class ApartmentManager : MonoBehaviour
         if (areas == null || areas.Length == 0) return;
 
         _currentAreaIndex = (_currentAreaIndex + direction + areas.Length) % areas.Length;
-        ApplyBrowseCamera(areas[_currentAreaIndex], hardCut: false);
-        UpdateUI();
+        var area = areas[_currentAreaIndex];
 
-        Debug.Log($"[ApartmentManager] Browsing: {areas[_currentAreaIndex].areaName}");
-    }
+        _targetSplineT = area.splinePosition;
+        _isDollyAnimating = true;
 
-    private void ApplyBrowseCamera(ApartmentAreaDefinition area, bool hardCut)
-    {
-        if (browseCamera == null) return;
-
-        browseCamera.transform.position = area.browsePosition;
-        browseCamera.transform.rotation = Quaternion.Euler(area.browseRotation);
-        var browseLens = browseCamera.Lens;
-        browseLens.FieldOfView = area.browseFOV;
-        browseCamera.Lens = browseLens;
-
-        _basePosition = area.browsePosition;
-        _currentParallaxOffset = Vector3.zero;
-
-        // Set blend style on brain
         if (brain != null)
         {
-            if (hardCut)
-            {
-                brain.DefaultBlend = new CinemachineBlendDefinition(
-                    CinemachineBlendDefinition.Styles.Cut, 0f);
-            }
-            else
-            {
-                brain.DefaultBlend = new CinemachineBlendDefinition(
-                    CinemachineBlendDefinition.Styles.EaseInOut, area.browseBlendDuration);
-            }
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut, area.browseBlendDuration);
         }
 
-        // Ensure browse camera is active
-        browseCamera.Priority = PriorityActive;
-        if (selectedCamera != null)
-            selectedCamera.Priority = PriorityInactive;
+        UpdateUI();
+        Debug.Log($"[ApartmentManager] Browsing: {area.areaName}");
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -253,7 +325,6 @@ public class ApartmentManager : MonoBehaviour
         var area = areas[_currentAreaIndex];
         CurrentState = State.Selecting;
 
-        // Position selected camera
         if (selectedCamera != null)
         {
             selectedCamera.transform.position = area.selectedPosition;
@@ -266,7 +337,6 @@ public class ApartmentManager : MonoBehaviour
         _basePosition = area.selectedPosition;
         _currentParallaxOffset = Vector3.zero;
 
-        // Set blend duration and switch priority
         if (brain != null)
         {
             brain.DefaultBlend = new CinemachineBlendDefinition(
@@ -281,7 +351,6 @@ public class ApartmentManager : MonoBehaviour
         _blendTimer = _blendDuration;
 
         UpdateUI();
-
         Debug.Log($"[ApartmentManager] Selecting: {area.areaName}");
     }
 
@@ -291,29 +360,86 @@ public class ApartmentManager : MonoBehaviour
 
     private void EnterSelected()
     {
+        var area = areas[_currentAreaIndex];
+
+        // If this area has a station, enter it immediately
+        if (area.stationType != StationType.None
+            && _stationLookup != null
+            && _stationLookup.TryGetValue(area.stationType, out var station))
+        {
+            CurrentState = State.InStation;
+            _activeStation = station;
+            station.Activate();
+
+            // Disable apartment-level interaction during station
+            if (objectGrabber != null)
+                objectGrabber.SetEnabled(false);
+
+            UpdateUI();
+            Debug.Log($"[ApartmentManager] Entered station: {area.stationType}");
+            return;
+        }
+
+        // No station — enter standard Selected state with object grabber
         CurrentState = State.Selected;
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(true);
 
-        if (bookInteractionManager != null && _currentAreaIndex == bookNookAreaIndex)
-            bookInteractionManager.enabled = true;
-
         UpdateUI();
-
         Debug.Log("[ApartmentManager] Entered Selected state.");
     }
 
     private void HandleSelectedInput()
     {
-        // Don't process Esc while BookInteractionManager is reading/animating a book
-        if (BookInteractionManager.Instance != null
-            && BookInteractionManager.Instance.CurrentState != BookInteractionManager.State.Browsing)
-            return;
-
         if (_cancelAction.WasPressedThisFrame())
             ReturnToBrowsing();
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // InStation
+    // ──────────────────────────────────────────────────────────────
+
+    private void HandleInStationInput()
+    {
+        if (!_cancelAction.WasPressedThisFrame()) return;
+
+        // Only allow exit when the station's manager is at its idle state
+        if (_activeStation != null)
+        {
+            var manager = _activeStation.Manager;
+            if (manager != null && !manager.IsAtIdleState)
+                return;
+        }
+
+        ExitStation();
+    }
+
+    private void ExitStation()
+    {
+        if (_activeStation != null)
+        {
+            _activeStation.Deactivate();
+            _activeStation = null;
+        }
+
+        // Return to Selected state (shows grabber + selected hints)
+        CurrentState = State.Selected;
+
+        if (objectGrabber != null)
+            objectGrabber.SetEnabled(true);
+
+        // Re-raise selected camera (station may have lowered it)
+        if (selectedCamera != null)
+            selectedCamera.Priority = PriorityActive;
+
+        UpdateUI();
+        Debug.Log("[ApartmentManager] Exited station → Selected.");
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Return to Browsing
+    // ──────────────────────────────────────────────────────────────
 
     private void ReturnToBrowsing()
     {
@@ -322,11 +448,19 @@ public class ApartmentManager : MonoBehaviour
         if (objectGrabber != null)
             objectGrabber.SetEnabled(false);
 
-        if (bookInteractionManager != null)
-            bookInteractionManager.enabled = false;
+        // Re-activate browse dolly camera
+        _currentSplineT = areas[_currentAreaIndex].splinePosition;
+        _targetSplineT = _currentSplineT;
+        _isDollyAnimating = false;
 
-        // Return to browse camera
-        ApplyBrowseCamera(areas[_currentAreaIndex], hardCut: false);
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut,
+                areas[_currentAreaIndex].browseBlendDuration);
+        }
+
+        ApplyDollyPosition(_currentSplineT, hardCut: false);
         UpdateUI();
 
         Debug.Log("[ApartmentManager] Returned to Browsing.");
@@ -355,33 +489,64 @@ public class ApartmentManager : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────────────────────
+    // Look-At (runs in LateUpdate, after Cinemachine)
+    // ──────────────────────────────────────────────────────────────
+
+    private void LateUpdate()
+    {
+        ApplyLookAt();
+    }
+
+    private void ApplyLookAt()
+    {
+        if (CurrentState != State.Browsing && CurrentState != State.Selecting) return;
+        if (browseCamera == null || areas == null || areas.Length == 0) return;
+
+        // Smoothly move the look-at target toward the current area's focus point
+        Vector3 targetLookAt = areas[_currentAreaIndex].lookAtPosition;
+        _currentLookAt = Vector3.Lerp(_currentLookAt, targetLookAt, Time.deltaTime * lookAtSmoothing);
+
+        // Rotate the camera to face the look-at point
+        Vector3 dir = _currentLookAt - browseCamera.transform.position;
+        if (dir.sqrMagnitude < 0.001f) return;
+
+        Quaternion targetRot = Quaternion.LookRotation(dir);
+        browseCamera.transform.rotation = Quaternion.Slerp(
+            browseCamera.transform.rotation, targetRot, Time.deltaTime * lookAtSmoothing);
+    }
+
+    // ──────────────────────────────────────────────────────────────
     // Cursor Parallax
     // ──────────────────────────────────────────────────────────────
 
     private void ApplyParallax()
     {
-        if (CurrentState == State.Selecting) return;
+        if (CurrentState == State.Selecting || CurrentState == State.InStation) return;
         if (parallaxMaxOffset <= 0f) return;
 
-        // Determine which camera to shift
         CinemachineCamera activeCam = CurrentState == State.Selected ? selectedCamera : browseCamera;
         if (activeCam == null) return;
 
-        // Normalize mouse to [-1, 1] from screen center
+        // For browse state with dolly, read base position from dolly's evaluated transform
+        if (CurrentState == State.Browsing)
+            _basePosition = activeCam.transform.position;
+
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
         float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
         float ny = (mousePos.y / Screen.height - 0.5f) * 2f;
         nx = Mathf.Clamp(nx, -1f, 1f);
         ny = Mathf.Clamp(ny, -1f, 1f);
 
-        // Compute offset along camera's local right/up axes
         Transform camT = activeCam.transform;
         Vector3 targetOffset = (camT.right * nx + camT.up * ny) * parallaxMaxOffset;
 
-        // Smooth-lerp
         _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
             Time.deltaTime * parallaxSmoothing);
 
-        camT.position = _basePosition + _currentParallaxOffset;
+        // Apply parallax offset — works in both Browse and Selected states
+        if (CurrentState == State.Browsing)
+            camT.position += _currentParallaxOffset; // add on top of dolly position
+        else if (CurrentState == State.Selected)
+            camT.position = _basePosition + _currentParallaxOffset;
     }
 }

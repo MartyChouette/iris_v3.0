@@ -56,36 +56,41 @@ public class SapParticleController : MonoBehaviour
     public int maxPoolSize = 16;
 
     [Header("Stem Cut Settings")]
-    public float stemEndOffset = 0.02f;
+    public float stemEndOffset = 0.1f;
     public SapBurstProfile stemTopBurst = new SapBurstProfile
     {
-        speed = 12f, duration = 0.15f, angleJitter = 15f,
-        particleCount = 40, particleSize = 0.06f, lifetime = 1.2f
+        speed = 50f, duration = 1f, angleJitter = 15f,
+        particleCount = 80, particleSize = 1.2f, lifetime = 8f
     };
     public SapBurstProfile stemBottomBurst = new SapBurstProfile
     {
-        speed = 8f, duration = 0.12f, angleJitter = 10f,
-        particleCount = 30, particleSize = 0.05f, lifetime = 1.0f
+        speed = 35f, duration = 0.8f, angleJitter = 10f,
+        particleCount = 50, particleSize = 1f, lifetime = 6f
     };
 
     [Header("Leaf / Petal Tear Settings")]
     public SapBurstProfile leafTearBurst = new SapBurstProfile
     {
-        speed = 6f, duration = 0.1f, angleJitter = 20f,
-        particleCount = 20, particleSize = 0.04f, lifetime = 0.8f
+        speed = 40f, duration = 5f, angleJitter = 20f,
+        particleCount = 60, particleSize = 1.2f, lifetime = 8f
     };
     public SapBurstProfile petalTearBurst = new SapBurstProfile
     {
-        speed = 4f, duration = 0.08f, angleJitter = 25f,
-        particleCount = 15, particleSize = 0.03f, lifetime = 0.6f
+        speed = 35f, duration = 4f, angleJitter = 25f,
+        particleCount = 50, particleSize = 1f, lifetime = 6f
     };
+
+    [Header("Follow Drip")]
+    [Tooltip("How long the follow-drip lasts after a leaf/petal tears off (seconds)")]
+    public float followDripDuration = 2f;
 
     [Header("Appearance")]
     public Color sapColor = new Color(0.2f, 0.8f, 0.1f, 1f);
     public Gradient sapColorOverLifetime;
 
     [Header("Global Intensity")]
-    [Range(0f, 2f)]
+    [Tooltip("Master sap control — 1 = little squirt, 10 = complete gusher")]
+    [Range(0f, 10f)]
     public float sapIntensity = 1f;
 
     [Header("Physics")]
@@ -116,6 +121,8 @@ public class SapParticleController : MonoBehaviour
     {
         if (Instance == this) Instance = null;
     }
+
+    // No test burst — particles only fire from actual bleed points on leaves/petals/stems.
 
     private void InitializePool()
     {
@@ -154,7 +161,7 @@ public class SapParticleController : MonoBehaviour
         main.startColor = sapColor;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.gravityModifier = gravityModifier;
-        main.maxParticles = 100;
+        main.maxParticles = 1000;
 
         // Configure emission (we'll burst manually)
         var emission = ps.emission;
@@ -192,13 +199,22 @@ public class SapParticleController : MonoBehaviour
     {
         ParticleSystem ps = Instantiate(sapParticlePrefab, _poolRoot);
         ps.gameObject.name = $"SapParticle_{_pool.Count}";
+
+        // Minimal overrides for pool compatibility — keep all visual settings from prefab
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         ps.gameObject.SetActive(false);
 
-        // Ensure collision is configured
+        // Ensure collision is fully configured for surface splatting
         var collision = ps.collision;
         collision.enabled = true;
+        collision.type = ParticleSystemCollisionType.World;
+        collision.mode = ParticleSystemCollisionMode.Collision3D;
+        collision.quality = ParticleSystemCollisionQuality.High;
         collision.sendCollisionMessages = true;
         collision.collidesWith = collisionLayers;
+        collision.bounce = 0.1f;
+        collision.dampen = 0.3f;
+        collision.lifetimeLoss = 0.2f;
 
         // Add decal spawner if not present
         if (ps.GetComponent<SapDecalSpawner>() == null)
@@ -267,22 +283,95 @@ public class SapParticleController : MonoBehaviour
         EmitBurst(exactPos - dir * stemEndOffset, -dir, stemBottomBurst);
     }
 
-    public void EmitLeafTear(Vector3 pos, Vector3 normal)
+    public void EmitLeafTear(Vector3 pos, Vector3 normal, Transform followTarget = null)
     {
         if (sapIntensity <= 0f) return;
         EmitBurst(pos, normal.normalized, leafTearBurst);
     }
 
-    public void EmitPetalTear(Vector3 pos, Vector3 normal)
+    public void EmitPetalTear(Vector3 pos, Vector3 normal, Transform followTarget = null)
     {
         if (sapIntensity <= 0f) return;
         EmitBurst(pos, normal.normalized, petalTearBurst);
+    }
+
+    /// <summary>
+    /// Called directly from FlowerPartRuntime.MarkDetached — guaranteed to fire for ALL parts.
+    /// Does an initial burst + follow-drip that tracks the falling part.
+    /// </summary>
+    public void EmitTearWithFollow(Transform part, bool isPetal)
+    {
+        if (sapIntensity <= 0f) return;
+        if (part == null) return;
+
+        var profile = isPetal ? petalTearBurst : leafTearBurst;
+        Vector3 dir = Vector3.down;
+
+        // Initial burst at the break point
+        EmitBurst(part.position, dir, profile);
+
+        // Follow-drip: one PS emits periodic small bursts at the part's position as it falls
+        ParticleSystem ps = GetFreeParticleSystem();
+        if (ps == null) return;
+
+        float sizeScale = Mathf.Pow(sapIntensity, 0.5f);
+        float speedScale = Mathf.Pow(sapIntensity, 0.3f);
+        float lifeScale = Mathf.Pow(sapIntensity, 0.3f);
+
+        ps.transform.SetParent(_poolRoot);
+        ps.transform.position = part.position;
+        ps.transform.rotation = Quaternion.LookRotation(dir);
+
+        var main = ps.main;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.startSpeed = profile.speed * speedScale * 0.5f;
+        main.startSize = profile.particleSize * sizeScale;
+        main.startLifetime = profile.lifetime * lifeScale;
+        main.startColor = sapColor;
+        main.gravityModifier = gravityModifier;
+
+        ps.gameObject.SetActive(true);
+        ps.Clear();
+        ps.Play();
+
+        StartCoroutine(FollowAndDrip(ps, part, profile, dir));
+    }
+
+    private IEnumerator FollowAndDrip(ParticleSystem ps, Transform target, SapBurstProfile profile, Vector3 direction)
+    {
+        float elapsed = 0f;
+        float duration = followDripDuration;
+        float interval = 0.15f;
+        int dripCount = Mathf.Max(2, Mathf.RoundToInt(profile.particleCount * sapIntensity * 0.2f));
+
+        while (elapsed < duration && ps != null && target != null)
+        {
+            ps.transform.position = target.position;
+            ps.transform.rotation = Quaternion.LookRotation(direction);
+            ps.Emit(dripCount);
+            elapsed += interval;
+            yield return new WaitForSeconds(interval);
+        }
+
+        // Let remaining particles finish
+        float remainLife = profile.lifetime * Mathf.Pow(sapIntensity, 0.3f) + 0.5f;
+        yield return new WaitForSeconds(remainLife);
+        while (ps != null && ps.particleCount > 0)
+            yield return s_pollWait;
+
+        ReturnToPool(ps);
     }
 
     private void EmitBurst(Vector3 position, Vector3 direction, SapBurstProfile profile)
     {
         ParticleSystem ps = GetFreeParticleSystem();
         if (ps == null) return;
+
+        // Intensity-driven scaling: 1 = squirt, 10 = gusher
+        float countScale = sapIntensity;
+        float sizeScale = Mathf.Pow(sapIntensity, 0.5f);   // 1x → 3.16x
+        float speedScale = Mathf.Pow(sapIntensity, 0.3f);  // 1x → 2x
+        float lifeScale = Mathf.Pow(sapIntensity, 0.3f);   // 1x → 2x
 
         // Apply jitter to direction
         if (profile.angleJitter > 0f)
@@ -296,28 +385,27 @@ public class SapParticleController : MonoBehaviour
         }
 
         // Position and orient
+        ps.transform.SetParent(_poolRoot);
         ps.transform.position = position;
         ps.transform.rotation = Quaternion.LookRotation(direction);
 
-        // Configure particle system for this burst
+        // Apply burst profile tuning — scaled by master intensity
         var main = ps.main;
-        main.startSpeed = profile.speed * sapIntensity;
-        main.startSize = profile.particleSize * sapIntensity;
-        main.startLifetime = profile.lifetime;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.startSpeed = profile.speed * speedScale;
+        main.startSize = profile.particleSize * sizeScale;
+        main.startLifetime = profile.lifetime * lifeScale;
         main.startColor = sapColor;
         main.gravityModifier = gravityModifier;
-
-        // Configure shape spread based on jitter
-        var shape = ps.shape;
-        shape.angle = profile.angleJitter;
 
         // Activate and emit
         ps.gameObject.SetActive(true);
         ps.Clear();
-        ps.Emit(Mathf.RoundToInt(profile.particleCount * sapIntensity));
+        ps.Play();
+        ps.Emit(Mathf.Max(1, Mathf.RoundToInt(profile.particleCount * countScale)));
 
         // Schedule return to pool
-        StartCoroutine(ReturnToPoolAfterDelay(ps, profile.lifetime + 0.5f));
+        StartCoroutine(ReturnToPoolAfterDelay(ps, profile.lifetime * lifeScale + 0.5f));
     }
 
     private IEnumerator ReturnToPoolAfterDelay(ParticleSystem ps, float delay)
@@ -325,11 +413,12 @@ public class SapParticleController : MonoBehaviour
         yield return new WaitForSeconds(delay);
 
         // Wait until all particles are gone
-        while (ps.particleCount > 0)
+        while (ps != null && ps.particleCount > 0)
         {
             yield return s_pollWait;
         }
 
         ReturnToPool(ps);
     }
+
 }

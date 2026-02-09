@@ -2,11 +2,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
 
-public class BookInteractionManager : MonoBehaviour
+public class BookInteractionManager : MonoBehaviour, IStationManager
 {
     public enum State { Browsing, Pulling, Reading, PuttingBack }
 
     public static BookInteractionManager Instance { get; private set; }
+
+    public bool IsAtIdleState => CurrentState == State.Browsing;
 
     [Header("References")]
     [Tooltip("Transform where the book is positioned for reading (child of camera).")]

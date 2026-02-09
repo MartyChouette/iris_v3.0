@@ -26,6 +26,7 @@ public class HeadController : MonoBehaviour
     private float _currentYaw;
     private float _currentPitch;
     private Vector2 _normalizedMousePos;
+    private Quaternion _baseRotation;
 
     /// <summary>Current horizontal rotation in degrees.</summary>
     public float CurrentYaw => _currentYaw;
@@ -35,6 +36,12 @@ public class HeadController : MonoBehaviour
 
     /// <summary>Normalized mouse position from -1 to 1.</summary>
     public Vector2 NormalizedMousePos => _normalizedMousePos;
+
+    void Awake()
+    {
+        if (_headTransform != null)
+            _baseRotation = _headTransform.localRotation;
+    }
 
     void Update()
     {
@@ -52,6 +59,6 @@ public class HeadController : MonoBehaviour
         _currentYaw = Mathf.Lerp(_currentYaw, targetYaw, _smoothSpeed * Time.deltaTime);
         _currentPitch = Mathf.Lerp(_currentPitch, targetPitch, _smoothSpeed * Time.deltaTime);
 
-        _headTransform.localRotation = Quaternion.Euler(_currentPitch, _currentYaw, 0f);
+        _headTransform.localRotation = _baseRotation * Quaternion.Euler(_currentPitch, _currentYaw, 0f);
     }
 }

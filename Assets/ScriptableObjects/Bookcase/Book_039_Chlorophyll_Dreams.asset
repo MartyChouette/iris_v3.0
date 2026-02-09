@@ -22,5 +22,5 @@ MonoBehaviour:
   - At night, the chloroplasts rest. Even the most dedicated workers need darkness
     to make sense of the day.
   spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
-  heightScale: 0.7064334
-  thicknessScale: 0.023186522
+  heightScale: 0.7314887
+  thicknessScale: 0.042988162

@@ -31,6 +31,24 @@ public class PotController : MonoBehaviour
     [Tooltip("Thin marker tracking the current water level.")]
     public Transform waterLineMarker;
 
+    [Header("Water Visuals")]
+    [Tooltip("Renderer for the water box (transparent blue).")]
+    public Renderer waterRenderer;
+
+    [Tooltip("Transform for the water box (scales Y with water level).")]
+    public Transform waterTransform;
+
+    [Header("Overflow Visuals")]
+    [Tooltip("Small drip boxes on the pot exterior (animate when overflowed).")]
+    public Transform[] overflowDrips;
+
+    [Header("Drain Visuals")]
+    [Tooltip("Small drip box below the pot (visible when water > drainThreshold).")]
+    public Transform drainDrip;
+
+    [Tooltip("Water level above which drain drip appears.")]
+    public float drainThreshold = 0.5f;
+
     [Header("Pot Dimensions")]
     [Tooltip("Internal height of the pot in world units.")]
     public float potWorldHeight = 0.10f;
@@ -48,12 +66,14 @@ public class PotController : MonoBehaviour
     private bool _isPouring;
     private MaterialPropertyBlock _soilMPB;
     private MaterialPropertyBlock _foamMPB;
+    private MaterialPropertyBlock _waterMPB;
 
     // ── Public API ───────────────────────────────────────────────────
 
     public float WaterLevel => _waterLevel;
     public float FoamLevel => _foamLevel;
     public bool Overflowed => _overflowed;
+    public bool IsPouring => _isPouring;
 
     /// <summary>
     /// How close the water level is to the ideal fill line (1 = perfect, 0 = way off).
@@ -115,6 +135,19 @@ public class PotController : MonoBehaviour
         _foamLevel = 0f;
         _overflowed = false;
         _isPouring = false;
+
+        // Hide water/overflow/drain visuals
+        if (waterTransform != null)
+            waterTransform.gameObject.SetActive(false);
+
+        if (overflowDrips != null)
+        {
+            for (int i = 0; i < overflowDrips.Length; i++)
+                if (overflowDrips[i] != null) overflowDrips[i].gameObject.SetActive(false);
+        }
+
+        if (drainDrip != null)
+            drainDrip.gameObject.SetActive(false);
     }
 
     // ── MonoBehaviour ────────────────────────────────────────────────
@@ -123,6 +156,7 @@ public class PotController : MonoBehaviour
     {
         _soilMPB = new MaterialPropertyBlock();
         _foamMPB = new MaterialPropertyBlock();
+        _waterMPB = new MaterialPropertyBlock();
     }
 
     void Update()
@@ -141,6 +175,13 @@ public class PotController : MonoBehaviour
         {
             // Foam settles toward water level
             _foamLevel = Mathf.MoveTowards(_foamLevel, _waterLevel, definition.foamSettleRate * dt);
+
+            // Water slowly absorbs into soil
+            if (_waterLevel > 0f)
+            {
+                _waterLevel = Mathf.MoveTowards(_waterLevel, 0f, definition.absorptionRate * dt);
+                _foamLevel = Mathf.Max(_foamLevel, _waterLevel);
+            }
         }
     }
 
@@ -201,6 +242,64 @@ public class PotController : MonoBehaviour
         {
             float waterY = _waterLevel * h;
             waterLineMarker.localPosition = new Vector3(0f, waterY, 0f);
+        }
+
+        // Water box — transparent blue layer
+        if (waterTransform != null)
+        {
+            bool showWater = _waterLevel > 0.05f;
+            waterTransform.gameObject.SetActive(showWater);
+
+            if (showWater)
+            {
+                float waterHeight = Mathf.Max(_waterLevel * h, 0.001f);
+                waterTransform.localScale = new Vector3(
+                    waterTransform.localScale.x,
+                    waterHeight,
+                    waterTransform.localScale.z);
+                waterTransform.localPosition = new Vector3(0f, waterHeight * 0.5f, 0f);
+
+                if (waterRenderer != null)
+                {
+                    waterRenderer.GetPropertyBlock(_waterMPB);
+                    _waterMPB.SetColor("_BaseColor", new Color(0.3f, 0.5f, 0.8f, 0.4f));
+                    waterRenderer.SetPropertyBlock(_waterMPB);
+                }
+            }
+        }
+
+        // Overflow drips — visible when overflowed, animate with PingPong
+        if (overflowDrips != null)
+        {
+            for (int i = 0; i < overflowDrips.Length; i++)
+            {
+                if (overflowDrips[i] == null) continue;
+                overflowDrips[i].gameObject.SetActive(_overflowed);
+
+                if (_overflowed)
+                {
+                    float ping = Mathf.PingPong(Time.time * 1.5f + i * 0.7f, 1f);
+                    float s = Mathf.Lerp(0.5f, 1.2f, ping);
+                    overflowDrips[i].localScale = new Vector3(
+                        overflowDrips[i].localScale.x,
+                        overflowDrips[i].localScale.y * 0f + 0.01f * s,
+                        overflowDrips[i].localScale.z);
+                }
+            }
+        }
+
+        // Drain drip — visible when water > drainThreshold
+        if (drainDrip != null)
+        {
+            bool showDrain = _waterLevel > drainThreshold;
+            drainDrip.gameObject.SetActive(showDrain);
+
+            if (showDrain)
+            {
+                float excess = (_waterLevel - drainThreshold) / (1f - drainThreshold);
+                float dripScale = Mathf.Lerp(0.005f, 0.015f, excess);
+                drainDrip.localScale = new Vector3(dripScale, dripScale * 2f, dripScale);
+            }
         }
     }
 }

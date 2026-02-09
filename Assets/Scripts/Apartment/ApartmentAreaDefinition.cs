@@ -15,17 +15,26 @@ public class ApartmentAreaDefinition : ScriptableObject
     public string description;
 
     // ──────────────────────────────────────────────────────────────
-    // Browse Camera (overview vantage)
+    // Station
     // ──────────────────────────────────────────────────────────────
-    [Header("Browse Camera")]
-    [Tooltip("World position of the camera when browsing this area.")]
-    public Vector3 browsePosition;
+    [Header("Station")]
+    [Tooltip("Which minigame station this area hosts (None = no station).")]
+    public StationType stationType = StationType.None;
 
-    [Tooltip("World rotation (Euler) of the camera when browsing this area.")]
-    public Vector3 browseRotation;
+    // ──────────────────────────────────────────────────────────────
+    // Spline Dolly (browse camera)
+    // ──────────────────────────────────────────────────────────────
+    [Header("Spline Dolly")]
+    [Tooltip("Normalized position (0-1) on the apartment dolly spline for browse view.")]
+    [Range(0f, 1f)]
+    public float splinePosition;
 
-    [Tooltip("Field of view when browsing this area.")]
-    public float browseFOV = 60f;
+    // ──────────────────────────────────────────────────────────────
+    // Look-At Target (browse camera focus point)
+    // ──────────────────────────────────────────────────────────────
+    [Header("Look-At Target")]
+    [Tooltip("World position the browse camera should look at when at this area. Place at the main point of interest.")]
+    public Vector3 lookAtPosition;
 
     // ──────────────────────────────────────────────────────────────
     // Selected Camera (close-up for interaction)

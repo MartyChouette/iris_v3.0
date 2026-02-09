@@ -79,21 +79,19 @@ public class JointBreakFluidResponder : MonoBehaviour
         Vector3 dir = bleedPoint.forward; // Ensure the Z-axis (Blue Arrow) of BleedPoint points OUT
 
         // Fire the correct fluid type
+        // For leaf/petal, pass our transform so particles follow the detaching part
         switch (partType)
         {
             case PartType.Leaf:
-                sapController.EmitLeafTear(pos, dir);
+                sapController.EmitLeafTear(pos, dir, transform);
                 break;
 
             case PartType.Petal:
-                sapController.EmitPetalTear(pos, dir);
+                sapController.EmitPetalTear(pos, dir, transform);
                 break;
 
             case PartType.Stem:
-                // FIX: Find the stem runtime so the fluid controller knows where to project the burst
                 var stem = GetComponentInParent<FlowerStemRuntime>();
-
-                // Pass the 'stem' as the new 3rd argument
                 sapController.EmitStemCut(pos, dir, stem);
                 break;
         }

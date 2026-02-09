@@ -140,8 +140,7 @@ using UnityEngine.Events;
  * - @ref SetCutBreakSuppressed(true) sets joint breakForce to infinity and resets accumulators on all joints.
  * - @ref SetCutBreakSuppressed(false) restores breakForce behavior based on criteria.
  *
- * @warning FindObjectsByType is called in SetCutBreakSuppressed and iterates all XYTetherJoints.
- *          This is not per-frame, but it should be called sparingly (only on cut windows).
+ * @note SetCutBreakSuppressed iterates the static s_all registry (O(n) over active joints, no scene scan).
  *
  * ------------------------------------------------------------
  * Performance & Allocation Notes
@@ -342,6 +341,10 @@ public class XYTetherJoint : MonoBehaviour
 
     // ───────────────────────── Static cut suppression ─────────────────────────
 
+    // PERF: Static registry avoids expensive FindObjectsByType calls in SetCutBreakSuppressed
+    private static readonly System.Collections.Generic.List<XYTetherJoint> s_all = new(32);
+    public static System.Collections.Generic.IReadOnlyList<XYTetherJoint> All => s_all;
+
     public static bool cutBreakSuppressed = false;
     public static bool IsCutBreakSuppressed => cutBreakSuppressed;
 
@@ -352,6 +355,7 @@ public class XYTetherJoint : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStaticState()
     {
+        s_all.Clear();
         cutBreakSuppressed = false;
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedResetSuppression;
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedResetSuppression;
@@ -369,9 +373,9 @@ public class XYTetherJoint : MonoBehaviour
     {
         cutBreakSuppressed = on;
 
-        var all = FindObjectsByType<XYTetherJoint>(FindObjectsSortMode.None);
-        foreach (var t in all)
+        for (int i = s_all.Count - 1; i >= 0; i--)
         {
+            var t = s_all[i];
             if (t == null) continue;
 
             if (on)
@@ -410,6 +414,14 @@ public class XYTetherJoint : MonoBehaviour
 
     private float pluckTimer;
     private bool wasAbovePluckThreshold;
+    private bool _breakForceArmed;
+
+    // Startup grace: track creation time and retry count to suppress false physics breaks
+    // during initial settling (large scale objects, collider overlaps, etc.)
+    private float _jointCreatedAt;
+    private int _startupRetries;
+    private const int MAX_STARTUP_RETRIES = 5;
+    private const float STARTUP_GRACE_SECONDS = 0.25f;
 
     private float lastTension;
 
@@ -484,7 +496,7 @@ public class XYTetherJoint : MonoBehaviour
      * Calls @ref TryCreateJoint once at startup. This is separated from Awake() so that other
      * components can assign @ref connectedBody during initialization before joint creation.
      */
-    void Start() => TryCreateJoint();
+    void Start() { _startupRetries = 0; TryCreateJoint(); }
 
     /**
      * @brief Unity lifecycle hook to restore the joint if the component is re-enabled.
@@ -493,7 +505,11 @@ public class XYTetherJoint : MonoBehaviour
      * If a joint does not exist and a @ref connectedBody is assigned, calls @ref TryCreateJoint.
      * This supports pooling and enable/disable flows without requiring scene reload.
      */
-    void OnEnable() { if (!joint && connectedBody) TryCreateJoint(); }
+    void OnEnable()
+    {
+        s_all.Add(this);
+        if (!joint && connectedBody) { _startupRetries = 0; TryCreateJoint(); }
+    }
 
     /**
      * @brief Unity lifecycle hook to teardown the joint when disabled.
@@ -501,7 +517,11 @@ public class XYTetherJoint : MonoBehaviour
      * @details
      * Calls @ref DestroyJoint to prevent orphaned joints from persisting while the component is inactive.
      */
-    void OnDisable() => DestroyJoint();
+    void OnDisable()
+    {
+        s_all.Remove(this);
+        DestroyJoint();
+    }
 
     /**
      * @brief Physics-step update that computes stretch/velocity/travel and triggers authored breaks.
@@ -622,6 +642,21 @@ public class XYTetherJoint : MonoBehaviour
 
         if (Time.time < armedAt) return;
 
+        // Startup grace: keep breakForce at Infinity AND skip all authored break
+        // criteria (distance, speed, travel, pluck) during the settling window.
+        // Without this, ForceBreak fires on the first FixedUpdate after arming
+        // when initial drift exceeds maxDistance — the root cause of leaves
+        // detaching on frame 1 despite arm-delay protection.
+        if (Time.time - _jointCreatedAt < STARTUP_GRACE_SECONDS)
+            return;
+
+        // Arm the physics breakForce now that settling is over
+        if (!_breakForceArmed)
+        {
+            _breakForceArmed = true;
+            ApplyBreakForceToJoint();
+        }
+
         Vector3 vA = velocityMode == VelocityMode.Rigidbody ? rb.linearVelocity : vA_int;
         Vector3 vB = velocityMode == VelocityMode.Rigidbody ? connectedBody.linearVelocity : vB_int;
 
@@ -729,6 +764,20 @@ public class XYTetherJoint : MonoBehaviour
         {
             if (debugLogs)
                 Debug.Log($"[XYTetherJoint] OnJointBreak suppressed (force={force:F1}) due to cutBreakSuppressed.", this);
+            return;
+        }
+
+        // Startup grace: physics settling can exceed low breakForce values on the first
+        // few frames (large scale objects, collider overlaps, etc.). If we're still within
+        // the grace window and haven't exhausted retries, recreate the joint instead of
+        // accepting a false break.
+        if (Time.time - _jointCreatedAt < STARTUP_GRACE_SECONDS && _startupRetries < MAX_STARTUP_RETRIES)
+        {
+            _startupRetries++;
+            if (debugLogs)
+                Debug.Log($"[XYTetherJoint] OnJointBreak suppressed during startup grace (force={force:F1}, retry {_startupRetries}/{MAX_STARTUP_RETRIES}). Recreating joint.", this);
+            joint = null;
+            TryCreateJoint();
             return;
         }
 
@@ -880,15 +929,15 @@ public class XYTetherJoint : MonoBehaviour
         if (dir.sqrMagnitude < 0.0001f) dir = transform.up;
         dir.Normalize();
 
+        // Pass transform so particles follow the detaching part
         if (_cachedSapKind != null)
         {
-            if (_cachedSapKind.partKind == SapOnXYTether.PartKind.Leaf) sap.EmitLeafTear(pos, dir);
-            else sap.EmitPetalTear(pos, dir);
+            if (_cachedSapKind.partKind == SapOnXYTether.PartKind.Leaf) sap.EmitLeafTear(pos, dir, transform);
+            else sap.EmitPetalTear(pos, dir, transform);
         }
         else
         {
-            // fallback: generic leaf tear
-            sap.EmitLeafTear(pos, dir);
+            sap.EmitLeafTear(pos, dir, transform);
         }
     }
 
@@ -914,7 +963,14 @@ public class XYTetherJoint : MonoBehaviour
     private void TriggerBreakFluid()
     {
         if (_cachedFluid != null)
+        {
+            Debug.Log($"[XYTetherJoint] TriggerBreakFluid on '{name}' — calling responder", this);
             _cachedFluid.OnJointBroken();
+        }
+        else
+        {
+            Debug.LogWarning($"[XYTetherJoint] TriggerBreakFluid on '{name}' — NO JointBreakFluidResponder cached!", this);
+        }
     }
 
     // ───────────────────────── Public API ─────────────────────────
@@ -922,6 +978,7 @@ public class XYTetherJoint : MonoBehaviour
     public void SetConnectedBody(Rigidbody body)
     {
         connectedBody = body;
+        _startupRetries = 0;
         TryCreateJoint();
     }
 
@@ -945,6 +1002,7 @@ public class XYTetherJoint : MonoBehaviour
             return;
         }
 
+        _startupRetries = 0;
         TryCreateJoint();
     }
 
@@ -969,6 +1027,7 @@ public class XYTetherJoint : MonoBehaviour
         spring = newSpring;
         damper = newDamper;
         if (newDriveMax > 0f) driveMaxForce = newDriveMax;
+        _startupRetries = 0;
         TryCreateJoint();
     }
 
@@ -995,6 +1054,7 @@ public class XYTetherJoint : MonoBehaviour
         spring = newSpring;
         damper = newDamper;
         driveMaxForce = newDriveMax;
+        _startupRetries = 0;
         TryCreateJoint();
     }
 
@@ -1090,6 +1150,8 @@ public class XYTetherJoint : MonoBehaviour
 
         pluckTimer = 0f;
         wasAbovePluckThreshold = false;
+        _breakForceArmed = false;
+        _jointCreatedAt = Time.time;
 
         armedAt = Time.time + Mathf.Max(0f, armDelay);
 
@@ -1101,11 +1163,13 @@ public class XYTetherJoint : MonoBehaviour
     }
 
     /**
-     * @brief Applies break force settings to the underlying ConfigurableJoint based on criteria and suppression state.
+     * @brief Applies break force settings to the underlying ConfigurableJoint based on criteria, suppression, and arm state.
      *
      * @details
-     * If @ref cutBreakSuppressed is true:
-     * - joint.breakForce and joint.breakTorque are set to infinity to prevent physics-driven breaks.
+     * breakForce is set to infinity (suppressed) when any of these are true:
+     * - @ref cutBreakSuppressed (cutting grace window)
+     * - @ref _breakForceArmed is false (arm delay window — prevents settling forces from
+     *   snapping joints on the first physics frames after creation)
      *
      * Otherwise:
      * - joint.breakForce is set to @ref breakForce if @ref BreakCriteria.Force is enabled,
@@ -1116,7 +1180,10 @@ public class XYTetherJoint : MonoBehaviour
     {
         if (!joint) return;
 
-        if (cutBreakSuppressed)
+        // Suppress physics breakForce during cut suppression AND during the arm delay
+        // window. Settling forces on the first few physics frames can exceed low
+        // breakForce values and falsely snap joints before authored logic even runs.
+        if (cutBreakSuppressed || !_breakForceArmed)
         {
             joint.breakForce = Mathf.Infinity;
             joint.breakTorque = Mathf.Infinity;
@@ -1134,6 +1201,7 @@ public class XYTetherJoint : MonoBehaviour
         relativeTravel = 0f;
         pluckTimer = 0f;
         wasAbovePluckThreshold = false;
+        _breakForceArmed = false;
         armedAt = Time.time + Mathf.Max(0f, armDelay);
     }
 

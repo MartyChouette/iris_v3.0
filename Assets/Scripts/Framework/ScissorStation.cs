@@ -177,6 +177,11 @@ public class ScissorStation : MonoBehaviour
 
     private Coroutine _equipRoutine;
 
+    // Cached base transform so offset application is idempotent (no compounding on re-equip)
+    private Vector3 _baseLocalPosition;
+    private Vector3 _baseLocalEulerAngles;
+    private bool _baseCached;
+
     public bool IsEquipped => isEquipped;
     public bool IsBusy => isBusy;
 
@@ -188,7 +193,15 @@ public class ScissorStation : MonoBehaviour
         if (scissorsClickableRoot == null && inactiveScissorsRoot != null)
             scissorsClickableRoot = inactiveScissorsRoot.transform;
 
-        // HARD deterministic start (prevents “scissors already out” + prevents tilt changing rotation on frame 0)
+        // Cache base local transform before any offsets are applied
+        if (activeScissorsRoot != null && !_baseCached)
+        {
+            _baseLocalPosition = activeScissorsRoot.transform.localPosition;
+            _baseLocalEulerAngles = activeScissorsRoot.transform.localEulerAngles;
+            _baseCached = true;
+        }
+
+        // HARD deterministic start (prevents "scissors already out" + prevents tilt changing rotation on frame 0)
         ForceUnequip(silentEvents: true);
 
         ValidateSetup();
@@ -315,9 +328,9 @@ public class ScissorStation : MonoBehaviour
         {
             activeScissorsRoot.SetActive(true);
 
-            // APPLY OFFSET: Fixes "floating hand" issue
-            activeScissorsRoot.transform.localPosition += toolPositionOffset;
-            activeScissorsRoot.transform.localEulerAngles += toolRotationOffset;
+            // APPLY OFFSET: Uses cached base + offset so re-equipping never compounds
+            activeScissorsRoot.transform.localPosition = _baseLocalPosition + toolPositionOffset;
+            activeScissorsRoot.transform.localEulerAngles = _baseLocalEulerAngles + toolRotationOffset;
         }
 
         // Safety delay prevents:

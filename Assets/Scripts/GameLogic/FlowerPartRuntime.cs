@@ -105,8 +105,7 @@ using UnityEngine.Events;
  * Optional crown fall failsafe:
  * - If @ref enableCrownYFailsafe is true, a Crown part that falls below @ref crownFailY
  *   triggers @c session.ForceGameOver("Crown fell too low.").
- * - @note As currently implemented, the Y-failsafe does not explicitly check @ref isAttached.
- *   If the intended behavior is "only after detaching", add an @c !isAttached gate.
+ * - @note The Y-failsafe checks @c !isAttached so it only fires after the crown has detached.
  *
  * ------------------------------------------------------------
  * Unity Lifecycle Notes
@@ -357,15 +356,15 @@ public class FlowerPartRuntime : MonoBehaviour
  *       - a coroutine started on detachment, or
  *       - a session-level watcher tracking only the crown instance.
  *
- * @warning As implemented, this check does not explicitly require
- *          @ref isAttached == false. If the intended rule is
- *          "only after detachment," an additional guard should be added.
+ * @note The Y-failsafe only triggers after detachment (@ref isAttached == false)
+ *       to prevent false game-overs while the crown is still connected.
  */
 
     private void Update()
     {
         if (enableCrownYFailsafe &&
             kind == FlowerPartKind.Crown &&
+            !isAttached &&
             !_crownFallFailTriggered &&
             session != null)
         {
@@ -517,6 +516,13 @@ public class FlowerPartRuntime : MonoBehaviour
         lastDetachReason = detachReason;
         if (permanent)
             permanentlyDetached = true;
+
+        // Emit sap spray + follow-drip for leaves and petals
+        if (kind == FlowerPartKind.Leaf || kind == FlowerPartKind.Petal)
+        {
+            if (SapParticleController.Instance != null)
+                SapParticleController.Instance.EmitTearWithFollow(transform, kind == FlowerPartKind.Petal);
+        }
 
 #if UNITY_EDITOR
         Debug.Log($"[FlowerPartRuntime] '{PartId}' detached: {reason} (Reason={detachReason}, Permanent={permanent})", this);

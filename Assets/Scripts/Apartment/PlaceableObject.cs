@@ -15,6 +15,9 @@ public class PlaceableObject : MonoBehaviour
     private Material _instanceMat;
     private Color _originalColor;
 
+    private Vector3 _lastValidPosition;
+    private PlacementSurface _currentSurface;
+
     private void Awake()
     {
         _renderer = GetComponent<Renderer>();
@@ -25,6 +28,8 @@ public class PlaceableObject : MonoBehaviour
             _renderer.material = _instanceMat;
             _originalColor = _instanceMat.color;
         }
+
+        _lastValidPosition = transform.position;
     }
 
     private void OnDestroy()
@@ -39,6 +44,7 @@ public class PlaceableObject : MonoBehaviour
     public void OnPickedUp()
     {
         CurrentState = State.Held;
+        _lastValidPosition = transform.position;
 
         if (_instanceMat != null)
             _instanceMat.color = _originalColor * heldBrightness;
@@ -52,6 +58,7 @@ public class PlaceableObject : MonoBehaviour
     public void OnPlaced(bool gridSnapped, Vector3 position)
     {
         CurrentState = State.Placed;
+        _lastValidPosition = position;
 
         if (_instanceMat != null)
             _instanceMat.color = _originalColor;
@@ -70,5 +77,28 @@ public class PlaceableObject : MonoBehaviour
             _instanceMat.color = _originalColor;
 
         Debug.Log($"[PlaceableObject] {name} dropped.");
+    }
+
+    /// <summary>
+    /// Check if the object is within any placement surface bounds.
+    /// If not, snap back to last valid position.
+    /// Called by ObjectGrabber in FixedUpdate while holding.
+    /// </summary>
+    public void ValidatePosition(PlacementSurface[] surfaces)
+    {
+        if (surfaces == null || surfaces.Length == 0) return;
+
+        Vector3 pos = transform.position;
+        foreach (var surface in surfaces)
+        {
+            if (surface != null && surface.ContainsWorldPoint(pos))
+            {
+                _lastValidPosition = pos;
+                _currentSurface = surface;
+                return;
+            }
+        }
+
+        // Not on any surface — don't snap while held (let ObjectGrabber clamp on Place)
     }
 }

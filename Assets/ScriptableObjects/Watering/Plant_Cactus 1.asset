@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66ddcfedac620f04e8937fac2fa47d3c, type: 3}
+  m_Name: Plant_Cactus 1
+  m_EditorClassIdentifier: Assembly-CSharp::PlantDefinition
+  plantName: Cactus
+  description: "Desert dweller \u2014 a little water goes a long way."
+  potColor: {r: 0.65, g: 0.4, b: 0.22, a: 1}
+  dryColor: {r: 0.6, g: 0.48, b: 0.3, a: 1}
+  wetColor: {r: 0.35, g: 0.28, b: 0.15, a: 1}
+  foamColor: {r: 0.55, g: 0.42, b: 0.25, a: 0.6}
+  plantColor: {r: 0.15, g: 0.45, b: 0.12, a: 1}
+  idealWaterLevel: 0.3
+  waterTolerance: 0.1
+  pourRate: 0.1
+  foamRateMultiplier: 1.2
+  foamSettleRate: 0.3
+  absorptionRate: 0.03
+  baseScore: 100

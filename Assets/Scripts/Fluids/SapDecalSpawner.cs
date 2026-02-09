@@ -27,13 +27,13 @@ public class SapDecalSpawner : MonoBehaviour
 
     [Tooltip("Chance (0-1) that a collision spawns a decal. Lower = better perf.")]
     [Range(0f, 1f)]
-    public float spawnChance = 0.3f;
+    public float spawnChance = 0.7f;
 
     [Tooltip("Minimum decal size")]
-    public float minSize = 0.05f;
+    public float minSize = 0.5f;
 
     [Tooltip("Maximum decal size")]
-    public float maxSize = 0.15f;
+    public float maxSize = 2f;
 
     [Tooltip("Size scales with particle velocity")]
     public bool scaleWithVelocity = true;
@@ -43,7 +43,7 @@ public class SapDecalSpawner : MonoBehaviour
 
     [Header("Placement")]
     [Tooltip("Offset decal slightly from surface to prevent z-fighting")]
-    public float surfaceOffset = 0.001f;
+    public float surfaceOffset = 0.02f;
 
     [Tooltip("Random rotation around surface normal")]
     public bool randomRotation = true;
@@ -57,11 +57,20 @@ public class SapDecalSpawner : MonoBehaviour
         _collisionEvents = new List<ParticleCollisionEvent>(16);
     }
 
+    public bool debugLogs = true;
+
     private void OnParticleCollision(GameObject other)
     {
-        if (SapDecalPool.Instance == null) return;
+        if (SapDecalPool.Instance == null)
+        {
+            if (debugLogs) Debug.LogWarning("[SapDecalSpawner] SapDecalPool.Instance is NULL — no decals.");
+            return;
+        }
 
         int eventCount = _particleSystem.GetCollisionEvents(other, _collisionEvents);
+
+        if (debugLogs && eventCount > 0)
+            Debug.Log($"[SapDecalSpawner] {eventCount} particle collisions with '{other.name}' (layer={LayerMask.LayerToName(other.layer)})");
 
         for (int i = 0; i < eventCount; i++)
         {
