@@ -75,7 +75,7 @@
 
 ### Medium Priority
 
-- [ ] **Sap emission cleanup** - Multiple overlapping sap triggers (XYTetherJoint responder path, XYTetherJoint deterministic path, SapOnXYTether, and now FlowerPartRuntime.MarkDetached) cause duplicate/never-stopping particle spray. Consolidate to ONE emission source (MarkDetached) and remove the redundant paths from XYTetherJoint and JointBreakFluidResponder. Also verify petals have correct FlowerPartKind set so sap fires for them.
+- [x] **Sap emission cleanup** - Consolidated to one emission source: `FlowerPartRuntime.MarkDetached()` → `SapParticleController.EmitTearWithFollow()`. XYTetherJoint now skips `TriggerBreakFluidOrDeterministicSap()` when `_partRuntime` exists. SapOnXYTether self-guards via `isAttached` check. Removed noisy debug logs from FlowerSapController, SapDecalPool, SapDecalSpawner, and XYTetherJoint.
 - [ ] **Profile on target hardware** - Test on minimum-spec machine, profile memory during particle bursts, watch for frame spikes on stem cuts
 - [x] **Material instance auditing** - Added OnDestroy cleanup to BacklightPulse and BookVolume. SapDecal and TMP_MotionBlur already had proper cleanup.
 - [x] **Coroutine WaitForSeconds caching** - Cached `WaitForSeconds(0.1f)` as static readonly in SapParticleController. Other usages are variable-delay (not cacheable).

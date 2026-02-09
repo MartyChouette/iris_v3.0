@@ -57,20 +57,11 @@ public class SapDecalSpawner : MonoBehaviour
         _collisionEvents = new List<ParticleCollisionEvent>(16);
     }
 
-    public bool debugLogs = true;
-
     private void OnParticleCollision(GameObject other)
     {
-        if (SapDecalPool.Instance == null)
-        {
-            if (debugLogs) Debug.LogWarning("[SapDecalSpawner] SapDecalPool.Instance is NULL — no decals.");
-            return;
-        }
+        if (SapDecalPool.Instance == null) return;
 
         int eventCount = _particleSystem.GetCollisionEvents(other, _collisionEvents);
-
-        if (debugLogs && eventCount > 0)
-            Debug.Log($"[SapDecalSpawner] {eventCount} particle collisions with '{other.name}' (layer={LayerMask.LayerToName(other.layer)})");
 
         for (int i = 0; i < eventCount; i++)
         {

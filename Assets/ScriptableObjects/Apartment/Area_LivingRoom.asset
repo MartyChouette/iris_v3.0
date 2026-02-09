@@ -16,6 +16,7 @@ MonoBehaviour:
   description: Bookcase, coffee table, couch.
   stationType: 1
   splinePosition: 0.286
+  lookAtPosition: {x: 0, y: 0, z: 0}
   selectedPosition: {x: -4.5, y: 2.5, z: 4}
   selectedRotation: {x: 35, y: 180, z: 0}
   selectedFOV: 50

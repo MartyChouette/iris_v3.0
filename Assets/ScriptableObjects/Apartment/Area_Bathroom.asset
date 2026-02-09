@@ -16,6 +16,7 @@ MonoBehaviour:
   description: Mirror, sink, and makeup station.
   stationType: 3
   splinePosition: 0.857
+  lookAtPosition: {x: 0, y: 0, z: 0}
   selectedPosition: {x: 5.2, y: 2, z: -3.5}
   selectedRotation: {x: 40, y: 180, z: 0}
   selectedFOV: 48

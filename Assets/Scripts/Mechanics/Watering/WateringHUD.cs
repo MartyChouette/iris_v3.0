@@ -1,10 +1,10 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// HUD overlay for the watering prototype. Shows plant info,
-/// water/foam meters, overflow warnings, and score breakdown per state.
+/// Simple overlay HUD for the ambient watering system.
+/// Shows plant name, water/foam levels, fill target, overflow warning, and score.
+/// Hidden when idle.
 /// </summary>
 [DisallowMultipleComponent]
 public class WateringHUD : MonoBehaviour
@@ -14,43 +14,32 @@ public class WateringHUD : MonoBehaviour
 
     [Header("Labels")]
     public TMP_Text plantNameLabel;
-    public TMP_Text descriptionLabel;
-    public TMP_Text instructionLabel;
     public TMP_Text waterLevelLabel;
     public TMP_Text foamLevelLabel;
+    public TMP_Text targetLabel;
     public TMP_Text scoreLabel;
 
     [Header("Panels")]
-    [Tooltip("Shown during Browsing state.")]
-    public GameObject browsePanel;
-
-    [Tooltip("Shown during Watering state (Done Watering button).")]
-    public GameObject wateringPanel;
-
-    [Tooltip("Shown during Scoring state (Retry + Next Plant buttons).")]
-    public GameObject scoringPanel;
-
-    [Tooltip("Overflow warning flash (red, shown when foam is high).")]
+    [Tooltip("Overflow warning (red, shown when foam > 85%).")]
     public GameObject overflowWarning;
 
-    [Header("Buttons")]
-    public Button doneButton;
-    public Button retryButton;
-    public Button nextPlantButton;
+    [Tooltip("Root panel — hidden when Idle.")]
+    public GameObject hudPanel;
 
     void Update()
     {
         if (manager == null) return;
 
-        UpdatePanelVisibility();
+        bool showHUD = manager.CurrentState != WateringManager.State.Idle;
+        if (hudPanel != null)
+            hudPanel.SetActive(showHUD);
+
+        if (!showHUD) return;
 
         switch (manager.CurrentState)
         {
-            case WateringManager.State.Browsing:
-                UpdateBrowsing();
-                break;
-            case WateringManager.State.Watering:
-                UpdateWatering();
+            case WateringManager.State.Pouring:
+                UpdatePouring();
                 break;
             case WateringManager.State.Scoring:
                 UpdateScoring();
@@ -58,43 +47,13 @@ public class WateringHUD : MonoBehaviour
         }
     }
 
-    private void UpdatePanelVisibility()
-    {
-        var state = manager.CurrentState;
-        if (browsePanel != null) browsePanel.SetActive(state == WateringManager.State.Browsing);
-        if (wateringPanel != null) wateringPanel.SetActive(state == WateringManager.State.Watering);
-        if (scoringPanel != null) scoringPanel.SetActive(state == WateringManager.State.Scoring);
-    }
-
-    private void UpdateBrowsing()
-    {
-        var plant = manager.CurrentPlant;
-
-        if (plantNameLabel != null)
-            plantNameLabel.text = plant != null ? plant.plantName : "Select a plant";
-
-        if (descriptionLabel != null)
-            descriptionLabel.text = plant != null ? plant.description : "";
-
-        if (instructionLabel != null)
-            instructionLabel.text = "A/D: Browse plants   Enter: Select";
-
-        ClearMeters();
-
-        if (overflowWarning != null)
-            overflowWarning.SetActive(false);
-    }
-
-    private void UpdateWatering()
+    private void UpdatePouring()
     {
         var plant = manager.CurrentPlant;
         var pot = manager.Pot;
 
         if (plantNameLabel != null)
             plantNameLabel.text = plant != null ? plant.plantName : "";
-
-        if (descriptionLabel != null)
-            descriptionLabel.text = "";
 
         if (pot != null)
         {
@@ -104,16 +63,9 @@ public class WateringHUD : MonoBehaviour
             if (foamLevelLabel != null)
                 foamLevelLabel.SetText("Foam: {0}%", (int)(pot.FoamLevel * 100f));
 
-            // Instruction changes near overflow
-            if (instructionLabel != null)
-            {
-                if (pot.FoamLevel > 0.85f)
-                    instructionLabel.text = "Careful! The dirt is foaming up!";
-                else
-                    instructionLabel.text = "Click+hold to pour water \u2014 watch the fill line!";
-            }
+            if (targetLabel != null && plant != null)
+                targetLabel.SetText("Target: {0}%", (int)(plant.idealWaterLevel * 100f));
 
-            // Overflow warning
             if (overflowWarning != null)
                 overflowWarning.SetActive(pot.FoamLevel > 0.85f);
         }
@@ -129,30 +81,16 @@ public class WateringHUD : MonoBehaviour
         if (plantNameLabel != null)
             plantNameLabel.text = plant != null ? plant.plantName : "";
 
-        if (descriptionLabel != null)
-            descriptionLabel.text = "";
-
-        if (instructionLabel != null)
-            instructionLabel.text = "";
+        if (waterLevelLabel != null) waterLevelLabel.text = "";
+        if (foamLevelLabel != null) foamLevelLabel.text = "";
+        if (targetLabel != null) targetLabel.text = "";
 
         if (overflowWarning != null)
             overflowWarning.SetActive(false);
 
         if (scoreLabel != null)
         {
-            scoreLabel.SetText(
-                "Score: {0}\nFill: {1}  Bonus: {2}  Overflow: {3}",
-                manager.lastScore,
-                (int)manager.lastFillScore,
-                (int)manager.lastBonusScore,
-                (int)manager.lastOverflowScore);
+            scoreLabel.text = $"Score: {manager.lastScore}\nFill: {(int)manager.lastFillScore}  Bonus: {(int)manager.lastBonusScore}  Overflow: {(int)manager.lastOverflowScore}";
         }
-    }
-
-    private void ClearMeters()
-    {
-        if (waterLevelLabel != null) waterLevelLabel.text = "";
-        if (foamLevelLabel != null) foamLevelLabel.text = "";
-        if (scoreLabel != null) scoreLabel.text = "";
     }
 }

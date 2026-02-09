@@ -51,46 +51,22 @@ public class FlowerSapController : MonoBehaviour
 
     public void EmitStemCut(Vector3 planePoint, Vector3 planeNormal, FlowerStemRuntime stem)
     {
-        if (sapIntensity <= 0f) { Debug.Log("[FlowerSapController] EmitStemCut skipped: sapIntensity=0"); return; }
-
+        if (sapIntensity <= 0f) return;
         if (SapParticleController.Instance != null)
-        {
-            Debug.Log($"[FlowerSapController] EmitStemCut at {planePoint}");
             SapParticleController.Instance.EmitStemCut(planePoint, planeNormal, stem);
-        }
-        else
-        {
-            Debug.LogWarning("[FlowerSapController] EmitStemCut: SapParticleController.Instance is NULL");
-        }
     }
 
     public void EmitLeafTear(Vector3 pos, Vector3 normal, Transform followTarget = null)
     {
-        if (sapIntensity <= 0f) { Debug.Log("[FlowerSapController] EmitLeafTear skipped: sapIntensity=0"); return; }
-
+        if (sapIntensity <= 0f) return;
         if (SapParticleController.Instance != null)
-        {
-            Debug.Log($"[FlowerSapController] EmitLeafTear at {pos}");
             SapParticleController.Instance.EmitLeafTear(pos, normal, followTarget);
-        }
-        else
-        {
-            Debug.LogWarning("[FlowerSapController] EmitLeafTear: SapParticleController.Instance is NULL");
-        }
     }
 
     public void EmitPetalTear(Vector3 pos, Vector3 normal, Transform followTarget = null)
     {
-        if (sapIntensity <= 0f) { Debug.Log("[FlowerSapController] EmitPetalTear skipped: sapIntensity=0"); return; }
-
+        if (sapIntensity <= 0f) return;
         if (SapParticleController.Instance != null)
-        {
-            Debug.Log($"[FlowerSapController] EmitPetalTear at {pos}");
             SapParticleController.Instance.EmitPetalTear(pos, normal, followTarget);
-        }
-        else
-        {
-            Debug.LogWarning("[FlowerSapController] EmitPetalTear: SapParticleController.Instance is NULL");
-        }
     }
 }

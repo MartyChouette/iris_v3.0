@@ -22,5 +22,5 @@ MonoBehaviour:
   - In the corner of the shed, a spider had built a web between two terra cotta pots.
     He left it there.
   spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
-  heightScale: 0.7376547
-  thicknessScale: 0.05092086
+  heightScale: 0.907467
+  thicknessScale: 0.033112075

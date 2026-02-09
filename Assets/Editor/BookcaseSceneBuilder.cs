@@ -5,12 +5,17 @@ using TMPro;
 
 /// <summary>
 /// Editor utility that programmatically builds the bookcase_browsing scene with
-/// a room, bookcase full of books, first-person browse camera, and UI overlay.
+/// a room, bookcase full of books, drawers with trinkets, perfume bottles,
+/// coffee table books, item inspector, and first-person browse camera.
 /// Menu: Window > Iris > Build Bookcase Browsing Scene
 /// </summary>
 public static class BookcaseSceneBuilder
 {
     private const string BooksLayerName = "Books";
+    private const string DrawersLayerName = "Drawers";
+    private const string PerfumesLayerName = "Perfumes";
+    private const string TrinketsLayerName = "Trinkets";
+    private const string CoffeeTableBooksLayerName = "CoffeeTableBooks";
 
     // Bookcase dimensions
     private const float CaseWidth = 2.4f;
@@ -20,6 +25,10 @@ public static class BookcaseSceneBuilder
     private const int ShelfCount = 5;       // 5 shelves = 4 usable rows
     private const float ShelfThickness = 0.02f;
     private const float SidePanelThickness = 0.03f;
+
+    // Drawer dimensions
+    private const float DrawerHeight = 0.25f;
+    private const float DrawerSlideDistance = 0.3f;
 
     // Book generation
     private const int MinBooksPerRow = 8;
@@ -162,6 +171,67 @@ public static class BookcaseSceneBuilder
         },
     };
 
+    // Perfume data
+    private static readonly string[] PerfumeNames = { "Twilight Bloom", "Morning Dew", "Cedar Ember" };
+    private static readonly string[] PerfumeDescriptions =
+    {
+        "A dusky floral scent that shifts the room toward warm evening tones.",
+        "Light and crisp, like sunlight through wet leaves on a spring morning.",
+        "Smoky and grounding, with hints of resin and dried wood."
+    };
+    private static readonly Color[] PerfumeBottleColors =
+    {
+        new Color(0.6f, 0.3f, 0.7f, 0.8f),
+        new Color(0.3f, 0.7f, 0.5f, 0.8f),
+        new Color(0.7f, 0.4f, 0.2f, 0.8f),
+    };
+    private static readonly Color[] PerfumeSprayColors =
+    {
+        new Color(0.8f, 0.5f, 0.9f, 0.4f),
+        new Color(0.5f, 0.9f, 0.7f, 0.4f),
+        new Color(0.9f, 0.6f, 0.3f, 0.4f),
+    };
+    private static readonly Color[] PerfumeLightColors =
+    {
+        new Color(0.9f, 0.7f, 0.95f),
+        new Color(0.8f, 1f, 0.9f),
+        new Color(1f, 0.85f, 0.65f),
+    };
+    private static readonly float[] PerfumeLightIntensities = { 0.8f, 1.2f, 0.9f };
+
+    // Trinket data
+    private static readonly string[] TrinketNames =
+    {
+        "Ceramic Cat", "Brass Key", "Glass Marble", "Tiny Cactus"
+    };
+    private static readonly string[] TrinketDescriptions =
+    {
+        "A small painted cat, one ear chipped. It looks smug.",
+        "An old brass key that doesn't fit any lock you own.",
+        "Swirls of blue and green trapped in a perfect sphere.",
+        "A fake cactus, barely an inch tall. Perpetually cheerful."
+    };
+    private static readonly Color[] TrinketColors =
+    {
+        new Color(0.9f, 0.85f, 0.75f),
+        new Color(0.75f, 0.65f, 0.3f),
+        new Color(0.3f, 0.5f, 0.8f),
+        new Color(0.4f, 0.7f, 0.3f),
+    };
+
+    // Coffee table book data
+    private static readonly string[] CoffeeBookTitles = { "Arrangements", "Petal Studies" };
+    private static readonly string[] CoffeeBookDescriptions =
+    {
+        "A heavy book of ikebana arrangements, each page a meditation.",
+        "Macro photographs of petals — textures you've never noticed."
+    };
+    private static readonly Color[] CoffeeBookColors =
+    {
+        new Color(0.15f, 0.25f, 0.35f),
+        new Color(0.5f, 0.2f, 0.3f),
+    };
+
     [MenuItem("Window/Iris/Build Bookcase Browsing Scene")]
     public static void Build()
     {
@@ -169,6 +239,10 @@ public static class BookcaseSceneBuilder
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         int booksLayer = EnsureLayer(BooksLayerName);
+        int drawersLayer = EnsureLayer(DrawersLayerName);
+        int perfumesLayer = EnsureLayer(PerfumesLayerName);
+        int trinketsLayer = EnsureLayer(TrinketsLayerName);
+        int coffeeTableBooksLayer = EnsureLayer(CoffeeTableBooksLayerName);
 
         // ── 1. Directional light ───────────────────────────────────────
         var lightGO = new GameObject("Directional Light");
@@ -184,16 +258,36 @@ public static class BookcaseSceneBuilder
         // ── 3. Room geometry ───────────────────────────────────────────
         BuildRoom();
 
-        // ── 4. Bookcase frame ──────────────────────────────────────────
+        // ── 4. Bookcase frame (includes drawer section) ────────────────
         BuildBookcaseFrame();
 
-        // ── 5. Books ───────────────────────────────────────────────────
+        // ── 5. Books (rows 2-3) ────────────────────────────────────────
         BuildBooks(booksLayer);
 
-        // ── 6. BookInteractionManager + UI ─────────────────────────────
-        BuildInteractionManager(camGO, booksLayer);
+        // ── 6. Perfume bottles (row 1) ─────────────────────────────────
+        BuildPerfumeShelf(perfumesLayer);
 
-        // ── 7. Save scene ──────────────────────────────────────────────
+        // ── 7. Trinket display slots (row 0) ───────────────────────────
+        BuildTrinketDisplaySlots(trinketsLayer);
+
+        // ── 8. Drawers (below bookcase) ────────────────────────────────
+        BuildDrawers(drawersLayer, trinketsLayer);
+
+        // ── 9. Coffee table + coffee table books (row 2 right) ─────────
+        BuildCoffeeTable();
+        BuildCoffeeTableBooks(coffeeTableBooksLayer);
+
+        // ── 10. Environment mood controller ────────────────────────────
+        BuildEnvironmentMood(lightGO);
+
+        // ── 11. Item Inspector ─────────────────────────────────────────
+        var inspector = BuildItemInspector(camGO);
+
+        // ── 12. BookInteractionManager + UI ────────────────────────────
+        BuildInteractionManager(camGO, inspector, booksLayer, drawersLayer,
+            perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+
+        // ── 13. Save scene ─────────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -226,6 +320,12 @@ public static class BookcaseSceneBuilder
         anchorGO.transform.localPosition = new Vector3(0f, -0.1f, 0.5f);
         anchorGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
+        // Inspect anchor — child of camera, slightly closer
+        var inspectAnchor = new GameObject("InspectAnchor");
+        inspectAnchor.transform.SetParent(camGO.transform);
+        inspectAnchor.transform.localPosition = new Vector3(0f, 0f, 0.4f);
+        inspectAnchor.transform.localRotation = Quaternion.identity;
+
         return camGO;
     }
 
@@ -237,17 +337,14 @@ public static class BookcaseSceneBuilder
     {
         var parent = new GameObject("Room");
 
-        // Floor — 6m x 4m
         CreateBox("Floor", parent.transform,
             new Vector3(0f, -0.025f, 1f), new Vector3(6f, 0.05f, 4f),
-            new Color(0.30f, 0.20f, 0.12f)); // dark wood
+            new Color(0.30f, 0.20f, 0.12f));
 
-        // Back wall — at Z = 2 (behind bookcase)
         CreateBox("BackWall", parent.transform,
             new Vector3(0f, 1.5f, 2.2f), new Vector3(6f, 3f, 0.1f),
-            new Color(0.85f, 0.78f, 0.68f)); // warm plaster
+            new Color(0.85f, 0.78f, 0.68f));
 
-        // Side walls
         CreateBox("SideWall_L", parent.transform,
             new Vector3(-3f, 1.5f, 1f), new Vector3(0.1f, 3f, 4f),
             new Color(0.82f, 0.75f, 0.65f));
@@ -258,7 +355,7 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Bookcase Frame
+    // Bookcase Frame (original geometry — drawers are separate below)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildBookcaseFrame()
@@ -303,12 +400,11 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Books
+    // Books (all 4 rows, with reserved space for new items on some rows)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildBooks(int booksLayer)
     {
-        // Create BookDefinition assets
         string defDir = "Assets/ScriptableObjects/Bookcase";
         if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects"))
             AssetDatabase.CreateFolder("Assets", "ScriptableObjects");
@@ -316,7 +412,6 @@ public static class BookcaseSceneBuilder
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
 
         var booksParent = new GameObject("Books");
-        // Find or create the Bookcase parent
         var bookcase = GameObject.Find("Bookcase");
         if (bookcase != null)
             booksParent.transform.SetParent(bookcase.transform);
@@ -327,15 +422,27 @@ public static class BookcaseSceneBuilder
 
         int bookIndex = 0;
 
-        // 4 usable rows (between shelves)
+        // All 4 usable rows — some rows reserve right-side space for new items
         for (int row = 0; row < ShelfCount - 1; row++)
         {
             float shelfTopY = row * rowHeight + ShelfThickness / 2f;
             float availableHeight = rowHeight - ShelfThickness;
 
-            // Random number of books per row
+            // Reserve right-side space on specific rows for new items:
+            //   Row 0: reserve right third for trinket display slots
+            //   Row 1: reserve right third for perfume bottles
+            //   Row 2: reserve right quarter for coffee table books (flat)
+            //   Row 3: full width for books
+            float maxX;
+            if (row == 0 || row == 1)
+                maxX = innerWidth / 2f - innerWidth / 3f;
+            else if (row == 2)
+                maxX = innerWidth / 2f - innerWidth / 4f;
+            else
+                maxX = innerWidth / 2f - 0.01f;
+
             int bookCount = Random.Range(MinBooksPerRow, MaxBooksPerRow + 1);
-            float xCursor = caseLeftX + 0.01f; // small left margin
+            float xCursor = caseLeftX + 0.01f;
 
             for (int b = 0; b < bookCount; b++)
             {
@@ -346,17 +453,14 @@ public static class BookcaseSceneBuilder
                 float bookDepth = CaseDepth * depthFrac;
                 Color color = SpineColors[Random.Range(0, SpineColors.Length)];
 
-                // Check if book fits in row
-                if (xCursor + thickness > innerWidth / 2f - 0.01f)
+                if (xCursor + thickness > maxX)
                     break;
 
-                // Title/author — cycle through sample data
                 int dataIndex = bookIndex % BookTitles.Length;
                 string title = BookTitles[dataIndex];
                 string author = BookAuthors[dataIndex];
                 string[] pages = BookPages[dataIndex];
 
-                // Create BookDefinition asset
                 var def = ScriptableObject.CreateInstance<BookDefinition>();
                 def.title = title;
                 def.author = author;
@@ -368,7 +472,6 @@ public static class BookcaseSceneBuilder
                 string defPath = $"{defDir}/Book_{bookIndex:D3}_{title.Replace(" ", "_")}.asset";
                 AssetDatabase.CreateAsset(def, defPath);
 
-                // Create book GameObject
                 float bookX = xCursor + thickness / 2f;
                 float bookY = shelfTopY + bookHeight / 2f;
                 float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
@@ -380,18 +483,13 @@ public static class BookcaseSceneBuilder
                 bookGO.isStatic = false;
                 bookGO.layer = booksLayer;
 
-                // Add BookVolume component
                 var volume = bookGO.AddComponent<BookVolume>();
-
-                // Build pages child hierarchy (inactive by default)
                 var pagesRoot = BuildBookPages(bookGO.transform, thickness, bookHeight, bookDepth);
 
-                // Wire serialized fields
                 var so = new SerializedObject(volume);
                 so.FindProperty("definition").objectReferenceValue = def;
                 so.FindProperty("pagesRoot").objectReferenceValue = pagesRoot;
 
-                // Find page labels
                 var pageLabels = pagesRoot.GetComponentsInChildren<TMP_Text>(true);
                 var labelsProperty = so.FindProperty("pageLabels");
                 labelsProperty.arraySize = Mathf.Min(pageLabels.Length, 3);
@@ -400,13 +498,12 @@ public static class BookcaseSceneBuilder
 
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                // Advance cursor
                 xCursor += thickness + Random.Range(MinGap, MaxGap);
                 bookIndex++;
             }
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {bookIndex} books across {ShelfCount - 1} rows.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {bookIndex} books across all 4 rows.");
     }
 
     private static GameObject BuildBookPages(Transform bookTransform, float thickness, float height, float depth)
@@ -416,7 +513,6 @@ public static class BookcaseSceneBuilder
         pagesRoot.transform.localPosition = Vector3.zero;
         pagesRoot.transform.localRotation = Quaternion.identity;
 
-        // World-space canvas on the book face
         var canvasGO = new GameObject("PageCanvas");
         canvasGO.transform.SetParent(pagesRoot.transform);
         canvasGO.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.001f);
@@ -429,7 +525,6 @@ public static class BookcaseSceneBuilder
         canvasRT.sizeDelta = new Vector2(900f, 400f);
         canvasRT.localScale = new Vector3(0.0005f, 0.0005f, 0.0005f);
 
-        // Three pages: left, center, right
         string[] pageNames = { "PageLeft", "PageCenter", "PageRight" };
         float pageWidth = 280f;
         float[] xPositions = { -300f, 0f, 300f };
@@ -445,11 +540,9 @@ public static class BookcaseSceneBuilder
             rt.localScale = Vector3.one;
             rt.localRotation = Quaternion.identity;
 
-            // Page background
             var bg = pageGO.AddComponent<UnityEngine.UI.Image>();
             bg.color = new Color(0.95f, 0.93f, 0.88f, 0.95f);
 
-            // Text child
             var textGO = new GameObject("Text");
             textGO.transform.SetParent(pageGO.transform);
 
@@ -475,10 +568,436 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
+    // Perfume Shelf (row 1, right side — next to books)
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildPerfumeShelf(int perfumesLayer)
+    {
+        string defDir = "Assets/ScriptableObjects/Bookcase";
+        if (!AssetDatabase.IsValidFolder(defDir))
+            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
+
+        var parent = new GameObject("PerfumeBottles");
+        var bookcase = GameObject.Find("Bookcase");
+        if (bookcase != null)
+            parent.transform.SetParent(bookcase.transform);
+
+        float innerWidth = CaseWidth - SidePanelThickness * 2f;
+        float rowHeight = CaseHeight / ShelfCount;
+        float row1ShelfTopY = 1f * rowHeight + ShelfThickness / 2f;
+        float bottleHeight = 0.15f;
+        float bottleWidth = 0.05f;
+        float bottleDepth = 0.05f;
+
+        // Place on the right third of row 1, next to where books end
+        float rightZoneStart = innerWidth / 2f - innerWidth / 3f + 0.04f;
+        float spacing = 0.2f;
+
+        for (int i = 0; i < PerfumeNames.Length; i++)
+        {
+            var def = ScriptableObject.CreateInstance<PerfumeDefinition>();
+            def.perfumeName = PerfumeNames[i];
+            def.description = PerfumeDescriptions[i];
+            def.bottleColor = PerfumeBottleColors[i];
+            def.sprayColor = PerfumeSprayColors[i];
+            def.lightingColor = PerfumeLightColors[i];
+            def.lightIntensity = PerfumeLightIntensities[i];
+            def.moodParticleColor = PerfumeSprayColors[i];
+
+            string defPath = $"{defDir}/Perfume_{i:D2}_{PerfumeNames[i].Replace(" ", "_")}.asset";
+            AssetDatabase.CreateAsset(def, defPath);
+
+            float bottleX = rightZoneStart + i * spacing;
+            float bottleY = row1ShelfTopY + bottleHeight / 2f;
+
+            var bottleGO = CreateBox($"Perfume_{i}", parent.transform,
+                new Vector3(bottleX, bottleY, CaseCenterZ),
+                new Vector3(bottleWidth, bottleHeight, bottleDepth),
+                PerfumeBottleColors[i]);
+            bottleGO.isStatic = false;
+            bottleGO.layer = perfumesLayer;
+
+            var bottle = bottleGO.AddComponent<PerfumeBottle>();
+
+            // Spray particle system child
+            var sprayGO = new GameObject("SprayParticles");
+            sprayGO.transform.SetParent(bottleGO.transform);
+            sprayGO.transform.localPosition = new Vector3(0f, bottleHeight / 2f + 0.02f, 0f);
+            sprayGO.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+
+            var ps = sprayGO.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.startLifetime = 0.5f;
+            main.startSpeed = 1f;
+            main.startSize = 0.02f;
+            main.maxParticles = 50;
+            main.startColor = PerfumeSprayColors[i];
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 30f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 15f;
+            shape.radius = 0.01f;
+
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            var bottleSO = new SerializedObject(bottle);
+            bottleSO.FindProperty("definition").objectReferenceValue = def;
+            bottleSO.FindProperty("sprayParticles").objectReferenceValue = ps;
+            bottleSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        Debug.Log($"[BookcaseSceneBuilder] Created {PerfumeNames.Length} perfume bottles on row 1.");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Trinket Display Slots (row 0, right side — next to books)
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildTrinketDisplaySlots(int trinketsLayer)
+    {
+        var parent = new GameObject("TrinketDisplaySlots");
+        var bookcase = GameObject.Find("Bookcase");
+        if (bookcase != null)
+            parent.transform.SetParent(bookcase.transform);
+
+        float innerWidth = CaseWidth - SidePanelThickness * 2f;
+        float rowHeight = CaseHeight / ShelfCount;
+        float row0ShelfTopY = 0f * rowHeight + ShelfThickness / 2f;
+
+        // 4 display positions in the right third of row 0
+        float rightZoneStart = innerWidth / 2f - innerWidth / 3f + 0.02f;
+        float spacing = (innerWidth / 3f - 0.04f) / 4f;
+
+        for (int i = 0; i < 4; i++)
+        {
+            float slotX = rightZoneStart + i * spacing + spacing / 2f;
+            float slotY = row0ShelfTopY + 0.01f;
+
+            var slotGO = CreateBox($"DisplaySlot_{i}", parent.transform,
+                new Vector3(slotX, slotY, CaseCenterZ),
+                new Vector3(0.06f, 0.005f, 0.06f),
+                new Color(0.35f, 0.25f, 0.15f, 0.5f));
+            slotGO.isStatic = true;
+        }
+
+        Debug.Log("[BookcaseSceneBuilder] Created 4 trinket display slots on row 0 (right side).");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Drawers (separate unit below bookcase, from Y=-DrawerHeight to Y=0)
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildDrawers(int drawersLayer, int trinketsLayer)
+    {
+        string defDir = "Assets/ScriptableObjects/Bookcase";
+        if (!AssetDatabase.IsValidFolder(defDir))
+            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
+
+        var parent = new GameObject("Drawers");
+        var bookcase = GameObject.Find("Bookcase");
+        if (bookcase != null)
+            parent.transform.SetParent(bookcase.transform);
+
+        float innerWidth = CaseWidth - SidePanelThickness * 2f;
+        float drawerWidth = innerWidth / 2f - 0.02f;
+        float drawerY = -DrawerHeight / 2f;  // centered in the drawer section
+        float drawerDepth = CaseDepth - 0.04f;
+
+        Color drawerColor = new Color(0.30f, 0.20f, 0.12f);
+        Color frameBrown = new Color(0.25f, 0.15f, 0.08f);
+
+        // Drawer unit frame (sits below the bookcase)
+        CreateBox("DrawerFrame_Bottom", parent.transform,
+            new Vector3(0f, -DrawerHeight, CaseCenterZ),
+            new Vector3(innerWidth, ShelfThickness, CaseDepth),
+            frameBrown);
+        CreateBox("DrawerFrame_SideL", parent.transform,
+            new Vector3(-CaseWidth / 2f, -DrawerHeight / 2f, CaseCenterZ),
+            new Vector3(SidePanelThickness, DrawerHeight, CaseDepth),
+            frameBrown);
+        CreateBox("DrawerFrame_SideR", parent.transform,
+            new Vector3(CaseWidth / 2f, -DrawerHeight / 2f, CaseCenterZ),
+            new Vector3(SidePanelThickness, DrawerHeight, CaseDepth),
+            frameBrown);
+        CreateBox("DrawerFrame_Back", parent.transform,
+            new Vector3(0f, -DrawerHeight / 2f, CaseCenterZ + CaseDepth / 2f - 0.01f),
+            new Vector3(CaseWidth, DrawerHeight, 0.015f),
+            new Color(0.20f, 0.12f, 0.06f));
+        CreateBox("DrawerFrame_Divider", parent.transform,
+            new Vector3(0f, -DrawerHeight / 2f, CaseCenterZ),
+            new Vector3(SidePanelThickness, DrawerHeight - 0.02f, CaseDepth - 0.02f),
+            frameBrown);
+
+        // Row 0 display slot positions for trinket targets (right third)
+        float rowHeight = CaseHeight / ShelfCount;
+        float displayY = 0f * rowHeight + ShelfThickness / 2f + 0.04f;
+        float displayRightStart = innerWidth / 2f - innerWidth / 3f + 0.02f;
+        float displaySpacing = (innerWidth / 3f - 0.04f) / 4f;
+        float displayStartX = displayRightStart + displaySpacing / 2f;
+
+        int trinketIndex = 0;
+
+        for (int d = 0; d < 2; d++)
+        {
+            float drawerX = (d == 0) ? -innerWidth / 4f : innerWidth / 4f;
+
+            var drawerGO = CreateBox($"Drawer_{d}", parent.transform,
+                new Vector3(drawerX, drawerY, CaseCenterZ),
+                new Vector3(drawerWidth, DrawerHeight - 0.02f, drawerDepth),
+                drawerColor);
+            drawerGO.isStatic = false;
+            drawerGO.layer = drawersLayer;
+
+            var drawer = drawerGO.AddComponent<DrawerController>();
+
+            // Trinket contents inside this drawer
+            var contentsRoot = new GameObject($"DrawerContents_{d}");
+            contentsRoot.transform.SetParent(drawerGO.transform);
+            contentsRoot.transform.localPosition = Vector3.zero;
+
+            // 2 trinkets per drawer
+            int trinketsInDrawer = 2;
+            for (int t = 0; t < trinketsInDrawer && trinketIndex < TrinketNames.Length; t++)
+            {
+                var trinketDef = ScriptableObject.CreateInstance<TrinketDefinition>();
+                trinketDef.trinketName = TrinketNames[trinketIndex];
+                trinketDef.description = TrinketDescriptions[trinketIndex];
+                trinketDef.color = TrinketColors[trinketIndex];
+                trinketDef.itemID = $"trinket_{trinketIndex}";
+                trinketDef.startsInDrawer = true;
+
+                string trinketDefPath = $"{defDir}/Trinket_{trinketIndex:D2}_{TrinketNames[trinketIndex].Replace(" ", "_")}.asset";
+                AssetDatabase.CreateAsset(trinketDef, trinketDefPath);
+
+                float localX = (t == 0) ? -0.08f : 0.08f;
+                var trinketGO = CreateBox($"Trinket_{trinketIndex}", contentsRoot.transform,
+                    new Vector3(drawerX + localX, drawerY + 0.04f, CaseCenterZ),
+                    new Vector3(0.06f, 0.06f, 0.06f),
+                    TrinketColors[trinketIndex]);
+                trinketGO.isStatic = false;
+                trinketGO.layer = trinketsLayer;
+
+                var trinketVol = trinketGO.AddComponent<TrinketVolume>();
+
+                // Display slot position for this trinket
+                float displayX = displayStartX + trinketIndex * displaySpacing;
+
+                var trinketSO = new SerializedObject(trinketVol);
+                trinketSO.FindProperty("definition").objectReferenceValue = trinketDef;
+                trinketSO.FindProperty("displayPosition").vector3Value =
+                    new Vector3(displayX, displayY, CaseCenterZ);
+                trinketSO.FindProperty("displayRotation").quaternionValue = Quaternion.identity;
+                trinketSO.ApplyModifiedPropertiesWithoutUndo();
+
+                trinketIndex++;
+            }
+
+            contentsRoot.SetActive(false);
+
+            var drawerSO = new SerializedObject(drawer);
+            drawerSO.FindProperty("slideDistance").floatValue = DrawerSlideDistance;
+            drawerSO.FindProperty("contentsRoot").objectReferenceValue = contentsRoot;
+            drawerSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        Debug.Log($"[BookcaseSceneBuilder] Created 2 drawers with {trinketIndex} trinkets.");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Coffee Table (in room, in front of bookcase)
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildCoffeeTable()
+    {
+        var parent = new GameObject("CoffeeTable");
+
+        // Small table in front of the bookcase, at Z=0.8
+        CreateBox("TableTop", parent.transform,
+            new Vector3(0.8f, 0.4f, 0.8f), new Vector3(0.6f, 0.03f, 0.4f),
+            new Color(0.35f, 0.22f, 0.12f));
+
+        // Legs
+        float legSize = 0.03f;
+        float legHeight = 0.39f;
+        Color legColor = new Color(0.30f, 0.18f, 0.10f);
+        CreateBox("Leg_FL", parent.transform, new Vector3(0.52f, legHeight / 2f, 0.62f), new Vector3(legSize, legHeight, legSize), legColor);
+        CreateBox("Leg_FR", parent.transform, new Vector3(1.08f, legHeight / 2f, 0.62f), new Vector3(legSize, legHeight, legSize), legColor);
+        CreateBox("Leg_BL", parent.transform, new Vector3(0.52f, legHeight / 2f, 0.98f), new Vector3(legSize, legHeight, legSize), legColor);
+        CreateBox("Leg_BR", parent.transform, new Vector3(1.08f, legHeight / 2f, 0.98f), new Vector3(legSize, legHeight, legSize), legColor);
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Coffee Table Books (on bookcase row 2, right side)
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildCoffeeTableBooks(int coffeeTableBooksLayer)
+    {
+        string defDir = "Assets/ScriptableObjects/Bookcase";
+        if (!AssetDatabase.IsValidFolder(defDir))
+            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
+
+        var parent = new GameObject("CoffeeTableBooks");
+        var bookcase = GameObject.Find("Bookcase");
+        if (bookcase != null)
+            parent.transform.SetParent(bookcase.transform);
+
+        // Row 2 — right side of shelf
+        float rowHeight = CaseHeight / ShelfCount;
+        float row2ShelfTopY = 2f * rowHeight + ShelfThickness / 2f;
+        float innerWidth = CaseWidth - SidePanelThickness * 2f;
+
+        // Coffee table top Y for target positions
+        float coffeeTableTopY = 0.415f;
+
+        for (int i = 0; i < CoffeeBookTitles.Length; i++)
+        {
+            var def = ScriptableObject.CreateInstance<CoffeeTableBookDefinition>();
+            def.title = CoffeeBookTitles[i];
+            def.description = CoffeeBookDescriptions[i];
+            def.coverColor = CoffeeBookColors[i];
+            def.itemID = $"coffeebook_{i}";
+            def.size = new Vector2(0.20f, 0.16f);
+            def.thickness = 0.025f;
+
+            string defPath = $"{defDir}/CoffeeBook_{i:D2}_{CoffeeBookTitles[i].Replace(" ", "_")}.asset";
+            AssetDatabase.CreateAsset(def, defPath);
+
+            // Bookcase position: flat (lying down) on right quarter of row 2
+            float rightZoneStart = innerWidth / 2f - innerWidth / 4f + 0.05f;
+            float bookcaseX = rightZoneStart + i * 0.22f;
+            float bookcaseY = row2ShelfTopY + def.thickness / 2f;
+
+            var bookGO = CreateBox($"CoffeeBook_{i}", parent.transform,
+                new Vector3(bookcaseX, bookcaseY, CaseCenterZ),
+                new Vector3(def.size.x, def.thickness, def.size.y),
+                CoffeeBookColors[i]);
+            bookGO.isStatic = false;
+            bookGO.layer = coffeeTableBooksLayer;
+
+            var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
+
+            // Coffee table target position
+            float tableX = 0.65f + i * 0.25f;
+
+            var cbSO = new SerializedObject(coffeeBook);
+            cbSO.FindProperty("definition").objectReferenceValue = def;
+            cbSO.FindProperty("coffeeTablePosition").vector3Value =
+                new Vector3(tableX, coffeeTableTopY, 0.8f);
+            cbSO.FindProperty("coffeeTableRotation").quaternionValue =
+                Quaternion.Euler(0f, 15f * (i + 1), 0f);
+            cbSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books.");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Environment Mood Controller
+    // ════════════════════════════════════════════════════════════════════
+
+    private static void BuildEnvironmentMood(GameObject lightGO)
+    {
+        var moodGO = new GameObject("EnvironmentMoodController");
+        var mood = moodGO.AddComponent<EnvironmentMoodController>();
+
+        var moodSO = new SerializedObject(mood);
+        moodSO.FindProperty("directionalLight").objectReferenceValue = lightGO.GetComponent<Light>();
+        moodSO.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Item Inspector
+    // ════════════════════════════════════════════════════════════════════
+
+    private static ItemInspector BuildItemInspector(GameObject camGO)
+    {
+        var inspectorGO = new GameObject("ItemInspector");
+        var inspector = inspectorGO.AddComponent<ItemInspector>();
+
+        var inspectAnchor = camGO.transform.Find("InspectAnchor");
+        var browseCamera = camGO.GetComponent<BookcaseBrowseCamera>();
+
+        // Description panel UI
+        var uiCanvasGO = new GameObject("InspectUI_Canvas");
+        var uiCanvas = uiCanvasGO.AddComponent<Canvas>();
+        uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        uiCanvas.sortingOrder = 15;
+        uiCanvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
+        uiCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        var descPanel = new GameObject("DescriptionPanel");
+        descPanel.transform.SetParent(uiCanvasGO.transform);
+
+        var panelRT = descPanel.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0f);
+        panelRT.anchorMax = new Vector2(0.5f, 0f);
+        panelRT.pivot = new Vector2(0.5f, 0f);
+        panelRT.sizeDelta = new Vector2(450f, 100f);
+        panelRT.anchoredPosition = new Vector2(0f, 80f);
+        panelRT.localScale = Vector3.one;
+
+        var panelBg = descPanel.AddComponent<UnityEngine.UI.Image>();
+        panelBg.color = new Color(0f, 0f, 0f, 0.7f);
+
+        // Name text
+        var nameGO = new GameObject("NameText");
+        nameGO.transform.SetParent(descPanel.transform);
+
+        var nameRT = nameGO.AddComponent<RectTransform>();
+        nameRT.anchorMin = new Vector2(0f, 0.6f);
+        nameRT.anchorMax = new Vector2(1f, 1f);
+        nameRT.offsetMin = new Vector2(10f, 0f);
+        nameRT.offsetMax = new Vector2(-10f, -5f);
+        nameRT.localScale = Vector3.one;
+
+        var nameTMP = nameGO.AddComponent<TextMeshProUGUI>();
+        nameTMP.text = "Item Name";
+        nameTMP.fontSize = 22f;
+        nameTMP.alignment = TextAlignmentOptions.Center;
+        nameTMP.color = Color.white;
+        nameTMP.fontStyle = FontStyles.Bold;
+
+        // Description text
+        var descGO = new GameObject("DescriptionText");
+        descGO.transform.SetParent(descPanel.transform);
+
+        var descRT = descGO.AddComponent<RectTransform>();
+        descRT.anchorMin = new Vector2(0f, 0f);
+        descRT.anchorMax = new Vector2(1f, 0.6f);
+        descRT.offsetMin = new Vector2(10f, 5f);
+        descRT.offsetMax = new Vector2(-10f, 0f);
+        descRT.localScale = Vector3.one;
+
+        var descTMP = descGO.AddComponent<TextMeshProUGUI>();
+        descTMP.text = "Description";
+        descTMP.fontSize = 16f;
+        descTMP.alignment = TextAlignmentOptions.Center;
+        descTMP.color = new Color(0.8f, 0.8f, 0.8f);
+        descTMP.enableWordWrapping = true;
+
+        descPanel.SetActive(false);
+
+        var inspSO = new SerializedObject(inspector);
+        inspSO.FindProperty("inspectAnchor").objectReferenceValue = inspectAnchor;
+        inspSO.FindProperty("browseCamera").objectReferenceValue = browseCamera;
+        inspSO.FindProperty("descriptionPanel").objectReferenceValue = descPanel;
+        inspSO.FindProperty("nameText").objectReferenceValue = nameTMP;
+        inspSO.FindProperty("descriptionText").objectReferenceValue = descTMP;
+        inspSO.ApplyModifiedPropertiesWithoutUndo();
+
+        return inspector;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
     // Interaction Manager + UI
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildInteractionManager(GameObject camGO, int booksLayer)
+    private static void BuildInteractionManager(GameObject camGO, ItemInspector inspector,
+        int booksLayer, int drawersLayer, int perfumesLayer, int trinketsLayer, int coffeeTableBooksLayer)
     {
         var managerGO = new GameObject("BookInteractionManager");
         var manager = managerGO.AddComponent<BookInteractionManager>();
@@ -491,7 +1010,6 @@ public static class BookcaseSceneBuilder
         uiCanvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
         uiCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
-        // Title hint panel — bottom center of screen
         var hintPanel = new GameObject("TitleHintPanel");
         hintPanel.transform.SetParent(uiCanvasGO.transform);
 
@@ -506,7 +1024,6 @@ public static class BookcaseSceneBuilder
         var bg = hintPanel.AddComponent<UnityEngine.UI.Image>();
         bg.color = new Color(0f, 0f, 0f, 0.6f);
 
-        // Title text child
         var textGO = new GameObject("TitleText");
         textGO.transform.SetParent(hintPanel.transform);
 
@@ -526,18 +1043,26 @@ public static class BookcaseSceneBuilder
 
         hintPanel.SetActive(false);
 
-        // Wire serialized fields on BookInteractionManager
         var readingAnchor = camGO.transform.Find("ReadingAnchor");
         var cam = camGO.GetComponent<UnityEngine.Camera>();
         var browseCamera = camGO.GetComponent<BookcaseBrowseCamera>();
+
+        // Find mood controller
+        var moodController = Object.FindFirstObjectByType<EnvironmentMoodController>();
 
         var so = new SerializedObject(manager);
         so.FindProperty("readingAnchor").objectReferenceValue = readingAnchor;
         so.FindProperty("mainCamera").objectReferenceValue = cam;
         so.FindProperty("browseCamera").objectReferenceValue = browseCamera;
+        so.FindProperty("itemInspector").objectReferenceValue = inspector;
+        so.FindProperty("moodController").objectReferenceValue = moodController;
         so.FindProperty("titleHintPanel").objectReferenceValue = hintPanel;
         so.FindProperty("titleHintText").objectReferenceValue = tmp;
         so.FindProperty("booksLayerMask").intValue = 1 << booksLayer;
+        so.FindProperty("drawersLayerMask").intValue = 1 << drawersLayer;
+        so.FindProperty("perfumesLayerMask").intValue = 1 << perfumesLayer;
+        so.FindProperty("trinketsLayerMask").intValue = 1 << trinketsLayer;
+        so.FindProperty("coffeeTableBooksLayerMask").intValue = 1 << coffeeTableBooksLayer;
         so.FindProperty("maxRayDistance").floatValue = 10f;
         so.ApplyModifiedPropertiesWithoutUndo();
     }

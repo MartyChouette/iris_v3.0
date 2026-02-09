@@ -9,6 +9,13 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Color multiplier applied to the material when held.")]
     [SerializeField] private float heldBrightness = 1.4f;
 
+    [Header("Respawn")]
+    [Tooltip("Y position below which the object teleports back to its last valid position.")]
+    [SerializeField] private float fallThresholdY = -5f;
+
+    [Tooltip("Seconds after falling below threshold before respawn (prevents flicker).")]
+    [SerializeField] private float respawnDelay = 0.5f;
+
     public State CurrentState { get; private set; } = State.Resting;
 
     private Renderer _renderer;
@@ -17,6 +24,8 @@ public class PlaceableObject : MonoBehaviour
 
     private Vector3 _lastValidPosition;
     private PlacementSurface _currentSurface;
+    private Rigidbody _rb;
+    private float _fallTimer;
 
     private void Awake()
     {
@@ -30,6 +39,39 @@ public class PlaceableObject : MonoBehaviour
         }
 
         _lastValidPosition = transform.position;
+        _rb = GetComponent<Rigidbody>();
+    }
+
+    private void Update()
+    {
+        if (CurrentState == State.Held) return;
+
+        if (transform.position.y < fallThresholdY)
+        {
+            _fallTimer += Time.deltaTime;
+            if (_fallTimer >= respawnDelay)
+            {
+                Respawn();
+                _fallTimer = 0f;
+            }
+        }
+        else
+        {
+            _fallTimer = 0f;
+        }
+    }
+
+    private void Respawn()
+    {
+        transform.position = _lastValidPosition;
+        if (_rb != null)
+        {
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+            _rb.useGravity = true;
+        }
+        CurrentState = State.Resting;
+        Debug.Log($"[PlaceableObject] {name} respawned at {_lastValidPosition}.");
     }
 
     private void OnDestroy()

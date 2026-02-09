@@ -16,6 +16,7 @@ MonoBehaviour:
   description: Table with newspaper, fridge, counter.
   stationType: 2
   splinePosition: 0.143
+  lookAtPosition: {x: 0, y: 0, z: 0}
   selectedPosition: {x: -4, y: 2, z: -2.5}
   selectedRotation: {x: 45, y: 0, z: 0}
   selectedFOV: 50

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 public class ObjectGrabber : MonoBehaviour
 {
@@ -20,6 +21,10 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Grid cell size in world units (X/Z).")]
     [SerializeField] private float gridSize = 0.5f;
 
+    [Header("Rotation")]
+    [Tooltip("Degrees rotated per scroll tick.")]
+    [SerializeField] private float rotationStep = 15f;
+
     [Header("Raycast")]
     [Tooltip("Layer mask for placeable objects.")]
     [SerializeField] private LayerMask placeableLayer = ~0;
@@ -35,6 +40,7 @@ public class ObjectGrabber : MonoBehaviour
     private InputAction _mousePosition;
     private InputAction _mouseClick;
     private InputAction _gridToggle;
+    private InputAction _scrollAction;
 
     private bool _isEnabled;
     private bool _gridSnap;
@@ -42,6 +48,13 @@ public class ObjectGrabber : MonoBehaviour
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;
+
+    // Shadow preview
+    private GameObject _shadowGO;
+    private MeshRenderer _shadowRenderer;
+    private Material _shadowMat;
+    private static readonly Color s_shadowValid = new Color(0.2f, 0.8f, 0.3f, 0.5f);
+    private static readonly Color s_shadowInvalid = new Color(0.8f, 0.2f, 0.2f, 0.5f);
 
     private void Awake()
     {
@@ -51,6 +64,9 @@ public class ObjectGrabber : MonoBehaviour
         _mousePosition = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
         _mouseClick = new InputAction("MouseClick", InputActionType.Button, "<Mouse>/leftButton");
         _gridToggle = new InputAction("GridToggle", InputActionType.Button, "<Keyboard>/g");
+        _scrollAction = new InputAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
+
+        BuildShadow();
     }
 
     private void OnEnable()
@@ -58,6 +74,7 @@ public class ObjectGrabber : MonoBehaviour
         _mousePosition.Enable();
         _mouseClick.Enable();
         _gridToggle.Enable();
+        _scrollAction.Enable();
     }
 
     private void OnDisable()
@@ -65,6 +82,12 @@ public class ObjectGrabber : MonoBehaviour
         _mousePosition.Disable();
         _mouseClick.Disable();
         _gridToggle.Disable();
+        _scrollAction.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        if (_shadowMat != null) Destroy(_shadowMat);
     }
 
     private void Update()
@@ -86,9 +109,13 @@ public class ObjectGrabber : MonoBehaviour
                 Place();
         }
 
-        // Update grab target while holding
+        // Update grab target, scroll rotation, and shadow while holding
         if (_held != null)
+        {
             UpdateGrabTarget();
+            UpdateScrollRotation();
+            UpdateShadow();
+        }
     }
 
     private void FixedUpdate()
@@ -134,6 +161,7 @@ public class ObjectGrabber : MonoBehaviour
         _grabTarget = _heldRb.worldCenterOfMass;
 
         placeable.OnPickedUp();
+        ShowShadow(true);
     }
 
     private void Place()
@@ -166,6 +194,7 @@ public class ObjectGrabber : MonoBehaviour
         _held.OnPlaced(_gridSnap, pos);
         _held = null;
         _heldRb = null;
+        ShowShadow(false);
     }
 
     private void UpdateGrabTarget()
@@ -209,6 +238,120 @@ public class ObjectGrabber : MonoBehaviour
         return bestPos;
     }
 
+    private void UpdateScrollRotation()
+    {
+        float scroll = _scrollAction.ReadValue<float>();
+        if (Mathf.Abs(scroll) > 0.01f)
+            _held.transform.Rotate(Vector3.up, rotationStep * Mathf.Sign(scroll), Space.World);
+    }
+
+    // ── Shadow preview ──────────────────────────────────────────────────
+
+    private void BuildShadow()
+    {
+        _shadowGO = new GameObject("PlacementShadow");
+        _shadowGO.transform.SetParent(transform);
+
+        var mf = _shadowGO.AddComponent<MeshFilter>();
+        _shadowRenderer = _shadowGO.AddComponent<MeshRenderer>();
+
+        // Procedural quad
+        var mesh = new Mesh { name = "ShadowQuad" };
+        mesh.vertices = new[]
+        {
+            new Vector3(-0.5f, 0f, -0.5f),
+            new Vector3( 0.5f, 0f, -0.5f),
+            new Vector3( 0.5f, 0f,  0.5f),
+            new Vector3(-0.5f, 0f,  0.5f)
+        };
+        mesh.uv = new[]
+        {
+            new Vector2(0f, 0f), new Vector2(1f, 0f),
+            new Vector2(1f, 1f), new Vector2(0f, 1f)
+        };
+        mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+        mesh.RecalculateNormals();
+        mf.sharedMesh = mesh;
+
+        // Procedural soft-circle texture (reuse SapDecalPool pattern)
+        int texSize = 32;
+        var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        float center = texSize * 0.5f;
+        float radius = center - 1f;
+        for (int y = 0; y < texSize; y++)
+        {
+            for (int x = 0; x < texSize; x++)
+            {
+                float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                float a = Mathf.Clamp01((radius - dist) / 2f);
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+        }
+        tex.Apply();
+
+        // URP Particles/Unlit shader with fallback chain
+        var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader == null) shader = Shader.Find("Sprites/Default");
+        if (shader == null) shader = Shader.Find("Unlit/Transparent");
+        _shadowMat = new Material(shader);
+        _shadowMat.mainTexture = tex;
+        _shadowMat.color = s_shadowValid;
+        _shadowMat.SetFloat("_Surface", 1f); // Transparent
+        _shadowMat.SetFloat("_Blend", 0f);   // Alpha
+        _shadowMat.renderQueue = 3000;
+        _shadowRenderer.sharedMaterial = _shadowMat;
+        _shadowRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        _shadowRenderer.receiveShadows = false;
+
+        _shadowGO.SetActive(false);
+    }
+
+    private void ShowShadow(bool show)
+    {
+        if (_shadowGO != null)
+            _shadowGO.SetActive(show);
+    }
+
+    private void UpdateShadow()
+    {
+        if (_shadowGO == null || _heldRb == null) return;
+
+        Vector3 objPos = _heldRb.position;
+
+        // Raycast down from held object to find surface
+        float surfaceY = objPos.y - 1f; // fallback if no hit
+        if (Physics.Raycast(objPos, Vector3.down, out RaycastHit hit, 50f))
+            surfaceY = hit.point.y;
+
+        float targetX = objPos.x;
+        float targetZ = objPos.z;
+
+        if (_gridSnap)
+        {
+            targetX = Mathf.Round(targetX / gridSize) * gridSize;
+            targetZ = Mathf.Round(targetZ / gridSize) * gridSize;
+        }
+
+        // Check if shadow position is on a valid surface
+        Vector3 shadowPos = new Vector3(targetX, surfaceY + 0.01f, targetZ);
+        bool onSurface = IsOnAnySurface(shadowPos);
+        _shadowMat.color = onSurface ? s_shadowValid : s_shadowInvalid;
+
+        _shadowGO.transform.position = shadowPos;
+        _shadowGO.transform.rotation = Quaternion.identity;
+
+        // Scale to match held object's footprint
+        var col = _held.GetComponent<Collider>();
+        if (col != null)
+        {
+            Vector3 ext = col.bounds.extents;
+            float diameter = Mathf.Max(ext.x, ext.z) * 2f;
+            _shadowGO.transform.localScale = new Vector3(diameter, 1f, diameter);
+        }
+    }
+
     /// <summary>
     /// Enable or disable grabbing. Called by ApartmentManager during state transitions.
     /// </summary>
@@ -224,6 +367,7 @@ public class ObjectGrabber : MonoBehaviour
             _held.OnDropped();
             _held = null;
             _heldRb = null;
+            ShowShadow(false);
         }
     }
 }

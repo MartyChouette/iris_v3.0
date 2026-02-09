@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Splines;
 using Unity.Cinemachine;
+using Unity.Mathematics;
 using TMPro;
 
 public class ApartmentManager : MonoBehaviour
@@ -549,4 +551,52 @@ public class ApartmentManager : MonoBehaviour
         else if (CurrentState == State.Selected)
             camT.position = _basePosition + _currentParallaxOffset;
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // Scene View Gizmos
+    // ──────────────────────────────────────────────────────────────
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        if (areas == null || areas.Length == 0) return;
+
+        // Resolve the spline container from the dolly
+        SplineContainer container = null;
+        if (browseDolly != null)
+            container = browseDolly.Spline;
+        if (container == null || container.Spline == null) return;
+
+        var spline = container.Spline;
+
+        for (int i = 0; i < areas.Length; i++)
+        {
+            var area = areas[i];
+            if (area == null) continue;
+
+            SplineUtility.Evaluate(spline, area.splinePosition,
+                out float3 localPos, out float3 tangent, out float3 up);
+            Vector3 worldPos = container.transform.TransformPoint((Vector3)localPos);
+
+            // Sphere at spline stop
+            bool isCurrent = Application.isPlaying && i == _currentAreaIndex;
+            Gizmos.color = isCurrent ? Color.yellow : Color.cyan;
+            Gizmos.DrawSphere(worldPos, 0.15f);
+            Gizmos.DrawLine(worldPos, worldPos + Vector3.up * 0.5f);
+
+            // Label
+            var style = new GUIStyle(UnityEditor.EditorStyles.boldLabel)
+            {
+                normal = { textColor = isCurrent ? Color.yellow : Color.white }
+            };
+            UnityEditor.Handles.Label(worldPos + Vector3.up * 0.6f, area.areaName, style);
+
+            // Line from spline stop to look-at target
+            Gizmos.color = new Color(1f, 1f, 1f, 0.25f);
+            Gizmos.DrawLine(worldPos, area.lookAtPosition);
+            Gizmos.color = new Color(1f, 0.5f, 0f, 0.6f);
+            Gizmos.DrawWireSphere(area.lookAtPosition, 0.1f);
+        }
+    }
+#endif
 }

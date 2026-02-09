@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ApartmentAreaDefinition
   areaName: Book Nook
   description: Bookshelf, reading chair, and side table.
-  browsePosition: {x: 5, y: 6, z: 8}
-  browseRotation: {x: 45, y: 210, z: 0}
-  browseFOV: 55
+  stationType: 0
+  splinePosition: 0
+  lookAtPosition: {x: -11.241436, y: 1.8846627, z: 8.997955}
   selectedPosition: {x: 4, y: 3, z: 5}
   selectedRotation: {x: 35, y: 200, z: 0}
   selectedFOV: 48

@@ -16,6 +16,7 @@ MonoBehaviour:
   description: Coat rack, keys, and welcome mat.
   stationType: 0
   splinePosition: 0
+  lookAtPosition: {x: 0, y: 0, z: 0}
   selectedPosition: {x: 0, y: 2, z: -4.5}
   selectedRotation: {x: 40, y: 0, z: 0}
   selectedFOV: 55

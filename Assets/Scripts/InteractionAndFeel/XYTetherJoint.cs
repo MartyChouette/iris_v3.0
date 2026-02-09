@@ -788,7 +788,10 @@ public class XYTetherJoint : MonoBehaviour
         MarkPartDetachedAuthoritative(isPlayerAction: false, reasonText: debugLogs ? $"Physics JointBreak force={force:F1}" : "Physics JointBreak");
 
         TriggerBreakAudio();
-        TriggerBreakFluidOrDeterministicSap();
+        // Only emit fluid here for parts WITHOUT FlowerPartRuntime — parts with it
+        // already get sap from FlowerPartRuntime.MarkDetached → EmitTearWithFollow.
+        if (_partRuntime == null)
+            TriggerBreakFluidOrDeterministicSap();
 
         joint = null;
         onBroke?.Invoke();
@@ -845,7 +848,10 @@ public class XYTetherJoint : MonoBehaviour
         MarkPartDetachedAuthoritative(isPlayerAction: !isAuthoredPhysics, reasonText: reason);
 
         TriggerBreakAudio();
-        TriggerBreakFluidOrDeterministicSap();
+        // Only emit fluid here for parts WITHOUT FlowerPartRuntime — parts with it
+        // already get sap from FlowerPartRuntime.MarkDetached → EmitTearWithFollow.
+        if (_partRuntime == null)
+            TriggerBreakFluidOrDeterministicSap();
 
         onBroke?.Invoke();
     }
@@ -963,14 +969,7 @@ public class XYTetherJoint : MonoBehaviour
     private void TriggerBreakFluid()
     {
         if (_cachedFluid != null)
-        {
-            Debug.Log($"[XYTetherJoint] TriggerBreakFluid on '{name}' — calling responder", this);
             _cachedFluid.OnJointBroken();
-        }
-        else
-        {
-            Debug.LogWarning($"[XYTetherJoint] TriggerBreakFluid on '{name}' — NO JointBreakFluidResponder cached!", this);
-        }
     }
 
     // ───────────────────────── Public API ─────────────────────────

@@ -5,7 +5,7 @@ using TMPro;
 
 /// <summary>
 /// Editor utility that builds a complete watering prototype scene.
-/// Creates SO assets, room + shelf + plants, watering station, UI, and wires everything.
+/// Creates SO assets, room + shelf + plants, ambient watering system, UI, and wires everything.
 /// Menu: Window > Iris > Build Watering Scene
 /// </summary>
 public static class WateringSceneBuilder
@@ -23,11 +23,11 @@ public static class WateringSceneBuilder
         // ── 2. Create ScriptableObject assets ────────────────────────
         var fern = CreatePlant("Fern",
             "A classic shelf fern — likes it moist.",
-            new Color(0.72f, 0.45f, 0.20f),       // pot
-            new Color(0.55f, 0.40f, 0.25f),        // dry
-            new Color(0.30f, 0.22f, 0.12f),        // wet
-            new Color(0.50f, 0.38f, 0.22f, 0.7f),  // foam
-            new Color(0.18f, 0.55f, 0.18f),        // plant
+            new Color(0.72f, 0.45f, 0.20f),
+            new Color(0.55f, 0.40f, 0.25f),
+            new Color(0.30f, 0.22f, 0.12f),
+            new Color(0.50f, 0.38f, 0.22f, 0.7f),
+            new Color(0.18f, 0.55f, 0.18f),
             0.75f, 0.06f, 0.14f, 2.5f, 0.25f, 0.05f, 100);
 
         var cactus = CreatePlant("Cactus",
@@ -69,7 +69,10 @@ public static class WateringSceneBuilder
         var allPlants = new[] { fern, cactus, succulent, monstera, herbPot };
         AssetDatabase.SaveAssets();
 
-        // ── 3. Directional light ─────────────────────────────────────
+        // ── 3. Plants layer ────────────────────────────────────────
+        int plantsLayer = EnsureLayer("Plants");
+
+        // ── 4. Directional light ─────────────────────────────────────
         var lightGO = new GameObject("Directional Light");
         var light = lightGO.AddComponent<Light>();
         light.type = LightType.Directional;
@@ -77,7 +80,7 @@ public static class WateringSceneBuilder
         light.color = new Color(1f, 0.96f, 0.88f);
         lightGO.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
-        // ── 4. Main Camera ───────────────────────────────────────────
+        // ── 5. Main Camera ───────────────────────────────────────────
         var camGO = new GameObject("Main Camera");
         camGO.tag = "MainCamera";
         var cam = camGO.AddComponent<Camera>();
@@ -88,7 +91,7 @@ public static class WateringSceneBuilder
         camGO.transform.position = new Vector3(0f, 1.3f, -0.6f);
         camGO.transform.rotation = Quaternion.Euler(20f, 0f, 0f);
 
-        // ── 5. Room geometry ─────────────────────────────────────────
+        // ── 6. Room geometry ─────────────────────────────────────────
         var roomParent = new GameObject("Room");
 
         CreateBox("Floor", roomParent.transform,
@@ -107,362 +110,158 @@ public static class WateringSceneBuilder
             new Vector3(2f, 1.5f, 0f), new Vector3(0.15f, 3f, 4f),
             new Color(0.33f, 0.31f, 0.29f));
 
-        // ── 6. Shelf ─────────────────────────────────────────────────
+        // ── 7. Shelf ─────────────────────────────────────────────────
         float shelfY = 0.85f;
         CreateBox("Shelf", roomParent.transform,
             new Vector3(0f, shelfY, 0.4f), new Vector3(1.8f, 0.04f, 0.25f),
             new Color(0.50f, 0.35f, 0.20f));
 
-        // ── 7. Plants on shelf ───────────────────────────────────────
+        // ── 8. Plants on shelf (with WaterablePlant markers) ─────────
         var plantsParent = new GameObject("ShelfPlants");
         plantsParent.transform.SetParent(roomParent.transform);
 
-        var plantVisuals = new Transform[allPlants.Length];
         float plantSpacing = 0.30f;
         float plantStartX = -(allPlants.Length - 1) * plantSpacing * 0.5f;
 
         for (int i = 0; i < allPlants.Length; i++)
         {
             float px = plantStartX + i * plantSpacing;
-            float potTop = shelfY + 0.02f; // just above shelf
+            float potTop = shelfY + 0.02f;
 
             var plantRoot = new GameObject($"Plant_{allPlants[i].plantName}");
             plantRoot.transform.SetParent(plantsParent.transform);
             plantRoot.transform.position = new Vector3(px, potTop, 0.4f);
-            plantVisuals[i] = plantRoot.transform;
+            plantRoot.layer = plantsLayer;
+            plantRoot.isStatic = false;
 
-            // Pot
-            CreateBox("Pot", plantRoot.transform,
+            // WaterablePlant marker
+            var wp = plantRoot.AddComponent<WaterablePlant>();
+            wp.definition = allPlants[i];
+
+            // Pot (also on Plants layer for raycasting)
+            var potGO = CreateBox("Pot", plantRoot.transform,
                 new Vector3(0f, 0.03f, 0f), new Vector3(0.06f, 0.06f, 0.06f),
                 allPlants[i].potColor);
+            potGO.layer = plantsLayer;
+            potGO.isStatic = false;
+
+            // Add a BoxCollider to the plant root for easier clicking
+            var col = plantRoot.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.07f, 0f);
+            col.size = new Vector3(0.08f, 0.14f, 0.08f);
 
             // Stem
-            CreateBox("Stem", plantRoot.transform,
+            var stemGO = CreateBox("Stem", plantRoot.transform,
                 new Vector3(0f, 0.10f, 0f), new Vector3(0.012f, 0.08f, 0.012f),
                 allPlants[i].plantColor);
+            stemGO.layer = plantsLayer;
 
             // Leaf left
-            CreateBox("LeafL", plantRoot.transform,
+            var leafL = CreateBox("LeafL", plantRoot.transform,
                 new Vector3(-0.02f, 0.11f, 0f), new Vector3(0.03f, 0.015f, 0.01f),
                 allPlants[i].plantColor);
+            leafL.layer = plantsLayer;
 
             // Leaf right
-            CreateBox("LeafR", plantRoot.transform,
+            var leafR = CreateBox("LeafR", plantRoot.transform,
                 new Vector3(0.02f, 0.13f, 0f), new Vector3(0.03f, 0.015f, 0.01f),
                 allPlants[i].plantColor);
+            leafR.layer = plantsLayer;
         }
 
-        // ── 8. Highlight ring ────────────────────────────────────────
-        var highlightGO = CreateBox("HighlightRing", roomParent.transform,
-            new Vector3(plantStartX, shelfY + 0.025f, 0.4f),
-            new Vector3(0.08f, 0.005f, 0.08f),
-            new Color(1f, 0.9f, 0.2f));
-        highlightGO.isStatic = false;
-
-        // ── 9. Watering station (close-up pot) ──────────────────────
-        float potWorldHeight = 0.10f;
-        float potWorldRadius = 0.04f;
-
-        var stationParent = new GameObject("WateringStation");
-        stationParent.transform.position = new Vector3(0f, 0.5f, 0.3f);
-
-        // Pot shell (brown container)
-        CreateBox("PotShell", stationParent.transform,
-            new Vector3(0f, potWorldHeight * 0.5f, 0f),
-            new Vector3(potWorldRadius * 2.5f, potWorldHeight, potWorldRadius * 2.5f),
-            new Color(0.65f, 0.40f, 0.20f));
-
-        // Soil box (starts at bottom, scales with water)
-        var soilGO = CreateBox("Soil", stationParent.transform,
-            new Vector3(0f, 0.001f, 0f),
-            new Vector3(potWorldRadius * 2.2f, 0.001f, potWorldRadius * 2.2f),
-            fern.dryColor);
-        soilGO.isStatic = false;
-
-        // Foam box (bubbly dirt on top of soil)
-        var foamGO = CreateBox("Foam", stationParent.transform,
-            new Vector3(0f, 0.001f, 0f),
-            new Vector3(potWorldRadius * 2.2f, 0.001f, potWorldRadius * 2.2f),
-            fern.foamColor);
-        foamGO.isStatic = false;
-
-        // Fill line marker (thin green line at ideal water level)
-        var fillLineGO = CreateBox("FillLine", stationParent.transform,
-            new Vector3(0f, fern.idealWaterLevel * potWorldHeight, 0f),
-            new Vector3(potWorldRadius * 2.6f, 0.002f, potWorldRadius * 2.6f),
-            new Color(0.2f, 0.8f, 0.2f, 0.8f));
-        fillLineGO.isStatic = false;
-
-        // Water line marker (thin blue line tracking current level)
-        var waterLineGO = CreateBox("WaterLine", stationParent.transform,
-            new Vector3(0f, 0f, 0f),
-            new Vector3(potWorldRadius * 2.4f, 0.002f, potWorldRadius * 2.4f),
-            new Color(0.2f, 0.4f, 0.9f, 0.8f));
-        waterLineGO.isStatic = false;
-
-        // Water box (transparent blue, inside pot — starts inactive)
-        var waterGO = CreateBox("Water", stationParent.transform,
-            new Vector3(0f, 0.001f, 0f),
-            new Vector3(potWorldRadius * 2.2f, 0.001f, potWorldRadius * 2.2f),
-            new Color(0.3f, 0.5f, 0.8f, 0.4f));
-        waterGO.isStatic = false;
-        MakeTransparent(waterGO.GetComponent<Renderer>());
-        waterGO.SetActive(false);
-
-        // Overflow drip boxes (3 small boxes on pot exterior — start inactive)
-        float dripSize = 0.008f;
-        float rimOffset = potWorldRadius * 1.4f;
-        Vector3[] dripOffsets =
-        {
-            new Vector3(-rimOffset, potWorldHeight * 0.7f, 0f),
-            new Vector3(rimOffset * 0.5f, potWorldHeight * 0.65f, rimOffset * 0.85f),
-            new Vector3(rimOffset * 0.5f, potWorldHeight * 0.6f, -rimOffset * 0.85f)
-        };
-        var overflowDripGOs = new GameObject[3];
-        for (int i = 0; i < 3; i++)
-        {
-            var dripGO = CreateBox($"OverflowDrip_{i}", stationParent.transform,
-                dripOffsets[i],
-                new Vector3(dripSize, dripSize * 1.5f, dripSize),
-                new Color(0.35f, 0.30f, 0.55f, 0.5f));
-            dripGO.isStatic = false;
-            MakeTransparent(dripGO.GetComponent<Renderer>());
-            dripGO.SetActive(false);
-            overflowDripGOs[i] = dripGO;
-        }
-
-        // Drain drip box (small blue box below pot — starts inactive)
-        var drainDripGO = CreateBox("DrainDrip", stationParent.transform,
-            new Vector3(0f, -0.02f, 0f),
-            new Vector3(0.008f, 0.015f, 0.008f),
-            new Color(0.3f, 0.5f, 0.8f, 0.5f));
-        drainDripGO.isStatic = false;
-        MakeTransparent(drainDripGO.GetComponent<Renderer>());
-        drainDripGO.SetActive(false);
-
-        // PotController component
-        var potCtrl = stationParent.AddComponent<PotController>();
+        // ── 9. PotController (hidden — simulation only) ──────────────
+        var potHiddenGO = new GameObject("PotController");
+        var potCtrl = potHiddenGO.AddComponent<PotController>();
         var potCtrlSO = new SerializedObject(potCtrl);
-        potCtrlSO.FindProperty("definition").objectReferenceValue = fern;
-        potCtrlSO.FindProperty("soilRenderer").objectReferenceValue = soilGO.GetComponent<Renderer>();
-        potCtrlSO.FindProperty("soilTransform").objectReferenceValue = soilGO.transform;
-        potCtrlSO.FindProperty("foamRenderer").objectReferenceValue = foamGO.GetComponent<Renderer>();
-        potCtrlSO.FindProperty("foamTransform").objectReferenceValue = foamGO.transform;
-        potCtrlSO.FindProperty("fillLineMarker").objectReferenceValue = fillLineGO.transform;
-        potCtrlSO.FindProperty("waterLineMarker").objectReferenceValue = waterLineGO.transform;
-        potCtrlSO.FindProperty("waterRenderer").objectReferenceValue = waterGO.GetComponent<Renderer>();
-        potCtrlSO.FindProperty("waterTransform").objectReferenceValue = waterGO.transform;
-
-        // Overflow drips array
-        var overflowDripsProp = potCtrlSO.FindProperty("overflowDrips");
-        overflowDripsProp.ClearArray();
-        for (int i = 0; i < overflowDripGOs.Length; i++)
-        {
-            overflowDripsProp.InsertArrayElementAtIndex(i);
-            overflowDripsProp.GetArrayElementAtIndex(i).objectReferenceValue = overflowDripGOs[i].transform;
-        }
-
-        potCtrlSO.FindProperty("drainDrip").objectReferenceValue = drainDripGO.transform;
-        potCtrlSO.FindProperty("drainThreshold").floatValue = 0.5f;
-        potCtrlSO.FindProperty("potWorldHeight").floatValue = potWorldHeight;
-        potCtrlSO.FindProperty("potWorldRadius").floatValue = potWorldRadius;
+        potCtrlSO.FindProperty("potWorldHeight").floatValue = 0.10f;
+        potCtrlSO.FindProperty("potWorldRadius").floatValue = 0.04f;
         potCtrlSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 10. Watering can ─────────────────────────────────────────
-        var canParent = new GameObject("WateringCan");
-        canParent.transform.position = new Vector3(0.15f, 0.75f, 0.3f);
-
-        // Body
-        CreateBox("CanBody", canParent.transform,
-            new Vector3(0f, 0f, 0f), new Vector3(0.06f, 0.04f, 0.04f),
-            new Color(0.25f, 0.55f, 0.55f));
-
-        // Spout
-        CreateBox("CanSpout", canParent.transform,
-            new Vector3(-0.05f, 0.01f, 0f), new Vector3(0.04f, 0.012f, 0.012f),
-            new Color(0.25f, 0.55f, 0.55f));
-
-        canParent.SetActive(false); // hidden until watering state
-
-        // ── 10b. Water stream visual (thin blue cylinder from spout to pot) ──
-        var streamGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        streamGO.name = "WaterStream";
-        streamGO.transform.position = new Vector3(0.10f, 0.65f, 0.3f);
-        streamGO.transform.localScale = new Vector3(0.008f, 0.08f, 0.008f);
-        streamGO.isStatic = false;
-
-        // Remove default collider — it's just a visual
-        var streamCollider = streamGO.GetComponent<Collider>();
-        if (streamCollider != null)
-            Object.DestroyImmediate(streamCollider);
-
-        // Transparent blue material
-        var streamRend = streamGO.GetComponent<Renderer>();
-        if (streamRend != null)
-        {
-            var streamMat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                         ?? Shader.Find("Standard"));
-            streamMat.color = new Color(0.4f, 0.65f, 0.95f, 0.6f);
-            streamRend.sharedMaterial = streamMat;
-            MakeTransparent(streamRend);
-        }
-        streamGO.SetActive(false); // hidden until pouring
-
-        // ── 11. Managers GO ──────────────────────────────────────────
+        // ── 10. Managers GO ──────────────────────────────────────────
         var managersGO = new GameObject("Managers");
         var mgr = managersGO.AddComponent<WateringManager>();
         var hud = managersGO.AddComponent<WateringHUD>();
 
-        // Wire manager via SerializedObject
+        // Wire manager
         var mgrSO = new SerializedObject(mgr);
-
-        // Plant definitions array
-        var plantDefsProp = mgrSO.FindProperty("_plantDefinitions");
-        plantDefsProp.ClearArray();
-        for (int i = 0; i < allPlants.Length; i++)
-        {
-            plantDefsProp.InsertArrayElementAtIndex(i);
-            plantDefsProp.GetArrayElementAtIndex(i).objectReferenceValue = allPlants[i];
-        }
-
-        // Plant visuals array
-        var plantVisProp = mgrSO.FindProperty("_plantVisuals");
-        plantVisProp.ClearArray();
-        for (int i = 0; i < plantVisuals.Length; i++)
-        {
-            plantVisProp.InsertArrayElementAtIndex(i);
-            plantVisProp.GetArrayElementAtIndex(i).objectReferenceValue = plantVisuals[i];
-        }
-
-        mgrSO.FindProperty("_highlightRing").objectReferenceValue = highlightGO.transform;
-        mgrSO.FindProperty("_highlightColor").colorValue = new Color(1f, 0.9f, 0.2f);
+        mgrSO.FindProperty("_plantLayer").intValue = 1 << plantsLayer;
         mgrSO.FindProperty("_pot").objectReferenceValue = potCtrl;
-        mgrSO.FindProperty("_wateringCanVisual").objectReferenceValue = canParent.transform;
-        mgrSO.FindProperty("_mainCamera").objectReferenceValue = cam;
-
-        mgrSO.FindProperty("_browsePosition").vector3Value = new Vector3(0f, 1.3f, -0.6f);
-        mgrSO.FindProperty("_browseRotation").vector3Value = new Vector3(20f, 0f, 0f);
-        mgrSO.FindProperty("_wateringPosition").vector3Value = new Vector3(0f, 0.8f, -0.1f);
-        mgrSO.FindProperty("_wateringRotation").vector3Value = new Vector3(40f, 0f, 0f);
-        mgrSO.FindProperty("_cameraBlendSpeed").floatValue = 3f;
-        mgrSO.FindProperty("_canIdleAngle").floatValue = 0f;
-        mgrSO.FindProperty("_canPourAngle").floatValue = -45f;
-        mgrSO.FindProperty("_waterStreamVisual").objectReferenceValue = streamGO.transform;
-        mgrSO.FindProperty("_spoutTipOffset").vector3Value = new Vector3(-0.08f, 0f, 0f);
-        mgrSO.FindProperty("_streamWidth").floatValue = 0.008f;
-        mgrSO.FindProperty("_overflowPenalty").floatValue = 30f;
         mgrSO.FindProperty("_hud").objectReferenceValue = hud;
+        mgrSO.FindProperty("_mainCamera").objectReferenceValue = cam;
+        mgrSO.FindProperty("_scoreDisplayTime").floatValue = 2f;
+        mgrSO.FindProperty("_overflowPenalty").floatValue = 30f;
         mgrSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 12. UI Canvas ────────────────────────────────────────────
+        // ── 11. UI Canvas ────────────────────────────────────────────
         var canvasGO = CreateScreenCanvas("WateringUI_Canvas", managersGO.transform);
 
+        // HUD panel container (hidden when idle)
+        var hudPanelGO = new GameObject("WateringHUDPanel");
+        hudPanelGO.transform.SetParent(canvasGO.transform);
+        var hudPanelRT = hudPanelGO.AddComponent<RectTransform>();
+        hudPanelRT.anchorMin = Vector2.zero;
+        hudPanelRT.anchorMax = Vector2.one;
+        hudPanelRT.offsetMin = Vector2.zero;
+        hudPanelRT.offsetMax = Vector2.zero;
+        hudPanelRT.localScale = Vector3.one;
+
         // Plant name (top-center)
-        var plantNameLabel = CreateLabel("PlantNameLabel", canvasGO.transform,
+        var plantNameLabel = CreateLabel("PlantNameLabel", hudPanelGO.transform,
             new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
             new Vector2(0f, -30f), new Vector2(400f, 40f),
-            "Select a plant", 24f, TextAlignmentOptions.Center);
-
-        // Description (top-center, below name)
-        var descLabel = CreateLabel("DescriptionLabel", canvasGO.transform,
-            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-            new Vector2(0f, -65f), new Vector2(450f, 30f),
-            "", 14f, TextAlignmentOptions.Center);
-
-        // Instruction hint (bottom-center)
-        var instructionLabel = CreateLabel("InstructionLabel", canvasGO.transform,
-            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-            new Vector2(0f, 40f), new Vector2(500f, 30f),
-            "A/D: Browse plants   Enter: Select", 16f, TextAlignmentOptions.Center);
+            "", 24f, TextAlignmentOptions.Center);
 
         // Water level (right side)
-        var waterLabel = CreateLabel("WaterLevelLabel", canvasGO.transform,
+        var waterLabel = CreateLabel("WaterLevelLabel", hudPanelGO.transform,
             new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
             new Vector2(-80f, 30f), new Vector2(150f, 30f),
             "", 18f, TextAlignmentOptions.Right);
 
         // Foam level (right side, below water)
-        var foamLabel = CreateLabel("FoamLevelLabel", canvasGO.transform,
+        var foamLabel = CreateLabel("FoamLevelLabel", hudPanelGO.transform,
             new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
             new Vector2(-80f, -10f), new Vector2(150f, 30f),
             "", 18f, TextAlignmentOptions.Right);
 
-        // Score label (center, used in scoring state)
-        var scoreLabel = CreateLabel("ScoreLabel", canvasGO.transform,
-            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(0f, 0f), new Vector2(500f, 120f),
-            "", 20f, TextAlignmentOptions.Center);
+        // Target hint (right side, below foam)
+        var targetLabel = CreateLabel("TargetLabel", hudPanelGO.transform,
+            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
+            new Vector2(-80f, -50f), new Vector2(150f, 30f),
+            "", 16f, TextAlignmentOptions.Right);
 
-        // ── Browse panel ─────────────────────────────────────────────
-        var browsePanelGO = new GameObject("BrowsePanel");
-        browsePanelGO.transform.SetParent(canvasGO.transform);
-        var browsePanelRT = browsePanelGO.AddComponent<RectTransform>();
-        browsePanelRT.anchorMin = new Vector2(0.5f, 0.5f);
-        browsePanelRT.anchorMax = new Vector2(0.5f, 0.5f);
-        browsePanelRT.sizeDelta = new Vector2(10f, 10f);
-        browsePanelRT.anchoredPosition = Vector2.zero;
-        browsePanelRT.localScale = Vector3.one;
-
-        // ── Overflow warning ─────────────────────────────────────────
-        var overflowGO = CreateLabel("OverflowWarning", canvasGO.transform,
+        // Overflow warning
+        var overflowGO = CreateLabel("OverflowWarning", hudPanelGO.transform,
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0f, 60f), new Vector2(300f, 40f),
             "Overflowing!", 22f, TextAlignmentOptions.Center);
         overflowGO.GetComponent<TMP_Text>().color = new Color(1f, 0.25f, 0.2f);
         overflowGO.SetActive(false);
 
-        // ── Watering panel (Done Watering button) ────────────────────
-        var wateringPanelGO = new GameObject("WateringPanel");
-        wateringPanelGO.transform.SetParent(canvasGO.transform);
-        var wateringRT = wateringPanelGO.AddComponent<RectTransform>();
-        wateringRT.anchorMin = new Vector2(1f, 0f);
-        wateringRT.anchorMax = new Vector2(1f, 0f);
-        wateringRT.pivot = new Vector2(1f, 0f);
-        wateringRT.anchoredPosition = new Vector2(-20f, 20f);
-        wateringRT.sizeDelta = new Vector2(180f, 40f);
-        wateringRT.localScale = Vector3.one;
+        // Score label (center)
+        var scoreLabel = CreateLabel("ScoreLabel", hudPanelGO.transform,
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+            new Vector2(0f, 0f), new Vector2(500f, 120f),
+            "", 20f, TextAlignmentOptions.Center);
 
-        var doneBtnGO = BuildActionButton(wateringPanelGO.transform, "Done Watering",
-            mgr, nameof(WateringManager.FinishWatering), Vector2.zero,
-            new Color(0.3f, 0.55f, 0.3f));
-
-        // ── Scoring panel (Retry + Next Plant) ──────────────────────
-        var scoringPanelGO = new GameObject("ScoringPanel");
-        scoringPanelGO.transform.SetParent(canvasGO.transform);
-        var scoringPanelRT = scoringPanelGO.AddComponent<RectTransform>();
-        scoringPanelRT.anchorMin = new Vector2(0.5f, 0.5f);
-        scoringPanelRT.anchorMax = new Vector2(0.5f, 0.5f);
-        scoringPanelRT.sizeDelta = new Vector2(350f, 50f);
-        scoringPanelRT.anchoredPosition = new Vector2(0f, -80f);
-        scoringPanelRT.localScale = Vector3.one;
-
-        var retryBtnGO = BuildActionButton(scoringPanelGO.transform, "Retry",
-            mgr, nameof(WateringManager.RetryPlant), new Vector2(-80f, 0f),
-            new Color(0.6f, 0.45f, 0.3f));
-
-        var nextBtnGO = BuildActionButton(scoringPanelGO.transform, "Next Plant",
-            mgr, nameof(WateringManager.NextPlant), new Vector2(80f, 0f),
-            new Color(0.3f, 0.55f, 0.3f));
+        // Instruction hint (bottom-center, always visible)
+        CreateLabel("InstructionLabel", canvasGO.transform,
+            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+            new Vector2(0f, 40f), new Vector2(500f, 30f),
+            "Click on a plant to water it \u2014 hold to pour!", 16f, TextAlignmentOptions.Center);
 
         // ── Wire HUD ─────────────────────────────────────────────────
         var hudSO = new SerializedObject(hud);
         hudSO.FindProperty("manager").objectReferenceValue = mgr;
         hudSO.FindProperty("plantNameLabel").objectReferenceValue = plantNameLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("descriptionLabel").objectReferenceValue = descLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("instructionLabel").objectReferenceValue = instructionLabel.GetComponent<TMP_Text>();
         hudSO.FindProperty("waterLevelLabel").objectReferenceValue = waterLabel.GetComponent<TMP_Text>();
         hudSO.FindProperty("foamLevelLabel").objectReferenceValue = foamLabel.GetComponent<TMP_Text>();
+        hudSO.FindProperty("targetLabel").objectReferenceValue = targetLabel.GetComponent<TMP_Text>();
         hudSO.FindProperty("scoreLabel").objectReferenceValue = scoreLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("browsePanel").objectReferenceValue = browsePanelGO;
-        hudSO.FindProperty("wateringPanel").objectReferenceValue = wateringPanelGO;
-        hudSO.FindProperty("scoringPanel").objectReferenceValue = scoringPanelGO;
         hudSO.FindProperty("overflowWarning").objectReferenceValue = overflowGO;
-        hudSO.FindProperty("doneButton").objectReferenceValue = doneBtnGO.GetComponent<UnityEngine.UI.Button>();
-        hudSO.FindProperty("retryButton").objectReferenceValue = retryBtnGO.GetComponent<UnityEngine.UI.Button>();
-        hudSO.FindProperty("nextPlantButton").objectReferenceValue = nextBtnGO.GetComponent<UnityEngine.UI.Button>();
+        hudSO.FindProperty("hudPanel").objectReferenceValue = hudPanelGO;
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 13. Save scene ───────────────────────────────────────────
+        // ── 12. Save scene ───────────────────────────────────────────
         EnsureFolder("Assets", "Scenes");
         string path = "Assets/Scenes/watering.unity";
         EditorSceneManager.SaveScene(scene, path);
@@ -499,60 +298,6 @@ public static class WateringSceneBuilder
             $"Assets/ScriptableObjects/Watering/Plant_{name.Replace(" ", "_")}.asset");
         AssetDatabase.CreateAsset(so, assetPath);
         return so;
-    }
-
-    // ════════════════════════════════════════════════════════════════════
-    // UI button builder
-    // ════════════════════════════════════════════════════════════════════
-
-    private static GameObject BuildActionButton(Transform parent, string label,
-        WateringManager mgr, string methodName, Vector2 position, Color bgColor)
-    {
-        var btnGO = new GameObject($"Btn_{label.Replace(" ", "")}");
-        btnGO.transform.SetParent(parent);
-
-        var rt = btnGO.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0.5f);
-        rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(140f, 36f);
-        rt.anchoredPosition = position;
-        rt.localScale = Vector3.one;
-
-        var img = btnGO.AddComponent<UnityEngine.UI.Image>();
-        img.color = bgColor;
-
-        var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
-
-        // Wire onClick to manager method by name
-        var method = typeof(WateringManager).GetMethod(methodName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-
-        if (method != null)
-        {
-            var action = System.Delegate.CreateDelegate(
-                typeof(UnityEngine.Events.UnityAction), mgr, method)
-                as UnityEngine.Events.UnityAction;
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, action);
-        }
-
-        // Label text
-        var labelGO = new GameObject("Label");
-        labelGO.transform.SetParent(btnGO.transform);
-
-        var labelRT = labelGO.AddComponent<RectTransform>();
-        labelRT.anchorMin = Vector2.zero;
-        labelRT.anchorMax = Vector2.one;
-        labelRT.offsetMin = Vector2.zero;
-        labelRT.offsetMax = Vector2.zero;
-        labelRT.localScale = Vector3.one;
-
-        var tmp = labelGO.AddComponent<TextMeshProUGUI>();
-        tmp.text = label;
-        tmp.fontSize = 14f;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = Color.white;
-
-        return btnGO;
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -630,21 +375,32 @@ public static class WateringSceneBuilder
         return go;
     }
 
-    private static void MakeTransparent(Renderer rend)
+    private static int EnsureLayer(string layerName)
     {
-        if (rend == null) return;
-        var mat = rend.sharedMaterial;
-        if (mat == null) return;
+        for (int i = 0; i < 32; i++)
+        {
+            string existing = LayerMask.LayerToName(i);
+            if (existing == layerName) return i;
+        }
 
-        mat.SetFloat("_Surface", 1f);
-        mat.SetFloat("_Blend", 0f);
-        mat.SetFloat("_AlphaClip", 0f);
-        mat.SetOverrideTag("RenderType", "Transparent");
-        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        mat.SetInt("_ZWrite", 0);
-        mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        var tagManager = new SerializedObject(
+            AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+        var layersProp = tagManager.FindProperty("layers");
+
+        for (int i = 8; i < layersProp.arraySize; i++)
+        {
+            var element = layersProp.GetArrayElementAtIndex(i);
+            if (string.IsNullOrEmpty(element.stringValue))
+            {
+                element.stringValue = layerName;
+                tagManager.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log($"[WateringSceneBuilder] Created layer '{layerName}' at index {i}");
+                return i;
+            }
+        }
+
+        Debug.LogWarning($"[WateringSceneBuilder] No empty layer slot for '{layerName}', using Default (0)");
+        return 0;
     }
 
     private static void EnsureFolder(string parentFolder, string newFolder)

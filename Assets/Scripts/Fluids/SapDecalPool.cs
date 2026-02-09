@@ -71,7 +71,6 @@ public class SapDecalPool : MonoBehaviour
         // Create prefab if needed
         if (decalPrefab == null && autoCreatePrefab)
         {
-            Debug.Log("[SapDecalPool] No decal prefab assigned — auto-creating default quad decal.");
             CreateDefaultPrefab();
         }
 
@@ -86,8 +85,6 @@ public class SapDecalPool : MonoBehaviour
         {
             CreateDecal();
         }
-
-        Debug.Log($"[SapDecalPool] Initialized with {_pool.Count} decals (prefab='{decalPrefab.name}').");
     }
 
     private void CreateDefaultPrefab()
