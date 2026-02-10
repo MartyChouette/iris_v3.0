@@ -24,63 +24,6 @@ public static class ApartmentSceneBuilder
     private const string TrinketsLayerName = "Trinkets";
     private const string CoffeeTableBooksLayerName = "CoffeeTableBooks";
 
-    // ── Book data ──
-    private static readonly string[] BookTitles =
-    {
-        "Roots in Darkness", "The Quiet Garden", "Letters to Soil",
-        "Pressing Petals", "On Wilting", "Stem Theory",
-    };
-
-    private static readonly string[] BookAuthors =
-    {
-        "Eleanor Moss", "H. Fernwood", "Clara Rootley",
-        "Jasper Thorn", "Wren Dewdrop", "P.L. Greenshaw",
-    };
-
-    private static readonly string[][] BookPages =
-    {
-        new[] {
-            "The roots do not ask permission. They push through clay and stone, searching for what they need in total darkness.",
-            "I have often wondered if the flower knows it is beautiful, or if beauty is simply a side effect of reaching toward light.",
-            "When the last petal falls, the stem stands bare — not empty, but unburdened."
-        },
-        new[] {
-            "A garden is never quiet. Listen closely: the earthworms turning, the slow exhale of opening buds, the patient drip.",
-            "She planted marigolds along the fence not for their color, but because they reminded her of someone she'd rather not forget.",
-            "By September the garden had its own ideas. She learned to stop arguing with it."
-        },
-        new[] {
-            "Dear Soil, I am writing to apologize. I have taken so much from you and returned so little.",
-            "The compost heap is a love letter written in eggshells and coffee grounds. Decomposition as devotion.",
-            "Perhaps we are all just soil, waiting patiently for something to take root."
-        },
-        new[] {
-            "To press a flower is to stop time — or at least, to press pause. The color fades, but the shape remembers.",
-            "Page 47 of her journal: a flattened daisy, brown at the edges, still holding its circular argument.",
-            "Some flowers are better preserved in memory than in books. But we press them anyway."
-        },
-        new[] {
-            "Wilting is not failure. It is the flower's way of saying: I have given everything I had to give.",
-            "The drooping head of a sunflower in October carries more dignity than any spring bloom.",
-            "We fear wilting because we see ourselves in it. But the plant does not fear. It simply returns."
-        },
-        new[] {
-            "Chapter 1: The stem is not merely a support structure. It is a highway, a messenger, a spine.",
-            "Consider the hollow stem of the dandelion — empty inside, yet strong enough to hold a wish.",
-            "All architecture aspires to the condition of the stem: vertical, purposeful, alive."
-        },
-    };
-
-    private static readonly Color[] SpineColors =
-    {
-        new Color(0.55f, 0.15f, 0.15f),
-        new Color(0.12f, 0.15f, 0.40f),
-        new Color(0.12f, 0.35f, 0.15f),
-        new Color(0.70f, 0.62f, 0.48f),
-        new Color(0.45f, 0.20f, 0.40f),
-        new Color(0.25f, 0.25f, 0.25f),
-    };
-
     // ══════════════════════════════════════════════════════════════════
     // Main Build
     // ══════════════════════════════════════════════════════════════════
@@ -149,13 +92,24 @@ public static class ApartmentSceneBuilder
 
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 9. Books in book nook ──
-        BuildBookNookBooks(booksLayer);
+        // ── 9. Bookcase unit (shared with standalone bookcase scene) ──
+        var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
+            booksLayer, drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+        bookcaseRoot.transform.position = new Vector3(-6.3f, 0f, 3.0f);
+        bookcaseRoot.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
-        // ── 9b. Bookcase extras (perfumes, drawers, trinkets, coffee books) ──
-        BuildBookNookPerfumes(perfumesLayer);
-        BuildBookNookDrawers(drawersLayer, trinketsLayer);
-        BuildBookNookCoffeeTableBooks(coffeeTableBooksLayer);
+        // Wire coffee table book targets to apartment furniture
+        var coffeeBooks = bookcaseRoot.GetComponentsInChildren<CoffeeTableBook>();
+        for (int i = 0; i < coffeeBooks.Length; i++)
+        {
+            var cbSO = new SerializedObject(coffeeBooks[i]);
+            cbSO.FindProperty("coffeeTablePosition").vector3Value =
+                new Vector3(-5.0f + i * 0.25f, 0.45f, 3.0f);
+            cbSO.FindProperty("coffeeTableRotation").quaternionValue =
+                Quaternion.Euler(0f, 15f * (i + 1), 0f);
+            cbSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         var moodController = BuildBookNookEnvironmentMood(lightGO);
         var itemInspector = BuildBookNookItemInspector(camGO);
 
@@ -399,11 +353,6 @@ public static class ApartmentSceneBuilder
         CreateBox("FloorLamp_Shade", parent,
             new Vector3(-6.3f, 1.7f, 5.3f), new Vector3(0.35f, 0.25f, 0.35f),
             new Color(0.92f, 0.85f, 0.65f));
-
-        // Bookcase (against wall, Living Room side)
-        CreateBox("Bookshelf", parent,
-            new Vector3(-6.3f, 1.0f, 3f), new Vector3(0.5f, 2.0f, 1.5f),
-            new Color(0.42f, 0.30f, 0.20f));
 
         // Sun ledge with mecha figurine
         CreateBox("SunLedge", parent,
@@ -1594,137 +1543,6 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Book Nook Books
-    // ══════════════════════════════════════════════════════════════════
-
-    private static void BuildBookNookBooks(int booksLayer)
-    {
-        string defDir = "Assets/ScriptableObjects/Bookcase";
-        if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects"))
-            AssetDatabase.CreateFolder("Assets", "ScriptableObjects");
-        if (!AssetDatabase.IsValidFolder(defDir))
-            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
-
-        var booksParent = new GameObject("BookNookBooks");
-        var furniture = GameObject.Find("Furniture");
-        if (furniture != null)
-            booksParent.transform.SetParent(furniture.transform);
-
-        // Bookshelf is at (-6.3, 1.0, 3.0) with scale (0.5, 2.0, 1.5)
-        float bookY = 1.05f;
-        float bookX = -6.0f;
-        float startZ = 2.35f;
-        float spacing = 0.22f;
-
-        for (int i = 0; i < BookTitles.Length; i++)
-        {
-            float thickness = 0.04f;
-            float bookHeight = 0.3f;
-            float bookDepth = 0.2f;
-            Color color = SpineColors[i % SpineColors.Length];
-
-            var def = ScriptableObject.CreateInstance<BookDefinition>();
-            def.title = BookTitles[i];
-            def.author = BookAuthors[i];
-            def.pageTexts = BookPages[i];
-            def.spineColor = color;
-            def.heightScale = 0.85f;
-            def.thicknessScale = thickness;
-
-            string defPath = $"{defDir}/AptBook_{i:D2}_{BookTitles[i].Replace(" ", "_")}.asset";
-            AssetDatabase.CreateAsset(def, defPath);
-
-            float bookZ = startZ + i * spacing;
-
-            var bookGO = CreateBox($"AptBook_{i}", booksParent.transform,
-                new Vector3(bookX, bookY + bookHeight / 2f, bookZ),
-                new Vector3(thickness, bookHeight, bookDepth),
-                color);
-            bookGO.isStatic = false;
-            bookGO.layer = booksLayer;
-
-            var volume = bookGO.AddComponent<BookVolume>();
-            var pagesRoot = BuildBookPages(bookGO.transform, thickness, bookHeight, bookDepth);
-
-            var bvSO = new SerializedObject(volume);
-            bvSO.FindProperty("definition").objectReferenceValue = def;
-            bvSO.FindProperty("pagesRoot").objectReferenceValue = pagesRoot;
-
-            var pageLabels = pagesRoot.GetComponentsInChildren<TMP_Text>(true);
-            var labelsProperty = bvSO.FindProperty("pageLabels");
-            labelsProperty.arraySize = Mathf.Min(pageLabels.Length, 3);
-            for (int p = 0; p < labelsProperty.arraySize; p++)
-                labelsProperty.GetArrayElementAtIndex(p).objectReferenceValue = pageLabels[p];
-
-            bvSO.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        Debug.Log($"[ApartmentSceneBuilder] Created {BookTitles.Length} books in book nook.");
-    }
-
-    private static GameObject BuildBookPages(Transform bookTransform,
-        float thickness, float height, float depth)
-    {
-        var pagesRoot = new GameObject("Pages");
-        pagesRoot.transform.SetParent(bookTransform);
-        pagesRoot.transform.localPosition = Vector3.zero;
-        pagesRoot.transform.localRotation = Quaternion.identity;
-
-        var canvasGO = new GameObject("PageCanvas");
-        canvasGO.transform.SetParent(pagesRoot.transform);
-        canvasGO.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.001f);
-        canvasGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-
-        var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-
-        var canvasRT = canvasGO.GetComponent<RectTransform>();
-        canvasRT.sizeDelta = new Vector2(900f, 400f);
-        canvasRT.localScale = new Vector3(0.0005f, 0.0005f, 0.0005f);
-
-        string[] pageNames = { "PageLeft", "PageCenter", "PageRight" };
-        float pageWidth = 280f;
-        float[] xPositions = { -300f, 0f, 300f };
-
-        for (int i = 0; i < 3; i++)
-        {
-            var pageGO = new GameObject(pageNames[i]);
-            pageGO.transform.SetParent(canvasGO.transform);
-
-            var rt = pageGO.AddComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2(xPositions[i], 0f);
-            rt.sizeDelta = new Vector2(pageWidth, 380f);
-            rt.localScale = Vector3.one;
-            rt.localRotation = Quaternion.identity;
-
-            var bg = pageGO.AddComponent<UnityEngine.UI.Image>();
-            bg.color = new Color(0.95f, 0.93f, 0.88f, 0.95f);
-
-            var textGO = new GameObject("Text");
-            textGO.transform.SetParent(pageGO.transform);
-
-            var textRT = textGO.AddComponent<RectTransform>();
-            textRT.anchorMin = Vector2.zero;
-            textRT.anchorMax = Vector2.one;
-            textRT.offsetMin = new Vector2(8f, 8f);
-            textRT.offsetMax = new Vector2(-8f, -8f);
-            textRT.localScale = Vector3.one;
-
-            var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "";
-            tmp.fontSize = 18f;
-            tmp.fontStyle = FontStyles.Normal;
-            tmp.alignment = TextAlignmentOptions.TopLeft;
-            tmp.color = new Color(0.12f, 0.10f, 0.08f);
-            tmp.enableWordWrapping = true;
-            tmp.overflowMode = TextOverflowModes.Ellipsis;
-        }
-
-        pagesRoot.SetActive(false);
-        return pagesRoot;
-    }
-
-    // ══════════════════════════════════════════════════════════════════
     // BookInteractionManager
     // ══════════════════════════════════════════════════════════════════
 
@@ -1805,282 +1623,8 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Bookcase Extras (perfumes, drawers, trinkets, coffee books, mood, inspector)
+    // Bookcase Extras (mood, inspector — bookcase geometry via BookcaseSceneBuilder)
     // ══════════════════════════════════════════════════════════════════
-
-    // Perfume data
-    private static readonly string[] PerfumeNames = { "Twilight Bloom", "Morning Dew", "Cedar Ember" };
-    private static readonly string[] PerfumeDescriptions =
-    {
-        "A dusky floral scent that shifts the room toward warm evening tones.",
-        "Light and crisp, like sunlight through wet leaves on a spring morning.",
-        "Smoky and grounding, with hints of resin and dried wood."
-    };
-    private static readonly Color[] PerfumeBottleColors =
-    {
-        new Color(0.6f, 0.3f, 0.7f, 0.8f),
-        new Color(0.3f, 0.7f, 0.5f, 0.8f),
-        new Color(0.7f, 0.4f, 0.2f, 0.8f),
-    };
-    private static readonly Color[] PerfumeSprayColors =
-    {
-        new Color(0.8f, 0.5f, 0.9f, 0.4f),
-        new Color(0.5f, 0.9f, 0.7f, 0.4f),
-        new Color(0.9f, 0.6f, 0.3f, 0.4f),
-    };
-    private static readonly Color[] PerfumeLightColors =
-    {
-        new Color(0.9f, 0.7f, 0.95f),
-        new Color(0.8f, 1f, 0.9f),
-        new Color(1f, 0.85f, 0.65f),
-    };
-    private static readonly float[] PerfumeLightIntensities = { 0.8f, 1.2f, 0.9f };
-
-    // Trinket data
-    private static readonly string[] TrinketNames =
-    {
-        "Ceramic Cat", "Brass Key", "Glass Marble", "Tiny Cactus"
-    };
-    private static readonly string[] TrinketDescriptions =
-    {
-        "A small painted cat, one ear chipped. It looks smug.",
-        "An old brass key that doesn't fit any lock you own.",
-        "Swirls of blue and green trapped in a perfect sphere.",
-        "A fake cactus, barely an inch tall. Perpetually cheerful."
-    };
-    private static readonly Color[] TrinketColors =
-    {
-        new Color(0.9f, 0.85f, 0.75f),
-        new Color(0.75f, 0.65f, 0.3f),
-        new Color(0.3f, 0.5f, 0.8f),
-        new Color(0.4f, 0.7f, 0.3f),
-    };
-
-    // Coffee table book data
-    private static readonly string[] CoffeeBookTitles = { "Arrangements", "Petal Studies" };
-    private static readonly string[] CoffeeBookDescriptions =
-    {
-        "A heavy book of ikebana arrangements, each page a meditation.",
-        "Macro photographs of petals — textures you've never noticed."
-    };
-    private static readonly Color[] CoffeeBookColors =
-    {
-        new Color(0.15f, 0.25f, 0.35f),
-        new Color(0.5f, 0.2f, 0.3f),
-    };
-
-    private static void BuildBookNookPerfumes(int perfumesLayer)
-    {
-        string defDir = "Assets/ScriptableObjects/Bookcase";
-        if (!AssetDatabase.IsValidFolder(defDir))
-            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
-
-        var parent = new GameObject("BookNookPerfumes");
-        var furniture = GameObject.Find("Furniture");
-        if (furniture != null)
-            parent.transform.SetParent(furniture.transform);
-
-        // Position perfume bottles on the book nook shelf, below the books
-        float shelfY = 0.75f;
-        float startX = -6.3f;
-        float startZ = 2.5f;
-        float spacing = 0.15f;
-
-        for (int i = 0; i < PerfumeNames.Length; i++)
-        {
-            var def = ScriptableObject.CreateInstance<PerfumeDefinition>();
-            def.perfumeName = PerfumeNames[i];
-            def.description = PerfumeDescriptions[i];
-            def.bottleColor = PerfumeBottleColors[i];
-            def.sprayColor = PerfumeSprayColors[i];
-            def.lightingColor = PerfumeLightColors[i];
-            def.lightIntensity = PerfumeLightIntensities[i];
-            def.moodParticleColor = PerfumeSprayColors[i];
-
-            string defPath = $"{defDir}/AptPerfume_{i:D2}_{PerfumeNames[i].Replace(" ", "_")}.asset";
-            AssetDatabase.CreateAsset(def, defPath);
-
-            float bottleZ = startZ + i * spacing;
-
-            var bottleGO = CreateBox($"AptPerfume_{i}", parent.transform,
-                new Vector3(startX, shelfY + 0.075f, bottleZ),
-                new Vector3(0.05f, 0.15f, 0.05f),
-                PerfumeBottleColors[i]);
-            bottleGO.isStatic = false;
-            bottleGO.layer = perfumesLayer;
-
-            var bottle = bottleGO.AddComponent<PerfumeBottle>();
-
-            var sprayGO = new GameObject("SprayParticles");
-            sprayGO.transform.SetParent(bottleGO.transform);
-            sprayGO.transform.localPosition = new Vector3(0f, 0.095f, 0f);
-            sprayGO.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-
-            var ps = sprayGO.AddComponent<ParticleSystem>();
-            var main = ps.main;
-            main.startLifetime = 0.5f;
-            main.startSpeed = 1f;
-            main.startSize = 0.02f;
-            main.maxParticles = 50;
-            main.startColor = PerfumeSprayColors[i];
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            var emission = ps.emission;
-            emission.rateOverTime = 30f;
-            var shape = ps.shape;
-            shape.shapeType = ParticleSystemShapeType.Cone;
-            shape.angle = 15f;
-            shape.radius = 0.01f;
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-            var bottleSO = new SerializedObject(bottle);
-            bottleSO.FindProperty("definition").objectReferenceValue = def;
-            bottleSO.FindProperty("sprayParticles").objectReferenceValue = ps;
-            bottleSO.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        Debug.Log($"[ApartmentSceneBuilder] Created {PerfumeNames.Length} perfume bottles in book nook.");
-    }
-
-    private static void BuildBookNookDrawers(int drawersLayer, int trinketsLayer)
-    {
-        string defDir = "Assets/ScriptableObjects/Bookcase";
-        if (!AssetDatabase.IsValidFolder(defDir))
-            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
-
-        var parent = new GameObject("BookNookDrawers");
-        var furniture = GameObject.Find("Furniture");
-        if (furniture != null)
-            parent.transform.SetParent(furniture.transform);
-
-        // Drawers below the bookshelf at (-6.3, 0.4, 3.0)
-        float drawerY = 0.4f;
-        float drawerX = -6.0f;
-        float drawerZ = 2.65f;
-
-        // Display slot positions on the shelf above
-        float displayY = 0.55f;
-        float displayStartZ = 2.35f;
-        float displaySpacing = 0.22f;
-
-        int trinketIndex = 0;
-
-        for (int d = 0; d < 2; d++)
-        {
-            float dZ = drawerZ + d * 0.5f;
-
-            var drawerGO = CreateBox($"AptDrawer_{d}", parent.transform,
-                new Vector3(drawerX, drawerY, dZ),
-                new Vector3(0.4f, 0.2f, 0.3f),
-                new Color(0.30f, 0.20f, 0.12f));
-            drawerGO.isStatic = false;
-            drawerGO.layer = drawersLayer;
-
-            var drawer = drawerGO.AddComponent<DrawerController>();
-
-            var contentsRoot = new GameObject($"AptDrawerContents_{d}");
-            contentsRoot.transform.SetParent(drawerGO.transform);
-            contentsRoot.transform.localPosition = Vector3.zero;
-
-            for (int t = 0; t < 2 && trinketIndex < TrinketNames.Length; t++)
-            {
-                var trinketDef = ScriptableObject.CreateInstance<TrinketDefinition>();
-                trinketDef.trinketName = TrinketNames[trinketIndex];
-                trinketDef.description = TrinketDescriptions[trinketIndex];
-                trinketDef.color = TrinketColors[trinketIndex];
-                trinketDef.itemID = $"apt_trinket_{trinketIndex}";
-                trinketDef.startsInDrawer = true;
-
-                string trinketDefPath = $"{defDir}/AptTrinket_{trinketIndex:D2}_{TrinketNames[trinketIndex].Replace(" ", "_")}.asset";
-                AssetDatabase.CreateAsset(trinketDef, trinketDefPath);
-
-                float localZ = (t == 0) ? -0.06f : 0.06f;
-                var trinketGO = CreateBox($"AptTrinket_{trinketIndex}", contentsRoot.transform,
-                    new Vector3(drawerX, drawerY + 0.04f, dZ + localZ),
-                    new Vector3(0.06f, 0.06f, 0.06f),
-                    TrinketColors[trinketIndex]);
-                trinketGO.isStatic = false;
-                trinketGO.layer = trinketsLayer;
-
-                var trinketVol = trinketGO.AddComponent<TrinketVolume>();
-
-                float displayZ = displayStartZ + trinketIndex * displaySpacing;
-                var trinketSO = new SerializedObject(trinketVol);
-                trinketSO.FindProperty("definition").objectReferenceValue = trinketDef;
-                trinketSO.FindProperty("displayPosition").vector3Value =
-                    new Vector3(drawerX, displayY, displayZ);
-                trinketSO.FindProperty("displayRotation").quaternionValue = Quaternion.identity;
-                trinketSO.ApplyModifiedPropertiesWithoutUndo();
-
-                trinketIndex++;
-            }
-
-            contentsRoot.SetActive(false);
-
-            var drawerSO = new SerializedObject(drawer);
-            drawerSO.FindProperty("slideDistance").floatValue = 0.3f;
-            drawerSO.FindProperty("contentsRoot").objectReferenceValue = contentsRoot;
-            drawerSO.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        Debug.Log($"[ApartmentSceneBuilder] Created 2 drawers with {trinketIndex} trinkets in book nook.");
-    }
-
-    private static void BuildBookNookCoffeeTableBooks(int coffeeTableBooksLayer)
-    {
-        string defDir = "Assets/ScriptableObjects/Bookcase";
-        if (!AssetDatabase.IsValidFolder(defDir))
-            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
-
-        var parent = new GameObject("BookNookCoffeeBooks");
-        var furniture = GameObject.Find("Furniture");
-        if (furniture != null)
-            parent.transform.SetParent(furniture.transform);
-
-        // Bookcase shelf position
-        float shelfY = 1.05f;
-        float shelfX = -6.0f;
-        float startZ = 3.55f;
-
-        // Coffee table in front of bookcase — approximate
-        float tableY = 0.45f;
-        float tableX = -5.0f;
-        float tableZ = 3.0f;
-
-        for (int i = 0; i < CoffeeBookTitles.Length; i++)
-        {
-            var def = ScriptableObject.CreateInstance<CoffeeTableBookDefinition>();
-            def.title = CoffeeBookTitles[i];
-            def.description = CoffeeBookDescriptions[i];
-            def.coverColor = CoffeeBookColors[i];
-            def.itemID = $"apt_coffeebook_{i}";
-            def.size = new Vector2(0.20f, 0.16f);
-            def.thickness = 0.025f;
-
-            string defPath = $"{defDir}/AptCoffeeBook_{i:D2}_{CoffeeBookTitles[i].Replace(" ", "_")}.asset";
-            AssetDatabase.CreateAsset(def, defPath);
-
-            float bookZ = startZ + i * 0.22f;
-
-            var bookGO = CreateBox($"AptCoffeeBook_{i}", parent.transform,
-                new Vector3(shelfX, shelfY + def.thickness / 2f, bookZ),
-                new Vector3(def.size.x, def.thickness, def.size.y),
-                CoffeeBookColors[i]);
-            bookGO.isStatic = false;
-            bookGO.layer = coffeeTableBooksLayer;
-
-            var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
-
-            var cbSO = new SerializedObject(coffeeBook);
-            cbSO.FindProperty("definition").objectReferenceValue = def;
-            cbSO.FindProperty("coffeeTablePosition").vector3Value =
-                new Vector3(tableX + i * 0.25f, tableY, tableZ);
-            cbSO.FindProperty("coffeeTableRotation").quaternionValue =
-                Quaternion.Euler(0f, 15f * (i + 1), 0f);
-            cbSO.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        Debug.Log($"[ApartmentSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books in book nook.");
-    }
 
     private static EnvironmentMoodController BuildBookNookEnvironmentMood(GameObject lightGO)
     {

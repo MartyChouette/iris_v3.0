@@ -21,7 +21,7 @@ public static class BookcaseSceneBuilder
     private const float CaseWidth = 2.4f;
     private const float CaseHeight = 2.2f;
     private const float CaseDepth = 0.35f;
-    private const float CaseCenterZ = 1.8f;
+    private const float CaseCenterZ = 0f;
     private const int ShelfCount = 5;       // 5 shelves = 4 usable rows
     private const float ShelfThickness = 0.02f;
     private const float SidePanelThickness = 0.03f;
@@ -258,36 +258,39 @@ public static class BookcaseSceneBuilder
         // ── 3. Room geometry ───────────────────────────────────────────
         BuildRoom();
 
-        // ── 4. Bookcase frame (includes drawer section) ────────────────
-        BuildBookcaseFrame();
+        // ── 4. Bookcase unit (frame, books, perfumes, trinkets, drawers, coffee books)
+        var bookcaseRoot = BuildBookcaseUnit(booksLayer, drawersLayer,
+            perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+        bookcaseRoot.transform.position = new Vector3(0f, 0f, 1.8f);
 
-        // ── 5. Books (rows 2-3) ────────────────────────────────────────
-        BuildBooks(booksLayer);
-
-        // ── 6. Perfume bottles (row 1) ─────────────────────────────────
-        BuildPerfumeShelf(perfumesLayer);
-
-        // ── 7. Trinket display slots (row 0) ───────────────────────────
-        BuildTrinketDisplaySlots(trinketsLayer);
-
-        // ── 8. Drawers (below bookcase) ────────────────────────────────
-        BuildDrawers(drawersLayer, trinketsLayer);
-
-        // ── 9. Coffee table + coffee table books (row 2 right) ─────────
+        // ── 5. Coffee table (scene-specific room furniture) ──────────
         BuildCoffeeTable();
-        BuildCoffeeTableBooks(coffeeTableBooksLayer);
 
-        // ── 10. Environment mood controller ────────────────────────────
+        // ── 6. Wire coffee table book targets ────────────────────────
+        var coffeeBooks = bookcaseRoot.GetComponentsInChildren<CoffeeTableBook>();
+        float coffeeTableTopY = 0.415f;
+        for (int i = 0; i < coffeeBooks.Length; i++)
+        {
+            float tableX = 0.65f + i * 0.25f;
+            var cbSO = new SerializedObject(coffeeBooks[i]);
+            cbSO.FindProperty("coffeeTablePosition").vector3Value =
+                new Vector3(tableX, coffeeTableTopY, 0.8f);
+            cbSO.FindProperty("coffeeTableRotation").quaternionValue =
+                Quaternion.Euler(0f, 15f * (i + 1), 0f);
+            cbSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // ── 7. Environment mood controller ───────────────────────────
         BuildEnvironmentMood(lightGO);
 
-        // ── 11. Item Inspector ─────────────────────────────────────────
+        // ── 8. Item Inspector ────────────────────────────────────────
         var inspector = BuildItemInspector(camGO);
 
-        // ── 12. BookInteractionManager + UI ────────────────────────────
+        // ── 9. BookInteractionManager + UI ───────────────────────────
         BuildInteractionManager(camGO, inspector, booksLayer, drawersLayer,
             perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
 
-        // ── 13. Save scene ─────────────────────────────────────────────
+        // ── 10. Save scene ───────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -295,6 +298,31 @@ public static class BookcaseSceneBuilder
         string path = $"{dir}/bookcase_browsing.unity";
         EditorSceneManager.SaveScene(scene, path);
         Debug.Log($"[BookcaseSceneBuilder] Scene saved to {path}");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Shared Bookcase Unit — builds the complete bookcase geometry
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Builds a self-contained bookcase unit at local origin (0,0,0) with all items:
+    /// frame, books, perfume bottles, trinket display slots, drawers with trinkets,
+    /// and coffee table books. Caller positions/rotates the returned root and wires
+    /// coffee table book targets to scene-specific furniture.
+    /// </summary>
+    public static GameObject BuildBookcaseUnit(int booksLayer, int drawersLayer,
+        int perfumesLayer, int trinketsLayer, int coffeeTableBooksLayer)
+    {
+        var bookcaseRoot = new GameObject("Bookcase");
+
+        BuildBookcaseFrame(bookcaseRoot);
+        BuildBooks(bookcaseRoot, booksLayer);
+        BuildPerfumeShelf(bookcaseRoot, perfumesLayer);
+        BuildTrinketDisplaySlots(bookcaseRoot, trinketsLayer);
+        BuildDrawers(bookcaseRoot, drawersLayer, trinketsLayer);
+        BuildCoffeeTableBooks(bookcaseRoot, coffeeTableBooksLayer);
+
+        return bookcaseRoot;
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -358,11 +386,10 @@ public static class BookcaseSceneBuilder
     // Bookcase Frame (original geometry — drawers are separate below)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildBookcaseFrame()
+    private static void BuildBookcaseFrame(GameObject bookcaseRoot)
     {
-        var parent = new GameObject("Bookcase");
         var frame = new GameObject("BookcaseFrame");
-        frame.transform.SetParent(parent.transform);
+        frame.transform.SetParent(bookcaseRoot.transform);
 
         Color darkBrown = new Color(0.25f, 0.15f, 0.08f);
         float caseX = 0f;
@@ -403,7 +430,7 @@ public static class BookcaseSceneBuilder
     // Books (all 4 rows, with reserved space for new items on some rows)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildBooks(int booksLayer)
+    private static void BuildBooks(GameObject bookcaseRoot, int booksLayer)
     {
         string defDir = "Assets/ScriptableObjects/Bookcase";
         if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects"))
@@ -412,9 +439,7 @@ public static class BookcaseSceneBuilder
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
 
         var booksParent = new GameObject("Books");
-        var bookcase = GameObject.Find("Bookcase");
-        if (bookcase != null)
-            booksParent.transform.SetParent(bookcase.transform);
+        booksParent.transform.SetParent(bookcaseRoot.transform);
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float rowHeight = CaseHeight / ShelfCount;
@@ -571,16 +596,14 @@ public static class BookcaseSceneBuilder
     // Perfume Shelf (row 1, right side — next to books)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildPerfumeShelf(int perfumesLayer)
+    private static void BuildPerfumeShelf(GameObject bookcaseRoot, int perfumesLayer)
     {
         string defDir = "Assets/ScriptableObjects/Bookcase";
         if (!AssetDatabase.IsValidFolder(defDir))
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
 
         var parent = new GameObject("PerfumeBottles");
-        var bookcase = GameObject.Find("Bookcase");
-        if (bookcase != null)
-            parent.transform.SetParent(bookcase.transform);
+        parent.transform.SetParent(bookcaseRoot.transform);
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float rowHeight = CaseHeight / ShelfCount;
@@ -657,12 +680,10 @@ public static class BookcaseSceneBuilder
     // Trinket Display Slots (row 0, right side — next to books)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildTrinketDisplaySlots(int trinketsLayer)
+    private static void BuildTrinketDisplaySlots(GameObject bookcaseRoot, int trinketsLayer)
     {
         var parent = new GameObject("TrinketDisplaySlots");
-        var bookcase = GameObject.Find("Bookcase");
-        if (bookcase != null)
-            parent.transform.SetParent(bookcase.transform);
+        parent.transform.SetParent(bookcaseRoot.transform);
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float rowHeight = CaseHeight / ShelfCount;
@@ -691,16 +712,14 @@ public static class BookcaseSceneBuilder
     // Drawers (separate unit below bookcase, from Y=-DrawerHeight to Y=0)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildDrawers(int drawersLayer, int trinketsLayer)
+    private static void BuildDrawers(GameObject bookcaseRoot, int drawersLayer, int trinketsLayer)
     {
         string defDir = "Assets/ScriptableObjects/Bookcase";
         if (!AssetDatabase.IsValidFolder(defDir))
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
 
         var parent = new GameObject("Drawers");
-        var bookcase = GameObject.Find("Bookcase");
-        if (bookcase != null)
-            parent.transform.SetParent(bookcase.transform);
+        parent.transform.SetParent(bookcaseRoot.transform);
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float drawerWidth = innerWidth / 2f - 0.02f;
@@ -808,7 +827,7 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Coffee Table (in room, in front of bookcase)
+    // Coffee Table (in room, in front of bookcase — scene-specific)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildCoffeeTable()
@@ -834,24 +853,19 @@ public static class BookcaseSceneBuilder
     // Coffee Table Books (on bookcase row 2, right side)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildCoffeeTableBooks(int coffeeTableBooksLayer)
+    private static void BuildCoffeeTableBooks(GameObject bookcaseRoot, int coffeeTableBooksLayer)
     {
         string defDir = "Assets/ScriptableObjects/Bookcase";
         if (!AssetDatabase.IsValidFolder(defDir))
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
 
         var parent = new GameObject("CoffeeTableBooks");
-        var bookcase = GameObject.Find("Bookcase");
-        if (bookcase != null)
-            parent.transform.SetParent(bookcase.transform);
+        parent.transform.SetParent(bookcaseRoot.transform);
 
         // Row 2 — right side of shelf
         float rowHeight = CaseHeight / ShelfCount;
         float row2ShelfTopY = 2f * rowHeight + ShelfThickness / 2f;
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
-
-        // Coffee table top Y for target positions
-        float coffeeTableTopY = 0.415f;
 
         for (int i = 0; i < CoffeeBookTitles.Length; i++)
         {
@@ -880,15 +894,8 @@ public static class BookcaseSceneBuilder
 
             var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
 
-            // Coffee table target position
-            float tableX = 0.65f + i * 0.25f;
-
             var cbSO = new SerializedObject(coffeeBook);
             cbSO.FindProperty("definition").objectReferenceValue = def;
-            cbSO.FindProperty("coffeeTablePosition").vector3Value =
-                new Vector3(tableX, coffeeTableTopY, 0.8f);
-            cbSO.FindProperty("coffeeTableRotation").quaternionValue =
-                Quaternion.Euler(0f, 15f * (i + 1), 0f);
             cbSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -1077,7 +1084,7 @@ public static class BookcaseSceneBuilder
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;
         go.transform.SetParent(parent);
-        go.transform.position = position;
+        go.transform.localPosition = position;
         go.transform.localScale = scale;
         go.isStatic = true;
 
@@ -1092,7 +1099,7 @@ public static class BookcaseSceneBuilder
         return go;
     }
 
-    private static int EnsureLayer(string layerName)
+    public static int EnsureLayer(string layerName)
     {
         var tagManager = new SerializedObject(
             AssetDatabase.LoadMainAssetAtPath("ProjectSettings/TagManager.asset"));

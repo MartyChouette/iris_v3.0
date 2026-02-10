@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
-  m_Name: Book_015_Roots_in_Darkness
+  m_Name: Book_045_Roots_in_Darkness
   m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
   title: Roots in Darkness
   author: Eleanor Moss
@@ -20,6 +20,6 @@ MonoBehaviour:
   - I have often wondered if the flower knows it is beautiful, or if beauty is simply
     a side effect of reaching toward light.
   - "When the last petal falls, the stem stands bare \u2014 not empty, but unburdened."
-  spineColor: {r: 0.1, g: 0.1, b: 0.25, a: 1}
-  heightScale: 0.91805553
-  thicknessScale: 0.041154176
+  spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
+  heightScale: 0.8717235
+  thicknessScale: 0.058475893

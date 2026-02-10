@@ -25,6 +25,12 @@ public class StationRoot : MonoBehaviour
     public StationType Type => stationType;
 
     /// <summary>
+    /// True if this station has its own Cinemachine cameras.
+    /// </summary>
+    public bool HasStationCameras =>
+        stationCameras != null && stationCameras.Length > 0;
+
+    /// <summary>
     /// Returns the station's manager cast to IStationManager, or null.
     /// </summary>
     public IStationManager Manager =>

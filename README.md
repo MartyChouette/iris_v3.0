@@ -66,6 +66,25 @@ Players tend to flowers by cutting stems, removing withered leaves, and arrangin
 | **UI** | Gameplay feedback HUD, grading screen, debug telemetry |
 | **Audio** | Singleton AudioManager with spatial SFX |
 | **Data** | ScriptableObject flower definitions for data-driven scoring |
+| **Apartment Hub** | Spline-dolly camera browsing 7 areas, station enter/exit FSM |
+| **Bookcase Station** | 4-row bookcase with books, perfumes, drawers, trinkets, coffee table books |
+| **Dating Minigame** | Newspaper scissors-cut ad selection, phone call, date arrival |
+| **Mechanic Prototypes** | 10 standalone minigame prototypes (drink making, cleaning, watering, etc.) |
+
+## Apartment Hub
+
+The apartment is the central hub connecting all stations. A Cinemachine spline-dolly camera pans along a closed-loop 7-knot spline. Press left/right to browse areas, Enter to select.
+
+```
+ApartmentManager FSM:
+  Browsing → Selecting → Selected → InStation
+                ↘ (if station has its own cameras) ↗
+                   direct skip to InStation
+```
+
+**7 Areas:** Entrance, Kitchen (NewspaperDating), Living Room (Bookcase), Watering Nook, Flower Room, Cozy Corner (RecordPlayer), Bathroom (MirrorMakeup)
+
+Stations with their own Cinemachine cameras skip the intermediate Selected state and transition directly from Browsing to InStation.
 
 ## Creating a New Flower Level
 
@@ -81,18 +100,25 @@ Players tend to flowers by cutting stems, removing withered leaves, and arrangin
 
 ```
 Assets/
-├── Editor/              # Custom inspectors and tools
-│   └── FlowerAutoSetup  # Auto-wiring wizard for new flowers
+├── Editor/                 # Scene builders and editor tools
+│   ├── FlowerAutoSetup     # Auto-wiring wizard for new flowers
+│   ├── ApartmentSceneBuilder # Generates full apartment hub scene
+│   ├── BookcaseSceneBuilder  # Generates bookcase station (shared builder)
+│   └── ...SceneBuilder     # 10+ scene builders for each mechanic
 ├── Scripts/
-│   ├── Framework/       # TimeScaleManager, VirtualStemCutter, AudioManager
-│   ├── GameLogic/       # FlowerGameBrain, FlowerSessionController, scoring
+│   ├── Framework/          # TimeScaleManager, VirtualStemCutter, AudioManager
+│   ├── GameLogic/          # FlowerGameBrain, FlowerSessionController, scoring
 │   ├── InteractionAndFeel/ # XYTetherJoint, SquishMove, GrabPull
 │   ├── DynamicMeshCutter/  # Mesh cutting engine + plane behaviors
-│   ├── Fluids/          # Sap particle system, decal pooling
-│   ├── UI/              # HUD, grading, debug telemetry
-│   └── Tags/            # Marker components (StemPieceMarker, etc.)
-├── ScriptableObjects/   # Flower definitions, scoring rules
-└── Scenes/              # Game scenes
+│   ├── Fluids/             # Sap particle system, decal pooling
+│   ├── UI/                 # HUD, grading, debug telemetry
+│   ├── Tags/               # Marker components (StemPieceMarker, etc.)
+│   ├── Apartment/          # Hub system: ApartmentManager, StationRoot, ObjectGrabber
+│   ├── Bookcase/           # BookInteractionManager, BookVolume, PerfumeBottle, etc.
+│   ├── Dating/             # NewspaperManager, ScissorsCutController, DayManager
+│   └── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
+├── ScriptableObjects/      # Flower defs, apartment areas, book/perfume/drink defs
+└── Scenes/                 # Game scenes
 ```
 
 ## Development

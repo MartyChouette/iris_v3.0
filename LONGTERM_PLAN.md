@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 3, 2026
+**Last Updated:** February 9, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -43,25 +43,48 @@
   - Full undo support
   - Access: Window > Iris > Flower Auto Setup
 
-### Phase 5: Newspaper Personals Dating Minigame (Done)
-- [x] **DatePersonalDefinition** (`Assets/Scripts/Dating/DatePersonalDefinition.cs`)
-  - ScriptableObject data container for one date character (name, ad text, arrival time, portrait, character prefab)
-- [x] **PersonalListing** (`Assets/Scripts/Dating/PersonalListing.cs`)
-  - Per-listing state machine: Available → BeingCircled → Circled
-  - Populates TMP labels from definition in Awake
-- [x] **MarkerController** (`Assets/Scripts/Dating/MarkerController.cs`)
-  - Mouse-driven Sharpie marker following cursor on newspaper surface via raycast
-  - Circle-drawing coroutine: ~48 points, Perlin-noise wobble, ellipse variation, 30° overshoot, 0.6s ease-in-out animation
-  - Mouse release cancels partial circle and resets listing
-  - Inline InputAction fallback (same pattern as SimpleTestCharacter)
-- [x] **NewspaperManager** (`Assets/Scripts/Dating/NewspaperManager.cs`)
-  - Scene-scoped singleton (Browsing → Calling → Waiting → DateArrived)
-  - 2s calling overlay, countdown timer, arrival notification
-  - UnityEvent OnDateArrived for downstream hooks
-- [x] **NewspaperDatingSceneBuilder** (`Assets/Editor/NewspaperDatingSceneBuilder.cs`)
-  - Editor tool: Window > Iris > Build Newspaper Dating Scene
-  - Generates: desk, newspaper with world-space Canvas + 4 sample listings, marker system with LineRenderer, screen-space UI overlay
-  - Auto-creates "Newspaper" physics layer and DatePersonalDefinition assets
+### Phase 5: Newspaper Dating Minigame (Done — v2 Scissors)
+- [x] **DatePersonalDefinition / CommercialAdDefinition** — ScriptableObjects for ad content
+- [x] **NewspaperPoolDefinition** — defines which ads appear in each newspaper
+- [x] **NewspaperManager** — 7-state FSM: TableView → PickingUp → ReadingPaper → Cutting → Calling → Waiting → DateArrived
+- [x] **ScissorsCutController** — mouse-driven scissors cutting on newspaper surface
+- [x] **CutPathEvaluator** — scores cut accuracy around ads
+- [x] **DayManager** — manages day progression
+- [x] **NewspaperDatingSceneBuilder** — generates complete dating desk scene
+- [x] Deleted legacy MarkerController and PersonalListing (replaced by scissors + ad slots)
+
+### Phase 6: Apartment Hub System (Done)
+- [x] **ApartmentManager** — 4-state FSM (Browsing → Selecting → Selected → InStation), scene-scoped singleton
+- [x] **ApartmentAreaDefinition** — ScriptableObject per area (splinePosition, stationType, selectedPosition/rotation/FOV)
+- [x] **StationRoot** — activates/deactivates station manager, HUD, and Cinemachine cameras
+- [x] **StationType** enum (7 types) + **IStationManager** interface
+- [x] **ObjectGrabber** — spring-damper pick-and-place with grid snap and surface clamping
+- [x] **PlacementSurface** — bounds-constrained placement areas
+- [x] CinemachineSplineDolly on browse camera, 7-knot closed-loop spline, ShortestSplineDelta() wraparound
+- [x] 7 areas: Entrance, Kitchen (NewspaperDating), Living Room (Bookcase), Watering Nook, Flower Room, Cozy Corner (RecordPlayer), Bathroom (MirrorMakeup)
+
+### Phase 7: Enhanced Bookcase Station (Done)
+- [x] **BookInteractionManager** — 11-state FSM with multi-layer raycast (Books, Drawers, Perfumes, Trinkets, CoffeeTableBooks)
+- [x] **BookVolume / BookDefinition** — book interaction with pull/read/put-back states
+- [x] **PerfumeBottle / PerfumeDefinition** — hold and spray interaction
+- [x] **DrawerController** — open/close slide with trinket storage
+- [x] **TrinketVolume / TrinketDefinition** — double-click inspection items
+- [x] **CoffeeTableBook / CoffeeTableBookDefinition** — moveable display books
+- [x] **ItemInspector** — double-click close-up view for items
+- [x] **EnvironmentMoodController** — light color lerp per book/perfume
+- [x] **ItemStateRegistry** — static dictionary tracking item states
+- [x] **BookcaseSceneBuilder** — generates standalone bookcase scene
+
+### Phase 8: Mechanic Prototypes (Done)
+- [x] 10 standalone mechanic prototypes with scene builders:
+  - StemSound, WiltingClock, ToolDegradation, PestSystem, BossFlowers, Grafting
+  - ComboCutting + ClientEconomy, DrinkMaking, MirrorMakeup, Cleaning, Watering
+- [x] RecordPlayer station (Browsing/Playing FSM, 5 record definitions)
+- [x] Ambient watering system (not a station — always active, click any WaterablePlant)
+
+### Phase 9: Shared Bookcase Refactor & Station Camera Improvements (Done)
+- [x] **Shared bookcase builder** — extracted `BookcaseSceneBuilder.BuildBookcaseUnit()` used by both standalone and apartment scenes, eliminating ~590 lines of duplicate code
+- [x] **Station camera skip** — stations with their own Cinemachine cameras (`StationRoot.HasStationCameras`) skip the Selected state, transitioning directly from Browsing to InStation
 
 ---
 
@@ -115,7 +138,10 @@
 | UI | FlowerGradingUI, FlowerHUD_GameplayFeedback, FlowerHUD_DebugTelemetry |
 | Audio | AudioManager, JointBreakAudioResponder |
 | Data | IdealFlowerDefinition, FlowerTypeDefinition, DatePersonalDefinition |
-| Dating Minigame | NewspaperManager, MarkerController, PersonalListing |
+| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, ApartmentAreaDefinition |
+| Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController |
+| Dating Minigame | NewspaperManager, ScissorsCutController, DayManager, CutPathEvaluator |
+| Mechanics | DrinkMakingManager, CleaningManager, WateringManager, MirrorMakeupManager |
 
 ### Creating a New Flower Level (Quick Start)
 1. Import your flower model into the scene

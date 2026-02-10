@@ -325,6 +325,27 @@ public class ApartmentManager : MonoBehaviour
         if (areas == null || areas.Length == 0) return;
 
         var area = areas[_currentAreaIndex];
+
+        // If the station has its own cameras, skip the selected camera and go straight in
+        if (area.stationType != StationType.None
+            && _stationLookup != null
+            && _stationLookup.TryGetValue(area.stationType, out var station)
+            && station.HasStationCameras)
+        {
+            CurrentState = State.InStation;
+            _activeStation = station;
+
+            browseCamera.Priority = PriorityInactive;
+            station.Activate();
+
+            if (objectGrabber != null)
+                objectGrabber.SetEnabled(false);
+
+            UpdateUI();
+            Debug.Log($"[ApartmentManager] Direct to station: {area.stationType}");
+            return;
+        }
+
         CurrentState = State.Selecting;
 
         if (selectedCamera != null)

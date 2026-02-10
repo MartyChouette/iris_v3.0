@@ -4,7 +4,7 @@
 
 Iris v3.0 is a contemplative flower-trimming game (thesis project). Unity 6.0.3, URP, C#. Players cut stems with scissors, evaluated against ideal rules for score and "days alive."
 
-A secondary **newspaper personals dating minigame** is in progress: player looks down at a desk, circles a personal ad with a Sharpie, calls the date, waits on a countdown timer.
+The game centers on an **apartment hub** — a spline-dolly camera browses 7 areas, each with a station (bookcase, newspaper dating, record player, mirror makeup, etc.). Stations are entered via `StationRoot` and managed by `ApartmentManager`.
 
 ## Build & Run
 
@@ -18,8 +18,10 @@ A secondary **newspaper personals dating minigame** is in progress: player looks
 | Menu Path | Script | What It Does |
 |-----------|--------|--------------|
 | Window > Iris > Flower Auto Setup | `Assets/Editor/FlowerAutoSetup.cs` | Auto-wires flower components from a model |
-| Window > Iris > Build Camera Test Scene | `Assets/Editor/CameraTestSceneBuilder.cs` | Generates Cinemachine camera test room |
+| Window > Iris > Build Apartment Scene | `Assets/Editor/ApartmentSceneBuilder.cs` | Generates full apartment hub with all 7 areas and stations |
+| Window > Iris > Build Bookcase Browsing Scene | `Assets/Editor/BookcaseSceneBuilder.cs` | Generates standalone bookcase station scene |
 | Window > Iris > Build Newspaper Dating Scene | `Assets/Editor/NewspaperDatingSceneBuilder.cs` | Generates newspaper dating desk scene |
+| Window > Iris > Build Camera Test Scene | `Assets/Editor/CameraTestSceneBuilder.cs` | Generates Cinemachine camera test room |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
 
 ## Code Conventions
@@ -41,7 +43,9 @@ A secondary **newspaper personals dating minigame** is in progress: player looks
 | `AudioManager` | Persistent (DDoL) | `Assets/Scripts/Framework/AudioManager.cs` |
 | `TimeScaleManager` | Static utility | `Assets/Scripts/Framework/TimeScaleManager.cs` |
 | `HorrorCameraManager` | Scene-scoped | `Assets/Scripts/Camera/HorrorCameraManager.cs` |
+| `ApartmentManager` | Scene-scoped | `Assets/Scripts/Apartment/ApartmentManager.cs` |
 | `NewspaperManager` | Scene-scoped | `Assets/Scripts/Dating/NewspaperManager.cs` |
+| `BookInteractionManager` | Scene-scoped | `Assets/Scripts/Bookcase/BookInteractionManager.cs` |
 
 ## Script Directory Map
 
@@ -55,33 +59,53 @@ A secondary **newspaper personals dating minigame** is in progress: player looks
 | `Scripts/Camera/` | HorrorCameraManager, CameraZoneTrigger, SimpleTestCharacter |
 | `Scripts/DynamicMeshCutter/` | Mesh cutting engine (DMC) |
 | `Scripts/Tags/` | Marker components (StemPieceMarker, LeafAttachmentMarker, etc.) |
-| `Scripts/Dating/` | Newspaper personals minigame: DatePersonalDefinition, PersonalListing, MarkerController, NewspaperManager |
+| `Scripts/Apartment/` | Hub system: ApartmentManager, StationRoot, ObjectGrabber, PlacementSurface |
+| `Scripts/Bookcase/` | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController, ItemInspector |
+| `Scripts/Dating/` | NewspaperManager, ScissorsCutController, DayManager, NewspaperAdSlot, CutPathEvaluator |
+| `Scripts/Mechanics/` | 10 prototype minigames: DrinkMaking, Cleaning, Watering, MirrorMakeup, RecordPlayer, etc. |
 | `Scripts/Prototype_LivingRoom_Scripts/` | Legacy living room prototype (not active) |
 
-## Dating Minigame Architecture
+## Apartment Hub Architecture
 
 ```
-MarkerController (mouse → raycast → newspaper surface)
-       │ click on listing
+ApartmentManager (Browsing → Selecting → Selected → InStation)
+       │ left/right input                          ↑ (skip if station has cameras)
+       ▼                                           │
+CinemachineSplineDolly (7-knot closed-loop spline)
+       │ Enter key
        ▼
-PersonalListing (Available → BeingCircled → Circled)
-       │ circle completes
+StationRoot.Activate() → raises station cameras to priority 30
+       │
        ▼
-NewspaperManager (Browsing → Calling → Waiting → DateArrived)
-       │ timer hits 0
-       ▼
-UnityEvent OnDateArrived
+IStationManager (BookInteractionManager, NewspaperManager, RecordPlayerManager, MirrorMakeupManager)
 ```
 
-- `DatePersonalDefinition` — ScriptableObject per character (name, ad text, arrival time)
-- Circle drawn via LineRenderer with Perlin-noise wobble for hand-drawn look
-- "Newspaper" physics layer for marker raycasting
+- `ApartmentAreaDefinition` — ScriptableObject per area (splinePosition, stationType, camera settings)
+- `StationRoot` — Marker on each station root, manages activate/deactivate of manager + HUD + cameras
+- Stations with their own `stationCameras` skip the Selected state entirely (direct Browsing → InStation)
+- `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
+
+## Dating Minigame Architecture (v2 — Scissors)
+
+```
+NewspaperManager (TableView → PickingUp → ReadingPaper → Cutting → Calling → Waiting → DateArrived)
+       │ click newspaper
+       ▼
+ScissorsCutController (mouse-driven scissors on newspaper surface)
+       │ cut around ad
+       ▼
+CutPathEvaluator (scores cut accuracy)
+       │ phone call
+       ▼
+DayManager (manages day progression)
+```
+
+- `DatePersonalDefinition` / `CommercialAdDefinition` — ScriptableObjects for ad content
+- `NewspaperPoolDefinition` — defines which ads appear in each newspaper
+- Scissors replace the old marker/circle system (MarkerController and PersonalListing deleted)
 
 ## Roadmap Reference
 
 See `LONGTERM_PLAN.md` for full backlog. Key remaining items:
 - Memory profiling (historical leak concern)
-- Input gating over UI (movement, not just cuts)
-- Legacy Obi Fluid cleanup
-- Material instance auditing (MaterialPropertyBlock)
-- Unit tests for scoring logic
+- Profile on target hardware

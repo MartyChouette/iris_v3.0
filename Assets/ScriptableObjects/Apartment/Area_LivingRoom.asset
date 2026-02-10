@@ -15,10 +15,10 @@ MonoBehaviour:
   areaName: Living Room
   description: Bookcase, coffee table, couch.
   stationType: 1
-  splinePosition: 0.286
-  lookAtPosition: {x: 0, y: 0, z: 0}
-  selectedPosition: {x: -4.5, y: 2.5, z: 4}
+  splinePosition: 0.309
+  lookAtPosition: {x: -16.661419, y: -7.786653, z: 11.286069}
+  selectedPosition: {x: -4.48, y: 2.5, z: 4}
   selectedRotation: {x: 35, y: 180, z: 0}
-  selectedFOV: 50
+  selectedFOV: 48.14
   browseBlendDuration: 0.8
   selectBlendDuration: 0.5
