@@ -21,6 +21,7 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 7 are
 | Window > Iris > Build Apartment Scene | `Assets/Editor/ApartmentSceneBuilder.cs` | Generates full apartment hub with all 7 areas and stations |
 | Window > Iris > Build Bookcase Browsing Scene | `Assets/Editor/BookcaseSceneBuilder.cs` | Generates standalone bookcase station scene |
 | Window > Iris > Build Newspaper Dating Scene | `Assets/Editor/NewspaperDatingSceneBuilder.cs` | Generates newspaper dating desk scene |
+| Window > Iris > Build Dating Loop Scene | `Assets/Editor/DatingLoopSceneBuilder.cs` | Generates standalone dating loop test scene with full gameplay loop |
 | Window > Iris > Build Camera Test Scene | `Assets/Editor/CameraTestSceneBuilder.cs` | Generates Cinemachine camera test room |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
 
@@ -46,12 +47,18 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 7 are
 | `ApartmentManager` | Scene-scoped | `Assets/Scripts/Apartment/ApartmentManager.cs` |
 | `NewspaperManager` | Scene-scoped | `Assets/Scripts/Dating/NewspaperManager.cs` |
 | `BookInteractionManager` | Scene-scoped | `Assets/Scripts/Bookcase/BookInteractionManager.cs` |
+| `GameClock` | Scene-scoped | `Assets/Scripts/Framework/GameClock.cs` |
+| `DateSessionManager` | Scene-scoped | `Assets/Scripts/Dating/DateSessionManager.cs` |
+| `MoodMachine` | Scene-scoped | `Assets/Scripts/Apartment/MoodMachine.cs` |
+| `PhoneController` | Scene-scoped | `Assets/Scripts/Dating/PhoneController.cs` |
+| `CoffeeTableDelivery` | Scene-scoped | `Assets/Scripts/Dating/CoffeeTableDelivery.cs` |
+| `DateEndScreen` | Scene-scoped | `Assets/Scripts/Dating/DateEndScreen.cs` |
 
 ## Script Directory Map
 
 | Directory | Purpose |
 |-----------|---------|
-| `Scripts/Framework/` | Core systems: AudioManager, TimeScaleManager, CuttingPlaneController, VirtualStemCutter, ScissorStation |
+| `Scripts/Framework/` | Core systems: AudioManager, TimeScaleManager, GameClock, CuttingPlaneController, VirtualStemCutter, ScissorStation |
 | `Scripts/GameLogic/` | Scoring brain, session lifecycle, flower definitions, stem/part runtime |
 | `Scripts/InteractionAndFeel/` | Physics interactions: XYTetherJoint, SquishMove, JellyMesh, GrabPull |
 | `Scripts/Fluids/` | Sap particles, decal pooling |
@@ -59,9 +66,9 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 7 are
 | `Scripts/Camera/` | HorrorCameraManager, CameraZoneTrigger, SimpleTestCharacter |
 | `Scripts/DynamicMeshCutter/` | Mesh cutting engine (DMC) |
 | `Scripts/Tags/` | Marker components (StemPieceMarker, LeafAttachmentMarker, etc.) |
-| `Scripts/Apartment/` | Hub system: ApartmentManager, StationRoot, ObjectGrabber, PlacementSurface |
+| `Scripts/Apartment/` | Hub system: ApartmentManager, StationRoot, ObjectGrabber, PlacementSurface, MoodMachine |
 | `Scripts/Bookcase/` | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController, ItemInspector |
-| `Scripts/Dating/` | NewspaperManager, ScissorsCutController, DayManager, NewspaperAdSlot, CutPathEvaluator |
+| `Scripts/Dating/` | Dating loop: DateSessionManager, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, NewspaperManager, DayManager |
 | `Scripts/Mechanics/` | 10 prototype minigames: DrinkMaking, Cleaning, Watering, MirrorMakeup, RecordPlayer, etc. |
 | `Scripts/Prototype_LivingRoom_Scripts/` | Legacy living room prototype (not active) |
 
@@ -77,7 +84,7 @@ CinemachineSplineDolly (7-knot closed-loop spline)
 StationRoot.Activate() → raises station cameras to priority 30
        │
        ▼
-IStationManager (BookInteractionManager, NewspaperManager, RecordPlayerManager, MirrorMakeupManager)
+IStationManager (BookInteractionManager, NewspaperManager, RecordPlayerManager, MirrorMakeupManager, PhoneController)
 ```
 
 - `ApartmentAreaDefinition` — ScriptableObject per area (splinePosition, stationType, camera settings)
@@ -85,24 +92,43 @@ IStationManager (BookInteractionManager, NewspaperManager, RecordPlayerManager, 
 - Stations with their own `stationCameras` skip the Selected state entirely (direct Browsing → InStation)
 - `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
 
-## Dating Minigame Architecture (v2 — Scissors)
+## Dating Loop Architecture (v3 — Full Loop)
 
 ```
+GameClock (7-day calendar, real-time hour tick, MoodMachine "TimeOfDay" source)
+       │ each morning
+       ▼
+DayManager.AdvanceDay() → NewspaperManager regenerates ads
+       │ click newspaper → cut ad
+       ▼
 NewspaperManager (TableView → PickingUp → ReadingPaper → Cutting → Calling → Waiting → DateArrived)
-       │ click newspaper
+       │ DateArrived
        ▼
-ScissorsCutController (mouse-driven scissors on newspaper surface)
-       │ cut around ad
+PhoneController.StartRinging() → player clicks phone → AnswerPhone()
+       │
        ▼
-CutPathEvaluator (scores cut accuracy)
-       │ phone call
+DateSessionManager (Idle → WaitingForArrival → DateInProgress → DateEnding)
+       │ spawns character
        ▼
-DayManager (manages day progression)
+DateCharacterController (WalkingToCouch → Sitting → GettingUp → WalkingToTarget → Investigating → Returning)
+       │ investigates ReactableTag objects
+       ▼
+ReactionEvaluator → ReactionType (Like/Neutral/Dislike) → affection ±
+       │ player ends date or forced bedtime
+       ▼
+DateEndScreen (grade: S/A/B/C/D) → DateHistory records entry
+       │ continue
+       ▼
+GameClock.GoToBed() → next morning
 ```
 
-- `DatePersonalDefinition` / `CommercialAdDefinition` — ScriptableObjects for ad content
-- `NewspaperPoolDefinition` — defines which ads appear in each newspaper
-- Scissors replace the old marker/circle system (MarkerController and PersonalListing deleted)
+### Key Components
+- `DatePreferences` on `DatePersonalDefinition` — liked/disliked tags, mood range, drinks
+- `ReactableTag` — lightweight marker + static registry on apartment objects
+- `CoffeeTableDelivery` — auto-delivers drinks after DrinkMakingManager scores
+- `MoodMachine` mood matching multiplies affection gains/losses
+- `DateReactionUI` — world-space thought bubble (? → heart/meh/frown)
+- All cross-references use `?.` null-checks — works in standalone test scene or apartment
 
 ## Roadmap Reference
 

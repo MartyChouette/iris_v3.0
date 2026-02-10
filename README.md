@@ -68,7 +68,7 @@ Players tend to flowers by cutting stems, removing withered leaves, and arrangin
 | **Data** | ScriptableObject flower definitions for data-driven scoring |
 | **Apartment Hub** | Spline-dolly camera browsing 7 areas, station enter/exit FSM |
 | **Bookcase Station** | 4-row bookcase with books, perfumes, drawers, trinkets, coffee table books |
-| **Dating Minigame** | Newspaper scissors-cut ad selection, phone call, date arrival |
+| **Dating Loop** | Full dating lifecycle: calendar, newspaper ads, phone, 3D date character, affection tracking, grading |
 | **Mechanic Prototypes** | 10 standalone minigame prototypes (drink making, cleaning, watering, etc.) |
 
 ## Apartment Hub
@@ -85,6 +85,39 @@ ApartmentManager FSM:
 **7 Areas:** Entrance, Kitchen (NewspaperDating), Living Room (Bookcase), Watering Nook, Flower Room, Cozy Corner (RecordPlayer), Bathroom (MirrorMakeup)
 
 Stations with their own Cinemachine cameras skip the intermediate Selected state and transition directly from Browsing to InStation.
+
+## Dating Loop
+
+A full dating gameplay loop spans the 7-day calendar. Each day: wake up, read the newspaper, cut out a personal ad, call the date, prepare the apartment, host the date, then sleep.
+
+```
+GameClock (7-day calendar, real-time hour ticking, feeds MoodMachine "TimeOfDay")
+    │
+    ▼
+NewspaperManager → cut ad → DateSessionManager.StartWaiting()
+    │                              │
+    ▼                              ▼
+PhoneController (rings) ──→ DateSessionManager.OnDateCharacterArrived()
+                                   │
+                                   ▼
+                           DateCharacterController (NavMesh NPC)
+                           - walks to couch, sits
+                           - periodic excursions to ReactableTag objects
+                           - reactions: Like / Neutral / Dislike → affection
+                                   │
+                                   ▼
+                           DateSessionManager.EndDate() → DateEndScreen (grade)
+                                   │
+                                   ▼
+                           GameClock.GoToBed() → next day
+```
+
+- **ReactableTag** marks apartment objects (books, plants, perfume, records) for date reactions
+- **DatePreferences** on each `DatePersonalDefinition` define liked/disliked tags, mood range, drinks
+- **MoodMachine** mood matching multiplies affection gains/losses
+- **CoffeeTableDelivery** auto-delivers drinks after `DrinkMakingManager` scores
+- **DateEndScreen** shows letter grade (S/A/B/C/D) and summary
+- **DateHistory** static registry tracks all dates across the calendar
 
 ## Creating a New Flower Level
 
@@ -106,16 +139,16 @@ Assets/
 │   ├── BookcaseSceneBuilder  # Generates bookcase station (shared builder)
 │   └── ...SceneBuilder     # 10+ scene builders for each mechanic
 ├── Scripts/
-│   ├── Framework/          # TimeScaleManager, VirtualStemCutter, AudioManager
+│   ├── Framework/          # TimeScaleManager, VirtualStemCutter, AudioManager, GameClock
 │   ├── GameLogic/          # FlowerGameBrain, FlowerSessionController, scoring
 │   ├── InteractionAndFeel/ # XYTetherJoint, SquishMove, GrabPull
 │   ├── DynamicMeshCutter/  # Mesh cutting engine + plane behaviors
 │   ├── Fluids/             # Sap particle system, decal pooling
 │   ├── UI/                 # HUD, grading, debug telemetry
 │   ├── Tags/               # Marker components (StemPieceMarker, etc.)
-│   ├── Apartment/          # Hub system: ApartmentManager, StationRoot, ObjectGrabber
+│   ├── Apartment/          # Hub system: ApartmentManager, StationRoot, MoodMachine
 │   ├── Bookcase/           # BookInteractionManager, BookVolume, PerfumeBottle, etc.
-│   ├── Dating/             # NewspaperManager, ScissorsCutController, DayManager
+│   ├── Dating/             # Dating loop: DateSessionManager, GameClock, PhoneController, etc.
 │   └── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
 ├── ScriptableObjects/      # Flower defs, apartment areas, book/perfume/drink defs
 └── Scenes/                 # Game scenes

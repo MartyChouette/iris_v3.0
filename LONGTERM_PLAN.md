@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 9, 2026
+**Last Updated:** February 10, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -43,7 +43,7 @@
   - Full undo support
   - Access: Window > Iris > Flower Auto Setup
 
-### Phase 5: Newspaper Dating Minigame (Done — v2 Scissors)
+### Phase 5: Newspaper Dating Minigame (Done — v2 Scissors, expanded in Phase 10)
 - [x] **DatePersonalDefinition / CommercialAdDefinition** — ScriptableObjects for ad content
 - [x] **NewspaperPoolDefinition** — defines which ads appear in each newspaper
 - [x] **NewspaperManager** — 7-state FSM: TableView → PickingUp → ReadingPaper → Cutting → Calling → Waiting → DateArrived
@@ -86,6 +86,26 @@
 - [x] **Shared bookcase builder** — extracted `BookcaseSceneBuilder.BuildBookcaseUnit()` used by both standalone and apartment scenes, eliminating ~590 lines of duplicate code
 - [x] **Station camera skip** — stations with their own Cinemachine cameras (`StationRoot.HasStationCameras`) skip the Selected state, transitioning directly from Browsing to InStation
 
+### Phase 10: Full Dating Loop System (Done)
+- [x] **GameClock** — Scene-scoped singleton driving a 7-day calendar with configurable real-time hour ticking, feeds MoodMachine "TimeOfDay" source, forced bedtime at 2am, player-initiated sleep
+- [x] **DatePreferences** — Serializable class on DatePersonalDefinition defining liked/disliked tags, preferred mood range, liked/disliked drinks, reaction strength
+- [x] **ReactableTag** — Lightweight marker component with static registry; tags apartment objects for date character discovery
+- [x] **DateSessionManager** — Scene-scoped singleton orchestrating date lifecycle (Idle → WaitingForArrival → DateInProgress → DateEnding), affection tracking (0-100), mood-match multipliers
+- [x] **PhoneController** — Dual-mode: IStationManager station AND ambient-clickable. Rings after newspaper timer, click to answer and trigger date arrival
+- [x] **DateCharacterController** — NavMesh NPC with 7-state FSM (WalkingToCouch → Sitting → GettingUp → WalkingToTarget → Investigating → Returning → Dismissed). Periodic excursions to nearby ReactableTags
+- [x] **ReactionEvaluator** — Static utility evaluating reactables, drinks, and mood against DatePreferences → ReactionType (Like/Neutral/Dislike)
+- [x] **DateReactionUI** — World-space billboard bubble: question mark (notice) → heart/neutral/frown (opinion) with SFX and fade
+- [x] **CoffeeTableDelivery** — Auto-delivers drinks to coffee table after DrinkMakingManager scores, spawns visual cup, notifies DateSessionManager
+- [x] **DateEndScreen** — Results screen with letter grade (S≥90, A≥75, B≥60, C≥40, D<40), summary text, continue button
+- [x] **DateHistory** — Static registry tracking all completed dates across the calendar
+- [x] **DateSessionHUD** — Overlay showing date name, affection bar, clock, day number
+- [x] **DatingLoopSceneBuilder** — Full standalone test scene with room, NavMesh, furniture, cameras, reactable props, all managers, and UI
+- [x] Modified `NewspaperManager` to hand off to DateSessionManager + PhoneController instead of raw Instantiate
+- [x] Modified `DrinkMakingManager` to bridge to CoffeeTableDelivery after scoring
+- [x] Modified `RecordPlayerManager` and `PerfumeBottle` to toggle ReactableTag.IsActive on play/stop and spray/putdown
+- [x] Added `Phone` to `StationType` enum
+- [x] Added `MoodMachine` + `MoodMachineProfile` for scene-wide mood system (light, ambient, fog, rain)
+
 ---
 
 ## Remaining Work
@@ -125,7 +145,7 @@
 - **Data-driven:** ScriptableObjects for flower definitions (IdealFlowerDefinition)
 - **Singleton:** AudioManager (persistent across scenes)
 - **Object pooling:** SapDecalPool, SapParticleController
-- **Static registries:** StemPieceMarker.All, TimeScaleManager priorities
+- **Static registries:** StemPieceMarker.All, ReactableTag.All, DateHistory.Entries, TimeScaleManager priorities
 
 ### Subsystems
 | Subsystem | Key Scripts |
@@ -137,10 +157,11 @@
 | Fluids/VFX | FlowerSapController, SapParticleController, SapDecalPool |
 | UI | FlowerGradingUI, FlowerHUD_GameplayFeedback, FlowerHUD_DebugTelemetry |
 | Audio | AudioManager, JointBreakAudioResponder |
-| Data | IdealFlowerDefinition, FlowerTypeDefinition, DatePersonalDefinition |
-| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, ApartmentAreaDefinition |
+| Data | IdealFlowerDefinition, FlowerTypeDefinition, DatePersonalDefinition, DatePreferences |
+| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, MoodMachine, ApartmentAreaDefinition |
 | Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController |
-| Dating Minigame | NewspaperManager, ScissorsCutController, DayManager, CutPathEvaluator |
+| Dating Loop | DateSessionManager, GameClock, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery |
+| Newspaper | NewspaperManager, ScissorsCutController, DayManager, CutPathEvaluator |
 | Mechanics | DrinkMakingManager, CleaningManager, WateringManager, MirrorMakeupManager |
 
 ### Creating a New Flower Level (Quick Start)
