@@ -5,6 +5,11 @@ using UnityEngine.AI;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Cinemachine;
+using Unity.AI.Navigation;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using UnityEditor.Events;
+using UnityEngine.Events;
 
 /// <summary>
 /// Editor utility that programmatically builds a standalone dating loop test scene.
@@ -14,11 +19,14 @@ using Unity.Cinemachine;
 /// </summary>
 public static class DatingLoopSceneBuilder
 {
+    private const string NewspaperLayerName = "Newspaper";
+
     [MenuItem("Window/Iris/Build Dating Loop Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ───────────────────────────────────────
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        int newspaperLayer = EnsureLayer(NewspaperLayerName);
 
         // ── 1. Directional light ─────────────────────────────────────
         var lightGO = new GameObject("Directional Light");
@@ -43,16 +51,28 @@ public static class DatingLoopSceneBuilder
         // ── 6. Reactable props ───────────────────────────────────────
         BuildReactableProps();
 
-        // ── 7. ScriptableObject assets ───────────────────────────────
+        // ── 7. Newspaper + ad slots ──────────────────────────────────
+        var newspaperData = BuildNewspaper(newspaperLayer, furnitureData.deskTransform);
+
+        // ── 8. Scissors visual ───────────────────────────────────────
+        var scissorsVisual = BuildScissorsVisual();
+
+        // ── 9. ScriptableObject assets ───────────────────────────────
         var soData = CreateScriptableObjectAssets();
 
-        // ── 8. Managers ──────────────────────────────────────────────
-        var managerData = BuildManagers(camData, furnitureData, soData, light);
+        // ── 10. Managers ─────────────────────────────────────────────
+        var managerData = BuildManagers(camData, furnitureData, soData, light,
+            newspaperData, scissorsVisual, newspaperLayer);
 
-        // ── 9. UI ────────────────────────────────────────────────────
+        // ── 11. UI ───────────────────────────────────────────────────
         BuildUI(managerData);
 
-        // ── 10. Save scene ───────────────────────────────────────────
+        // ── 12. EventSystem (required for UI button clicks) ──────────
+        var eventSystemGO = new GameObject("EventSystem");
+        eventSystemGO.AddComponent<EventSystem>();
+        eventSystemGO.AddComponent<InputSystemUIInputModule>();
+
+        // ── 13. Save scene ───────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -164,7 +184,7 @@ public static class DatingLoopSceneBuilder
         var desk = new GameObject("Desk");
         desk.transform.SetParent(parent.transform);
 
-        CreateBox("DeskTop", desk.transform,
+        var deskTop = CreateBox("DeskTop", desk.transform,
             new Vector3(2f, 0.4f, 2f), new Vector3(1.2f, 0.05f, 0.8f),
             new Color(0.45f, 0.30f, 0.18f));
         CreateBox("DeskLeg_FL", desk.transform,
@@ -230,7 +250,7 @@ public static class DatingLoopSceneBuilder
             couchSeatTarget = seatTarget.transform,
             coffeeTableDeliveryPoint = deliveryPoint.transform,
             dateSpawnPoint = dateSpawn.transform,
-            deskTransform = desk.transform,
+            deskTransform = deskTop.transform,
             phoneTransform = phoneGO.transform,
             phoneCollider = phoneGO.GetComponent<Collider>(),
             bedTransform = bed.transform
@@ -325,6 +345,178 @@ public static class DatingLoopSceneBuilder
         navSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
         navSurface.BuildNavMesh();
         Debug.Log("[DatingLoopSceneBuilder] NavMesh built.");
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // Newspaper + Ad Slots
+    // ════════════════════════════════════════════════════════════════
+
+    private struct NewspaperData
+    {
+        public GameObject surfaceQuad;
+        public Collider clickCollider;
+        public NewspaperAdSlot[] personalSlots;
+        public NewspaperAdSlot[] commercialSlots;
+    }
+
+    private static NewspaperData BuildNewspaper(int newspaperLayer, Transform deskTransform)
+    {
+        Vector3 deskPos = deskTransform.position;
+        float newspaperY = deskPos.y + 0.027f; // just above desk surface
+
+        var parent = new GameObject("Newspaper");
+
+        // Newspaper surface quad
+        var surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        surfaceGO.name = "NewspaperSurface";
+        surfaceGO.transform.SetParent(parent.transform);
+        surfaceGO.transform.position = new Vector3(deskPos.x, newspaperY, deskPos.z);
+        surfaceGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        surfaceGO.transform.localScale = new Vector3(0.5f, 0.7f, 1f);
+        surfaceGO.layer = newspaperLayer;
+
+        Object.DestroyImmediate(surfaceGO.GetComponent<MeshCollider>());
+        var boxCol = surfaceGO.AddComponent<BoxCollider>();
+        boxCol.size = new Vector3(1f, 1f, 0.01f);
+        boxCol.center = Vector3.zero;
+
+        surfaceGO.AddComponent<NewspaperSurface>();
+
+        var rend = surfaceGO.GetComponent<Renderer>();
+        if (rend != null)
+        {
+            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                   ?? Shader.Find("Standard"));
+            mat.color = new Color(0.92f, 0.90f, 0.85f);
+            rend.sharedMaterial = mat;
+        }
+
+        // World-space canvas
+        var canvasGO = new GameObject("NewspaperCanvas");
+        canvasGO.transform.SetParent(parent.transform);
+        canvasGO.transform.position = new Vector3(deskPos.x, newspaperY + 0.001f, deskPos.z);
+        canvasGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        var canvasRT = canvasGO.GetComponent<RectTransform>();
+        canvasRT.sizeDelta = new Vector2(500f, 700f);
+        canvasRT.localScale = new Vector3(0.001f, 0.001f, 0.001f);
+
+        CreateTMPText("Header_Text", canvasGO.transform,
+            new Vector2(0f, 310f), new Vector2(480f, 50f),
+            "THE DAILY BLOOM", 40f, FontStyles.Bold, TextAlignmentOptions.Center);
+        CreateTMPText("Personals_Label", canvasGO.transform,
+            new Vector2(-130f, 260f), new Vector2(200f, 30f),
+            "PERSONALS", 16f, FontStyles.Bold, TextAlignmentOptions.Center);
+        CreateTMPText("Ads_Label", canvasGO.transform,
+            new Vector2(130f, 260f), new Vector2(200f, 30f),
+            "CLASSIFIEDS", 16f, FontStyles.Bold, TextAlignmentOptions.Center);
+
+        // 4 personal ad slots (left column)
+        var personalSlots = new NewspaperAdSlot[4];
+        float pStartY = 200f;
+        float pHeight = 110f;
+        for (int i = 0; i < 4; i++)
+        {
+            float yPos = pStartY - i * pHeight;
+            personalSlots[i] = CreateAdSlot(canvasGO.transform, $"PersonalSlot_{i}",
+                new Vector2(-130f, yPos), new Vector2(220f, 100f),
+                true, newspaperLayer, canvasRT.sizeDelta);
+        }
+
+        // 3 commercial ad slots (right column)
+        var commercialSlots = new NewspaperAdSlot[3];
+        float cStartY = 200f;
+        float cHeight = 140f;
+        for (int i = 0; i < 3; i++)
+        {
+            float yPos = cStartY - i * cHeight;
+            commercialSlots[i] = CreateAdSlot(canvasGO.transform, $"CommercialSlot_{i}",
+                new Vector2(130f, yPos), new Vector2(220f, 120f),
+                false, newspaperLayer, canvasRT.sizeDelta);
+        }
+
+        return new NewspaperData
+        {
+            surfaceQuad = surfaceGO,
+            clickCollider = boxCol,
+            personalSlots = personalSlots,
+            commercialSlots = commercialSlots
+        };
+    }
+
+    private static NewspaperAdSlot CreateAdSlot(Transform parent, string name,
+        Vector2 anchoredPos, Vector2 size, bool isPersonal, int layer, Vector2 canvasSize)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent);
+        go.layer = layer;
+
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = size;
+        rt.localScale = Vector3.one;
+        rt.localRotation = Quaternion.identity;
+
+        var slot = go.AddComponent<NewspaperAdSlot>();
+
+        var nameGO = CreateTMPText("Name", go.transform,
+            new Vector2(0f, size.y * 0.35f), new Vector2(size.x - 10f, 24f),
+            "", 16f, FontStyles.Bold, TextAlignmentOptions.Left);
+        var adGO = CreateTMPText("AdText", go.transform,
+            new Vector2(0f, -5f), new Vector2(size.x - 10f, size.y * 0.5f),
+            "", 11f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+        GameObject phoneGO = null;
+        if (isPersonal)
+        {
+            phoneGO = CreateTMPText("Phone", go.transform,
+                new Vector2(0f, -size.y * 0.35f), new Vector2(size.x - 10f, 18f),
+                "", 12f, FontStyles.Italic, TextAlignmentOptions.Left);
+        }
+
+        float uMin = (anchoredPos.x - size.x * 0.5f + canvasSize.x * 0.5f) / canvasSize.x;
+        float vMin = (anchoredPos.y - size.y * 0.5f + canvasSize.y * 0.5f) / canvasSize.y;
+        float uWidth = size.x / canvasSize.x;
+        float vHeight = size.y / canvasSize.y;
+
+        var so = new SerializedObject(slot);
+        so.FindProperty("slotRect").objectReferenceValue = rt;
+        so.FindProperty("nameLabel").objectReferenceValue = nameGO.GetComponent<TMP_Text>();
+        so.FindProperty("adLabel").objectReferenceValue = adGO.GetComponent<TMP_Text>();
+        if (phoneGO != null)
+            so.FindProperty("phoneNumberLabel").objectReferenceValue = phoneGO.GetComponent<TMP_Text>();
+        so.FindProperty("normalizedBounds").rectValue = new Rect(uMin, vMin, uWidth, vHeight);
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        return slot;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // Scissors Visual
+    // ════════════════════════════════════════════════════════════════
+
+    private static Transform BuildScissorsVisual()
+    {
+        var parent = new GameObject("ScissorsVisual");
+        parent.transform.position = Vector3.zero;
+
+        CreateBox("Blade_A", parent.transform,
+            Vector3.zero, new Vector3(0.04f, 0.003f, 0.003f),
+            new Color(0.7f, 0.7f, 0.7f));
+        CreateBox("Blade_B", parent.transform,
+            Vector3.zero, new Vector3(0.003f, 0.003f, 0.04f),
+            new Color(0.7f, 0.7f, 0.7f));
+        CreateBox("Handle_A", parent.transform,
+            new Vector3(0.025f, 0f, 0f), new Vector3(0.012f, 0.005f, 0.012f),
+            new Color(0.2f, 0.2f, 0.2f));
+        CreateBox("Handle_B", parent.transform,
+            new Vector3(-0.025f, 0f, 0f), new Vector3(0.012f, 0.005f, 0.012f),
+            new Color(0.2f, 0.2f, 0.2f));
+
+        parent.SetActive(false);
+        return parent.transform;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -633,11 +825,14 @@ public static class DatingLoopSceneBuilder
         public PhoneController phoneController;
         public CoffeeTableDelivery coffeeTableDelivery;
         public MoodMachine moodMachine;
+        public NewspaperManager newspaperManager;
+        public NewspaperHUD newspaperHUD;
     }
 
     private static ManagerData BuildManagers(
         CameraData camData, FurnitureData furnitureData,
-        SOData soData, Light directionalLight)
+        SOData soData, Light directionalLight,
+        NewspaperData newspaperData, Transform scissorsVisual, int newspaperLayer)
     {
         var managersGO = new GameObject("Managers");
 
@@ -689,6 +884,59 @@ public static class DatingLoopSceneBuilder
         // ── DateSessionHUD (added to managers, UI wired later) ───
         var dateSessionHUD = managersGO.AddComponent<DateSessionHUD>();
 
+        // ── CutPathEvaluator ───────────────────────────────────────
+        var evalComp = managersGO.AddComponent<CutPathEvaluator>();
+
+        // ── ScissorsCutController ─────────────────────────────────
+        var scissorsCtrl = managersGO.AddComponent<ScissorsCutController>();
+        var scissorsSO = new SerializedObject(scissorsCtrl);
+        scissorsSO.FindProperty("surface").objectReferenceValue =
+            newspaperData.surfaceQuad.GetComponent<NewspaperSurface>();
+        scissorsSO.FindProperty("cam").objectReferenceValue = camData.camera;
+        scissorsSO.FindProperty("newspaperLayer").intValue = 1 << newspaperLayer;
+        scissorsSO.FindProperty("scissorsVisual").objectReferenceValue = scissorsVisual;
+        scissorsSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── NewspaperManager ──────────────────────────────────────
+        var newsMgr = managersGO.AddComponent<NewspaperManager>();
+        var newsMgrSO = new SerializedObject(newsMgr);
+        newsMgrSO.FindProperty("dayManager").objectReferenceValue = dayMgr;
+        newsMgrSO.FindProperty("scissorsController").objectReferenceValue = scissorsCtrl;
+        newsMgrSO.FindProperty("surface").objectReferenceValue =
+            newspaperData.surfaceQuad.GetComponent<NewspaperSurface>();
+        newsMgrSO.FindProperty("evaluator").objectReferenceValue = evalComp;
+        newsMgrSO.FindProperty("mainCamera").objectReferenceValue = camData.camera;
+        newsMgrSO.FindProperty("tableCamera").objectReferenceValue = camData.overviewCamera;
+        newsMgrSO.FindProperty("paperCamera").objectReferenceValue = camData.newspaperCamera;
+        newsMgrSO.FindProperty("brain").objectReferenceValue = camData.brain;
+        newsMgrSO.FindProperty("newspaperTransform").objectReferenceValue =
+            newspaperData.surfaceQuad.transform;
+        newsMgrSO.FindProperty("newspaperClickCollider").objectReferenceValue =
+            newspaperData.clickCollider;
+
+        var personalSlotsProp = newsMgrSO.FindProperty("personalSlots");
+        personalSlotsProp.ClearArray();
+        for (int i = 0; i < newspaperData.personalSlots.Length; i++)
+        {
+            personalSlotsProp.InsertArrayElementAtIndex(i);
+            personalSlotsProp.GetArrayElementAtIndex(i).objectReferenceValue =
+                newspaperData.personalSlots[i];
+        }
+
+        var commercialSlotsProp = newsMgrSO.FindProperty("commercialSlots");
+        commercialSlotsProp.ClearArray();
+        for (int i = 0; i < newspaperData.commercialSlots.Length; i++)
+        {
+            commercialSlotsProp.InsertArrayElementAtIndex(i);
+            commercialSlotsProp.GetArrayElementAtIndex(i).objectReferenceValue =
+                newspaperData.commercialSlots[i];
+        }
+
+        newsMgrSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── NewspaperHUD ──────────────────────────────────────────
+        var newspaperHUD = managersGO.AddComponent<NewspaperHUD>();
+
         // ── Bed click trigger ────────────────────────────────────
         var bedGO = furnitureData.bedTransform.gameObject;
         var bedCollider = bedGO.GetComponentInChildren<Collider>();
@@ -708,7 +956,9 @@ public static class DatingLoopSceneBuilder
             dateSessionHUD = dateSessionHUD,
             phoneController = phoneCtrl,
             coffeeTableDelivery = coffeeDelivery,
-            moodMachine = moodMachine
+            moodMachine = moodMachine,
+            newspaperManager = newsMgr,
+            newspaperHUD = newspaperHUD
         };
     }
 
@@ -877,23 +1127,66 @@ public static class DatingLoopSceneBuilder
         endSO.FindProperty("continueButton").objectReferenceValue = continueBtnGO.GetComponent<Button>();
         endSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── Instruction / status text ────────────────────────────
-        CreateUIText("InstructionLabel", uiCanvasGO.transform,
+        // ── Newspaper UI panels ──────────────────────────────────
+        var callingPanel = CreateUIPanel("CallingUI", uiCanvasGO.transform,
+            "Calling...", 32f, new Color(0f, 0f, 0f, 0.7f));
+        var timerPanel = CreateUIPanel("TimerUI", uiCanvasGO.transform,
+            "0:30", 48f, new Color(0f, 0f, 0f, 0.5f));
+        var arrivedPanel = CreateUIPanel("ArrivedUI", uiCanvasGO.transform,
+            "Your date has arrived!", 36f, new Color(0f, 0f, 0f, 0.7f));
+
+        // Wire NewspaperManager UI
+        var newsMgrSO = new SerializedObject(managerData.newspaperManager);
+        newsMgrSO.FindProperty("callingUI").objectReferenceValue = callingPanel;
+        newsMgrSO.FindProperty("callingText").objectReferenceValue =
+            callingPanel.GetComponentInChildren<TMP_Text>();
+        newsMgrSO.FindProperty("timerUI").objectReferenceValue = timerPanel;
+        newsMgrSO.FindProperty("timerText").objectReferenceValue =
+            timerPanel.GetComponentInChildren<TMP_Text>();
+        newsMgrSO.FindProperty("arrivedUI").objectReferenceValue = arrivedPanel;
+        newsMgrSO.FindProperty("arrivedText").objectReferenceValue =
+            arrivedPanel.GetComponentInChildren<TMP_Text>();
+        newsMgrSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── Day label (top-left) ─────────────────────────────────
+        var dayLabelGO = CreateUIText("DayLabel", uiCanvasGO.transform,
+            new Vector2(0f, 1f), new Vector2(0f, 1f),
+            new Vector2(100f, -30f), new Vector2(200f, 40f),
+            "Day 1", 28f, TextAlignmentOptions.Left);
+
+        // ── Instruction hint (bottom-center) ─────────────────────
+        var instructionGO = CreateUIText("InstructionLabel", uiCanvasGO.transform,
             new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
             new Vector2(0f, 40f), new Vector2(600f, 40f),
-            "Click the newspaper to start | Click the bed to sleep", 18f, TextAlignmentOptions.Center);
+            "Click the newspaper to pick it up", 18f, TextAlignmentOptions.Center);
+
+        // Wire NewspaperHUD
+        var newsHudSO = new SerializedObject(managerData.newspaperHUD);
+        newsHudSO.FindProperty("dayManager").objectReferenceValue = managerData.dayManager;
+        newsHudSO.FindProperty("manager").objectReferenceValue = managerData.newspaperManager;
+        newsHudSO.FindProperty("dayLabel").objectReferenceValue =
+            dayLabelGO.GetComponent<TMP_Text>();
+        newsHudSO.FindProperty("instructionLabel").objectReferenceValue =
+            instructionGO.GetComponent<TMP_Text>();
+        newsHudSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── End Date button (bottom-right) ───────────────────────
         var endDateBtnGO = CreateUIButton("EndDateButton", uiCanvasGO.transform,
             new Vector2(1f, 0f), new Vector2(1f, 0f),
             new Vector2(-100f, 40f), new Vector2(160f, 50f),
             "End Date", new Color(0.6f, 0.3f, 0.3f));
+        UnityEventTools.AddVoidPersistentListener(
+            endDateBtnGO.GetComponent<Button>().onClick,
+            new UnityAction(managerData.dateSessionManager.EndDate));
 
         // ── Go To Bed button ─────────────────────────────────────
         var bedBtnGO = CreateUIButton("GoToBedButton", uiCanvasGO.transform,
             new Vector2(1f, 0f), new Vector2(1f, 0f),
             new Vector2(-100f, 100f), new Vector2(160f, 50f),
             "Go To Bed", new Color(0.3f, 0.3f, 0.5f));
+        UnityEventTools.AddVoidPersistentListener(
+            bedBtnGO.GetComponent<Button>().onClick,
+            new UnityAction(managerData.gameClock.GoToBed));
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -986,5 +1279,96 @@ public static class DatingLoopSceneBuilder
             rend.sharedMaterial = mat;
         }
         return go;
+    }
+
+    private static GameObject CreateTMPText(string name, Transform parent,
+        Vector2 anchoredPos, Vector2 size,
+        string text, float fontSize, FontStyles style, TextAlignmentOptions alignment)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent);
+
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = size;
+        rt.localScale = Vector3.one;
+        rt.localRotation = Quaternion.identity;
+
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.fontStyle = style;
+        tmp.alignment = alignment;
+        tmp.color = new Color(0.1f, 0.1f, 0.1f);
+        tmp.enableWordWrapping = true;
+        tmp.overflowMode = TextOverflowModes.Ellipsis;
+
+        return go;
+    }
+
+    private static GameObject CreateUIPanel(string name, Transform parent,
+        string defaultText, float fontSize, Color bgColor)
+    {
+        var panel = new GameObject(name);
+        panel.transform.SetParent(parent);
+
+        var panelRT = panel.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRT.sizeDelta = new Vector2(500f, 100f);
+        panelRT.anchoredPosition = Vector2.zero;
+        panelRT.localScale = Vector3.one;
+
+        var bg = panel.AddComponent<Image>();
+        bg.color = bgColor;
+
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(panel.transform);
+
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = new Vector2(10f, 10f);
+        textRT.offsetMax = new Vector2(-10f, -10f);
+        textRT.localScale = Vector3.one;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = defaultText;
+        tmp.fontSize = fontSize;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+
+        panel.SetActive(false);
+        return panel;
+    }
+
+    private static int EnsureLayer(string layerName)
+    {
+        var tagManager = new SerializedObject(
+            AssetDatabase.LoadMainAssetAtPath("ProjectSettings/TagManager.asset"));
+
+        var layersProp = tagManager.FindProperty("layers");
+
+        for (int i = 0; i < layersProp.arraySize; i++)
+        {
+            var element = layersProp.GetArrayElementAtIndex(i);
+            if (element.stringValue == layerName)
+                return i;
+        }
+
+        for (int i = 8; i < layersProp.arraySize; i++)
+        {
+            var element = layersProp.GetArrayElementAtIndex(i);
+            if (string.IsNullOrEmpty(element.stringValue))
+            {
+                element.stringValue = layerName;
+                tagManager.ApplyModifiedProperties();
+                Debug.Log($"[DatingLoopSceneBuilder] Added '{layerName}' as layer {i}.");
+                return i;
+            }
+        }
+
+        Debug.LogError($"[DatingLoopSceneBuilder] No empty layer slots for '{layerName}'.");
+        return 0;
     }
 }
