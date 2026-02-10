@@ -99,6 +99,12 @@ public class PerfumeBottle : MonoBehaviour
     {
         CurrentState = State.OnShelf;
         SprayComplete = false;
+
+        MoodMachine.Instance?.RemoveSource("Perfume");
+
+        var reactable = GetComponent<ReactableTag>();
+        if (reactable != null) reactable.IsActive = false;
+
         StartCoroutine(LerpToPosition(_shelfPosition, _shelfRotation));
     }
 
@@ -135,6 +141,12 @@ public class PerfumeBottle : MonoBehaviour
         {
             _moodTriggeredThisSpray = true;
             SprayComplete = true;
+
+            if (definition != null && MoodMachine.Instance != null)
+                MoodMachine.Instance.SetSource("Perfume", definition.moodValue);
+
+            var reactable = GetComponent<ReactableTag>();
+            if (reactable != null) reactable.IsActive = true;
         }
     }
 

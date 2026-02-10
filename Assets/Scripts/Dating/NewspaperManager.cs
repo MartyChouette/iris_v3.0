@@ -12,7 +12,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     public static NewspaperManager Instance { get; private set; }
 
-    public bool IsAtIdleState => CurrentState == State.TableView;
+    public bool IsAtIdleState => CurrentState == State.TableView || CurrentState == State.DateArrived;
 
     // ─── References ───────────────────────────────────────────────
     [Header("References")]
@@ -322,6 +322,10 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         CurrentState = State.Waiting;
         _timeRemaining = _selectedDefinition.arrivalTimeSec;
 
+        // Notify dating system
+        DateSessionManager.Instance?.StartWaiting(_selectedDefinition);
+        PhoneController.Instance?.SetPendingDate(_selectedDefinition);
+
         if (timerUI != null) timerUI.SetActive(true);
         UpdateTimerDisplay();
     }
@@ -336,9 +340,11 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         if (arrivedText != null)
             arrivedText.text = $"{_selectedDefinition.characterName} has arrived!";
 
-        // Spawn character model if set
-        if (_selectedDefinition.characterModelPrefab != null)
-            Instantiate(_selectedDefinition.characterModelPrefab);
+        // Tell phone to ring / trigger date arrival via DateSessionManager
+        if (PhoneController.Instance != null)
+            PhoneController.Instance.StartRinging();
+        else
+            DateSessionManager.Instance?.OnDateCharacterArrived();
 
         OnDateArrived?.Invoke();
     }

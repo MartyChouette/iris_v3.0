@@ -51,4 +51,11 @@ public class DatePersonalDefinition : ScriptableObject
     [Header("Ad Appearance")]
     [Tooltip("Font size variation for personality. 0 = use default.")]
     public int fontSizeOverride;
+
+    // ──────────────────────────────────────────────────────────────
+    // Preferences
+    // ──────────────────────────────────────────────────────────────
+    [Header("Preferences")]
+    [Tooltip("What this date likes and dislikes in the apartment.")]
+    public DatePreferences preferences = new DatePreferences();
 }

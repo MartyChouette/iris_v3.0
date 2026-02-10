@@ -10,5 +10,6 @@ public enum StationType
     MirrorMakeup,
     RecordPlayer,
     FlowerTrimming,
-    Watering
+    Watering,
+    Phone
 }

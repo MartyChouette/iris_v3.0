@@ -14,6 +14,11 @@ public class RecordDefinition : ScriptableObject
     [Tooltip("Color of the record label (center circle).")]
     public Color labelColor = new Color(0.8f, 0.2f, 0.2f);
 
+    [Header("Mood Machine")]
+    [Tooltip("Mood value this record pushes toward (0 = sunny, 1 = stormy).")]
+    [Range(0f, 1f)]
+    public float moodValue = 0.3f;
+
     [Header("Audio")]
     [Tooltip("Music clip to play. Can be null for silent placeholder.")]
     public AudioClip musicClip;

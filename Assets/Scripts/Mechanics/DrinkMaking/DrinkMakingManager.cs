@@ -346,6 +346,10 @@ public class DrinkMakingManager : MonoBehaviour
             AudioManager.Instance.PlaySFX(scoreSFX);
 
         OnDrinkScored?.Invoke(lastScore);
+
+        // Deliver drink to coffee table for date reaction
+        CoffeeTableDelivery.Instance?.DeliverDrink(activeRecipe, glass.CurrentColor, lastScore);
+
         currentState = State.Scoring;
         Debug.Log($"[DrinkMakingManager] Score: {lastScore} (fill={lastFillScore:F0} ingr={lastIngredientScore:F0} stir={lastStirScore:F0} overflow={lastOverflowScore:F0})");
     }

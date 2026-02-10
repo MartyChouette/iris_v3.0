@@ -170,6 +170,11 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
             audioSource.Play();
         }
 
+        MoodMachine.Instance?.SetSource("Music", record.moodValue);
+
+        var reactable = GetComponent<ReactableTag>();
+        if (reactable != null) reactable.IsActive = true;
+
         UpdateHUD();
         Debug.Log($"[RecordPlayerManager] Playing: {record.title} by {record.artist}");
     }
@@ -178,6 +183,12 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
     {
         CurrentState = State.Browsing;
         audioSource.Stop();
+
+        MoodMachine.Instance?.RemoveSource("Music");
+
+        var reactable = GetComponent<ReactableTag>();
+        if (reactable != null) reactable.IsActive = false;
+
         UpdateHUD();
         Debug.Log("[RecordPlayerManager] Stopped playback.");
     }
