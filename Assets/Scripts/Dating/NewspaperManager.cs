@@ -97,6 +97,10 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         _cancelAction = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
 
         HideAllUI();
+
+        // Subscribe to day manager early so we don't miss DayManager.Start() firing OnNewNewspaper
+        if (dayManager != null)
+            dayManager.OnNewNewspaper.AddListener(OnNewNewspaper);
     }
 
     private void OnEnable()
@@ -127,10 +131,6 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private void Start()
     {
-        // Subscribe to day manager
-        if (dayManager != null)
-            dayManager.OnNewNewspaper.AddListener(OnNewNewspaper);
-
         // Initial camera setup
         SetCamera(tableCamera);
 
