@@ -1527,13 +1527,13 @@ public static class ApartmentSceneBuilder
         int adCount = Mathf.Clamp(pool.personalAdsPerDay, 1, 8);
 
         // ── Read camera (held-up newspaper view) ──────────────────
-        // Kitchen area: player at table (-4, y, -3.5), looking +Z
+        // Kitchen area: player at table, looking +Z toward newspaper
         var readCamGO = new GameObject("Cam_NewspaperRead");
-        readCamGO.transform.position = new Vector3(-4f, 1.5f, -3.5f);
-        readCamGO.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+        readCamGO.transform.position = new Vector3(-4f, 1.4f, -4.5f);
+        readCamGO.transform.rotation = Quaternion.Euler(5f, 0f, 0f);
         var readCam = readCamGO.AddComponent<CinemachineCamera>();
         var readLens = LensSettings.Default;
-        readLens.FieldOfView = 40f;
+        readLens.FieldOfView = 50f;
         readLens.NearClipPlane = 0.1f;
         readLens.FarClipPlane = 100f;
         readCam.Lens = readLens;
@@ -1550,7 +1550,7 @@ public static class ApartmentSceneBuilder
             surfaceGO = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
-            surfaceGO.transform.position = new Vector3(-4f, 1.35f, -2.95f);
+            surfaceGO.transform.position = new Vector3(-4f, 1.4f, -2.5f);
             SetNewspaperLayerRecursive(surfaceGO, newspaperLayer);
         }
         else
@@ -1558,8 +1558,8 @@ public static class ApartmentSceneBuilder
             surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
             surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
-            surfaceGO.transform.position = new Vector3(-4f, 1.35f, -2.95f);
-            surfaceGO.transform.rotation = Quaternion.Euler(-5f, 180f, 0f);
+            surfaceGO.transform.position = new Vector3(-4f, 1.4f, -2.5f);
+            surfaceGO.transform.rotation = Quaternion.Euler(-5f, 0f, 0f);
             surfaceGO.transform.localScale = new Vector3(1.0f, 0.7f, 1f);
             surfaceGO.layer = newspaperLayer;
             Object.DestroyImmediate(surfaceGO.GetComponent<MeshCollider>());
@@ -1591,8 +1591,8 @@ public static class ApartmentSceneBuilder
         // ── WorldSpace Canvas overlay (two-page spread) ───────────
         var pivotGO = new GameObject("NewspaperOverlayPivot");
         pivotGO.transform.SetParent(parent.transform);
-        pivotGO.transform.position = new Vector3(-4f, 1.35f, -2.951f);
-        pivotGO.transform.rotation = Quaternion.Euler(-5f, 180f, 0f);
+        pivotGO.transform.position = new Vector3(-4f, 1.4f, -2.499f);
+        pivotGO.transform.rotation = Quaternion.Euler(-5f, 0f, 0f);
         pivotGO.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
 
         var canvasGO = new GameObject("NewspaperOverlay");
