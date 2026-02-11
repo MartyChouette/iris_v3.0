@@ -728,17 +728,17 @@ public static class ApartmentSceneBuilder
         var spline = container.Spline;
         spline.Clear();
 
-        // 7 knots in clockwise order — positions are world space
-        // (container is at origin, so local = world)
+        // 7 knots in clockwise order — wide orbit around the apartment exterior
+        // Apartment is 14x12 units centered at origin; spline sits well outside walls
         var knots = new float3[]
         {
-            new float3( 0.0f, 2.0f, -6.0f),  // 0: Entrance
-            new float3(-4.0f, 2.5f, -2.5f),  // 1: Kitchen
-            new float3(-4.0f, 3.0f,  3.0f),  // 2: Living Room
-            new float3(-1.0f, 2.5f,  5.5f),  // 3: Watering Nook
-            new float3( 4.0f, 2.5f,  4.5f),  // 4: Flower Room
-            new float3( 5.0f, 2.5f,  0.0f),  // 5: Cozy Corner
-            new float3( 5.0f, 2.5f, -3.5f),  // 6: Bathroom
+            new float3(  0.0f, 4.0f, -11.0f),  // 0: Entrance (south)
+            new float3( -9.0f, 4.5f,  -5.0f),  // 1: Kitchen (south-west)
+            new float3(-10.0f, 5.0f,   4.0f),  // 2: Living Room (west)
+            new float3( -3.0f, 4.5f,  10.0f),  // 3: Watering Nook (north)
+            new float3(  6.0f, 4.5f,   9.0f),  // 4: Flower Room (north-east)
+            new float3( 10.0f, 4.5f,   1.0f),  // 5: Cozy Corner (east)
+            new float3(  9.0f, 4.5f,  -6.0f),  // 6: Bathroom (south-east)
         };
 
         foreach (var pos in knots)
@@ -770,7 +770,7 @@ public static class ApartmentSceneBuilder
         browseGO.transform.SetParent(parent.transform);
         var browse = browseGO.AddComponent<CinemachineCamera>();
         var browseLens = LensSettings.Default;
-        browseLens.FieldOfView = 60f;
+        browseLens.FieldOfView = 55f;
         browseLens.NearClipPlane = 0.1f;
         browseLens.FarClipPlane = 500f;
         browse.Lens = browseLens;
@@ -782,13 +782,13 @@ public static class ApartmentSceneBuilder
         dolly.CameraPosition = 0f;
         dolly.CameraRotation = CinemachineSplineDolly.RotationMode.Default;
 
-        // Selected camera (starts inactive)
+        // Selected camera (starts inactive — positioned per-area by ApartmentManager)
         var selectedGO = new GameObject("Cam_Selected");
         selectedGO.transform.SetParent(parent.transform);
-        selectedGO.transform.position = new Vector3(0f, 2f, -5f);
+        selectedGO.transform.position = new Vector3(0f, 3.2f, -7.5f);
         var selected = selectedGO.AddComponent<CinemachineCamera>();
         var selectedLens = LensSettings.Default;
-        selectedLens.FieldOfView = 50f;
+        selectedLens.FieldOfView = 48f;
         selectedLens.NearClipPlane = 0.1f;
         selectedLens.FarClipPlane = 500f;
         selected.Lens = selectedLens;
@@ -812,37 +812,37 @@ public static class ApartmentSceneBuilder
         var entrance = CreateAreaDef("Entrance", soDir,
             "Entrance", "Coat rack, keys, and welcome mat.",
             StationType.None, 0.000f,
-            new Vector3(0f, 2f, -4.5f), new Vector3(40f, 0f, 0f), 55f);
+            new Vector3(0f, 3.2f, -7.5f), new Vector3(30f, 0f, 0f), 50f);
 
         var kitchen = CreateAreaDef("Kitchen", soDir,
             "Kitchen", "Table with newspaper, fridge, counter, drink station.",
             StationType.DrinkMaking, 0.143f,
-            new Vector3(-4f, 2f, -2.5f), new Vector3(45f, 0f, 0f), 50f);
+            new Vector3(-6.5f, 3.5f, -4.0f), new Vector3(35f, 45f, 0f), 48f);
 
         var livingRoom = CreateAreaDef("LivingRoom", soDir,
             "Living Room", "Bookcase, coffee table, couch.",
             StationType.Bookcase, 0.286f,
-            new Vector3(-4.5f, 2.5f, 4f), new Vector3(35f, 180f, 0f), 50f);
+            new Vector3(-7.0f, 3.5f, 3.0f), new Vector3(30f, 60f, 0f), 48f);
 
         var wateringNook = CreateAreaDef("WateringNook", soDir,
             "Watering Nook", "Plant shelf with watering can.",
             StationType.None, 0.429f,
-            new Vector3(-2f, 1.8f, 5.5f), new Vector3(30f, 0f, 0f), 48f);
+            new Vector3(-2.5f, 3.0f, 7.5f), new Vector3(28f, 180f, 0f), 48f);
 
         var flowerRoom = CreateAreaDef("FlowerRoom", soDir,
             "Flower Room", "Trimming table with scissors and flower pot.",
             StationType.FlowerTrimming, 0.571f,
-            new Vector3(4f, 2f, 5f), new Vector3(35f, 180f, 0f), 50f);
+            new Vector3(5.5f, 3.0f, 7.0f), new Vector3(28f, 210f, 0f), 48f);
 
         var cozyCorner = CreateAreaDef("CozyCorner", soDir,
             "Cozy Corner", "Record player, comfy chair, stack of records.",
             StationType.RecordPlayer, 0.714f,
-            new Vector3(5f, 2f, 0.5f), new Vector3(35f, 180f, 0f), 48f);
+            new Vector3(7.5f, 3.2f, 0.5f), new Vector3(30f, 240f, 0f), 48f);
 
         var bathroom = CreateAreaDef("Bathroom", soDir,
             "Bathroom", "Mirror, sink, and makeup station.",
             StationType.MirrorMakeup, 0.857f,
-            new Vector3(5.2f, 2f, -3.5f), new Vector3(40f, 180f, 0f), 48f);
+            new Vector3(7.5f, 3.2f, -4.5f), new Vector3(32f, 220f, 0f), 48f);
 
         return new[] { entrance, kitchen, livingRoom, wateringNook, flowerRoom, cozyCorner, bathroom };
     }
