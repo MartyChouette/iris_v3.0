@@ -735,10 +735,12 @@ public static class ApartmentSceneBuilder
         int adCount = Mathf.Clamp(pool.personalAdsPerDay, 1, 8);
 
         // ── Read camera (held-up newspaper view) ──────────────────
-        // Camera on +Z side looking back (-Z) at newspaper so canvas readable side faces camera
+        // Camera on -Z side looking +Z at the back of the surface quad.
+        // The quad faces -Z so the camera sees its front face, and screen X
+        // maps to UV X without mirroring (no 180-degree Y rotation).
         var readCamGO = new GameObject("Cam_NewspaperRead");
-        readCamGO.transform.position = new Vector3(-4f, 1.5f, -1.5f);
-        readCamGO.transform.rotation = Quaternion.Euler(5f, 180f, 0f);
+        readCamGO.transform.position = new Vector3(-4f, 1.5f, -5.5f);
+        readCamGO.transform.rotation = Quaternion.Euler(3f, 0f, 0f);
         var readCam = readCamGO.AddComponent<CinemachineCamera>();
         var readLens = LensSettings.Default;
         readLens.FieldOfView = 50f;
@@ -750,7 +752,7 @@ public static class ApartmentSceneBuilder
         // ── Newspaper parent ──────────────────────────────────────
         var parent = new GameObject("NewspaperStation");
 
-        // ── Surface quad (vertical, facing camera) ────────────────
+        // ── Surface quad (vertical, facing -Z toward camera) ──────
         GameObject surfaceGO;
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/NewspaperModel.prefab");
         if (prefab != null)
@@ -760,26 +762,27 @@ public static class ApartmentSceneBuilder
             surfaceGO.transform.SetParent(parent.transform);
             surfaceGO.transform.position = new Vector3(-4f, 1.4f, -3.5f);
             SetNewspaperLayerRecursive(surfaceGO, newspaperLayer);
+
+            var boxCol = surfaceGO.GetComponent<BoxCollider>();
+            if (boxCol == null) boxCol = surfaceGO.GetComponentInChildren<BoxCollider>();
+            if (boxCol == null)
+            {
+                boxCol = surfaceGO.AddComponent<BoxCollider>();
+                boxCol.size = new Vector3(1f, 1f, 0.01f);
+                boxCol.center = Vector3.zero;
+            }
         }
         else
         {
-            surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            surfaceGO.name = "NewspaperSurface";
+            surfaceGO = new GameObject("NewspaperSurface");
             surfaceGO.transform.SetParent(parent.transform);
             surfaceGO.transform.position = new Vector3(-4f, 1.4f, -3.5f);
-            surfaceGO.transform.rotation = Quaternion.identity;
             surfaceGO.transform.localScale = new Vector3(1.0f, 0.7f, 1f);
             surfaceGO.layer = newspaperLayer;
-            Object.DestroyImmediate(surfaceGO.GetComponent<MeshCollider>());
-        }
-
-        var boxCol = surfaceGO.GetComponent<BoxCollider>();
-        if (boxCol == null) boxCol = surfaceGO.GetComponentInChildren<BoxCollider>();
-        if (boxCol == null)
-        {
-            boxCol = surfaceGO.AddComponent<BoxCollider>();
-            boxCol.size = new Vector3(1f, 1f, 0.01f);
-            boxCol.center = Vector3.zero;
+            var quadMesh = CreateNewspaperQuadMesh();
+            surfaceGO.AddComponent<MeshFilter>().sharedMesh = quadMesh;
+            surfaceGO.AddComponent<MeshRenderer>();
+            surfaceGO.AddComponent<MeshCollider>().sharedMesh = quadMesh;
         }
 
         if (surfaceGO.GetComponent<NewspaperSurface>() == null)
@@ -1246,6 +1249,33 @@ public static class ApartmentSceneBuilder
 
         go.SetActive(false);
         return go;
+    }
+
+    private static Mesh CreateNewspaperQuadMesh()
+    {
+        var mesh = new Mesh { name = "NewspaperQuad" };
+        mesh.vertices = new[]
+        {
+            new Vector3(-0.5f, -0.5f, 0f),
+            new Vector3( 0.5f, -0.5f, 0f),
+            new Vector3(-0.5f,  0.5f, 0f),
+            new Vector3( 0.5f,  0.5f, 0f)
+        };
+        mesh.uv = new[]
+        {
+            new Vector2(0f, 0f),
+            new Vector2(1f, 0f),
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f)
+        };
+        mesh.normals = new[]
+        {
+            -Vector3.forward, -Vector3.forward,
+            -Vector3.forward, -Vector3.forward
+        };
+        // CW winding when viewed from -Z → front face points -Z
+        mesh.triangles = new[] { 0, 1, 2, 2, 1, 3 };
+        return mesh;
     }
 
     private static void SetNewspaperLayerRecursive(GameObject go, int layer)
