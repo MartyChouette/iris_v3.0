@@ -11,5 +11,6 @@ public enum StationType
     RecordPlayer,
     FlowerTrimming,
     Watering,
-    Phone
+    Phone,
+    DrinkMaking
 }

@@ -4,8 +4,11 @@ using UnityEngine;
 public class NewspaperSurface : MonoBehaviour
 {
     [Header("Surface")]
-    [Tooltip("Resolution of the cut mask texture.")]
-    [SerializeField] private int textureSize = 512;
+    [Tooltip("Width of the cut mask texture (pixels).")]
+    [SerializeField] private int textureWidth = 1460;
+
+    [Tooltip("Height of the cut mask texture (pixels).")]
+    [SerializeField] private int textureHeight = 1024;
 
     [Tooltip("Base newspaper color (fully opaque).")]
     [SerializeField] private Color paperColor = new Color(0.92f, 0.90f, 0.85f, 1f);
@@ -38,7 +41,7 @@ public class NewspaperSurface : MonoBehaviour
         toIndex = Mathf.Min(uvPoints.Count - 1, toIndex);
 
         bool dirty = false;
-        int halfWidth = Mathf.Max(1, Mathf.RoundToInt(cutWidth * textureSize * 0.5f));
+        int halfWidthX = Mathf.Max(1, Mathf.RoundToInt(cutWidth * textureWidth * 0.5f));
 
         for (int i = fromIndex; i < toIndex; i++)
         {
@@ -47,15 +50,15 @@ public class NewspaperSurface : MonoBehaviour
 
             // Bresenham-style line stamp
             int steps = Mathf.Max(
-                Mathf.Abs(Mathf.RoundToInt((b.x - a.x) * textureSize)),
-                Mathf.Abs(Mathf.RoundToInt((b.y - a.y) * textureSize)));
+                Mathf.Abs(Mathf.RoundToInt((b.x - a.x) * textureWidth)),
+                Mathf.Abs(Mathf.RoundToInt((b.y - a.y) * textureHeight)));
             steps = Mathf.Max(steps, 1);
 
             for (int s = 0; s <= steps; s++)
             {
                 float t = (float)s / steps;
                 Vector2 p = Vector2.Lerp(a, b, t);
-                StampCircle(p, halfWidth);
+                StampCircle(p, halfWidthX);
                 dirty = true;
             }
         }
@@ -81,19 +84,19 @@ public class NewspaperSurface : MonoBehaviour
             if (p.y > maxY) maxY = p.y;
         }
 
-        int pxMinX = Mathf.Max(0, Mathf.FloorToInt(minX * textureSize));
-        int pxMaxX = Mathf.Min(textureSize - 1, Mathf.CeilToInt(maxX * textureSize));
-        int pxMinY = Mathf.Max(0, Mathf.FloorToInt(minY * textureSize));
-        int pxMaxY = Mathf.Min(textureSize - 1, Mathf.CeilToInt(maxY * textureSize));
+        int pxMinX = Mathf.Max(0, Mathf.FloorToInt(minX * textureWidth));
+        int pxMaxX = Mathf.Min(textureWidth - 1, Mathf.CeilToInt(maxX * textureWidth));
+        int pxMinY = Mathf.Max(0, Mathf.FloorToInt(minY * textureHeight));
+        int pxMaxY = Mathf.Min(textureHeight - 1, Mathf.CeilToInt(maxY * textureHeight));
 
         for (int y = pxMinY; y <= pxMaxY; y++)
         {
             for (int x = pxMinX; x <= pxMaxX; x++)
             {
-                Vector2 uv = new Vector2((float)x / textureSize, (float)y / textureSize);
+                Vector2 uv = new Vector2((float)x / textureWidth, (float)y / textureHeight);
                 if (CutPathEvaluator.PointInPolygon(uv, uvPolygon))
                 {
-                    _pixels[y * textureSize + x] = s_transparent;
+                    _pixels[y * textureWidth + x] = s_transparent;
                 }
             }
         }
@@ -119,12 +122,12 @@ public class NewspaperSurface : MonoBehaviour
         pieceGO.name = "CutPiece";
         Object.Destroy(pieceGO.GetComponent<Collider>());
 
-        // Position relative to newspaper
+        // Position relative to newspaper (vertical quad: X = width, Y = height, -Z = toward camera)
         var myTransform = transform;
         Vector3 localOffset = new Vector3(
             (centroid.x - 0.5f) * myTransform.localScale.x,
-            0.001f,
-            (centroid.y - 0.5f) * myTransform.localScale.z);
+            (centroid.y - 0.5f) * myTransform.localScale.y,
+            -0.001f);
 
         pieceGO.transform.position = myTransform.position + myTransform.rotation * localOffset;
         pieceGO.transform.rotation = myTransform.rotation;
@@ -146,7 +149,7 @@ public class NewspaperSurface : MonoBehaviour
     }
 
     /// <summary>
-    /// Restore full opacity (new day).
+    /// Reset surface to opaque white (new day). Text is shown via WorldSpace Canvas overlay.
     /// </summary>
     public void ResetSurface()
     {
@@ -171,15 +174,15 @@ public class NewspaperSurface : MonoBehaviour
     public bool IsPixelCut(int x, int y)
     {
         if (_pixels == null) return false;
-        if (x < 0 || x >= textureSize || y < 0 || y >= textureSize) return false;
-        return _pixels[y * textureSize + x].a == 0;
+        if (x < 0 || x >= textureWidth || y < 0 || y >= textureHeight) return false;
+        return _pixels[y * textureWidth + x].a == 0;
     }
 
     // ─── Lifecycle ────────────────────────────────────────────────
 
     private void Awake()
     {
-        _renderer = GetComponent<Renderer>();
+        _renderer = GetComponent<Renderer>() ?? GetComponentInChildren<Renderer>();
         InitTexture();
         ApplyToMaterial();
     }
@@ -194,11 +197,11 @@ public class NewspaperSurface : MonoBehaviour
 
     private void InitTexture()
     {
-        _cutMask = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
+        _cutMask = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false);
         _cutMask.filterMode = FilterMode.Bilinear;
         _cutMask.wrapMode = TextureWrapMode.Clamp;
 
-        _pixels = new Color32[textureSize * textureSize];
+        _pixels = new Color32[textureWidth * textureHeight];
         for (int i = 0; i < _pixels.Length; i++)
             _pixels[i] = s_opaque;
 
@@ -219,7 +222,7 @@ public class NewspaperSurface : MonoBehaviour
 
         _matInstance = new Material(shader);
         _matInstance.SetTexture("_BaseMap", _cutMask);
-        _matInstance.color = paperColor;
+        _matInstance.color = Color.white;
 
         // Enable transparent rendering (same as SpillSurface)
         _matInstance.SetFloat("_Surface", 1f);
@@ -229,6 +232,7 @@ public class NewspaperSurface : MonoBehaviour
         _matInstance.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
         _matInstance.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
         _matInstance.SetInt("_ZWrite", 0);
+        _matInstance.SetInt("_Cull", 0); // Off — render both faces (quad faces down due to Euler(90,0,0))
         _matInstance.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         _matInstance.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
 
@@ -237,14 +241,14 @@ public class NewspaperSurface : MonoBehaviour
 
     private void StampCircle(Vector2 uvCenter, int radius)
     {
-        int cx = Mathf.RoundToInt(uvCenter.x * (textureSize - 1));
-        int cy = Mathf.RoundToInt(uvCenter.y * (textureSize - 1));
+        int cx = Mathf.RoundToInt(uvCenter.x * (textureWidth - 1));
+        int cy = Mathf.RoundToInt(uvCenter.y * (textureHeight - 1));
         int rSq = radius * radius;
 
         int xMin = Mathf.Max(cx - radius, 0);
-        int xMax = Mathf.Min(cx + radius, textureSize - 1);
+        int xMax = Mathf.Min(cx + radius, textureWidth - 1);
         int yMin = Mathf.Max(cy - radius, 0);
-        int yMax = Mathf.Min(cy + radius, textureSize - 1);
+        int yMax = Mathf.Min(cy + radius, textureHeight - 1);
 
         for (int y = yMin; y <= yMax; y++)
         {
@@ -253,7 +257,7 @@ public class NewspaperSurface : MonoBehaviour
                 int dx = x - cx;
                 int dy = y - cy;
                 if (dx * dx + dy * dy <= rSq)
-                    _pixels[y * textureSize + x] = s_transparent;
+                    _pixels[y * textureWidth + x] = s_transparent;
             }
         }
     }

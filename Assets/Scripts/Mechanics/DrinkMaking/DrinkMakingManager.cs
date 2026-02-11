@@ -9,8 +9,10 @@ using UnityEngine.InputSystem;
 /// <see cref="BottleController"/>, and <see cref="StirController"/>.
 /// </summary>
 [DisallowMultipleComponent]
-public class DrinkMakingManager : MonoBehaviour
+public class DrinkMakingManager : MonoBehaviour, IStationManager
 {
+    public bool IsAtIdleState => currentState == State.ChoosingRecipe;
+
     public static DrinkMakingManager Instance { get; private set; }
 
     public enum State { ChoosingRecipe, Pouring, Stirring, Scoring }

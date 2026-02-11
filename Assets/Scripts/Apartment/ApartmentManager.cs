@@ -287,6 +287,11 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandleBrowsingInput()
     {
+        // During Morning phase, block navigation — newspaper is forced
+        if (DayPhaseManager.Instance != null
+            && DayPhaseManager.Instance.CurrentPhase == DayPhaseManager.DayPhase.Morning)
+            return;
+
         if (_navigateLeftAction.WasPressedThisFrame())
             CycleArea(-1);
         else if (_navigateRightAction.WasPressedThisFrame())
@@ -332,6 +337,12 @@ public class ApartmentManager : MonoBehaviour
             && _stationLookup.TryGetValue(area.stationType, out var station)
             && station.HasStationCameras)
         {
+            // Check phase gating before entering
+            if (!station.IsAvailableInCurrentPhase())
+            {
+                Debug.Log($"[ApartmentManager] Station {area.stationType} not available in current phase.");
+                return;
+            }
             CurrentState = State.InStation;
             _activeStation = station;
 
@@ -390,6 +401,18 @@ public class ApartmentManager : MonoBehaviour
             && _stationLookup != null
             && _stationLookup.TryGetValue(area.stationType, out var station))
         {
+            // Check phase gating before entering
+            if (!station.IsAvailableInCurrentPhase())
+            {
+                // No station available — enter standard Selected state
+                CurrentState = State.Selected;
+                if (objectGrabber != null)
+                    objectGrabber.SetEnabled(true);
+                UpdateUI();
+                Debug.Log($"[ApartmentManager] Station {area.stationType} not available in current phase — Selected state.");
+                return;
+            }
+
             CurrentState = State.InStation;
             _activeStation = station;
             station.Activate();

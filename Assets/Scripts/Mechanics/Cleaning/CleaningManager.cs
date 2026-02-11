@@ -74,6 +74,9 @@ public class CleaningManager : MonoBehaviour
     /// <summary>All surfaces in the scene.</summary>
     public CleanableSurface[] Surfaces => _surfaces;
 
+    /// <summary>Replace the surfaces array (used by ApartmentStainSpawner).</summary>
+    public void SetSurfaces(CleanableSurface[] surfaces) => _surfaces = surfaces;
+
     /// <summary>Average clean percent across all surfaces.</summary>
     public float OverallCleanPercent
     {

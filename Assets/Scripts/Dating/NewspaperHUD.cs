@@ -18,8 +18,6 @@ public class NewspaperHUD : MonoBehaviour
     [Tooltip("Button to advance to next day.")]
     [SerializeField] private GameObject advanceDayButton;
 
-    private bool _interactionDone;
-
     private void Start()
     {
         // Wire advance day button
@@ -33,7 +31,6 @@ public class NewspaperHUD : MonoBehaviour
         if (dayManager != null)
         {
             dayManager.OnDayChanged.AddListener(OnDayChanged);
-            dayManager.OnNewNewspaper.AddListener(OnNewNewspaper);
         }
 
         UpdateDayLabel();
@@ -49,13 +46,7 @@ public class NewspaperHUD : MonoBehaviour
 
     private void OnDayChanged(int newDay)
     {
-        _interactionDone = false;
         UpdateDayLabel();
-    }
-
-    private void OnNewNewspaper()
-    {
-        _interactionDone = false;
     }
 
     private void OnAdvanceDayClicked()
@@ -76,14 +67,8 @@ public class NewspaperHUD : MonoBehaviour
 
         switch (manager.CurrentState)
         {
-            case NewspaperManager.State.TableView:
-                instructionLabel.SetText("Click the newspaper to pick it up");
-                break;
-            case NewspaperManager.State.PickingUp:
-                instructionLabel.SetText("");
-                break;
             case NewspaperManager.State.ReadingPaper:
-                instructionLabel.SetText("Draw around an ad to cut it out | Escape to put down");
+                instructionLabel.SetText("Draw around a phone number to cut it out");
                 break;
             case NewspaperManager.State.Cutting:
                 instructionLabel.SetText("Cutting...");
@@ -91,12 +76,8 @@ public class NewspaperHUD : MonoBehaviour
             case NewspaperManager.State.Calling:
                 instructionLabel.SetText("Dialing...");
                 break;
-            case NewspaperManager.State.Waiting:
-                instructionLabel.SetText("Waiting for your date...");
-                break;
-            case NewspaperManager.State.DateArrived:
-                instructionLabel.SetText("Your date is here!");
-                _interactionDone = true;
+            case NewspaperManager.State.Done:
+                instructionLabel.SetText("");
                 break;
         }
     }
@@ -105,13 +86,7 @@ public class NewspaperHUD : MonoBehaviour
     {
         if (advanceDayButton == null) return;
 
-        // Show button only when in TableView and interaction is done (or DateArrived)
-        bool show = manager.CurrentState == NewspaperManager.State.TableView && _interactionDone;
-
-        // Also show if DateArrived (player can advance from arrived state)
-        if (manager.CurrentState == NewspaperManager.State.DateArrived)
-            show = true;
-
-        advanceDayButton.SetActive(show);
+        // Show button only in Done state (after date interaction is complete)
+        advanceDayButton.SetActive(manager.CurrentState == NewspaperManager.State.Done);
     }
 }

@@ -13,13 +13,17 @@ using UnityEngine.Events;
 
 /// <summary>
 /// Editor utility that programmatically builds a standalone dating loop test scene.
-/// Includes room geometry, NavMesh, newspaper desk, kitchen, couch, phone,
-/// reactable props, all managers, cameras, and UI.
+/// Includes room geometry, NavMesh, newspaper (two-page spread held up in front of player),
+/// kitchen, couch, phone, reactable props, all managers, cameras, and UI.
 /// Menu: Window > Iris > Build Dating Loop Scene
 /// </summary>
 public static class DatingLoopSceneBuilder
 {
     private const string NewspaperLayerName = "Newspaper";
+
+    // Two-page spread: 1000×700 canvas at 0.001 pivot scale = 1.0×0.7 world units
+    private const int CanvasWidth = 1000;
+    private const int CanvasHeight = 700;
 
     [MenuItem("Window/Iris/Build Dating Loop Scene")]
     public static void Build()
@@ -51,8 +55,8 @@ public static class DatingLoopSceneBuilder
         // ── 6. Reactable props ───────────────────────────────────────
         BuildReactableProps();
 
-        // ── 7. Newspaper + ad slots ──────────────────────────────────
-        var newspaperData = BuildNewspaper(newspaperLayer, furnitureData.deskTransform);
+        // ── 7. Newspaper surface + WorldSpace overlay (two-page spread) ─
+        var newspaperData = BuildNewspaper(newspaperLayer);
 
         // ── 8. Scissors visual ───────────────────────────────────────
         var scissorsVisual = BuildScissorsVisual();
@@ -131,7 +135,6 @@ public static class DatingLoopSceneBuilder
         public Transform couchSeatTarget;
         public Transform coffeeTableDeliveryPoint;
         public Transform dateSpawnPoint;
-        public Transform deskTransform;
         public Transform phoneTransform;
         public Collider phoneCollider;
         public Transform bedTransform;
@@ -180,26 +183,6 @@ public static class DatingLoopSceneBuilder
         deliveryPoint.transform.SetParent(coffeeTable.transform);
         deliveryPoint.transform.position = new Vector3(-1f, 0.34f, -0.6f);
 
-        // ── Desk (right side, for newspaper) ─────────────────────
-        var desk = new GameObject("Desk");
-        desk.transform.SetParent(parent.transform);
-
-        var deskTop = CreateBox("DeskTop", desk.transform,
-            new Vector3(2f, 0.4f, 2f), new Vector3(1.2f, 0.05f, 0.8f),
-            new Color(0.45f, 0.30f, 0.18f));
-        CreateBox("DeskLeg_FL", desk.transform,
-            new Vector3(1.45f, 0.2f, 1.65f), new Vector3(0.05f, 0.4f, 0.05f),
-            new Color(0.35f, 0.22f, 0.12f));
-        CreateBox("DeskLeg_FR", desk.transform,
-            new Vector3(2.55f, 0.2f, 1.65f), new Vector3(0.05f, 0.4f, 0.05f),
-            new Color(0.35f, 0.22f, 0.12f));
-        CreateBox("DeskLeg_BL", desk.transform,
-            new Vector3(1.45f, 0.2f, 2.35f), new Vector3(0.05f, 0.4f, 0.05f),
-            new Color(0.35f, 0.22f, 0.12f));
-        CreateBox("DeskLeg_BR", desk.transform,
-            new Vector3(2.55f, 0.2f, 2.35f), new Vector3(0.05f, 0.4f, 0.05f),
-            new Color(0.35f, 0.22f, 0.12f));
-
         // ── Kitchen counter (back-right) ─────────────────────────
         var kitchen = new GameObject("KitchenCounter");
         kitchen.transform.SetParent(parent.transform);
@@ -211,7 +194,7 @@ public static class DatingLoopSceneBuilder
             new Vector3(2.5f, 0.25f, -2f), new Vector3(2f, 0.5f, 0.8f),
             new Color(0.4f, 0.35f, 0.3f));
 
-        // ── Phone (on wall near desk) ────────────────────────────
+        // ── Phone (on wall near kitchen) ─────────────────────────
         var phoneGO = CreateBox("Phone", parent.transform,
             new Vector3(3.2f, 1.0f, 2f), new Vector3(0.12f, 0.18f, 0.06f),
             new Color(0.15f, 0.15f, 0.15f));
@@ -224,7 +207,7 @@ public static class DatingLoopSceneBuilder
         ringVisual.isStatic = false;
 
         // ── Entrance door area ───────────────────────────────────
-        var doorArea = CreateBox("EntranceDoor", parent.transform,
+        CreateBox("EntranceDoor", parent.transform,
             new Vector3(-3.9f, 1f, -2f), new Vector3(0.08f, 2f, 1f),
             new Color(0.5f, 0.35f, 0.2f));
 
@@ -250,7 +233,6 @@ public static class DatingLoopSceneBuilder
             couchSeatTarget = seatTarget.transform,
             coffeeTableDeliveryPoint = deliveryPoint.transform,
             dateSpawnPoint = dateSpawn.transform,
-            deskTransform = deskTop.transform,
             phoneTransform = phoneGO.transform,
             phoneCollider = phoneGO.GetComponent<Collider>(),
             bedTransform = bed.transform
@@ -266,7 +248,7 @@ public static class DatingLoopSceneBuilder
         public Camera camera;
         public CinemachineBrain brain;
         public CinemachineCamera overviewCamera;
-        public CinemachineCamera newspaperCamera;
+        public CinemachineCamera newspaperReadCamera;
         public CinemachineCamera kitchenCamera;
         public CinemachineCamera couchCamera;
     }
@@ -280,7 +262,7 @@ public static class DatingLoopSceneBuilder
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.15f, 0.12f, 0.10f);
         cam.fieldOfView = 60f;
-        camGO.transform.position = new Vector3(0f, 3f, -3f);
+        camGO.transform.position = new Vector3(0f, 2.5f, -3f);
         camGO.transform.rotation = Quaternion.Euler(35f, 0f, 0f);
 
         var brain = camGO.AddComponent<CinemachineBrain>();
@@ -293,17 +275,17 @@ public static class DatingLoopSceneBuilder
         overviewCam.Lens = LensSettings.Default;
         overviewCam.Lens.FieldOfView = 65f;
         overviewCam.Priority = 10;
-        overviewGO.transform.position = new Vector3(0f, 4f, -3f);
-        overviewGO.transform.rotation = Quaternion.Euler(40f, 0f, 0f);
+        overviewGO.transform.position = new Vector3(0f, 2.5f, -3f);
+        overviewGO.transform.rotation = Quaternion.Euler(35f, 0f, 0f);
 
-        // Newspaper reading camera (close-up on desk)
-        var newsGO = new GameObject("NewspaperCamera");
-        var newsCam = newsGO.AddComponent<CinemachineCamera>();
-        newsCam.Lens = LensSettings.Default;
-        newsCam.Lens.FieldOfView = 40f;
-        newsCam.Priority = 0;
-        newsGO.transform.position = new Vector3(2f, 0.9f, 2f);
-        newsGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        // Newspaper read camera — held up in front of player, forward-facing
+        var newsReadGO = new GameObject("NewspaperReadCamera");
+        var newsReadCam = newsReadGO.AddComponent<CinemachineCamera>();
+        newsReadCam.Lens = LensSettings.Default;
+        newsReadCam.Lens.FieldOfView = 40f;
+        newsReadCam.Priority = 0;
+        newsReadGO.transform.position = new Vector3(0f, 1.5f, 0f);
+        newsReadGO.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
 
         // Kitchen camera
         var kitchenGO = new GameObject("KitchenCamera");
@@ -328,7 +310,7 @@ public static class DatingLoopSceneBuilder
             camera = cam,
             brain = brain,
             overviewCamera = overviewCam,
-            newspaperCamera = newsCam,
+            newspaperReadCamera = newsReadCam,
             kitchenCamera = kitchenCam,
             couchCamera = couchCam
         };
@@ -348,145 +330,360 @@ public static class DatingLoopSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════
-    // Newspaper + Ad Slots
+    // Newspaper Surface + WorldSpace Canvas Overlay (Two-Page Spread)
     // ════════════════════════════════════════════════════════════════
 
     private struct NewspaperData
     {
         public GameObject surfaceQuad;
-        public Collider clickCollider;
         public NewspaperAdSlot[] personalSlots;
         public NewspaperAdSlot[] commercialSlots;
+        public GameObject overlayCanvas;
     }
 
-    private static NewspaperData BuildNewspaper(int newspaperLayer, Transform deskTransform)
-    {
-        Vector3 deskPos = deskTransform.position;
-        float newspaperY = deskPos.y + 0.027f; // just above desk surface
+    private const string NewspaperPrefabPath = "Assets/Prefabs/NewspaperModel.prefab";
 
+    private static NewspaperData BuildNewspaper(int newspaperLayer)
+    {
         var parent = new GameObject("Newspaper");
 
-        // Newspaper surface quad
-        var surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        surfaceGO.name = "NewspaperSurface";
-        surfaceGO.transform.SetParent(parent.transform);
-        surfaceGO.transform.position = new Vector3(deskPos.x, newspaperY, deskPos.z);
-        surfaceGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        surfaceGO.transform.localScale = new Vector3(0.5f, 0.7f, 1f);
-        surfaceGO.layer = newspaperLayer;
+        // Held up in front of player — vertical plane facing camera
+        // Camera is at (0, 1.5, 0) looking forward (+Z)
+        // Newspaper at (0, 1.35, 0.55) — slightly below eye level, in front
 
-        Object.DestroyImmediate(surfaceGO.GetComponent<MeshCollider>());
-        var boxCol = surfaceGO.AddComponent<BoxCollider>();
-        boxCol.size = new Vector3(1f, 1f, 0.01f);
-        boxCol.center = Vector3.zero;
+        // ── Surface (3D mesh for cut texture) ─────────────────────────
+        GameObject surfaceGO;
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(NewspaperPrefabPath);
+        if (prefab != null)
+        {
+            surfaceGO = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            surfaceGO.name = "NewspaperSurface";
+            surfaceGO.transform.SetParent(parent.transform);
+            surfaceGO.transform.position = new Vector3(0f, 1.35f, 0.55f);
+            SetLayerRecursive(surfaceGO, newspaperLayer);
+            Debug.Log($"[DatingLoopSceneBuilder] Using imported newspaper model from {NewspaperPrefabPath}");
+        }
+        else
+        {
+            surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            surfaceGO.name = "NewspaperSurface";
+            surfaceGO.transform.SetParent(parent.transform);
+            surfaceGO.transform.position = new Vector3(0f, 1.35f, 0.55f);
+            // Face camera (looking -Z), slight tilt toward player
+            surfaceGO.transform.rotation = Quaternion.Euler(-5f, 180f, 0f);
+            surfaceGO.transform.localScale = new Vector3(1.0f, 0.7f, 1f);
+            surfaceGO.layer = newspaperLayer;
 
-        surfaceGO.AddComponent<NewspaperSurface>();
+            // Remove default MeshCollider from primitive
+            Object.DestroyImmediate(surfaceGO.GetComponent<MeshCollider>());
+        }
 
+        // Ensure collider exists
+        var boxCol = surfaceGO.GetComponent<BoxCollider>();
+        if (boxCol == null)
+            boxCol = surfaceGO.GetComponentInChildren<BoxCollider>();
+        if (boxCol == null)
+        {
+            boxCol = surfaceGO.AddComponent<BoxCollider>();
+            boxCol.size = new Vector3(1f, 1f, 0.01f);
+            boxCol.center = Vector3.zero;
+        }
+
+        // Add NewspaperSurface if not already present
+        if (surfaceGO.GetComponent<NewspaperSurface>() == null)
+            surfaceGO.AddComponent<NewspaperSurface>();
+
+        // Only assign default material if no material is already set (i.e., primitive quad)
         var rend = surfaceGO.GetComponent<Renderer>();
-        if (rend != null)
+        if (rend == null) rend = surfaceGO.GetComponentInChildren<Renderer>();
+        if (rend != null && prefab == null)
         {
             var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
                                    ?? Shader.Find("Standard"));
             mat.color = new Color(0.92f, 0.90f, 0.85f);
+            mat.SetInt("_Cull", 0); // Render both faces
             rend.sharedMaterial = mat;
         }
 
-        // World-space canvas
-        var canvasGO = new GameObject("NewspaperCanvas");
-        canvasGO.transform.SetParent(parent.transform);
-        canvasGO.transform.position = new Vector3(deskPos.x, newspaperY + 0.001f, deskPos.z);
-        canvasGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        // ── WorldSpace Canvas overlay (two-page spread) ─────────────
+        // Pivot GO holds 3D transform — matches newspaper quad position/rotation
+        var pivotGO = new GameObject("NewspaperOverlayPivot");
+        pivotGO.transform.SetParent(parent.transform);
+        pivotGO.transform.position = new Vector3(0f, 1.35f, 0.549f);
+        pivotGO.transform.rotation = Quaternion.Euler(-5f, 180f, 0f);
+        pivotGO.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
+
+        // Canvas child — identity local transform
+        var canvasGO = new GameObject("NewspaperOverlay");
+        canvasGO.transform.SetParent(pivotGO.transform, false);
 
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
+
         var canvasRT = canvasGO.GetComponent<RectTransform>();
-        canvasRT.sizeDelta = new Vector2(500f, 700f);
-        canvasRT.localScale = new Vector3(0.001f, 0.001f, 0.001f);
+        canvasRT.localPosition = Vector3.zero;
+        canvasRT.localRotation = Quaternion.identity;
+        canvasRT.localScale = Vector3.one;
+        canvasRT.sizeDelta = new Vector2(CanvasWidth, CanvasHeight);
+        canvasRT.pivot = new Vector2(0.5f, 0.5f);
 
-        CreateTMPText("Header_Text", canvasGO.transform,
-            new Vector2(0f, 310f), new Vector2(480f, 50f),
-            "THE DAILY BLOOM", 40f, FontStyles.Bold, TextAlignmentOptions.Center);
-        CreateTMPText("Personals_Label", canvasGO.transform,
-            new Vector2(-130f, 260f), new Vector2(200f, 30f),
-            "PERSONALS", 16f, FontStyles.Bold, TextAlignmentOptions.Center);
-        CreateTMPText("Ads_Label", canvasGO.transform,
-            new Vector2(130f, 260f), new Vector2(200f, 30f),
-            "CLASSIFIEDS", 16f, FontStyles.Bold, TextAlignmentOptions.Center);
+        // CanvasGroup — blocksRaycasts=false so scissors Physics.Raycast passes through
+        var cg = canvasGO.AddComponent<CanvasGroup>();
+        cg.blocksRaycasts = false;
+        cg.interactable = false;
 
-        // 4 personal ad slots (left column)
-        var personalSlots = new NewspaperAdSlot[4];
-        float pStartY = 200f;
-        float pHeight = 110f;
-        for (int i = 0; i < 4; i++)
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.dynamicPixelsPerUnit = 10f;
+
+        // ── Center fold line ────────────────────────────────────────
+        var foldGO = new GameObject("FoldLine");
+        foldGO.transform.SetParent(canvasGO.transform, false);
+        var foldRT = foldGO.AddComponent<RectTransform>();
+        foldRT.anchoredPosition = new Vector2(0f, 0f);
+        foldRT.sizeDelta = new Vector2(2f, CanvasHeight);
+        foldRT.localScale = Vector3.one;
+        var foldImg = foldGO.AddComponent<Image>();
+        foldImg.color = new Color(0.3f, 0.3f, 0.3f, 0.4f);
+
+        // ── Left page (decorative fake articles) ────────────────────
+        BuildLeftPageSquiggles(canvasGO.transform);
+
+        // ── Right page (personal ads — flex layout) ─────────────────
+        // Load pool to determine ad count
+        string poolPath = "Assets/ScriptableObjects/Dating/NewspaperPool_Default.asset";
+        var pool = AssetDatabase.LoadAssetAtPath<NewspaperPoolDefinition>(poolPath);
+        int adCount = pool != null ? pool.personalAdsPerDay : 4;
+        adCount = Mathf.Clamp(adCount, 1, 8);
+
+        // Right page header
+        CreateCanvasText("PersonalsLabel", canvasGO.transform,
+            new Vector2(250f, 310f), new Vector2(440f, 35f),
+            "PERSONALS", 28f, FontStyles.Bold, TextAlignmentOptions.Center);
+
+        // Right page header rule
+        var pRuleGO = new GameObject("PersonalsRule");
+        pRuleGO.transform.SetParent(canvasGO.transform, false);
+        var pRuleRT = pRuleGO.AddComponent<RectTransform>();
+        pRuleRT.anchoredPosition = new Vector2(250f, 290f);
+        pRuleRT.sizeDelta = new Vector2(420f, 2f);
+        pRuleRT.localScale = Vector3.one;
+        pRuleGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f);
+
+        // Flex layout for personal ads on right page
+        // Content area: x=[520, 980], y=[30, 620] in absolute pixel space (from bottom-left)
+        float contentLeft = 520f;
+        float contentRight = 980f;
+        float contentBottom = 30f;
+        float contentTop = 620f;
+        float contentWidth = contentRight - contentLeft;   // 460
+        float contentHeight = contentTop - contentBottom;   // 590
+        float spacing = 10f;
+        float slotHeight = (contentHeight - spacing * (adCount - 1)) / adCount;
+
+        var personalSlots = new NewspaperAdSlot[adCount];
+
+        for (int i = 0; i < adCount; i++)
         {
-            float yPos = pStartY - i * pHeight;
-            personalSlots[i] = CreateAdSlot(canvasGO.transform, $"PersonalSlot_{i}",
-                new Vector2(-130f, yPos), new Vector2(220f, 100f),
-                true, newspaperLayer, canvasRT.sizeDelta);
+            // Slot position (from top)
+            float slotTopY = contentTop - i * (slotHeight + spacing);
+            float slotCenterY = slotTopY - slotHeight * 0.5f;
+
+            // Anchored position relative to canvas center (pivot 0.5, 0.5)
+            float anchoredX = (contentLeft + contentWidth * 0.5f) - CanvasWidth * 0.5f;  // 250
+            float anchoredY = slotCenterY - CanvasHeight * 0.5f;
+
+            // Font sizes clamped by slot height
+            float nameFontSize = Mathf.Clamp(slotHeight * 0.16f, 14f, 28f);
+            float bodyFontSize = Mathf.Clamp(slotHeight * 0.11f, 10f, 18f);
+            float phoneFontSize = Mathf.Clamp(slotHeight * 0.13f, 12f, 22f);
+            float portraitSize = Mathf.Clamp(slotHeight * 0.35f, 32f, 48f);
+
+            string prefix = $"Personal_{i}";
+
+            // Slot background (subtle border)
+            var slotBgGO = new GameObject($"{prefix}_BG");
+            slotBgGO.transform.SetParent(canvasGO.transform, false);
+            var slotBgRT = slotBgGO.AddComponent<RectTransform>();
+            slotBgRT.anchoredPosition = new Vector2(anchoredX, anchoredY);
+            slotBgRT.sizeDelta = new Vector2(contentWidth, slotHeight);
+            slotBgRT.localScale = Vector3.one;
+            var slotBgImg = slotBgGO.AddComponent<Image>();
+            slotBgImg.color = new Color(0.1f, 0.1f, 0.1f, 0.06f);
+
+            // Name text (top of slot)
+            float nameOffsetY = slotHeight * 0.35f;
+            var nameGO = CreateCanvasText($"{prefix}_Name", canvasGO.transform,
+                new Vector2(anchoredX - 20f, anchoredY + nameOffsetY),
+                new Vector2(contentWidth - portraitSize - 20f, nameFontSize + 6f),
+                "Name", nameFontSize, FontStyles.Bold, TextAlignmentOptions.Left);
+
+            // Portrait image (top-right of slot)
+            var portraitGO = CreateCanvasImage($"{prefix}_Portrait", canvasGO.transform,
+                new Vector2(anchoredX + contentWidth * 0.5f - portraitSize * 0.5f - 5f,
+                            anchoredY + nameOffsetY),
+                new Vector2(portraitSize, portraitSize));
+
+            // Ad body text (center of slot)
+            var adGO = CreateCanvasText($"{prefix}_Ad", canvasGO.transform,
+                new Vector2(anchoredX, anchoredY),
+                new Vector2(contentWidth - 20f, slotHeight * 0.4f),
+                "Ad text...", bodyFontSize, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+            // Phone number (bottom of slot)
+            float phoneOffsetY = -slotHeight * 0.35f;
+            var phoneGO = CreateCanvasText($"{prefix}_Phone", canvasGO.transform,
+                new Vector2(anchoredX, anchoredY + phoneOffsetY),
+                new Vector2(contentWidth - 20f, phoneFontSize + 6f),
+                "555-0000", phoneFontSize, FontStyles.Italic, TextAlignmentOptions.Left);
+
+            // Create logical ad slot with UV bounds
+            float slotCenterX_abs = contentLeft + contentWidth * 0.5f;
+            personalSlots[i] = CreateLogicalAdSlot($"PersonalSlot_{i}",
+                parent.transform, newspaperLayer,
+                new Vector2(slotCenterX_abs, slotCenterY),
+                new Vector2(contentWidth, slotHeight),
+                true, new Vector2(CanvasWidth, CanvasHeight));
+
+            // Wire TMP_Text and Image refs to ad slot
+            var slotSO = new SerializedObject(personalSlots[i]);
+            slotSO.FindProperty("nameLabel").objectReferenceValue = nameGO.GetComponent<TMP_Text>();
+            slotSO.FindProperty("adLabel").objectReferenceValue = adGO.GetComponent<TMP_Text>();
+            slotSO.FindProperty("phoneNumberLabel").objectReferenceValue = phoneGO.GetComponent<TMP_Text>();
+            slotSO.FindProperty("portraitImage").objectReferenceValue = portraitGO.GetComponent<Image>();
+            slotSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        // 3 commercial ad slots (right column)
-        var commercialSlots = new NewspaperAdSlot[3];
-        float cStartY = 200f;
-        float cHeight = 140f;
-        for (int i = 0; i < 3; i++)
-        {
-            float yPos = cStartY - i * cHeight;
-            commercialSlots[i] = CreateAdSlot(canvasGO.transform, $"CommercialSlot_{i}",
-                new Vector2(130f, yPos), new Vector2(220f, 120f),
-                false, newspaperLayer, canvasRT.sizeDelta);
-        }
+        // No commercial slots on the two-page spread (left page is decorative)
+        var commercialSlots = new NewspaperAdSlot[0];
+
+        // Start hidden — NewspaperManager shows it when entering ReadingPaper state
+        canvasGO.SetActive(false);
 
         return new NewspaperData
         {
             surfaceQuad = surfaceGO,
-            clickCollider = boxCol,
             personalSlots = personalSlots,
-            commercialSlots = commercialSlots
+            commercialSlots = commercialSlots,
+            overlayCanvas = canvasGO
         };
     }
 
-    private static NewspaperAdSlot CreateAdSlot(Transform parent, string name,
-        Vector2 anchoredPos, Vector2 size, bool isPersonal, int layer, Vector2 canvasSize)
+    /// <summary>
+    /// Build decorative left page content: newspaper title, fake headlines, body squiggles.
+    /// Left page occupies x=[0, 500] in canvas space → anchored x=[-250, 0] relative to center.
+    /// </summary>
+    private static void BuildLeftPageSquiggles(Transform canvasTransform)
+    {
+        float leftCenter = -250f; // center of left page relative to canvas center
+
+        // Newspaper title
+        CreateCanvasText("Title", canvasTransform,
+            new Vector2(leftCenter, 300f), new Vector2(460f, 50f),
+            "THE DAILY BLOOM", 38f, FontStyles.Bold, TextAlignmentOptions.Center);
+
+        // Title rule
+        var titleRuleGO = new GameObject("TitleRule");
+        titleRuleGO.transform.SetParent(canvasTransform, false);
+        var titleRuleRT = titleRuleGO.AddComponent<RectTransform>();
+        titleRuleRT.anchoredPosition = new Vector2(leftCenter, 270f);
+        titleRuleRT.sizeDelta = new Vector2(420f, 2f);
+        titleRuleRT.localScale = Vector3.one;
+        titleRuleGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f);
+
+        // Date line
+        CreateCanvasText("DateLine", canvasTransform,
+            new Vector2(leftCenter, 252f), new Vector2(420f, 20f),
+            "Vol. XLII  No. 7  |  The Garden District Gazette", 12f,
+            FontStyles.Italic, TextAlignmentOptions.Center);
+
+        // Headline 1
+        CreateCanvasText("Headline1", canvasTransform,
+            new Vector2(leftCenter, 215f), new Vector2(420f, 35f),
+            "MYSTERIOUS BLOOM SPOTTED IN TOWN SQUARE", 20f,
+            FontStyles.Bold, TextAlignmentOptions.Left);
+
+        // Body 1
+        CreateCanvasText("Body1", canvasTransform,
+            new Vector2(leftCenter, 155f), new Vector2(420f, 80f),
+            "Residents were astonished yesterday when a never-before-seen flower appeared overnight in the central fountain. Botanists remain baffled. \"It smells like Tuesday,\" said one local.",
+            13f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+        // Rule 2
+        var rule2GO = new GameObject("Rule2");
+        rule2GO.transform.SetParent(canvasTransform, false);
+        var rule2RT = rule2GO.AddComponent<RectTransform>();
+        rule2RT.anchoredPosition = new Vector2(leftCenter, 108f);
+        rule2RT.sizeDelta = new Vector2(420f, 1f);
+        rule2RT.localScale = Vector3.one;
+        rule2GO.AddComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+
+        // Headline 2
+        CreateCanvasText("Headline2", canvasTransform,
+            new Vector2(leftCenter, 85f), new Vector2(420f, 30f),
+            "ANNUAL PRUNING FESTIVAL DRAWS RECORD CROWDS", 18f,
+            FontStyles.Bold, TextAlignmentOptions.Left);
+
+        // Body 2
+        CreateCanvasText("Body2", canvasTransform,
+            new Vector2(leftCenter, 25f), new Vector2(420f, 80f),
+            "The 47th Annual Pruning Festival exceeded all expectations with over 200 attendees. Highlights included the competitive hedge-sculpting finals and Mrs. Fernsby's award-winning topiary swan.",
+            13f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+        // Rule 3
+        var rule3GO = new GameObject("Rule3");
+        rule3GO.transform.SetParent(canvasTransform, false);
+        var rule3RT = rule3GO.AddComponent<RectTransform>();
+        rule3RT.anchoredPosition = new Vector2(leftCenter, -22f);
+        rule3RT.sizeDelta = new Vector2(420f, 1f);
+        rule3RT.localScale = Vector3.one;
+        rule3GO.AddComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+
+        // Headline 3
+        CreateCanvasText("Headline3", canvasTransform,
+            new Vector2(leftCenter, -45f), new Vector2(420f, 30f),
+            "WEATHER: PARTLY SUNNY WITH CHANCE OF PETALS", 16f,
+            FontStyles.Bold, TextAlignmentOptions.Left);
+
+        // Body 3
+        CreateCanvasText("Body3", canvasTransform,
+            new Vector2(leftCenter, -100f), new Vector2(420f, 70f),
+            "Meteorologists predict a mild week ahead with occasional floral precipitation. Residents advised to carry umbrellas and enjoy the fragrance. Pollen count: high.",
+            12f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+        // Filler squiggles at bottom
+        CreateCanvasText("Filler", canvasTransform,
+            new Vector2(leftCenter, -185f), new Vector2(420f, 100f),
+            "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~",
+            10f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+    }
+
+    /// <summary>
+    /// Create a logical ad slot (no visible geometry — text lives on overlay canvas).
+    /// Computes UV bounds for cut polygon evaluation.
+    /// </summary>
+    private static NewspaperAdSlot CreateLogicalAdSlot(string name, Transform parent,
+        int layer, Vector2 centerPx, Vector2 sizePx, bool isPersonal, Vector2 virtualSize)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent);
         go.layer = layer;
 
         var rt = go.AddComponent<RectTransform>();
-        rt.anchoredPosition = anchoredPos;
-        rt.sizeDelta = size;
-        rt.localScale = Vector3.one;
+        rt.localPosition = Vector3.zero;
         rt.localRotation = Quaternion.identity;
+        rt.localScale = Vector3.one;
+        rt.sizeDelta = sizePx;
 
         var slot = go.AddComponent<NewspaperAdSlot>();
 
-        var nameGO = CreateTMPText("Name", go.transform,
-            new Vector2(0f, size.y * 0.35f), new Vector2(size.x - 10f, 24f),
-            "", 16f, FontStyles.Bold, TextAlignmentOptions.Left);
-        var adGO = CreateTMPText("AdText", go.transform,
-            new Vector2(0f, -5f), new Vector2(size.x - 10f, size.y * 0.5f),
-            "", 11f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
-
-        GameObject phoneGO = null;
-        if (isPersonal)
-        {
-            phoneGO = CreateTMPText("Phone", go.transform,
-                new Vector2(0f, -size.y * 0.35f), new Vector2(size.x - 10f, 18f),
-                "", 12f, FontStyles.Italic, TextAlignmentOptions.Left);
-        }
-
-        float uMin = (anchoredPos.x - size.x * 0.5f + canvasSize.x * 0.5f) / canvasSize.x;
-        float vMin = (anchoredPos.y - size.y * 0.5f + canvasSize.y * 0.5f) / canvasSize.y;
-        float uWidth = size.x / canvasSize.x;
-        float vHeight = size.y / canvasSize.y;
+        // Compute UV bounds (0-1) from pixel coordinates
+        float uMin = (centerPx.x - sizePx.x * 0.5f) / virtualSize.x;
+        float vMin = (centerPx.y - sizePx.y * 0.5f) / virtualSize.y;
+        float uWidth = sizePx.x / virtualSize.x;
+        float vHeight = sizePx.y / virtualSize.y;
 
         var so = new SerializedObject(slot);
         so.FindProperty("slotRect").objectReferenceValue = rt;
-        so.FindProperty("nameLabel").objectReferenceValue = nameGO.GetComponent<TMP_Text>();
-        so.FindProperty("adLabel").objectReferenceValue = adGO.GetComponent<TMP_Text>();
-        if (phoneGO != null)
-            so.FindProperty("phoneNumberLabel").objectReferenceValue = phoneGO.GetComponent<TMP_Text>();
         so.FindProperty("normalizedBounds").rectValue = new Rect(uMin, vMin, uWidth, vHeight);
         so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -502,18 +699,24 @@ public static class DatingLoopSceneBuilder
         var parent = new GameObject("ScissorsVisual");
         parent.transform.position = Vector3.zero;
 
-        CreateBox("Blade_A", parent.transform,
-            Vector3.zero, new Vector3(0.04f, 0.003f, 0.003f),
-            new Color(0.7f, 0.7f, 0.7f));
-        CreateBox("Blade_B", parent.transform,
-            Vector3.zero, new Vector3(0.003f, 0.003f, 0.04f),
-            new Color(0.7f, 0.7f, 0.7f));
-        CreateBox("Handle_A", parent.transform,
-            new Vector3(0.025f, 0f, 0f), new Vector3(0.012f, 0.005f, 0.012f),
-            new Color(0.2f, 0.2f, 0.2f));
-        CreateBox("Handle_B", parent.transform,
-            new Vector3(-0.025f, 0f, 0f), new Vector3(0.012f, 0.005f, 0.012f),
-            new Color(0.2f, 0.2f, 0.2f));
+        // Two thin crossed blades (angled apart like open scissors)
+        var bladeA = CreateBox("Blade_A", parent.transform,
+            new Vector3(0f, 0.001f, 0.012f), new Vector3(0.003f, 0.002f, 0.025f),
+            new Color(0.75f, 0.75f, 0.8f));
+        bladeA.transform.localRotation = Quaternion.Euler(0f, 12f, 0f);
+        bladeA.isStatic = false;
+
+        var bladeB = CreateBox("Blade_B", parent.transform,
+            new Vector3(0f, 0.001f, 0.012f), new Vector3(0.003f, 0.002f, 0.025f),
+            new Color(0.75f, 0.75f, 0.8f));
+        bladeB.transform.localRotation = Quaternion.Euler(0f, -12f, 0f);
+        bladeB.isStatic = false;
+
+        // Pivot dot
+        var pivot = CreateBox("Pivot", parent.transform,
+            Vector3.zero, new Vector3(0.005f, 0.003f, 0.005f),
+            new Color(0.3f, 0.3f, 0.3f));
+        pivot.isStatic = false;
 
         parent.SetActive(false);
         return parent.transform;
@@ -614,7 +817,7 @@ public static class DatingLoopSceneBuilder
         };
         float[] arrivalTimes = { 30f, 45f, 20f, 60f };
 
-        // Preference data: [likedTags], [dislikedTags], moodMin, moodMax
+        // Preference data
         string[][] likedTags = {
             new[] { "cozy", "perfume_floral", "music" },
             new[] { "vinyl", "books" },
@@ -755,7 +958,6 @@ public static class DatingLoopSceneBuilder
         else
         {
             moodProfile = ScriptableObject.CreateInstance<MoodMachineProfile>();
-            // Set up default gradient (warm → cool)
             var lightGrad = new Gradient();
             lightGrad.SetKeys(
                 new[] { new GradientColorKey(new Color(1f, 0.95f, 0.85f), 0f),
@@ -832,7 +1034,8 @@ public static class DatingLoopSceneBuilder
     private static ManagerData BuildManagers(
         CameraData camData, FurnitureData furnitureData,
         SOData soData, Light directionalLight,
-        NewspaperData newspaperData, Transform scissorsVisual, int newspaperLayer)
+        NewspaperData newspaperData,
+        Transform scissorsVisual, int newspaperLayer)
     {
         var managersGO = new GameObject("Managers");
 
@@ -866,7 +1069,6 @@ public static class DatingLoopSceneBuilder
         // ── PhoneController ──────────────────────────────────────
         var phoneCtrl = furnitureData.phoneTransform.gameObject.AddComponent<PhoneController>();
         var pcSO = new SerializedObject(phoneCtrl);
-        // Wire ring visual (child of phone)
         if (furnitureData.phoneTransform.childCount > 0)
             pcSO.FindProperty("ringVisual").objectReferenceValue = furnitureData.phoneTransform.GetChild(0).gameObject;
         pcSO.FindProperty("phoneLayer").intValue = 1 << furnitureData.phoneTransform.gameObject.layer;
@@ -906,13 +1108,11 @@ public static class DatingLoopSceneBuilder
             newspaperData.surfaceQuad.GetComponent<NewspaperSurface>();
         newsMgrSO.FindProperty("evaluator").objectReferenceValue = evalComp;
         newsMgrSO.FindProperty("mainCamera").objectReferenceValue = camData.camera;
-        newsMgrSO.FindProperty("tableCamera").objectReferenceValue = camData.overviewCamera;
-        newsMgrSO.FindProperty("paperCamera").objectReferenceValue = camData.newspaperCamera;
+        newsMgrSO.FindProperty("newspaperOverlay").objectReferenceValue = newspaperData.overlayCanvas;
+        newsMgrSO.FindProperty("readCamera").objectReferenceValue = camData.newspaperReadCamera;
         newsMgrSO.FindProperty("brain").objectReferenceValue = camData.brain;
         newsMgrSO.FindProperty("newspaperTransform").objectReferenceValue =
             newspaperData.surfaceQuad.transform;
-        newsMgrSO.FindProperty("newspaperClickCollider").objectReferenceValue =
-            newspaperData.clickCollider;
 
         var personalSlotsProp = newsMgrSO.FindProperty("personalSlots");
         personalSlotsProp.ClearArray();
@@ -1127,25 +1327,15 @@ public static class DatingLoopSceneBuilder
         endSO.FindProperty("continueButton").objectReferenceValue = continueBtnGO.GetComponent<Button>();
         endSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── Newspaper UI panels ──────────────────────────────────
+        // ── Calling UI panel ──────────────────────────────────────
         var callingPanel = CreateUIPanel("CallingUI", uiCanvasGO.transform,
             "Calling...", 32f, new Color(0f, 0f, 0f, 0.7f));
-        var timerPanel = CreateUIPanel("TimerUI", uiCanvasGO.transform,
-            "0:30", 48f, new Color(0f, 0f, 0f, 0.5f));
-        var arrivedPanel = CreateUIPanel("ArrivedUI", uiCanvasGO.transform,
-            "Your date has arrived!", 36f, new Color(0f, 0f, 0f, 0.7f));
 
         // Wire NewspaperManager UI
         var newsMgrSO = new SerializedObject(managerData.newspaperManager);
         newsMgrSO.FindProperty("callingUI").objectReferenceValue = callingPanel;
         newsMgrSO.FindProperty("callingText").objectReferenceValue =
             callingPanel.GetComponentInChildren<TMP_Text>();
-        newsMgrSO.FindProperty("timerUI").objectReferenceValue = timerPanel;
-        newsMgrSO.FindProperty("timerText").objectReferenceValue =
-            timerPanel.GetComponentInChildren<TMP_Text>();
-        newsMgrSO.FindProperty("arrivedUI").objectReferenceValue = arrivedPanel;
-        newsMgrSO.FindProperty("arrivedText").objectReferenceValue =
-            arrivedPanel.GetComponentInChildren<TMP_Text>();
         newsMgrSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── Day label (top-left) ─────────────────────────────────
@@ -1158,7 +1348,7 @@ public static class DatingLoopSceneBuilder
         var instructionGO = CreateUIText("InstructionLabel", uiCanvasGO.transform,
             new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
             new Vector2(0f, 40f), new Vector2(600f, 40f),
-            "Click the newspaper to pick it up", 18f, TextAlignmentOptions.Center);
+            "Draw around a phone number to cut it out", 18f, TextAlignmentOptions.Center);
 
         // Wire NewspaperHUD
         var newsHudSO = new SerializedObject(managerData.newspaperHUD);
@@ -1281,20 +1471,34 @@ public static class DatingLoopSceneBuilder
         return go;
     }
 
-    private static GameObject CreateTMPText(string name, Transform parent,
+    private static TMP_FontAsset s_defaultFont;
+
+    private static TMP_FontAsset GetDefaultTMPFont()
+    {
+        if (s_defaultFont == null)
+        {
+            s_defaultFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+                "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
+        }
+        return s_defaultFont;
+    }
+
+    private static GameObject CreateCanvasText(string name, Transform parent,
         Vector2 anchoredPos, Vector2 size,
         string text, float fontSize, FontStyles style, TextAlignmentOptions alignment)
     {
         var go = new GameObject(name);
-        go.transform.SetParent(parent);
+        go.transform.SetParent(parent, false);
 
         var rt = go.AddComponent<RectTransform>();
         rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = size;
         rt.localScale = Vector3.one;
-        rt.localRotation = Quaternion.identity;
+        rt.pivot = new Vector2(0.5f, 0.5f);
 
         var tmp = go.AddComponent<TextMeshProUGUI>();
+        var font = GetDefaultTMPFont();
+        if (font != null) tmp.font = font;
         tmp.text = text;
         tmp.fontSize = fontSize;
         tmp.fontStyle = style;
@@ -1302,6 +1506,27 @@ public static class DatingLoopSceneBuilder
         tmp.color = new Color(0.1f, 0.1f, 0.1f);
         tmp.enableWordWrapping = true;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
+
+        return go;
+    }
+
+    private static GameObject CreateCanvasImage(string name, Transform parent,
+        Vector2 anchoredPos, Vector2 size)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = size;
+        rt.localScale = Vector3.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+
+        var img = go.AddComponent<Image>();
+        img.color = Color.white;
+        img.preserveAspect = true;
+
+        go.SetActive(false); // hidden by default — slot shows it when sprite assigned
 
         return go;
     }
@@ -1340,6 +1565,13 @@ public static class DatingLoopSceneBuilder
 
         panel.SetActive(false);
         return panel;
+    }
+
+    private static void SetLayerRecursive(GameObject go, int layer)
+    {
+        go.layer = layer;
+        foreach (Transform child in go.transform)
+            SetLayerRecursive(child.gameObject, layer);
     }
 
     private static int EnsureLayer(string layerName)

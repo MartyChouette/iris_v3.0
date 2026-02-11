@@ -15,31 +15,28 @@ public class ScissorsCutController : MonoBehaviour
     [Tooltip("Layer mask for the newspaper surface.")]
     [SerializeField] private LayerMask newspaperLayer;
 
-    [Tooltip("3D scissors model/sprite that follows the cut path.")]
+    [Tooltip("3D scissors visual that trails behind the cursor.")]
     [SerializeField] private Transform scissorsVisual;
 
-    [Header("Cut Path")]
+    [Header("Cut Line")]
     [Tooltip("Minimum world distance between path points.")]
     [SerializeField] private float minPointDistance = 0.005f;
 
     [Tooltip("Max total path length before auto-close.")]
     [SerializeField] private float maxPathLength = 5f;
 
-    [Tooltip("Color of the cut line.")]
+    [Tooltip("Color of the dotted cut line.")]
     [SerializeField] private Color cutLineColor = Color.black;
 
-    [Header("Scissors Follow")]
-    [Tooltip("Scissors move at this multiplier of player draw speed.")]
-    [SerializeField] private float scissorsSpeedMultiplier = 1.3f;
+    [Tooltip("Width of the dotted cut line.")]
+    [SerializeField] private float lineWidth = 0.003f;
 
-    [Tooltip("Minimum scissors speed (world units/sec).")]
-    [SerializeField] private float scissorsMinSpeed = 0.1f;
+    [Tooltip("Dash density — higher values produce more dashes per world unit.")]
+    [SerializeField] private float dashesPerUnit = 40f;
 
-    [Tooltip("Extra speed when scissors are far behind.")]
-    [SerializeField] private float scissorsCatchUpSpeed = 2.0f;
-
-    [Tooltip("Distance threshold where catchup kicks in.")]
-    [SerializeField] private float catchUpDistance = 0.1f;
+    [Header("Scissors")]
+    [Tooltip("Speed of the scissors trailing the cursor (world units/sec).")]
+    [SerializeField] private float scissorsSpeed = 0.5f;
 
     [Header("Close Tolerance")]
     [Tooltip("Max UV distance from end to start to close the polygon.")]
@@ -68,8 +65,8 @@ public class ScissorsCutController : MonoBehaviour
     private float _drawnArcLength;
     private float _scissorsArcLength;
     private int _scissorsLastCutIndex;
-    private float _prevFrameDrawnArc;
     private LineRenderer _lineRenderer;
+    private Texture2D _dashTexture;
 
     // Pre-computed cumulative arc lengths for each point
     private List<float> _cumulativeArcLengths = new List<float>();
@@ -84,18 +81,35 @@ public class ScissorsCutController : MonoBehaviour
         _mousePosition = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
         _mouseClick = new InputAction("MouseClick", InputActionType.Button, "<Mouse>/leftButton");
 
-        // Create LineRenderer for cut line visualization
+        // Procedural dash texture (half opaque, half transparent)
+        _dashTexture = new Texture2D(8, 2, TextureFormat.RGBA32, false);
+        _dashTexture.filterMode = FilterMode.Point;
+        _dashTexture.wrapMode = TextureWrapMode.Repeat;
+        var pixels = new Color32[16];
+        for (int i = 0; i < 16; i++)
+        {
+            int x = i % 8;
+            pixels[i] = x < 4
+                ? new Color32(255, 255, 255, 255)
+                : new Color32(0, 0, 0, 0);
+        }
+        _dashTexture.SetPixels32(pixels);
+        _dashTexture.Apply();
+
+        // Dotted line renderer
         _lineRenderer = gameObject.AddComponent<LineRenderer>();
         _lineRenderer.useWorldSpace = true;
         _lineRenderer.positionCount = 0;
-        _lineRenderer.startWidth = 0.002f;
-        _lineRenderer.endWidth = 0.002f;
+        _lineRenderer.startWidth = lineWidth;
+        _lineRenderer.endWidth = lineWidth;
         _lineRenderer.numCornerVertices = 4;
-        _lineRenderer.numCapVertices = 4;
+        _lineRenderer.numCapVertices = 2;
+        _lineRenderer.textureMode = LineTextureMode.Tile;
 
-        var lineMat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
+        var lineMat = new Material(Shader.Find("Sprites/Default"));
+        lineMat.mainTexture = _dashTexture;
         lineMat.color = cutLineColor;
+        lineMat.mainTextureScale = new Vector2(dashesPerUnit, 1f);
         _lineRenderer.sharedMaterial = lineMat;
 
         if (scissorsVisual != null)
@@ -112,6 +126,11 @@ public class ScissorsCutController : MonoBehaviour
     {
         _mousePosition.Disable();
         _mouseClick.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        if (_dashTexture != null) Destroy(_dashTexture);
     }
 
     private void Update()
@@ -166,7 +185,6 @@ public class ScissorsCutController : MonoBehaviour
         _drawnArcLength = 0f;
         _scissorsArcLength = 0f;
         _scissorsLastCutIndex = 0;
-        _prevFrameDrawnArc = 0f;
 
         Vector3 worldPoint = hit.point + hit.normal * 0.001f;
         _pathWorldPoints.Add(worldPoint);
@@ -182,7 +200,6 @@ public class ScissorsCutController : MonoBehaviour
             scissorsVisual.gameObject.SetActive(true);
         }
 
-        // Play cut loop SFX
         if (cutLoopSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(cutLoopSFX);
     }
@@ -202,7 +219,6 @@ public class ScissorsCutController : MonoBehaviour
         if (dist < minPointDistance)
             return;
 
-        _prevFrameDrawnArc = _drawnArcLength;
         _drawnArcLength += dist;
         _pathWorldPoints.Add(worldPoint);
         _pathUVPoints.Add(hit.textureCoord);
@@ -220,22 +236,13 @@ public class ScissorsCutController : MonoBehaviour
     {
         if (_pathWorldPoints.Count < 2) return;
 
-        // Calculate player draw speed this frame
-        float drawDelta = _drawnArcLength - _prevFrameDrawnArc;
-        float playerSpeed = drawDelta / Mathf.Max(Time.deltaTime, 0.001f);
-
-        // Advance scissors
-        float scissorsSpeed = Mathf.Max(playerSpeed * scissorsSpeedMultiplier, scissorsMinSpeed);
-
-        float gap = _drawnArcLength - _scissorsArcLength;
-        if (gap > catchUpDistance)
-            scissorsSpeed += scissorsCatchUpSpeed;
-
+        // Advance scissors at configurable fixed speed
         _scissorsArcLength += scissorsSpeed * Time.deltaTime;
         _scissorsArcLength = Mathf.Min(_scissorsArcLength, _drawnArcLength);
 
         // Interpolate position along path
-        Vector3 scissorsPos = InterpolateAlongPath(_scissorsArcLength, out int segmentIndex, out Vector3 direction);
+        Vector3 scissorsPos = InterpolateAlongPath(_scissorsArcLength,
+            out int segmentIndex, out Vector3 direction);
 
         if (scissorsVisual != null)
         {
@@ -283,7 +290,6 @@ public class ScissorsCutController : MonoBehaviour
                 surface.SpawnCutPiece(_pathUVPoints);
             }
 
-            // Play complete SFX
             if (cutCompleteSFX != null && AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX(cutCompleteSFX);
 
@@ -327,11 +333,8 @@ public class ScissorsCutController : MonoBehaviour
         direction = Vector3.forward;
 
         if (_pathWorldPoints.Count < 2)
-        {
             return _pathWorldPoints.Count > 0 ? _pathWorldPoints[0] : Vector3.zero;
-        }
 
-        // Find which segment the arc length falls in
         for (int i = 1; i < _cumulativeArcLengths.Count; i++)
         {
             if (arcLength <= _cumulativeArcLengths[i])
@@ -347,10 +350,10 @@ public class ScissorsCutController : MonoBehaviour
             }
         }
 
-        // Past the end — return last point
         segmentIndex = _pathWorldPoints.Count - 2;
         if (_pathWorldPoints.Count >= 2)
-            direction = (_pathWorldPoints[_pathWorldPoints.Count - 1] - _pathWorldPoints[_pathWorldPoints.Count - 2]).normalized;
+            direction = (_pathWorldPoints[_pathWorldPoints.Count - 1]
+                       - _pathWorldPoints[_pathWorldPoints.Count - 2]).normalized;
 
         return _pathWorldPoints[_pathWorldPoints.Count - 1];
     }

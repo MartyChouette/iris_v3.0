@@ -66,6 +66,8 @@ public class DateSessionManager : MonoBehaviour
     private float _moodCheckTimer;
     private DateCharacterController _dateCharacter;
     private GameObject _dateCharacterGO;
+    private float _arrivalTimer;
+    private bool _arrivalTimerActive;
 
     // ──────────────────────────────────────────────────────────────
     // Public API
@@ -97,6 +99,18 @@ public class DateSessionManager : MonoBehaviour
 
     private void Update()
     {
+        // Arrival timer — ticks during WaitingForArrival
+        if (_state == SessionState.WaitingForArrival && _arrivalTimerActive)
+        {
+            _arrivalTimer -= Time.deltaTime;
+            if (_arrivalTimer <= 0f)
+            {
+                _arrivalTimer = 0f;
+                _arrivalTimerActive = false;
+                TriggerDateArrival();
+            }
+        }
+
         if (_state != SessionState.DateInProgress) return;
 
         // Periodic mood check
@@ -112,12 +126,25 @@ public class DateSessionManager : MonoBehaviour
     // Session Flow
     // ──────────────────────────────────────────────────────────────
 
-    /// <summary>Called after newspaper ad is cut — date is on the way.</summary>
-    public void StartWaiting(DatePersonalDefinition date)
+    /// <summary>Called after newspaper ad is cut — date is on the way. Starts arrival timer.</summary>
+    public void ScheduleDate(DatePersonalDefinition date)
     {
         _currentDate = date;
         _state = SessionState.WaitingForArrival;
-        Debug.Log($"[DateSessionManager] Waiting for {date.characterName} to arrive.");
+        _arrivalTimer = date.arrivalTimeSec;
+        _arrivalTimerActive = true;
+        Debug.Log($"[DateSessionManager] Scheduled date with {date.characterName}. Arriving in {date.arrivalTimeSec}s.");
+    }
+
+    /// <summary>Called when the arrival timer expires — triggers phone ring or direct arrival.</summary>
+    private void TriggerDateArrival()
+    {
+        Debug.Log($"[DateSessionManager] {_currentDate?.characterName} is arriving!");
+
+        if (PhoneController.Instance != null)
+            PhoneController.Instance.StartRinging();
+        else
+            OnDateCharacterArrived();
     }
 
     /// <summary>Called when the date character has arrived (phone answered or doorbell).</summary>

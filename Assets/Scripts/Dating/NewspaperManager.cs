@@ -8,11 +8,11 @@ using Unity.Cinemachine;
 
 public class NewspaperManager : MonoBehaviour, IStationManager
 {
-    public enum State { TableView, PickingUp, ReadingPaper, Cutting, Calling, Waiting, DateArrived }
+    public enum State { ReadingPaper, Cutting, Calling, Done }
 
     public static NewspaperManager Instance { get; private set; }
 
-    public bool IsAtIdleState => CurrentState == State.TableView || CurrentState == State.DateArrived;
+    public bool IsAtIdleState => CurrentState == State.Done;
 
     // ─── References ───────────────────────────────────────────────
     [Header("References")]
@@ -22,23 +22,20 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     [SerializeField] private CutPathEvaluator evaluator;
     [SerializeField] private Camera mainCamera;
 
+    [Tooltip("WorldSpace Canvas overlay with newspaper text + images (shown when reading).")]
+    [SerializeField] private GameObject newspaperOverlay;
+
     // ─── Cameras (Cinemachine 3) ──────────────────────────────────
     [Header("Cameras")]
-    [Tooltip("Looking down at desk with paper.")]
-    [SerializeField] private CinemachineCamera tableCamera;
-
-    [Tooltip("Close-up first-person reading view.")]
-    [SerializeField] private CinemachineCamera paperCamera;
+    [Tooltip("First-person newspaper reading view (held up in front of player).")]
+    [SerializeField] private CinemachineCamera readCamera;
 
     [SerializeField] private CinemachineBrain brain;
 
     // ─── Newspaper Object ─────────────────────────────────────────
     [Header("Newspaper Object")]
-    [Tooltip("The newspaper quad/plane on the desk.")]
+    [Tooltip("The newspaper quad/plane.")]
     [SerializeField] private Transform newspaperTransform;
-
-    [Tooltip("Click target when on table.")]
-    [SerializeField] private Collider newspaperClickCollider;
 
     // ─── Ad Slots ─────────────────────────────────────────────────
     [Header("Ad Slots")]
@@ -54,29 +51,28 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     [Header("UI")]
     [SerializeField] private GameObject callingUI;
     [SerializeField] private TMP_Text callingText;
-    [SerializeField] private GameObject timerUI;
-    [SerializeField] private TMP_Text timerText;
-    [SerializeField] private GameObject arrivedUI;
-    [SerializeField] private TMP_Text arrivedText;
 
     // ─── Events ───────────────────────────────────────────────────
     [Header("Events")]
     public UnityEvent<DatePersonalDefinition> OnDateSelected;
-    public UnityEvent OnDateArrived;
+    public UnityEvent OnNewspaperDone;
 
     // ─── Input ────────────────────────────────────────────────────
     private InputAction _clickAction;
     private InputAction _mousePositionAction;
-    private InputAction _cancelAction;
 
     // ─── State ────────────────────────────────────────────────────
-    public State CurrentState { get; private set; } = State.TableView;
+    public State CurrentState { get; private set; } = State.Done;
+
+    /// <summary>The read camera for external priority control (DayPhaseManager).</summary>
+    public CinemachineCamera ReadCamera => readCamera;
+
+    /// <summary>The newspaper quad transform for repositioning (tossed position).</summary>
+    public Transform NewspaperTransform => newspaperTransform;
 
     private DatePersonalDefinition _selectedDefinition;
-    private float _timeRemaining;
-    private bool _blendWaiting;
 
-    private const int PriorityActive = 20;
+    private const int PriorityActive = 30;
     private const int PriorityInactive = 0;
 
     // ─── Lifecycle ────────────────────────────────────────────────
@@ -94,7 +90,6 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         // Inline input actions
         _clickAction = new InputAction("Click", InputActionType.Button, "<Mouse>/leftButton");
         _mousePositionAction = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
-        _cancelAction = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
 
         HideAllUI();
 
@@ -107,7 +102,6 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     {
         _clickAction.Enable();
         _mousePositionAction.Enable();
-        _cancelAction.Enable();
 
         // Subscribe to scissors cut completion
         if (scissorsController != null)
@@ -118,7 +112,6 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     {
         _clickAction.Disable();
         _mousePositionAction.Disable();
-        _cancelAction.Disable();
 
         if (scissorsController != null)
             scissorsController.OnCutComplete.RemoveListener(OnCutCompleted);
@@ -131,131 +124,56 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private void Start()
     {
-        // Initial camera setup
-        SetCamera(tableCamera);
+        // Start in Done state — OnNewNewspaper will activate reading
+        if (readCamera != null)
+            readCamera.Priority = PriorityInactive;
 
         if (scissorsController != null)
             scissorsController.SetEnabled(false);
     }
 
-    private void Update()
-    {
-        switch (CurrentState)
-        {
-            case State.TableView:
-                UpdateTableView();
-                break;
-
-            case State.PickingUp:
-                UpdatePickingUp();
-                break;
-
-            case State.ReadingPaper:
-                UpdateReadingPaper();
-                break;
-
-            case State.Waiting:
-                UpdateWaiting();
-                break;
-        }
-    }
-
     // ─── State Updates ────────────────────────────────────────────
-
-    private void UpdateTableView()
-    {
-        if (!_clickAction.WasPressedThisFrame()) return;
-
-        // Raycast to check if player clicked the newspaper
-        Vector2 screenPos = _mousePositionAction.ReadValue<Vector2>();
-        if (mainCamera == null) return;
-
-        Ray ray = mainCamera.ScreenPointToRay(screenPos);
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
-        {
-            if (newspaperClickCollider != null && hit.collider == newspaperClickCollider)
-            {
-                EnterPickingUp();
-            }
-        }
-    }
-
-    private void UpdatePickingUp()
-    {
-        // Wait for Cinemachine blend to complete
-        if (brain != null && brain.IsBlending)
-            return;
-
-        EnterReadingPaper();
-    }
-
-    private void UpdateReadingPaper()
-    {
-        // Escape → put newspaper down
-        if (_cancelAction.WasPressedThisFrame())
-        {
-            ReturnToTable();
-        }
-    }
-
-    private void UpdateWaiting()
-    {
-        _timeRemaining -= Time.deltaTime;
-
-        if (_timeRemaining <= 0f)
-        {
-            _timeRemaining = 0f;
-            UpdateTimerDisplay();
-            EnterDateArrived();
-        }
-        else
-        {
-            UpdateTimerDisplay();
-        }
-    }
+    // ReadingPaper and Done need no per-frame updates.
+    // Cutting and Calling are coroutine-driven.
 
     // ─── State Transitions ────────────────────────────────────────
-
-    private void EnterPickingUp()
-    {
-        CurrentState = State.PickingUp;
-        Debug.Log("[NewspaperManager] Picking up newspaper...");
-
-        // Blend to paper camera
-        if (brain != null)
-        {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut, 0.5f);
-        }
-        SetCamera(paperCamera);
-    }
 
     private void EnterReadingPaper()
     {
         CurrentState = State.ReadingPaper;
         Debug.Log("[NewspaperManager] Reading paper. Draw to cut!");
 
+        // Raise camera priority
+        if (readCamera != null)
+            readCamera.Priority = PriorityActive;
+
+        // Show text overlay
+        if (newspaperOverlay != null)
+            newspaperOverlay.SetActive(true);
+
         // Enable scissors
         if (scissorsController != null)
             scissorsController.SetEnabled(true);
     }
 
-    private void ReturnToTable()
+    private void EnterDone()
     {
-        CurrentState = State.TableView;
-        Debug.Log("[NewspaperManager] Returning to table view.");
+        CurrentState = State.Done;
+        Debug.Log("[NewspaperManager] Newspaper done — free-roam begins.");
+
+        // Lower camera priority
+        if (readCamera != null)
+            readCamera.Priority = PriorityInactive;
+
+        // Hide overlay
+        if (newspaperOverlay != null)
+            newspaperOverlay.SetActive(false);
 
         // Disable scissors
         if (scissorsController != null)
             scissorsController.SetEnabled(false);
 
-        // Blend back to table camera
-        if (brain != null)
-        {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut, 0.5f);
-        }
-        SetCamera(tableCamera);
+        OnNewspaperDone?.Invoke();
     }
 
     private void OnCutCompleted(List<Vector2> cutPolygonUV)
@@ -274,6 +192,10 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
         _selectedDefinition = winner;
         OnDateSelected?.Invoke(winner);
+
+        // Hide overlay so cut-out animation is visible
+        if (newspaperOverlay != null)
+            newspaperOverlay.SetActive(false);
 
         // Disable scissors
         if (scissorsController != null)
@@ -314,39 +236,12 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         yield return new WaitForSeconds(callingDuration);
 
         if (callingUI != null) callingUI.SetActive(false);
-        EnterWaiting();
-    }
 
-    private void EnterWaiting()
-    {
-        CurrentState = State.Waiting;
-        _timeRemaining = _selectedDefinition.arrivalTimeSec;
-
-        // Notify dating system
-        DateSessionManager.Instance?.StartWaiting(_selectedDefinition);
+        // Schedule date on DateSessionManager — it owns the arrival timer now
+        DateSessionManager.Instance?.ScheduleDate(_selectedDefinition);
         PhoneController.Instance?.SetPendingDate(_selectedDefinition);
 
-        if (timerUI != null) timerUI.SetActive(true);
-        UpdateTimerDisplay();
-    }
-
-    private void EnterDateArrived()
-    {
-        CurrentState = State.DateArrived;
-        Debug.Log($"[NewspaperManager] {_selectedDefinition.characterName} has arrived!");
-
-        if (timerUI != null) timerUI.SetActive(false);
-        if (arrivedUI != null) arrivedUI.SetActive(true);
-        if (arrivedText != null)
-            arrivedText.text = $"{_selectedDefinition.characterName} has arrived!";
-
-        // Tell phone to ring / trigger date arrival via DateSessionManager
-        if (PhoneController.Instance != null)
-            PhoneController.Instance.StartRinging();
-        else
-            DateSessionManager.Instance?.OnDateCharacterArrived();
-
-        OnDateArrived?.Invoke();
+        EnterDone();
     }
 
     // ─── Newspaper Regeneration ───────────────────────────────────
@@ -387,7 +282,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
             }
         }
 
-        // Reset newspaper surface
+        // Reset cut surface for new newspaper
         if (surface != null)
             surface.ResetSurface();
 
@@ -395,42 +290,14 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         _selectedDefinition = null;
         HideAllUI();
 
-        // Return to table view
-        if (scissorsController != null)
-            scissorsController.SetEnabled(false);
-
-        SetCamera(tableCamera);
-        CurrentState = State.TableView;
+        // Enter reading state — newspaper is held up, ready to cut
+        EnterReadingPaper();
     }
 
     // ─── Helpers ──────────────────────────────────────────────────
 
-    private void SetCamera(CinemachineCamera cam)
-    {
-        if (cam == null) return;
-
-        if (tableCamera != null)
-            tableCamera.Priority = PriorityInactive;
-        if (paperCamera != null)
-            paperCamera.Priority = PriorityInactive;
-
-        cam.Priority = PriorityActive;
-    }
-
-    private void UpdateTimerDisplay()
-    {
-        if (timerText == null) return;
-
-        int seconds = Mathf.CeilToInt(_timeRemaining);
-        int min = seconds / 60;
-        int sec = seconds % 60;
-        timerText.SetText("{0}:{1:00}", min, sec);
-    }
-
     private void HideAllUI()
     {
         if (callingUI != null) callingUI.SetActive(false);
-        if (timerUI != null) timerUI.SetActive(false);
-        if (arrivedUI != null) arrivedUI.SetActive(false);
     }
 }

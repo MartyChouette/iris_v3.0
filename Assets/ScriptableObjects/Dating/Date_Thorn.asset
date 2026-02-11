@@ -18,3 +18,23 @@ MonoBehaviour:
   arrivalTimeSec: 45
   portrait: {fileID: 0}
   characterPrefab: {fileID: 0}
+  phoneNumberRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.05
+    width: 0.8
+    height: 0.15
+  characterModelPrefab: {fileID: 0}
+  fontSizeOverride: 0
+  preferences:
+    likedTags:
+    - vinyl
+    - books
+    dislikedTags:
+    - cute
+    - nature
+    preferredMoodMin: 0.4
+    preferredMoodMax: 0.8
+    likedDrinks: []
+    dislikedDrinks: []
+    reactionStrength: 1

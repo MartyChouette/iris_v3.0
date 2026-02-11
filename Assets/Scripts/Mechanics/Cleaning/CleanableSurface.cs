@@ -52,6 +52,29 @@ public class CleanableSurface : MonoBehaviour
     /// <summary>The spill definition driving this surface.</summary>
     public SpillDefinition Definition => _definition;
 
+    /// <summary>Assign a new spill definition (used by ApartmentStainSpawner).</summary>
+    public void SetDefinition(SpillDefinition def) => _definition = def;
+
+    /// <summary>
+    /// Regenerate dirt and wet textures, optionally with a new definition.
+    /// Used by ApartmentStainSpawner to reset stains each day.
+    /// </summary>
+    public void Regenerate(SpillDefinition newDef = null)
+    {
+        if (newDef != null) _definition = newDef;
+        if (_definition == null) return;
+
+        if (_dirtTex != null) Destroy(_dirtTex);
+        if (_wetTex != null) Destroy(_wetTex);
+        if (_dirtMat != null) Destroy(_dirtMat);
+        if (_wetMat != null) Destroy(_wetMat);
+
+        _fullyCleanFired = false;
+        _textureSize = _definition.textureSize;
+        GenerateDirtTexture();
+        GenerateWetTexture();
+    }
+
     /// <summary>Fraction of dirt pixels that have been cleaned (0-1).</summary>
     public float CleanPercent
     {

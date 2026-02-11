@@ -13,9 +13,11 @@ public class NewspaperPoolDefinition : ScriptableObject
 
     [Header("Daily Layout")]
     [Tooltip("How many personal ads appear each day.")]
+    [Range(1, 8)]
     public int personalAdsPerDay = 4;
 
     [Tooltip("How many commercial ads appear each day.")]
+    [Range(0, 6)]
     public int commercialAdsPerDay = 3;
 
     [Header("Repeat Rules")]

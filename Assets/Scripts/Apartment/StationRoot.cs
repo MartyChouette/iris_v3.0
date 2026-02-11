@@ -19,6 +19,9 @@ public class StationRoot : MonoBehaviour
     [Tooltip("Optional Cinemachine cameras owned by this station (raised to priority 30 on activate).")]
     [SerializeField] private Unity.Cinemachine.CinemachineCamera[] stationCameras;
 
+    [Tooltip("If non-empty, station is only available during these day phases (int cast of DayPhaseManager.DayPhase). Empty = always available.")]
+    [SerializeField] private int[] availableInPhases;
+
     private const int PriorityStation = 30;
     private const int PriorityInactive = 0;
 
@@ -35,6 +38,21 @@ public class StationRoot : MonoBehaviour
     /// </summary>
     public IStationManager Manager =>
         stationManager != null ? stationManager as IStationManager : null;
+
+    /// <summary>
+    /// True if the station is available in the current day phase.
+    /// Returns true if no phase restrictions are set (always available).
+    /// </summary>
+    public bool IsAvailableInCurrentPhase()
+    {
+        if (availableInPhases == null || availableInPhases.Length == 0) return true;
+        var phase = DayPhaseManager.Instance != null
+            ? DayPhaseManager.Instance.CurrentPhase
+            : DayPhaseManager.DayPhase.Exploration;
+        for (int i = 0; i < availableInPhases.Length; i++)
+            if ((DayPhaseManager.DayPhase)availableInPhases[i] == phase) return true;
+        return false;
+    }
 
     /// <summary>
     /// Enable the station manager, show its HUD, and raise camera priorities.

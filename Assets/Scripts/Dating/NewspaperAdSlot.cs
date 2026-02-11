@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class NewspaperAdSlot : MonoBehaviour
@@ -16,6 +17,13 @@ public class NewspaperAdSlot : MonoBehaviour
 
     [Tooltip("Phone number label — only visible for personal ads.")]
     [SerializeField] private TMP_Text phoneNumberLabel;
+
+    [Header("Images")]
+    [Tooltip("Portrait image for personal ads.")]
+    [SerializeField] private Image portraitImage;
+
+    [Tooltip("Logo image for commercial ads.")]
+    [SerializeField] private Image logoImage;
 
     [Header("Runtime — Set by NewspaperManager")]
     [Tooltip("0-1 UV rect of this slot on the newspaper surface.")]
@@ -61,6 +69,16 @@ public class NewspaperAdSlot : MonoBehaviour
         if (def.fontSizeOverride > 0 && adLabel != null)
             adLabel.fontSize = def.fontSizeOverride;
 
+        // Show portrait if available, hide logo
+        if (portraitImage != null)
+        {
+            bool hasPortrait = def.portrait != null;
+            portraitImage.gameObject.SetActive(hasPortrait);
+            if (hasPortrait) portraitImage.sprite = def.portrait;
+        }
+        if (logoImage != null)
+            logoImage.gameObject.SetActive(false);
+
         ComputePhoneNumberUV();
     }
 
@@ -82,6 +100,16 @@ public class NewspaperAdSlot : MonoBehaviour
         if (phoneNumberLabel != null)
             phoneNumberLabel.gameObject.SetActive(false);
 
+        // Show logo if available, hide portrait
+        if (logoImage != null)
+        {
+            bool hasLogo = def.logo != null;
+            logoImage.gameObject.SetActive(hasLogo);
+            if (hasLogo) logoImage.sprite = def.logo;
+        }
+        if (portraitImage != null)
+            portraitImage.gameObject.SetActive(false);
+
         _phoneNumberBoundsUV = Rect.zero;
     }
 
@@ -101,6 +129,10 @@ public class NewspaperAdSlot : MonoBehaviour
             phoneNumberLabel.SetText("");
             phoneNumberLabel.gameObject.SetActive(false);
         }
+        if (portraitImage != null)
+            portraitImage.gameObject.SetActive(false);
+        if (logoImage != null)
+            logoImage.gameObject.SetActive(false);
 
         _phoneNumberBoundsUV = Rect.zero;
     }
