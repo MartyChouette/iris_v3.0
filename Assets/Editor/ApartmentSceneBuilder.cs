@@ -735,12 +735,11 @@ public static class ApartmentSceneBuilder
         int adCount = Mathf.Clamp(pool.personalAdsPerDay, 1, 8);
 
         // ── Read camera (held-up newspaper view) ──────────────────
-        // Camera on -Z side looking +Z at the back of the surface quad.
-        // The quad faces -Z so the camera sees its front face, and screen X
-        // maps to UV X without mirroring (no 180-degree Y rotation).
+        // Camera on +Z side, 180-Y to face the front of the standard Quad.
+        // MeshCollider gives correct hit.textureCoord; UV bounds mirror X.
         var readCamGO = new GameObject("Cam_NewspaperRead");
-        readCamGO.transform.position = new Vector3(-4f, 1.5f, -5.5f);
-        readCamGO.transform.rotation = Quaternion.Euler(3f, 0f, 0f);
+        readCamGO.transform.position = new Vector3(-4f, 1.5f, -1.5f);
+        readCamGO.transform.rotation = Quaternion.Euler(5f, 180f, 0f);
         var readCam = readCamGO.AddComponent<CinemachineCamera>();
         var readLens = LensSettings.Default;
         readLens.FieldOfView = 50f;
@@ -752,7 +751,9 @@ public static class ApartmentSceneBuilder
         // ── Newspaper parent ──────────────────────────────────────
         var parent = new GameObject("NewspaperStation");
 
-        // ── Surface quad (vertical, facing -Z toward camera) ──────
+        // ── Surface quad (vertical, facing +Z toward camera) ─────
+        // Sized to fill the camera's view at FOV 50 / distance 2.
+        // MeshCollider is required for hit.textureCoord (scissors cutting).
         GameObject surfaceGO;
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/NewspaperModel.prefab");
         if (prefab != null)
@@ -762,27 +763,17 @@ public static class ApartmentSceneBuilder
             surfaceGO.transform.SetParent(parent.transform);
             surfaceGO.transform.position = new Vector3(-4f, 1.4f, -3.5f);
             SetNewspaperLayerRecursive(surfaceGO, newspaperLayer);
-
-            var boxCol = surfaceGO.GetComponent<BoxCollider>();
-            if (boxCol == null) boxCol = surfaceGO.GetComponentInChildren<BoxCollider>();
-            if (boxCol == null)
-            {
-                boxCol = surfaceGO.AddComponent<BoxCollider>();
-                boxCol.size = new Vector3(1f, 1f, 0.01f);
-                boxCol.center = Vector3.zero;
-            }
         }
         else
         {
-            surfaceGO = new GameObject("NewspaperSurface");
+            surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
             surfaceGO.transform.position = new Vector3(-4f, 1.4f, -3.5f);
-            surfaceGO.transform.localScale = new Vector3(1.0f, 0.7f, 1f);
+            surfaceGO.transform.rotation = Quaternion.identity;
+            surfaceGO.transform.localScale = new Vector3(2.5f, 1.75f, 1f);
             surfaceGO.layer = newspaperLayer;
-            var quadMesh = CreateNewspaperQuadMesh();
-            surfaceGO.AddComponent<MeshFilter>().sharedMesh = quadMesh;
-            surfaceGO.AddComponent<MeshRenderer>();
-            surfaceGO.AddComponent<MeshCollider>().sharedMesh = quadMesh;
+            // MeshCollider kept (auto-added by CreatePrimitive) for textureCoord
         }
 
         if (surfaceGO.GetComponent<NewspaperSurface>() == null)
@@ -799,17 +790,29 @@ public static class ApartmentSceneBuilder
             surfRend.sharedMaterial = mat;
         }
 
-        // ── ScreenSpace Overlay canvas (two-page newspaper spread) ───────────
+        // ── WorldSpace canvas (two-page newspaper spread) ─────────
+        // Pivot GO for 3D transform; canvas child at identity.
+        // Offset 0.01 toward camera (+Z) to avoid z-fighting with surface.
+        // 180-Y rotation so text reads correctly through the 180-Y camera.
+        float canvasScale = 0.0025f;
+        var pivotGO = new GameObject("NewspaperOverlayPivot");
+        pivotGO.transform.SetParent(parent.transform);
+        pivotGO.transform.position = new Vector3(-4f, 1.4f, -3.49f);
+        pivotGO.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+        pivotGO.transform.localScale = new Vector3(canvasScale, canvasScale, canvasScale);
+
         var canvasGO = new GameObject("NewspaperOverlay");
-        canvasGO.transform.SetParent(parent.transform);
+        canvasGO.transform.SetParent(pivotGO.transform, false);
 
         var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 25;
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvas.sortingOrder = 5;
 
-        var canvasScaler = canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
-        canvasScaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        canvasScaler.referenceResolution = new Vector2(NewspaperCanvasWidth, NewspaperCanvasHeight);
+        var canvasRT = canvasGO.GetComponent<RectTransform>();
+        canvasRT.sizeDelta = new Vector2(NewspaperCanvasWidth, NewspaperCanvasHeight);
+        canvasRT.localPosition = Vector3.zero;
+        canvasRT.localRotation = Quaternion.identity;
+        canvasRT.localScale = Vector3.one;
 
         canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
@@ -928,7 +931,7 @@ public static class ApartmentSceneBuilder
         }
 
         // Start overlay hidden
-        canvasGO.SetActive(false);
+        pivotGO.SetActive(false);
 
         // ── Scissors visual ───────────────────────────────────────
         var scissorsVisual = BuildNewspaperScissors();
@@ -965,7 +968,7 @@ public static class ApartmentSceneBuilder
             surfaceGO.GetComponent<NewspaperSurface>();
         newsMgrSO.FindProperty("evaluator").objectReferenceValue = evalComp;
         newsMgrSO.FindProperty("mainCamera").objectReferenceValue = cam;
-        newsMgrSO.FindProperty("newspaperOverlay").objectReferenceValue = canvasGO;
+        newsMgrSO.FindProperty("newspaperOverlay").objectReferenceValue = pivotGO;
         newsMgrSO.FindProperty("readCamera").objectReferenceValue = readCam;
         newsMgrSO.FindProperty("brain").objectReferenceValue =
             camGO.GetComponent<CinemachineBrain>();
@@ -1155,7 +1158,8 @@ public static class ApartmentSceneBuilder
 
         var slot = go.AddComponent<NewspaperAdSlot>();
 
-        float uMin = (centerPx.x - sizePx.x * 0.5f) / virtualSize.x;
+        // Mirror U for 180-Y camera: screen-right maps to lower UV X
+        float uMin = 1.0f - (centerPx.x + sizePx.x * 0.5f) / virtualSize.x;
         float vMin = (centerPx.y - sizePx.y * 0.5f) / virtualSize.y;
         float uWidth = sizePx.x / virtualSize.x;
         float vHeight = sizePx.y / virtualSize.y;
@@ -1176,19 +1180,19 @@ public static class ApartmentSceneBuilder
         parentGO.transform.position = Vector3.zero;
 
         var bladeA = CreateBox("Blade_A", parentGO.transform,
-            new Vector3(0f, 0.001f, 0.012f), new Vector3(0.003f, 0.002f, 0.025f),
+            new Vector3(0f, 0.004f, 0.05f), new Vector3(0.012f, 0.006f, 0.10f),
             new Color(0.75f, 0.75f, 0.8f));
         bladeA.transform.localRotation = Quaternion.Euler(0f, 12f, 0f);
         bladeA.isStatic = false;
 
         var bladeB = CreateBox("Blade_B", parentGO.transform,
-            new Vector3(0f, 0.001f, 0.012f), new Vector3(0.003f, 0.002f, 0.025f),
+            new Vector3(0f, 0.004f, 0.05f), new Vector3(0.012f, 0.006f, 0.10f),
             new Color(0.75f, 0.75f, 0.8f));
         bladeB.transform.localRotation = Quaternion.Euler(0f, -12f, 0f);
         bladeB.isStatic = false;
 
         var pivot = CreateBox("Pivot", parentGO.transform,
-            Vector3.zero, new Vector3(0.005f, 0.003f, 0.005f),
+            Vector3.zero, new Vector3(0.018f, 0.008f, 0.018f),
             new Color(0.3f, 0.3f, 0.3f));
         pivot.isStatic = false;
 
@@ -1249,33 +1253,6 @@ public static class ApartmentSceneBuilder
 
         go.SetActive(false);
         return go;
-    }
-
-    private static Mesh CreateNewspaperQuadMesh()
-    {
-        var mesh = new Mesh { name = "NewspaperQuad" };
-        mesh.vertices = new[]
-        {
-            new Vector3(-0.5f, -0.5f, 0f),
-            new Vector3( 0.5f, -0.5f, 0f),
-            new Vector3(-0.5f,  0.5f, 0f),
-            new Vector3( 0.5f,  0.5f, 0f)
-        };
-        mesh.uv = new[]
-        {
-            new Vector2(0f, 0f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f)
-        };
-        mesh.normals = new[]
-        {
-            -Vector3.forward, -Vector3.forward,
-            -Vector3.forward, -Vector3.forward
-        };
-        // CW winding when viewed from -Z → front face points -Z
-        mesh.triangles = new[] { 0, 1, 2, 2, 1, 3 };
-        return mesh;
     }
 
     private static void SetNewspaperLayerRecursive(GameObject go, int layer)
