@@ -105,7 +105,7 @@ public static class ApartmentSceneBuilder
         var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
             booksLayer, drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
         bookcaseRoot.transform.position = new Vector3(-6.3f, 0f, 3.0f);
-        bookcaseRoot.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+        bookcaseRoot.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
 
         // ── 10. BookInteractionManager ──
         var bookManager = BuildBookInteractionManager(camGO, booksLayer,

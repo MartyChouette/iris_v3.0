@@ -187,6 +187,16 @@ public class ApartmentManager : MonoBehaviour
         _targetSplineT = _currentSplineT;
         _currentLookAt = areas[0].lookAtPosition;
         ApplyDollyPosition(_currentSplineT, hardCut: true);
+
+        // Restore smooth blend after the initial hard cut — otherwise the
+        // brain stays on Cut(0) and the first priority-based camera switch
+        // (Morning read camera → Exploration browse camera) snaps instead of blending.
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut, 0.8f);
+        }
+
         UpdateUI();
     }
 
