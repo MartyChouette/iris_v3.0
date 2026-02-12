@@ -72,9 +72,6 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private DatePersonalDefinition _selectedDefinition;
 
-    private const int PriorityActive = 30;
-    private const int PriorityInactive = 0;
-
     // ─── Lifecycle ────────────────────────────────────────────────
 
     private void Awake()
@@ -124,12 +121,13 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private void Start()
     {
-        // Start in Done state — OnNewNewspaper will activate reading
-        if (readCamera != null)
-            readCamera.Priority = PriorityInactive;
-
-        if (scissorsController != null)
-            scissorsController.SetEnabled(false);
+        // Only reset scissors if OnNewNewspaper hasn't already moved us to ReadingPaper
+        // (DayManager.Start may fire before this Start on the same GameObject)
+        if (CurrentState == State.Done)
+        {
+            if (scissorsController != null)
+                scissorsController.SetEnabled(false);
+        }
     }
 
     // ─── State Updates ────────────────────────────────────────────
@@ -143,9 +141,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         CurrentState = State.ReadingPaper;
         Debug.Log("[NewspaperManager] Reading paper. Draw to cut!");
 
-        // Raise camera priority
-        if (readCamera != null)
-            readCamera.Priority = PriorityActive;
+        // Camera priority is owned by DayPhaseManager — not touched here.
 
         // Show text overlay
         if (newspaperOverlay != null)
@@ -159,11 +155,9 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     private void EnterDone()
     {
         CurrentState = State.Done;
-        Debug.Log("[NewspaperManager] Newspaper done — free-roam begins.");
+        Debug.Log("[NewspaperManager] Newspaper done — handing off to DayPhaseManager.");
 
-        // Lower camera priority
-        if (readCamera != null)
-            readCamera.Priority = PriorityInactive;
+        // Camera priority is owned by DayPhaseManager — not touched here.
 
         // Hide overlay
         if (newspaperOverlay != null)

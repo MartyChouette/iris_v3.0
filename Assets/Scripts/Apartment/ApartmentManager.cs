@@ -96,6 +96,9 @@ public class ApartmentManager : MonoBehaviour
     private float _targetSplineT;
     private bool _isDollyAnimating;
 
+    // Browse camera suppression (DayPhaseManager lowers during Morning)
+    private bool _browseSuppressed;
+
     // Station lookup
     private Dictionary<StationType, StationRoot> _stationLookup;
     private StationRoot _activeStation;
@@ -192,6 +195,19 @@ public class ApartmentManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    /// <summary>
+    /// Called by DayPhaseManager to raise or lower the browse camera.
+    /// During Morning phase the browse camera should be suppressed so
+    /// the read camera wins without a competing priority-20 camera.
+    /// Also prevents ApplyDollyPosition from re-raising the browse camera.
+    /// </summary>
+    public void SetBrowseCameraActive(bool active)
+    {
+        _browseSuppressed = !active;
+        if (browseCamera != null)
+            browseCamera.Priority = active ? PriorityActive : PriorityInactive;
+    }
+
     private void Update()
     {
         switch (CurrentState)
@@ -239,7 +255,8 @@ public class ApartmentManager : MonoBehaviour
             }
         }
 
-        browseCamera.Priority = PriorityActive;
+        if (!_browseSuppressed)
+            browseCamera.Priority = PriorityActive;
         if (selectedCamera != null)
             selectedCamera.Priority = PriorityInactive;
     }
