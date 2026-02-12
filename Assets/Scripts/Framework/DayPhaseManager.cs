@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using Unity.Cinemachine;
@@ -28,6 +29,12 @@ public class DayPhaseManager : MonoBehaviour
 
     [Tooltip("Stain spawner triggered at exploration start.")]
     [SerializeField] private ApartmentStainSpawner _stainSpawner;
+
+    [Tooltip("Apartment UI canvas root — hidden during morning, shown during exploration.")]
+    [SerializeField] private GameObject _apartmentUI;
+
+    [Tooltip("Newspaper HUD root — shown during morning, hidden during exploration.")]
+    [SerializeField] private GameObject _newspaperHUD;
 
     [Header("Events")]
     public UnityEvent<int> OnPhaseChanged;
@@ -136,15 +143,30 @@ public class DayPhaseManager : MonoBehaviour
         // Raise read camera so newspaper takes over view
         if (_readCamera != null)
             _readCamera.Priority = PriorityActive;
+
+        // Hide apartment browse UI, show newspaper HUD
+        if (_apartmentUI != null)
+            _apartmentUI.SetActive(false);
+        if (_newspaperHUD != null)
+            _newspaperHUD.SetActive(true);
     }
 
     private void OnEnterExploration()
     {
+        StartCoroutine(ExplorationTransition());
+    }
+
+    private IEnumerator ExplorationTransition()
+    {
+        // Fade to black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(0.5f);
+
         // Lower read camera — browse camera takes over
         if (_readCamera != null)
             _readCamera.Priority = PriorityInactive;
 
-        // Move newspaper to tossed position on kitchen counter (cosmetic)
+        // Move newspaper to tossed position on coffee table (cosmetic)
         if (_tossedNewspaperPosition != null)
         {
             var surface = _newspaperManager != null ? _newspaperManager.NewspaperTransform : null;
@@ -159,8 +181,18 @@ public class DayPhaseManager : MonoBehaviour
         if (_newspaperManager != null)
             _newspaperManager.enabled = false;
 
+        // Show apartment browse UI, hide newspaper HUD
+        if (_apartmentUI != null)
+            _apartmentUI.SetActive(true);
+        if (_newspaperHUD != null)
+            _newspaperHUD.SetActive(false);
+
         // Spawn daily stains
         if (_stainSpawner != null)
             _stainSpawner.SpawnDailyStains();
+
+        // Fade in from black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(0.5f);
     }
 }

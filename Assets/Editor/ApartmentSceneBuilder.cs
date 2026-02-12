@@ -119,7 +119,7 @@ public static class ApartmentSceneBuilder
         BuildStationRoots(bookManager, drinkMakingData);
 
         // ── 13. ApartmentManager + UI ──
-        BuildApartmentManager(cameras.browse, cameras.selected, cameras.dolly,
+        var apartmentUI = BuildApartmentManager(cameras.browse, cameras.selected, cameras.dolly,
             grabber, areaDefs);
 
         // ── 14. Dating infrastructure (GameClock, DateSessionManager, PhoneController, etc.) ──
@@ -129,9 +129,12 @@ public static class ApartmentSceneBuilder
         var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer);
 
         // ── 16. DayPhaseManager (orchestrates daily loop) ──
-        BuildDayPhaseManager(newspaperData, cleaningData);
+        BuildDayPhaseManager(newspaperData, cleaningData, apartmentUI);
 
-        // ── 17. Save scene ──
+        // ── 17. Screen fade overlay ──
+        BuildScreenFade();
+
+        // ── 18. Save scene ──
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -229,11 +232,11 @@ public static class ApartmentSceneBuilder
             new Vector3(-2f, 0.45f, -5.2f), new Vector3(0.8f, 0.9f, 0.7f),
             new Color(0.25f, 0.25f, 0.28f));
 
-        // Tossed newspaper position (on kitchen counter, where newspaper lands after reading)
+        // Tossed newspaper position (on coffee table, where newspaper lands after reading)
         var tossedGO = new GameObject("TossedNewspaperPosition");
         tossedGO.transform.SetParent(parent);
-        tossedGO.transform.position = new Vector3(-4.5f, 0.90f, -5.2f);
-        tossedGO.transform.rotation = Quaternion.Euler(90f, 15f, 0f);
+        tossedGO.transform.position = new Vector3(-3.5f, 0.42f, 3.0f);
+        tossedGO.transform.rotation = Quaternion.Euler(90f, 10f, 0f);
         tossedNewspaperPosition = tossedGO.transform;
 
         // Phone (wall-mounted near kitchen counter)
@@ -734,15 +737,15 @@ public static class ApartmentSceneBuilder
 
         int adCount = Mathf.Clamp(pool.personalAdsPerDay, 1, 8);
 
-        // ── Read camera (held-up newspaper view) ──────────────────
-        // Camera on +Z side, 180-Y to face the front of the standard Quad.
-        // MeshCollider gives correct hit.textureCoord; UV bounds mirror X.
+        // ── Read camera (couch newspaper view) ──────────────────
+        // Camera at couch looking +Z. Canvas at identity rotation faces -Z
+        // (toward camera) — text reads correctly with no mirroring.
         var readCamGO = new GameObject("Cam_NewspaperRead");
-        readCamGO.transform.position = new Vector3(-4f, 1.5f, -1.5f);
-        readCamGO.transform.rotation = Quaternion.Euler(5f, 180f, 0f);
+        readCamGO.transform.position = new Vector3(-5.5f, 1.3f, 3.0f);
+        readCamGO.transform.rotation = Quaternion.Euler(5f, 0f, 0f);
         var readCam = readCamGO.AddComponent<CinemachineCamera>();
         var readLens = LensSettings.Default;
-        readLens.FieldOfView = 50f;
+        readLens.FieldOfView = 48f;
         readLens.NearClipPlane = 0.1f;
         readLens.FarClipPlane = 100f;
         readCam.Lens = readLens;
@@ -751,8 +754,8 @@ public static class ApartmentSceneBuilder
         // ── Newspaper parent ──────────────────────────────────────
         var parent = new GameObject("NewspaperStation");
 
-        // ── Surface quad (vertical, facing +Z toward camera) ─────
-        // Sized to fill the camera's view at FOV 50 / distance 2.
+        // ── Surface quad (invisible — physics only) ────────────────
+        // Renderer disabled; canvas provides the paper visual.
         // MeshCollider is required for hit.textureCoord (scissors cutting).
         GameObject surfaceGO;
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/NewspaperModel.prefab");
@@ -761,7 +764,7 @@ public static class ApartmentSceneBuilder
             surfaceGO = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
-            surfaceGO.transform.position = new Vector3(-4f, 1.4f, -3.5f);
+            surfaceGO.transform.position = new Vector3(-5.5f, 1.1f, 5.0f);
             SetNewspaperLayerRecursive(surfaceGO, newspaperLayer);
         }
         else
@@ -769,46 +772,46 @@ public static class ApartmentSceneBuilder
             surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
             surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
-            surfaceGO.transform.position = new Vector3(-4f, 1.4f, -3.5f);
+            surfaceGO.transform.position = new Vector3(-5.5f, 1.1f, 5.0f);
             surfaceGO.transform.rotation = Quaternion.identity;
             surfaceGO.transform.localScale = new Vector3(2.5f, 1.75f, 1f);
             surfaceGO.layer = newspaperLayer;
-            // MeshCollider kept (auto-added by CreatePrimitive) for textureCoord
+            // Ensure MeshCollider with mesh assigned (required for hit.textureCoord)
+            var mc = surfaceGO.GetComponent<MeshCollider>();
+            if (mc == null) mc = surfaceGO.AddComponent<MeshCollider>();
+            mc.sharedMesh = surfaceGO.GetComponent<MeshFilter>().sharedMesh;
         }
 
         if (surfaceGO.GetComponent<NewspaperSurface>() == null)
             surfaceGO.AddComponent<NewspaperSurface>();
 
+        // Surface quad is invisible — canvas provides the paper visual.
+        // Quad only exists for MeshCollider (scissors raycasting).
         var surfRend = surfaceGO.GetComponent<Renderer>();
         if (surfRend == null) surfRend = surfaceGO.GetComponentInChildren<Renderer>();
         if (surfRend != null && prefab == null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
-            mat.color = new Color(0.92f, 0.90f, 0.85f);
-            mat.SetInt("_Cull", 0);
-            surfRend.sharedMaterial = mat;
-        }
+            surfRend.enabled = false;
 
-        // ── WorldSpace canvas (two-page newspaper spread) ─────────
-        // Pivot GO for 3D transform; canvas child at identity.
-        // Offset 0.01 toward camera (+Z) to avoid z-fighting with surface.
-        // 180-Y rotation so text reads correctly through the 180-Y camera.
+        // ── WorldSpace canvas (newspaper text) ────────────────────
+        // Camera looks +Z, canvas front faces -Z (toward camera) at identity.
+        // No mirroring needed — positive scale on all axes.
         float canvasScale = 0.0025f;
         var pivotGO = new GameObject("NewspaperOverlayPivot");
         pivotGO.transform.SetParent(parent.transform);
-        pivotGO.transform.position = new Vector3(-4f, 1.4f, -3.49f);
-        pivotGO.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+        pivotGO.transform.position = new Vector3(-5.5f, 1.1f, 5.05f);
+        pivotGO.transform.rotation = Quaternion.identity;
         pivotGO.transform.localScale = new Vector3(canvasScale, canvasScale, canvasScale);
 
         var canvasGO = new GameObject("NewspaperOverlay");
-        canvasGO.transform.SetParent(pivotGO.transform, false);
-
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
-        canvas.sortingOrder = 5;
+        canvas.sortingOrder = 0;
 
         var canvasRT = canvasGO.GetComponent<RectTransform>();
+        canvasRT.SetParent(pivotGO.transform, false);
+        canvasRT.anchorMin = new Vector2(0.5f, 0.5f);
+        canvasRT.anchorMax = new Vector2(0.5f, 0.5f);
+        canvasRT.pivot = new Vector2(0.5f, 0.5f);
         canvasRT.sizeDelta = new Vector2(NewspaperCanvasWidth, NewspaperCanvasHeight);
         canvasRT.localPosition = Vector3.zero;
         canvasRT.localRotation = Quaternion.identity;
@@ -816,7 +819,7 @@ public static class ApartmentSceneBuilder
 
         canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
-        // Full-canvas paper background
+        // Opaque paper background
         var bgGO = new GameObject("PaperBackground");
         bgGO.transform.SetParent(canvasGO.transform, false);
         var bgRT = bgGO.AddComponent<RectTransform>();
@@ -825,12 +828,16 @@ public static class ApartmentSceneBuilder
         bgRT.offsetMin = Vector2.zero;
         bgRT.offsetMax = Vector2.zero;
         bgRT.localScale = Vector3.one;
-        bgGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.92f, 0.90f, 0.85f);
+        var bgImg = bgGO.AddComponent<UnityEngine.UI.Image>();
+        bgImg.color = new Color(0.92f, 0.90f, 0.85f);
+        bgImg.raycastTarget = false;
 
         // Center fold line
         var foldGO = new GameObject("FoldLine");
         foldGO.transform.SetParent(canvasGO.transform, false);
         var foldRT = foldGO.AddComponent<RectTransform>();
+        foldRT.anchorMin = new Vector2(0.5f, 0.5f);
+        foldRT.anchorMax = new Vector2(0.5f, 0.5f);
         foldRT.anchoredPosition = new Vector2(0f, 0f);
         foldRT.sizeDelta = new Vector2(2f, NewspaperCanvasHeight);
         foldRT.localScale = Vector3.one;
@@ -847,6 +854,8 @@ public static class ApartmentSceneBuilder
         var pRuleGO = new GameObject("PersonalsRule");
         pRuleGO.transform.SetParent(canvasGO.transform, false);
         var pRuleRT = pRuleGO.AddComponent<RectTransform>();
+        pRuleRT.anchorMin = new Vector2(0.5f, 0.5f);
+        pRuleRT.anchorMax = new Vector2(0.5f, 0.5f);
         pRuleRT.anchoredPosition = new Vector2(250f, 290f);
         pRuleRT.sizeDelta = new Vector2(420f, 2f);
         pRuleRT.localScale = Vector3.one;
@@ -882,6 +891,8 @@ public static class ApartmentSceneBuilder
             var slotBgGO = new GameObject($"{prefix}_BG");
             slotBgGO.transform.SetParent(canvasGO.transform, false);
             var slotBgRT = slotBgGO.AddComponent<RectTransform>();
+            slotBgRT.anchorMin = new Vector2(0.5f, 0.5f);
+            slotBgRT.anchorMax = new Vector2(0.5f, 0.5f);
             slotBgRT.anchoredPosition = new Vector2(anchoredX, anchoredY);
             slotBgRT.sizeDelta = new Vector2(contentWidth, slotHeight);
             slotBgRT.localScale = Vector3.one;
@@ -957,6 +968,7 @@ public static class ApartmentSceneBuilder
         scissorsSO.FindProperty("cam").objectReferenceValue = cam;
         scissorsSO.FindProperty("newspaperLayer").intValue = 1 << newspaperLayer;
         scissorsSO.FindProperty("scissorsVisual").objectReferenceValue = scissorsVisual;
+        scissorsSO.FindProperty("surfaceOffset").floatValue = -0.05f;
         scissorsSO.ApplyModifiedPropertiesWithoutUndo();
 
         // NewspaperManager
@@ -1079,6 +1091,8 @@ public static class ApartmentSceneBuilder
         var titleRuleGO = new GameObject("TitleRule");
         titleRuleGO.transform.SetParent(canvasTransform, false);
         var titleRuleRT = titleRuleGO.AddComponent<RectTransform>();
+        titleRuleRT.anchorMin = new Vector2(0.5f, 0.5f);
+        titleRuleRT.anchorMax = new Vector2(0.5f, 0.5f);
         titleRuleRT.anchoredPosition = new Vector2(leftCenter, 270f);
         titleRuleRT.sizeDelta = new Vector2(420f, 2f);
         titleRuleRT.localScale = Vector3.one;
@@ -1102,6 +1116,8 @@ public static class ApartmentSceneBuilder
         var rule2GO = new GameObject("Rule2");
         rule2GO.transform.SetParent(canvasTransform, false);
         var rule2RT = rule2GO.AddComponent<RectTransform>();
+        rule2RT.anchorMin = new Vector2(0.5f, 0.5f);
+        rule2RT.anchorMax = new Vector2(0.5f, 0.5f);
         rule2RT.anchoredPosition = new Vector2(leftCenter, 108f);
         rule2RT.sizeDelta = new Vector2(420f, 1f);
         rule2RT.localScale = Vector3.one;
@@ -1120,6 +1136,8 @@ public static class ApartmentSceneBuilder
         var rule3GO = new GameObject("Rule3");
         rule3GO.transform.SetParent(canvasTransform, false);
         var rule3RT = rule3GO.AddComponent<RectTransform>();
+        rule3RT.anchorMin = new Vector2(0.5f, 0.5f);
+        rule3RT.anchorMax = new Vector2(0.5f, 0.5f);
         rule3RT.anchoredPosition = new Vector2(leftCenter, -22f);
         rule3RT.sizeDelta = new Vector2(420f, 1f);
         rule3RT.localScale = Vector3.one;
@@ -1158,8 +1176,8 @@ public static class ApartmentSceneBuilder
 
         var slot = go.AddComponent<NewspaperAdSlot>();
 
-        // Mirror U for 180-Y camera: screen-right maps to lower UV X
-        float uMin = 1.0f - (centerPx.x + sizePx.x * 0.5f) / virtualSize.x;
+        // Direct UV mapping — camera looks +Z, no mirroring needed
+        float uMin = (centerPx.x - sizePx.x * 0.5f) / virtualSize.x;
         float vMin = (centerPx.y - sizePx.y * 0.5f) / virtualSize.y;
         float uWidth = sizePx.x / virtualSize.x;
         float vHeight = sizePx.y / virtualSize.y;
@@ -1212,10 +1230,12 @@ public static class ApartmentSceneBuilder
         go.transform.SetParent(parent, false);
 
         var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = size;
         rt.localScale = Vector3.one;
-        rt.pivot = new Vector2(0.5f, 0.5f);
 
         var tmp = go.AddComponent<TextMeshProUGUI>();
 
@@ -1242,10 +1262,12 @@ public static class ApartmentSceneBuilder
         go.transform.SetParent(parent, false);
 
         var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = size;
         rt.localScale = Vector3.one;
-        rt.pivot = new Vector2(0.5f, 0.5f);
 
         var img = go.AddComponent<UnityEngine.UI.Image>();
         img.color = Color.white;
@@ -1266,7 +1288,7 @@ public static class ApartmentSceneBuilder
     // ApartmentManager + Screen-Space UI
     // ══════════════════════════════════════════════════════════════════
 
-    private static void BuildApartmentManager(
+    private static GameObject BuildApartmentManager(
         CinemachineCamera browseCam, CinemachineCamera selectedCam,
         CinemachineSplineDolly dolly,
         ObjectGrabber grabber, ApartmentAreaDefinition[] areaDefs)
@@ -1325,6 +1347,11 @@ public static class ApartmentSceneBuilder
         so.FindProperty("selectedHintsPanel").objectReferenceValue = selectedHints;
 
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        // Start hidden — DayPhaseManager shows it when entering Exploration
+        uiCanvasGO.SetActive(false);
+
+        return uiCanvasGO;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -2147,7 +2174,8 @@ public static class ApartmentSceneBuilder
     // ══════════════════════════════════════════════════════════════════
 
     private static void BuildDayPhaseManager(
-        NewspaperStationData newspaperData, AmbientCleaningData cleaningData)
+        NewspaperStationData newspaperData, AmbientCleaningData cleaningData,
+        GameObject apartmentUI)
     {
         var go = new GameObject("DayPhaseManager");
         var dpm = go.AddComponent<DayPhaseManager>();
@@ -2156,6 +2184,8 @@ public static class ApartmentSceneBuilder
         dpmSO.FindProperty("_newspaperManager").objectReferenceValue = newspaperData.manager;
         dpmSO.FindProperty("_readCamera").objectReferenceValue = newspaperData.stationCamera;
         dpmSO.FindProperty("_stainSpawner").objectReferenceValue = cleaningData.stainSpawner;
+        dpmSO.FindProperty("_apartmentUI").objectReferenceValue = apartmentUI;
+        dpmSO.FindProperty("_newspaperHUD").objectReferenceValue = newspaperData.hudRoot;
 
         // Find tossed newspaper position
         var tossedPos = GameObject.Find("TossedNewspaperPosition");
@@ -2197,6 +2227,41 @@ public static class ApartmentSceneBuilder
         // UnityEvent editor wiring complexity.
 
         Debug.Log("[ApartmentSceneBuilder] DayPhaseManager wired.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Screen fade overlay
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildScreenFade()
+    {
+        var go = new GameObject("ScreenFade");
+
+        var fadeCanvas = go.AddComponent<Canvas>();
+        fadeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        fadeCanvas.sortingOrder = 100;
+
+        var blackPanel = new GameObject("BlackPanel");
+        blackPanel.transform.SetParent(go.transform, false);
+        var rt = blackPanel.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        var img = blackPanel.AddComponent<UnityEngine.UI.Image>();
+        img.color = Color.black;
+        img.raycastTarget = true;
+
+        var cg = go.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.blocksRaycasts = false;
+
+        var fade = go.AddComponent<ScreenFade>();
+        var fadeSO = new SerializedObject(fade);
+        fadeSO.FindProperty("_canvasGroup").objectReferenceValue = cg;
+        fadeSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log("[ApartmentSceneBuilder] ScreenFade overlay built.");
     }
 
     // ══════════════════════════════════════════════════════════════════
