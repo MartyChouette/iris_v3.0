@@ -39,7 +39,7 @@ public class DayPhaseManager : MonoBehaviour
     public static DayPhaseManager Instance { get; private set; }
 
     [Header("Current Phase")]
-    [SerializeField] private DayPhase _currentPhase = DayPhase.Morning;
+    [SerializeField] private DayPhase _currentPhase = DayPhase.Evening;
 
     [Header("References")]
     [Tooltip("NewspaperManager to enable/disable at phase transitions.")]

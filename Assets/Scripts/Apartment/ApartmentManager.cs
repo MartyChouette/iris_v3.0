@@ -601,7 +601,7 @@ public class ApartmentManager : MonoBehaviour
         ny = Mathf.Clamp(ny, -1f, 1f);
 
         Transform camT = activeCam.transform;
-        Vector3 targetOffset = (camT.right * nx + camT.up * ny) * parallaxMaxOffset;
+        Vector3 targetOffset = (camT.right * -nx + camT.up * -ny) * parallaxMaxOffset;
 
         _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
             Time.deltaTime * parallaxSmoothing);

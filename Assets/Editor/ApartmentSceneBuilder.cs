@@ -1410,6 +1410,7 @@ public static class ApartmentSceneBuilder
         tmp.fontStyle = FontStyles.Italic;
 
         hintPanel.SetActive(false);
+        uiCanvasGO.SetActive(false);
 
         var cam = camGO.GetComponent<UnityEngine.Camera>();
 
@@ -2126,6 +2127,7 @@ public static class ApartmentSceneBuilder
         cleanHudSO.FindProperty("progressLabel").objectReferenceValue = progressLabel;
         cleanHudSO.FindProperty("surfaceDetailLabel").objectReferenceValue = surfaceDetailLabel;
         cleanHudSO.ApplyModifiedPropertiesWithoutUndo();
+        cleanHudCanvasGO.SetActive(false);
 
         var cam = camGO.GetComponent<UnityEngine.Camera>();
 
