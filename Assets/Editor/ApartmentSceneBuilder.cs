@@ -26,6 +26,7 @@ public static class ApartmentSceneBuilder
     private const string PhoneLayerName = "Phone";
     private const string FridgeLayerName = "Fridge";
     private const string PlantsLayerName = "Plants";
+    private const string GlassLayerName = "Glass";
 
     // ─── Station Group Positions ─────────────────────────────────
     private static readonly Vector3 BookcaseStationPos  = new Vector3(-6.3f, 0f, 3.0f);
@@ -67,6 +68,7 @@ public static class ApartmentSceneBuilder
         int phoneLayer = EnsureLayer(PhoneLayerName);
         int fridgeLayer = EnsureLayer(FridgeLayerName);
         int plantsLayer = EnsureLayer(PlantsLayerName);
+        int glassLayer = EnsureLayer(GlassLayerName);
 
         // ── 1. Lighting ──
         var lightGO = new GameObject("Directional Light");
@@ -98,7 +100,7 @@ public static class ApartmentSceneBuilder
         BuildBookcaseStationGroup(camGO, booksLayer, drawersLayer,
             perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
         BuildRecordPlayerStationGroup();
-        BuildDrinkMakingStationGroup(camGO, fridgeLayer);
+        BuildDrinkMakingStationGroup(camGO, fridgeLayer, glassLayer);
 
         // ── 4d. Newspaper station (DayPhaseManager-driven, not a StationRoot) ──
         var newspaperData = BuildNewspaperStation(camGO, newspaperLayer);
@@ -1702,7 +1704,7 @@ public static class ApartmentSceneBuilder
     // Drink Making Station Group (Kitchen) — with fridge door
     // ══════════════════════════════════════════════════════════════════
 
-    private static void BuildDrinkMakingStationGroup(GameObject mainCamGO, int fridgeLayer)
+    private static void BuildDrinkMakingStationGroup(GameObject mainCamGO, int fridgeLayer, int glassLayer)
     {
         var groupGO = new GameObject("Station_DrinkMaking");
 
@@ -1713,62 +1715,21 @@ public static class ApartmentSceneBuilder
         if (!AssetDatabase.IsValidFolder(soDir))
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "DrinkMaking");
 
-        // ── Load or create ingredient SOs ─────────────────────────────
-        string[] ingredNames = { "Gin", "Tonic", "Lemon", "Syrup", "Bitters", "Soda", "Grenadine" };
-        Color[] ingredColors =
-        {
-            new Color(0.85f, 0.88f, 0.90f, 0.3f),
-            new Color(0.90f, 0.92f, 0.95f, 0.2f),
-            new Color(1f, 0.95f, 0.3f, 0.5f),
-            new Color(0.85f, 0.70f, 0.30f, 0.4f),
-            new Color(0.4f, 0.2f, 0.1f, 0.6f),
-            new Color(0.92f, 0.95f, 0.98f, 0.15f),
-            new Color(0.9f, 0.15f, 0.2f, 0.5f),
-        };
-
-        var ingredients = new DrinkIngredientDefinition[ingredNames.Length];
-        for (int i = 0; i < ingredNames.Length; i++)
-        {
-            string path = $"{soDir}/Ingredient_{ingredNames[i]}.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<DrinkIngredientDefinition>(path);
-            if (existing != null) { ingredients[i] = existing; continue; }
-
-            var def = ScriptableObject.CreateInstance<DrinkIngredientDefinition>();
-            def.ingredientName = ingredNames[i];
-            def.liquidColor = ingredColors[i];
-            def.pourRate = 0.3f;
-            AssetDatabase.CreateAsset(def, path);
-            ingredients[i] = def;
-        }
-
-        // ── Glass definitions ─────────────────────────────────────────
-        string[] glassNames = { "Tumbler", "Highball", "Coupe" };
-        float[] glassFills = { 0.7f, 0.75f, 0.65f };
-        float[] glassTols = { 0.15f, 0.12f, 0.10f };
-        float[] glassMaxs = { 1.0f, 1.2f, 0.8f };
-
-        var glasses = new GlassDefinition[glassNames.Length];
-        for (int i = 0; i < glassNames.Length; i++)
-        {
-            string path = $"{soDir}/Glass_{glassNames[i]}.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<GlassDefinition>(path);
-            if (existing != null) { glasses[i] = existing; continue; }
-
-            var def = ScriptableObject.CreateInstance<GlassDefinition>();
-            def.glassName = glassNames[i];
-            def.fillLineNormalized = glassFills[i];
-            def.fillLineTolerance = glassTols[i];
-            def.capacity = glassMaxs[i];
-            AssetDatabase.CreateAsset(def, path);
-            glasses[i] = def;
-        }
-
-        // ── Recipe definitions ─────────────────────────────────────────
+        // ── Recipe definitions (with simple-pour fields) ─────────────
         string[] recipeNames = { "Gin & Tonic", "Lemon Drop", "Bitter Fizz", "Sunset Sip" };
-        int[] recipeGlassIdx = { 1, 2, 0, 1 };
-        bool[] recipeStir = { false, true, true, false };
-        float[] recipeDur = { 0f, 2f, 1.5f, 0f };
         int[] recipeBase = { 100, 120, 110, 90 };
+        float[] recipeIdeal = { 0.75f, 0.70f, 0.80f, 0.65f };
+        float[] recipeTol = { 0.10f, 0.08f, 0.12f, 0.10f };
+        float[] recipePour = { 0.15f, 0.18f, 0.12f, 0.20f };
+        float[] recipeFoam = { 2f, 1.5f, 3f, 2.5f };
+        float[] recipeSettle = { 0.25f, 0.30f, 0.20f, 0.25f };
+        Color[] recipeLiquid =
+        {
+            new Color(0.85f, 0.90f, 0.70f, 0.6f),
+            new Color(1.0f, 0.95f, 0.40f, 0.7f),
+            new Color(0.50f, 0.30f, 0.15f, 0.8f),
+            new Color(0.95f, 0.45f, 0.25f, 0.7f),
+        };
 
         var recipes = new DrinkRecipeDefinition[recipeNames.Length];
         for (int i = 0; i < recipeNames.Length; i++)
@@ -1779,10 +1740,13 @@ public static class ApartmentSceneBuilder
 
             var def = ScriptableObject.CreateInstance<DrinkRecipeDefinition>();
             def.drinkName = recipeNames[i];
-            def.requiredGlass = glasses[recipeGlassIdx[i]];
-            def.requiresStir = recipeStir[i];
-            def.stirDuration = recipeDur[i];
             def.baseScore = recipeBase[i];
+            def.idealFillLevel = recipeIdeal[i];
+            def.fillTolerance = recipeTol[i];
+            def.pourRate = recipePour[i];
+            def.foamRateMultiplier = recipeFoam[i];
+            def.foamSettleRate = recipeSettle[i];
+            def.liquidColor = recipeLiquid[i];
             AssetDatabase.CreateAsset(def, path);
             recipes[i] = def;
         }
@@ -1790,26 +1754,22 @@ public static class ApartmentSceneBuilder
         AssetDatabase.SaveAssets();
 
         // ── Fridge (body + animated door) ─────────────────────────────
-        // Static fridge body (back half)
         var fridgeBody = CreateBox("FridgeBody", groupGO.transform,
             new Vector3(-6.3f, 0.9f, -4.5f), new Vector3(0.7f, 1.8f, 0.35f),
             new Color(0.85f, 0.85f, 0.87f));
         fridgeBody.isStatic = true;
 
-        // Door pivot (empty at left hinge edge)
         var doorPivotGO = new GameObject("FridgeDoorPivot");
         doorPivotGO.transform.SetParent(groupGO.transform);
         doorPivotGO.transform.position = new Vector3(-6.65f, 0.9f, -4.325f);
         doorPivotGO.isStatic = false;
 
-        // Door (box, child of pivot, on Fridge layer for raycasting)
         var fridgeDoor = CreateBox("FridgeDoor", doorPivotGO.transform,
             new Vector3(-6.3f, 0.9f, -4.325f), new Vector3(0.7f, 1.8f, 0.35f),
             new Color(0.87f, 0.87f, 0.89f));
         fridgeDoor.isStatic = false;
         fridgeDoor.layer = fridgeLayer;
 
-        // Handle (small box on door front)
         var handle = CreateBox("FridgeHandle", fridgeDoor.transform,
             new Vector3(-5.98f, 1.0f, -4.175f), new Vector3(0.03f, 0.15f, 0.03f),
             new Color(0.5f, 0.5f, 0.55f));
@@ -1829,14 +1789,14 @@ public static class ApartmentSceneBuilder
         drinkCam.Lens = drinkLens;
         drinkCam.Priority = 0;
 
-        // ── Counter geometry (bottles, glass, stirrer) ────────────────
-        // Glass on counter
+        // ── Glass on counter (on Glass layer for raycast) ─────────────
         var glassGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         glassGO.name = "Glass";
         glassGO.transform.SetParent(groupGO.transform);
         glassGO.transform.position = new Vector3(-4f, 0.95f, -5.2f);
         glassGO.transform.localScale = new Vector3(0.08f, 0.10f, 0.08f);
         glassGO.isStatic = false;
+        glassGO.layer = glassLayer;
         var glassRend = glassGO.GetComponent<Renderer>();
         if (glassRend != null)
         {
@@ -1852,73 +1812,20 @@ public static class ApartmentSceneBuilder
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             glassRend.sharedMaterial = mat;
         }
-        var glassCtrl = glassGO.AddComponent<GlassController>();
 
-        // Stirrer
-        var stirGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        stirGO.name = "Stirrer";
-        stirGO.transform.SetParent(groupGO.transform);
-        stirGO.transform.position = new Vector3(-3.85f, 0.98f, -5.2f);
-        stirGO.transform.localScale = new Vector3(0.008f, 0.12f, 0.008f);
-        stirGO.isStatic = false;
-        var stirRend = stirGO.GetComponent<Renderer>();
-        if (stirRend != null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
-            mat.color = new Color(0.30f, 0.30f, 0.32f);
-            stirRend.sharedMaterial = mat;
-        }
-        var stirCol = stirGO.GetComponent<Collider>();
-        if (stirCol != null) Object.DestroyImmediate(stirCol);
-        var stirCtrl = stirGO.AddComponent<StirController>();
-
-        // Bottles (7 bottles along the counter back)
-        var bottleCtrls = new BottleController[ingredients.Length];
-        for (int i = 0; i < ingredients.Length; i++)
-        {
-            float x = -5.2f + i * 0.35f;
-            var bottleGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            bottleGO.name = $"Bottle_{ingredNames[i]}";
-            bottleGO.transform.SetParent(groupGO.transform);
-            bottleGO.transform.position = new Vector3(x, 1.05f, -5.5f);
-            bottleGO.transform.localScale = new Vector3(0.04f, 0.12f, 0.04f);
-            bottleGO.isStatic = false;
-
-            var bRend = bottleGO.GetComponent<Renderer>();
-            if (bRend != null)
-            {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                       ?? Shader.Find("Standard"));
-                Color c = ingredColors[i];
-                mat.color = new Color(c.r, c.g, c.b, 1f);
-                bRend.sharedMaterial = mat;
-            }
-
-            var bc = bottleGO.AddComponent<BottleController>();
-            bc.ingredient = ingredients[i];
-            bottleCtrls[i] = bc;
-        }
-
-        // ── Managers ──────────────────────────────────────────────────
+        // ── Managers (SimpleDrinkManager + SimpleDrinkHUD) ────────────
         var managersGO = new GameObject("DrinkMakingManagers");
         managersGO.transform.SetParent(groupGO.transform);
-        var mgr = managersGO.AddComponent<DrinkMakingManager>();
-        var hud = managersGO.AddComponent<DrinkMakingHUD>();
+        var mgr = managersGO.AddComponent<SimpleDrinkManager>();
+        var hud = managersGO.AddComponent<SimpleDrinkHUD>();
 
         var cam = mainCamGO.GetComponent<UnityEngine.Camera>();
 
-        // Wire manager
+        // Wire manager via SerializedObject
         var mgrSO = new SerializedObject(mgr);
-        mgrSO.FindProperty("glass").objectReferenceValue = glassCtrl;
-        mgrSO.FindProperty("stirrer").objectReferenceValue = stirCtrl;
-        mgrSO.FindProperty("mainCamera").objectReferenceValue = cam;
-        mgrSO.FindProperty("hud").objectReferenceValue = hud;
-
-        var bottlesProp = mgrSO.FindProperty("bottles");
-        bottlesProp.arraySize = bottleCtrls.Length;
-        for (int i = 0; i < bottleCtrls.Length; i++)
-            bottlesProp.GetArrayElementAtIndex(i).objectReferenceValue = bottleCtrls[i];
+        mgrSO.FindProperty("_glassLayer").intValue = 1 << glassLayer;
+        mgrSO.FindProperty("_mainCamera").objectReferenceValue = cam;
+        mgrSO.FindProperty("_hud").objectReferenceValue = hud;
 
         var recipesProp = mgrSO.FindProperty("availableRecipes");
         recipesProp.arraySize = recipes.Length;
@@ -1928,32 +1835,113 @@ public static class ApartmentSceneBuilder
         mgrSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── HUD Canvas ────────────────────────────────────────────────
-        var hudCanvasGO = new GameObject("DrinkMakingHUD_Canvas");
+        var hudCanvasGO = new GameObject("SimpleDrinkHUD_Canvas");
         hudCanvasGO.transform.SetParent(managersGO.transform);
         var hudCanvas = hudCanvasGO.AddComponent<Canvas>();
         hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         hudCanvas.sortingOrder = 12;
-        hudCanvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
-        hudCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        hudCanvasGO.AddComponent<CanvasScaler>();
+        hudCanvasGO.AddComponent<GraphicRaycaster>();
 
-        var recipeNameLabel = CreateHUDText("RecipeNameLabel", hudCanvasGO.transform,
-            new Vector2(0f, 200f), 24f, "Choose a Recipe");
-        var instructionLabel = CreateHUDText("InstructionLabel", hudCanvasGO.transform,
-            new Vector2(0f, 160f), 18f, "");
-        var fillLevelLabel = CreateHUDText("FillLevelLabel", hudCanvasGO.transform,
+        // ── Recipe panel (buttons for recipe selection) ───────────────
+        var recipePanelGO = new GameObject("RecipePanel");
+        recipePanelGO.transform.SetParent(hudCanvasGO.transform);
+        var recipePanelRT = recipePanelGO.AddComponent<RectTransform>();
+        recipePanelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        recipePanelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        recipePanelRT.sizeDelta = new Vector2(500f, 300f);
+        recipePanelRT.anchoredPosition = Vector2.zero;
+        recipePanelRT.localScale = Vector3.one;
+
+        var titleLabel = CreateHUDText("RecipePanelTitle", recipePanelGO.transform,
+            new Vector2(0f, 100f), 24f, "Choose a Recipe");
+
+        for (int i = 0; i < recipes.Length; i++)
+        {
+            float yPos = 40f - i * 50f;
+            var btnGO = new GameObject($"Btn_{recipes[i].drinkName}");
+            btnGO.transform.SetParent(recipePanelGO.transform);
+
+            var btnRT = btnGO.AddComponent<RectTransform>();
+            btnRT.anchorMin = new Vector2(0.5f, 0.5f);
+            btnRT.anchorMax = new Vector2(0.5f, 0.5f);
+            btnRT.sizeDelta = new Vector2(300f, 40f);
+            btnRT.anchoredPosition = new Vector2(0f, yPos);
+            btnRT.localScale = Vector3.one;
+
+            var btnImg = btnGO.AddComponent<Image>();
+            btnImg.color = new Color(0.2f, 0.2f, 0.25f, 0.85f);
+
+            var btn = btnGO.AddComponent<Button>();
+
+            var btnTextGO = new GameObject("Text");
+            btnTextGO.transform.SetParent(btnGO.transform);
+            var btnTextRT = btnTextGO.AddComponent<RectTransform>();
+            btnTextRT.anchorMin = Vector2.zero;
+            btnTextRT.anchorMax = Vector2.one;
+            btnTextRT.sizeDelta = Vector2.zero;
+            btnTextRT.anchoredPosition = Vector2.zero;
+            btnTextRT.localScale = Vector3.one;
+            var btnTMP = btnTextGO.AddComponent<TextMeshProUGUI>();
+            btnTMP.text = recipes[i].drinkName;
+            btnTMP.fontSize = 18f;
+            btnTMP.alignment = TextAlignmentOptions.Center;
+            btnTMP.color = Color.white;
+
+            // Wire button → SimpleDrinkManager.SelectRecipe(i)
+            int recipeIndex = i;
+            UnityEventTools.AddIntPersistentListener(btn.onClick,
+                mgr.SelectRecipe, recipeIndex);
+        }
+
+        // ── HUD panel (fill/foam/score — shown during Pouring + Scoring) ──
+        var hudPanelGO = new GameObject("HudPanel");
+        hudPanelGO.transform.SetParent(hudCanvasGO.transform);
+        var hudPanelRT = hudPanelGO.AddComponent<RectTransform>();
+        hudPanelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        hudPanelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        hudPanelRT.sizeDelta = new Vector2(500f, 300f);
+        hudPanelRT.anchoredPosition = Vector2.zero;
+        hudPanelRT.localScale = Vector3.one;
+
+        var drinkNameLabel = CreateHUDText("DrinkNameLabel", hudPanelGO.transform,
+            new Vector2(0f, 200f), 24f, "");
+        var fillLevelLabel = CreateHUDText("FillLevelLabel", hudPanelGO.transform,
             new Vector2(250f, 30f), 18f, "");
-        var scoreLabel = CreateHUDText("ScoreLabel", hudCanvasGO.transform,
+        var foamLevelLabel = CreateHUDText("FoamLevelLabel", hudPanelGO.transform,
+            new Vector2(250f, 0f), 18f, "");
+        var targetLabel = CreateHUDText("TargetLabel", hudPanelGO.transform,
+            new Vector2(250f, -30f), 18f, "");
+        var scoreLabel = CreateHUDText("ScoreLabel", hudPanelGO.transform,
             new Vector2(0f, 0f), 28f, "");
 
-        // Wire HUD (public fields)
+        // Overflow warning
+        var overflowGO = new GameObject("OverflowWarning");
+        overflowGO.transform.SetParent(hudPanelGO.transform);
+        var owRT = overflowGO.AddComponent<RectTransform>();
+        owRT.anchorMin = new Vector2(0.5f, 0.5f);
+        owRT.anchorMax = new Vector2(0.5f, 0.5f);
+        owRT.sizeDelta = new Vector2(300f, 40f);
+        owRT.anchoredPosition = new Vector2(0f, -80f);
+        owRT.localScale = Vector3.one;
+        var owTMP = overflowGO.AddComponent<TextMeshProUGUI>();
+        owTMP.text = "OVERFLOW!";
+        owTMP.fontSize = 22f;
+        owTMP.alignment = TextAlignmentOptions.Center;
+        owTMP.color = new Color(1f, 0.2f, 0.2f);
+        overflowGO.SetActive(false);
+
+        // Wire HUD
         var hudSO = new SerializedObject(hud);
         hudSO.FindProperty("manager").objectReferenceValue = mgr;
-        hudSO.FindProperty("glass").objectReferenceValue = glassCtrl;
-        hudSO.FindProperty("stirrer").objectReferenceValue = stirCtrl;
-        hudSO.FindProperty("recipeNameLabel").objectReferenceValue = recipeNameLabel;
-        hudSO.FindProperty("instructionLabel").objectReferenceValue = instructionLabel;
+        hudSO.FindProperty("drinkNameLabel").objectReferenceValue = drinkNameLabel;
         hudSO.FindProperty("fillLevelLabel").objectReferenceValue = fillLevelLabel;
+        hudSO.FindProperty("foamLevelLabel").objectReferenceValue = foamLevelLabel;
+        hudSO.FindProperty("targetLabel").objectReferenceValue = targetLabel;
         hudSO.FindProperty("scoreLabel").objectReferenceValue = scoreLabel;
+        hudSO.FindProperty("overflowWarning").objectReferenceValue = overflowGO;
+        hudSO.FindProperty("hudPanel").objectReferenceValue = hudPanelGO;
+        hudSO.FindProperty("recipePanel").objectReferenceValue = recipePanelGO;
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 
         // Start disabled (StationRoot will enable)
@@ -1974,7 +1962,7 @@ public static class ApartmentSceneBuilder
         // ── StationRoot (always available — kitchen used for cleaning + watering too) ──
         CreateStationRoot(groupGO, StationType.DrinkMaking, mgr, hudCanvasGO, drinkCam);
 
-        Debug.Log("[ApartmentSceneBuilder] Drink Making station group built (with fridge door).");
+        Debug.Log("[ApartmentSceneBuilder] Simple Drink Making station group built (with fridge door).");
     }
 
     // ══════════════════════════════════════════════════════════════════

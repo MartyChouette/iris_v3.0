@@ -36,4 +36,25 @@ public class DrinkRecipeDefinition : ScriptableObject
     [Header("Scoring")]
     [Tooltip("Maximum achievable score for perfect execution.")]
     public int baseScore = 100;
+
+    [Header("Simple Pour")]
+    [Tooltip("Target fill level for perfect score.")]
+    [Range(0f, 1f)]
+    public float idealFillLevel = 0.75f;
+
+    [Tooltip("Tolerance around ideal for full score.")]
+    [Range(0.01f, 0.3f)]
+    public float fillTolerance = 0.10f;
+
+    [Tooltip("Fill units per second while pouring.")]
+    public float pourRate = 0.15f;
+
+    [Tooltip("Foam rises this many times faster than liquid.")]
+    public float foamRateMultiplier = 2f;
+
+    [Tooltip("Units/sec foam settles when not pouring.")]
+    public float foamSettleRate = 0.25f;
+
+    [Tooltip("Liquid colour for the glass visual and coffee table delivery.")]
+    public Color liquidColor = new Color(0.8f, 0.6f, 0.3f, 0.8f);
 }
