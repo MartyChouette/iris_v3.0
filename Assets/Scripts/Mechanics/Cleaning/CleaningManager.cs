@@ -157,6 +157,15 @@ public class CleaningManager : MonoBehaviour
     {
         if (_mainCamera == null) return;
 
+        // Only allow cleaning interaction in the Selected apartment state
+        if (ApartmentManager.Instance != null
+            && ApartmentManager.Instance.CurrentState != ApartmentManager.State.Selected)
+        {
+            SetToolVisual(Vector3.zero, false);
+            _hoveredSurface = null;
+            return;
+        }
+
         _sfxCooldown -= Time.deltaTime;
 
         Vector2 pointer = _mousePosition.ReadValue<Vector2>();

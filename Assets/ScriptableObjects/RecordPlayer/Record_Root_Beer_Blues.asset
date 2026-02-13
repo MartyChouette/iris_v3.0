@@ -15,5 +15,6 @@ MonoBehaviour:
   title: Root Beer Blues
   artist: Decomposers
   labelColor: {r: 0.2, g: 0.4, b: 0.7, a: 1}
+  moodValue: 0.3
   musicClip: {fileID: 0}
   volume: 0.7

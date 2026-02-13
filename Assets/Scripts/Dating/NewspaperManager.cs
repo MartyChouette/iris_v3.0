@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -8,7 +7,7 @@ using Unity.Cinemachine;
 
 public class NewspaperManager : MonoBehaviour, IStationManager
 {
-    public enum State { ReadingPaper, Cutting, Calling, Done }
+    public enum State { ReadingPaper, Calling, Done }
 
     public static NewspaperManager Instance { get; private set; }
 
@@ -17,9 +16,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     // ─── References ───────────────────────────────────────────────
     [Header("References")]
     [SerializeField] private DayManager dayManager;
-    [SerializeField] private ScissorsCutController scissorsController;
     [SerializeField] private NewspaperSurface surface;
-    [SerializeField] private CutPathEvaluator evaluator;
     [SerializeField] private Camera mainCamera;
 
     [Tooltip("WorldSpace Canvas overlay with newspaper text + images (shown when reading).")]
@@ -72,6 +69,10 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private DatePersonalDefinition _selectedDefinition;
 
+    // Cached coroutine waits (avoid per-call allocation)
+    private static readonly WaitForSeconds s_waitCutPause = new WaitForSeconds(0.3f);
+    private WaitForSeconds _waitCallingDuration;
+
     // ─── Lifecycle ────────────────────────────────────────────────
 
     private void Awake()
@@ -89,6 +90,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         _mousePositionAction = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
 
         HideAllUI();
+        _waitCallingDuration = new WaitForSeconds(callingDuration);
 
         // Subscribe to day manager early so we don't miss DayManager.Start() firing OnNewNewspaper
         if (dayManager != null)
@@ -99,19 +101,12 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     {
         _clickAction.Enable();
         _mousePositionAction.Enable();
-
-        // Subscribe to scissors cut completion
-        if (scissorsController != null)
-            scissorsController.OnCutComplete.AddListener(OnCutCompleted);
     }
 
     private void OnDisable()
     {
         _clickAction.Disable();
         _mousePositionAction.Disable();
-
-        if (scissorsController != null)
-            scissorsController.OnCutComplete.RemoveListener(OnCutCompleted);
     }
 
     private void OnDestroy()
@@ -121,35 +116,25 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private void Start()
     {
-        // Only reset scissors if OnNewNewspaper hasn't already moved us to ReadingPaper
-        // (DayManager.Start may fire before this Start on the same GameObject)
-        if (CurrentState == State.Done)
-        {
-            if (scissorsController != null)
-                scissorsController.SetEnabled(false);
-        }
+        // No-op — state is managed by OnNewNewspaper / DayPhaseManager
     }
 
     // ─── State Updates ────────────────────────────────────────────
     // ReadingPaper and Done need no per-frame updates.
-    // Cutting and Calling are coroutine-driven.
+    // Calling is coroutine-driven.
 
     // ─── State Transitions ────────────────────────────────────────
 
     private void EnterReadingPaper()
     {
         CurrentState = State.ReadingPaper;
-        Debug.Log("[NewspaperManager] Reading paper. Draw to cut!");
+        Debug.Log("[NewspaperManager] Reading paper. Click a personal ad to select!");
 
         // Camera priority is owned by DayPhaseManager — not touched here.
 
         // Show text overlay
         if (newspaperOverlay != null)
             newspaperOverlay.SetActive(true);
-
-        // Enable scissors
-        if (scissorsController != null)
-            scissorsController.SetEnabled(true);
     }
 
     private void EnterDone()
@@ -163,47 +148,38 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         if (newspaperOverlay != null)
             newspaperOverlay.SetActive(false);
 
-        // Disable scissors
-        if (scissorsController != null)
-            scissorsController.SetEnabled(false);
-
         OnNewspaperDone?.Invoke();
     }
 
-    private void OnCutCompleted(List<Vector2> cutPolygonUV)
+    /// <summary>
+    /// Called by NewspaperAdSlot buttons when the player clicks a personal ad.
+    /// Replaces the former scissors-cutting mechanic.
+    /// </summary>
+    public void SelectPersonalAd(DatePersonalDefinition def)
     {
         if (CurrentState != State.ReadingPaper) return;
+        if (def == null) return;
 
-        // Evaluate which personal ad was cut
-        if (evaluator == null || personalSlots == null) return;
+        _selectedDefinition = def;
+        OnDateSelected?.Invoke(def);
 
-        var winner = evaluator.Evaluate(cutPolygonUV, personalSlots);
-        if (winner == null)
-        {
-            Debug.Log("[NewspaperManager] Cut didn't cover any phone number sufficiently.");
-            return;
-        }
-
-        _selectedDefinition = winner;
-        OnDateSelected?.Invoke(winner);
-
-        // Hide overlay so cut-out animation is visible
+        // Hide overlay
         if (newspaperOverlay != null)
             newspaperOverlay.SetActive(false);
 
-        // Disable scissors
-        if (scissorsController != null)
-            scissorsController.SetEnabled(false);
+        // Burst newspaper into paper scraps (visual flair)
+        if (surface != null)
+            surface.PlayPoofEffect();
 
-        StartCoroutine(CuttingThenCalling());
+        Debug.Log($"[NewspaperManager] Selected {def.characterName}'s ad!");
+
+        StartCoroutine(SelectionThenCalling());
     }
 
-    private IEnumerator CuttingThenCalling()
+    private IEnumerator SelectionThenCalling()
     {
-        // Brief pause for cut-out animation
-        CurrentState = State.Cutting;
-        Debug.Log($"[NewspaperManager] Cut out {_selectedDefinition.characterName}'s ad!");
-        yield return new WaitForSeconds(0.3f);
+        // Brief pause for poof animation
+        yield return s_waitCutPause;
 
         // Transition to calling
         EnterCalling();
@@ -227,7 +203,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     private IEnumerator CallingSequence()
     {
-        yield return new WaitForSeconds(callingDuration);
+        yield return _waitCallingDuration;
 
         if (callingUI != null) callingUI.SetActive(false);
 
@@ -284,7 +260,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         _selectedDefinition = null;
         HideAllUI();
 
-        // Enter reading state — newspaper is held up, ready to cut
+        // Enter reading state — newspaper is held up, click an ad to select
         EnterReadingPaper();
     }
 

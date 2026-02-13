@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Area_Kitchen
   m_EditorClassIdentifier: Assembly-CSharp::ApartmentAreaDefinition
   areaName: Kitchen
-  description: Table with newspaper, fridge, counter.
-  stationType: 2
-  splinePosition: 0.143
-  lookAtPosition: {x: -18.713789, y: -6.7153416, z: 8.276148}
-  selectedPosition: {x: -2.1851091, y: 1.3180497, z: 1.4863758}
-  selectedRotation: {x: 10.291093, y: 316.65555, z: 359.9469}
-  selectedFOV: 60.000004
+  description: Fridge (drink-making), counter, cleaning, watering.
+  stationType: 8
+  splinePosition: 0
+  lookAtPosition: {x: -4, y: 1, z: -4.5}
+  selectedPosition: {x: -6.5, y: 3.5, z: -4}
+  selectedRotation: {x: 35, y: 45, z: 0}
+  selectedFOV: 48
   browseBlendDuration: 0.8
   selectBlendDuration: 0.5

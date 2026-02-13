@@ -6,10 +6,11 @@ using Unity.Cinemachine;
 using UnityEngine.Splines;
 using Unity.Mathematics;
 using TMPro;
+using UnityEngine.UI;
 
 /// <summary>
 /// Editor utility that programmatically builds the apartment hub scene with
-/// Kitchen + Living Room, spline dolly camera, station integration, and placement surfaces.
+/// Kitchen, Living Room, and Cozy Corner areas, spline dolly camera, station integration, and placement surfaces.
 /// Menu: Window > Iris > Build Apartment Scene
 /// </summary>
 public static class ApartmentSceneBuilder
@@ -23,10 +24,27 @@ public static class ApartmentSceneBuilder
     private const string NewspaperLayerName = "Newspaper";
     private const string CleanableLayerName = "Cleanable";
     private const string PhoneLayerName = "Phone";
+    private const string FridgeLayerName = "Fridge";
+
+    // ─── Station Group Positions ─────────────────────────────────
+    private static readonly Vector3 BookcaseStationPos  = new Vector3(-6.3f, 0f, 3.0f);
+    private static readonly Vector3 RecordPlayerStationPos = new Vector3(-2f, 0f, 5f);
+    private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
     // Two-page newspaper spread dimensions
     private const int NewspaperCanvasWidth = 1000;
     private const int NewspaperCanvasHeight = 700;
+
+    // ─── Newspaper Position Config ──────────────────────────────
+    private static readonly Vector3 NewspaperCamPos     = new Vector3(-5.5f, 1.3f, 3.0f);
+    private static readonly Vector3 NewspaperCamRot     = new Vector3(5f, 0f, 0f);
+    private const float             NewspaperCamFOV     = 48f;
+    private static readonly Vector3 NewspaperSurfacePos = new Vector3(-5.5f, 1.1f, 5.0f);
+    private static readonly Vector3 NewspaperSurfaceScl = new Vector3(2.5f, 1.75f, 1f);
+    private static readonly Vector3 NewspaperCanvasOff  = new Vector3(0f, 0f, 0.05f);
+    private const float             NewspaperCanvasScl  = 0.0025f;
+    private static readonly Vector3 NewspaperTossPos    = new Vector3(-3.5f, 0.42f, 3.0f);
+    private static readonly Vector3 NewspaperTossRot    = new Vector3(90f, 10f, 0f);
 
     // ══════════════════════════════════════════════════════════════════
     // Main Build
@@ -46,6 +64,7 @@ public static class ApartmentSceneBuilder
         int newspaperLayer = EnsureLayer(NewspaperLayerName);
         int cleanableLayer = EnsureLayer(CleanableLayerName);
         int phoneLayer = EnsureLayer(PhoneLayerName);
+        int fridgeLayer = EnsureLayer(FridgeLayerName);
 
         // ── 1. Lighting ──
         var lightGO = new GameObject("Directional Light");
@@ -70,23 +89,34 @@ public static class ApartmentSceneBuilder
         eventSysGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
         eventSysGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 
-        // ── 3. Room geometry ──
-        BuildApartment();
+        // ── 3. Room geometry (import model or procedural fallback) ──
+        BuildApartmentModel();
 
-        // ── 4. Furniture (Kitchen + Living Room) ──
+        // ── 4. Modular station groups ──
+        BuildBookcaseStationGroup(camGO, booksLayer, drawersLayer,
+            perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+        BuildRecordPlayerStationGroup();
+        BuildDrinkMakingStationGroup(camGO, fridgeLayer);
+
+        // ── 4d. Newspaper station (DayPhaseManager-driven, not a StationRoot) ──
+        var newspaperData = BuildNewspaperStation(camGO, newspaperLayer);
+
+        // ── 5. Furniture (non-station items: couch, coffee table, kitchen table, etc.) ──
         var furnitureRefs = BuildFurniture();
 
-        // ── 5. Placeable objects ──
+        // ── 6. Placeable objects + ReactableTags ──
         BuildPlaceableObjects(placeableLayer);
 
-        // ── 6. Spline path + browse camera with dolly ──
+        // ── 7. Spline path (7-knot closed loop) ──
         var splineContainer = BuildSplinePath();
+
+        // ── 8. Cameras (browse + selected) ──
         var cameras = BuildCamerasWithDolly(splineContainer);
 
-        // ── 7. Area SOs (2 areas) ──
+        // ── 9. Area SOs (Kitchen, Living Room, Cozy Corner) ──
         var areaDefs = BuildAreaDefinitions();
 
-        // ── 8. ObjectGrabber ──
+        // ── 10. ObjectGrabber ──
         var grabberGO = new GameObject("ObjectGrabber");
         var grabber = grabberGO.AddComponent<ObjectGrabber>();
         var grabberSO = new SerializedObject(grabber);
@@ -101,40 +131,26 @@ public static class ApartmentSceneBuilder
 
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 9. Bookcase unit (shared with standalone bookcase scene) ──
-        var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
-            booksLayer, drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
-        bookcaseRoot.transform.position = new Vector3(-6.3f, 0f, 3.0f);
-        bookcaseRoot.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
-
-        // ── 10. BookInteractionManager ──
-        var bookManager = BuildBookInteractionManager(camGO, booksLayer,
-            drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
-
-        // ── 11. Newspaper station (Kitchen — auto-activated by DayPhaseManager, not a StationRoot) ──
-        var newspaperData = BuildNewspaperStation(camGO, newspaperLayer);
-
-        // ── 12. Station roots ──
-        var drinkMakingData = BuildDrinkMakingStation(camGO);
-        BuildStationRoots(bookManager, drinkMakingData);
-
-        // ── 13. ApartmentManager + UI ──
+        // ── 11. ApartmentManager + UI ──
         var apartmentUI = BuildApartmentManager(cameras.browse, cameras.selected, cameras.dolly,
             grabber, areaDefs);
 
-        // ── 14. Dating infrastructure (GameClock, DateSessionManager, PhoneController, etc.) ──
+        // ── 12. Dating infrastructure (GameClock, DateSessionManager, PhoneController, etc.) ──
         BuildDatingInfrastructure(camGO, furnitureRefs, newspaperData, phoneLayer);
 
-        // ── 15. Ambient cleaning (not a station) ──
+        // ── 13. Ambient cleaning (not a station) ──
         var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer);
 
-        // ── 16. DayPhaseManager (orchestrates daily loop) ──
+        // ── 14. DayPhaseManager (orchestrates daily loop) ──
         BuildDayPhaseManager(newspaperData, cleaningData, apartmentUI);
 
-        // ── 17. Screen fade overlay ──
+        // ── 15. Screen fade overlay ──
         BuildScreenFade();
 
-        // ── 18. Save scene ──
+        // ── 16. NavMesh setup ──
+        BuildNavMeshSetup();
+
+        // ── 17. Save scene ──
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -145,17 +161,49 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Apartment geometry (Kitchen + Living Room, no walls)
+    // Apartment geometry (import blockout model or procedural fallback)
     // ══════════════════════════════════════════════════════════════════
 
-    private static void BuildApartment()
+    private static void BuildApartmentModel()
     {
-        var parent = new GameObject("Apartment");
+        const string modelPath = "Assets/Scenes/Iris_V3/aprtment blockout.obj";
+        var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
 
-        // Floor (10 x 12, covers kitchen + living room)
-        CreateBox("Floor", parent.transform,
-            new Vector3(-3f, -0.05f, 0f), new Vector3(10f, 0.1f, 12f),
-            new Color(0.55f, 0.45f, 0.35f));
+        if (modelAsset != null)
+        {
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset);
+            instance.name = "ApartmentModel";
+            instance.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+            // Mark all children static for lighting + NavMesh
+            foreach (var tf in instance.GetComponentsInChildren<Transform>(true))
+            {
+                tf.gameObject.isStatic = true;
+                GameObjectUtility.SetStaticEditorFlags(tf.gameObject,
+                    StaticEditorFlags.ContributeGI | StaticEditorFlags.OccluderStatic
+                    | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.NavigationStatic
+                    | StaticEditorFlags.ReflectionProbeStatic | StaticEditorFlags.BatchingStatic);
+            }
+
+            // Add MeshColliders to any children with MeshFilter but no Collider
+            foreach (var mf in instance.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.GetComponent<Collider>() == null && mf.sharedMesh != null)
+                    mf.gameObject.AddComponent<MeshCollider>();
+            }
+
+            Debug.Log($"[ApartmentSceneBuilder] Imported apartment model from {modelPath}.");
+        }
+        else
+        {
+            // Procedural fallback — simple floor
+            Debug.LogWarning($"[ApartmentSceneBuilder] Model not found at {modelPath}, using procedural fallback.");
+            var parent = new GameObject("Apartment");
+
+            CreateBox("Floor", parent.transform,
+                new Vector3(-3f, -0.05f, 0f), new Vector3(16f, 0.1f, 16f),
+                new Color(0.55f, 0.45f, 0.35f));
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -172,6 +220,7 @@ public static class ApartmentSceneBuilder
         public Transform couchSeatTarget;
         public Transform coffeeTableDeliveryPoint;
         public Transform tossedNewspaperPosition;
+        public Transform judgmentStopPoint;
     }
 
     private static FurnitureRefs BuildFurniture()
@@ -188,6 +237,9 @@ public static class ApartmentSceneBuilder
         // ═══ Living Room (west: X ~ -4, Z ~ 3) ═══
         refs.coffeeTable = BuildLivingRoom(parent.transform,
             out refs.couchSeatTarget, out refs.coffeeTableDeliveryPoint);
+
+        // ═══ Judgment Stop Point (between entrance and couch) ═══
+        refs.judgmentStopPoint = BuildJudgmentStopPoint(parent.transform);
 
         return refs;
     }
@@ -214,10 +266,7 @@ public static class ApartmentSceneBuilder
             new Vector3(-3.5f, 0.35f, -3.15f), new Vector3(0.06f, 0.7f, 0.06f),
             new Color(0.40f, 0.28f, 0.18f));
 
-        // Fridge
-        CreateBox("Fridge", parent,
-            new Vector3(-6.3f, 0.9f, -4.5f), new Vector3(0.7f, 1.8f, 0.7f),
-            new Color(0.85f, 0.85f, 0.87f));
+        // Fridge is now part of the DrinkMaking station group (see BuildDrinkMakingStationGroup)
 
         // Counter
         CreateBox("Counter_Top", parent,
@@ -235,8 +284,8 @@ public static class ApartmentSceneBuilder
         // Tossed newspaper position (on coffee table, where newspaper lands after reading)
         var tossedGO = new GameObject("TossedNewspaperPosition");
         tossedGO.transform.SetParent(parent);
-        tossedGO.transform.position = new Vector3(-3.5f, 0.42f, 3.0f);
-        tossedGO.transform.rotation = Quaternion.Euler(90f, 10f, 0f);
+        tossedGO.transform.position = NewspaperTossPos;
+        tossedGO.transform.rotation = Quaternion.Euler(NewspaperTossRot);
         tossedNewspaperPosition = tossedGO.transform;
 
         // Phone (wall-mounted near kitchen counter)
@@ -272,6 +321,16 @@ public static class ApartmentSceneBuilder
         dateSpawnPoint = spawnGO.transform;
 
         return tableTop;
+    }
+
+    /// <summary>Build the judgment stop point between entrance and couch.</summary>
+    private static Transform BuildJudgmentStopPoint(Transform parent)
+    {
+        var go = new GameObject("JudgmentStopPoint");
+        go.transform.SetParent(parent);
+        // Halfway between spawn (-3, 0, -5.5) and couch (-5.5, 0, 3) — near the entrance area
+        go.transform.position = new Vector3(-4.2f, 0f, -1.5f);
+        return go.transform;
     }
 
     private static GameObject BuildLivingRoom(Transform parent,
@@ -316,12 +375,19 @@ public static class ApartmentSceneBuilder
             new Color(0.3f, 0.4f, 0.6f));
 
         // Small plant on sun ledge
-        CreateBox("SmallPlant_Pot", parent,
+        var plantPotGO = CreateBox("SmallPlant_Pot", parent,
             new Vector3(-4.1f, 0.98f, 5.7f), new Vector3(0.12f, 0.1f, 0.12f),
             new Color(0.6f, 0.35f, 0.25f));
         CreateBox("SmallPlant_Leaves", parent,
             new Vector3(-4.1f, 1.1f, 5.7f), new Vector3(0.15f, 0.12f, 0.15f),
             new Color(0.2f, 0.5f, 0.2f));
+
+        // ReactableTag on potted plant
+        AddReactableTag(plantPotGO, new[] { "plant", "greenery" }, true);
+
+        // ReactableTag on mecha figurine (decoration)
+        var mechaGO = GameObject.Find("MechaFigurine");
+        if (mechaGO != null) AddReactableTag(mechaGO, new[] { "figurine", "decoration" }, true);
 
         // Couch seat target (where date character sits)
         var seatGO = new GameObject("CouchSeatTarget");
@@ -426,7 +492,7 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Spline Path (closed loop, 4 knots — Kitchen + Living Room)
+    // Spline Path (closed loop — Kitchen + Living Room for now)
     // ══════════════════════════════════════════════════════════════════
 
     private static SplineContainer BuildSplinePath()
@@ -436,7 +502,7 @@ public static class ApartmentSceneBuilder
         var spline = container.Spline;
         spline.Clear();
 
-        // 4 knots orbiting the two-room zone
+        // 4 knots orbiting the Kitchen + Living Room zone
         var knots = new float3[]
         {
             new float3( -8.0f, 4.0f, -4.0f),  // SW (kitchen side)
@@ -502,7 +568,7 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Area ScriptableObjects (2 areas — Kitchen + Living Room)
+    // Area ScriptableObjects (Kitchen, Living Room, Cozy Corner)
     // ══════════════════════════════════════════════════════════════════
 
     private static ApartmentAreaDefinition[] BuildAreaDefinitions()
@@ -514,13 +580,15 @@ public static class ApartmentSceneBuilder
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Apartment");
 
         var kitchen = CreateAreaDef("Kitchen", soDir,
-            "Kitchen", "Table with newspaper, fridge, counter, drink station.",
+            "Kitchen", "Fridge (drink-making), counter, cleaning, watering.",
             StationType.DrinkMaking, 0.0f,
+            new Vector3(-4f, 1.0f, -4.5f),
             new Vector3(-6.5f, 3.5f, -4.0f), new Vector3(35f, 45f, 0f), 48f);
 
         var livingRoom = CreateAreaDef("LivingRoom", soDir,
             "Living Room", "Bookcase, coffee table, couch.",
             StationType.Bookcase, 0.5f,
+            new Vector3(-6.3f, 1.2f, 3.0f),
             new Vector3(-7.0f, 3.5f, 3.0f), new Vector3(30f, 60f, 0f), 48f);
 
         return new[] { kitchen, livingRoom };
@@ -530,21 +598,30 @@ public static class ApartmentSceneBuilder
         string assetName, string directory,
         string areaName, string description,
         StationType stationType, float splinePos,
+        Vector3 lookAt,
         Vector3 selectedPos, Vector3 selectedRot, float selectedFOV)
     {
-        var def = ScriptableObject.CreateInstance<ApartmentAreaDefinition>();
+        string path = $"{directory}/Area_{assetName}.asset";
+        var def = AssetDatabase.LoadAssetAtPath<ApartmentAreaDefinition>(path);
+        bool isNew = def == null;
+        if (isNew)
+            def = ScriptableObject.CreateInstance<ApartmentAreaDefinition>();
+
         def.areaName = areaName;
         def.description = description;
         def.stationType = stationType;
         def.splinePosition = splinePos;
+        def.lookAtPosition = lookAt;
         def.selectedPosition = selectedPos;
         def.selectedRotation = selectedRot;
         def.selectedFOV = selectedFOV;
         def.browseBlendDuration = 0.8f;
         def.selectBlendDuration = 0.5f;
 
-        string path = $"{directory}/Area_{assetName}.asset";
-        AssetDatabase.CreateAsset(def, path);
+        if (isNew)
+            AssetDatabase.CreateAsset(def, path);
+        else
+            EditorUtility.SetDirty(def);
 
         return def;
     }
@@ -572,41 +649,187 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Station Roots
+    // Modular Station Groups
     // ══════════════════════════════════════════════════════════════════
 
-    private static void BuildStationRoots(
-        BookInteractionManager bookManager,
-        DrinkMakingStationData drinkData)
+    /// <summary>
+    /// Builds the bookcase station as a self-contained group:
+    /// BookcaseUnit + BookInteractionManager + StationRoot.
+    /// </summary>
+    private static void BuildBookcaseStationGroup(GameObject camGO,
+        int booksLayer, int drawersLayer, int perfumesLayer,
+        int trinketsLayer, int coffeeTableBooksLayer)
     {
-        var parent = new GameObject("StationRoots");
+        var groupGO = new GameObject("Station_Bookcase");
 
-        // Bookcase station (Living Room)
-        CreateStationRoot(parent.transform, "Station_Bookcase",
-            StationType.Bookcase, bookManager);
+        // Bookcase unit (shared with standalone bookcase scene)
+        var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
+            booksLayer, drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+        bookcaseRoot.transform.SetParent(groupGO.transform);
+        bookcaseRoot.transform.localPosition = Vector3.zero;
+        bookcaseRoot.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
 
-        // Drink Making station (Kitchen) — phase-gated to DateInProgress only
-        var drinkRoot = CreateStationRoot(parent.transform, "Station_DrinkMaking",
-            StationType.DrinkMaking, drinkData.manager,
-            drinkData.hudRoot);
-        var drinkRootSO = new SerializedObject(drinkRoot);
-        var drinkCamsProp = drinkRootSO.FindProperty("stationCameras");
-        drinkCamsProp.arraySize = 1;
-        drinkCamsProp.GetArrayElementAtIndex(0).objectReferenceValue = drinkData.stationCamera;
-        // Phase gating: only available during DateInProgress
-        var phasesProp = drinkRootSO.FindProperty("availableInPhases");
-        phasesProp.arraySize = 1;
-        phasesProp.GetArrayElementAtIndex(0).intValue = (int)DayPhaseManager.DayPhase.DateInProgress;
-        drinkRootSO.ApplyModifiedPropertiesWithoutUndo();
+        // BookInteractionManager
+        var bookManager = BuildBookInteractionManager(camGO, booksLayer,
+            drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+        bookManager.transform.SetParent(groupGO.transform);
 
-        // Note: Newspaper is DayPhaseManager-driven — no StationRoot needed
+        // ReactableTag on bookcase
+        AddReactableTag(groupGO, new[] { "book", "reading" }, true);
+
+        // StationRoot (no station cameras — uses selected cam from ApartmentManager)
+        CreateStationRoot(groupGO, StationType.Bookcase, bookManager, null);
+
+        // Position the entire group
+        groupGO.transform.position = BookcaseStationPos;
+
+        Debug.Log("[ApartmentSceneBuilder] Bookcase station group built.");
     }
 
-    private static StationRoot CreateStationRoot(Transform parent, string name,
-        StationType type, MonoBehaviour manager, GameObject hudRoot = null)
+    /// <summary>
+    /// Builds the record player station as a self-contained group:
+    /// Furniture + RecordPlayerManager + RecordPlayerHUD + AudioSource + StationRoot.
+    /// </summary>
+    private static void BuildRecordPlayerStationGroup()
     {
-        var go = new GameObject(name);
-        go.transform.SetParent(parent);
+        var groupGO = new GameObject("Station_RecordPlayer");
+        groupGO.transform.position = RecordPlayerStationPos;
+
+        // ── Furniture ────────────────────────────────────────────────
+        // Record table
+        var table = CreateBox("RecordTable", groupGO.transform,
+            RecordPlayerStationPos + new Vector3(0f, 0.4f, 0f),
+            new Vector3(0.6f, 0.8f, 0.4f),
+            new Color(0.40f, 0.28f, 0.18f));
+        table.isStatic = true;
+
+        // Turntable (flat cylinder on top of table)
+        var turntableGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        turntableGO.name = "Turntable";
+        turntableGO.transform.SetParent(groupGO.transform);
+        turntableGO.transform.position = RecordPlayerStationPos + new Vector3(0f, 0.85f, 0f);
+        turntableGO.transform.localScale = new Vector3(0.30f, 0.02f, 0.30f);
+        turntableGO.isStatic = true;
+        SetMaterial(turntableGO, new Color(0.20f, 0.20f, 0.22f));
+
+        // Record disc (thin cylinder, child of group for rotation)
+        var discGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        discGO.name = "RecordDisc";
+        discGO.transform.SetParent(groupGO.transform);
+        discGO.transform.position = RecordPlayerStationPos + new Vector3(0f, 0.88f, 0f);
+        discGO.transform.localScale = new Vector3(0.25f, 0.005f, 0.25f);
+        discGO.isStatic = false;
+        var discCol = discGO.GetComponent<Collider>();
+        if (discCol != null) Object.DestroyImmediate(discCol);
+        SetMaterial(discGO, new Color(0.05f, 0.05f, 0.08f));
+
+        // Tone arm (thin box at angle)
+        var toneArm = CreateBox("ToneArm", groupGO.transform,
+            RecordPlayerStationPos + new Vector3(0.18f, 0.90f, 0.05f),
+            new Vector3(0.015f, 0.008f, 0.18f),
+            new Color(0.60f, 0.60f, 0.65f));
+        toneArm.transform.localRotation = Quaternion.Euler(0f, -15f, 0f);
+        toneArm.isStatic = false;
+
+        // ── Station camera ───────────────────────────────────────────
+        var camGO = new GameObject("Cam_RecordPlayer");
+        camGO.transform.SetParent(groupGO.transform);
+        camGO.transform.position = RecordPlayerStationPos + new Vector3(-1.0f, 1.5f, -0.8f);
+        camGO.transform.rotation = Quaternion.Euler(30f, 45f, 0f);
+        var stationCam = camGO.AddComponent<CinemachineCamera>();
+        var lens = LensSettings.Default;
+        lens.FieldOfView = 45f;
+        lens.NearClipPlane = 0.1f;
+        lens.FarClipPlane = 100f;
+        stationCam.Lens = lens;
+        stationCam.Priority = 0;
+
+        // ── Managers ─────────────────────────────────────────────────
+        var managersGO = new GameObject("RecordPlayerManagers");
+        managersGO.transform.SetParent(groupGO.transform);
+        var audioSrc = managersGO.AddComponent<AudioSource>();
+        audioSrc.playOnAwake = false;
+        audioSrc.loop = true;
+
+        var mgr = managersGO.AddComponent<RecordPlayerManager>();
+        var hud = managersGO.AddComponent<RecordPlayerHUD>();
+
+        // ReactableTag on managers GO (toggled by RecordPlayerManager during playback)
+        AddReactableTag(managersGO, new[] { "vinyl", "music" }, false);
+
+        // ── Load existing RecordDefinition SOs ───────────────────────
+        string soDir = "Assets/ScriptableObjects/RecordPlayer";
+        var recordPaths = AssetDatabase.FindAssets("t:RecordDefinition", new[] { soDir });
+        var records = new RecordDefinition[recordPaths.Length];
+        for (int i = 0; i < recordPaths.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(recordPaths[i]);
+            records[i] = AssetDatabase.LoadAssetAtPath<RecordDefinition>(path);
+        }
+
+        // ── Wire RecordPlayerManager ─────────────────────────────────
+        var mgrSO = new SerializedObject(mgr);
+        var recordsProp = mgrSO.FindProperty("records");
+        recordsProp.arraySize = records.Length;
+        for (int i = 0; i < records.Length; i++)
+            recordsProp.GetArrayElementAtIndex(i).objectReferenceValue = records[i];
+        mgrSO.FindProperty("recordVisual").objectReferenceValue = discGO.transform;
+        mgrSO.FindProperty("recordRenderer").objectReferenceValue = discGO.GetComponent<Renderer>();
+        mgrSO.FindProperty("audioSource").objectReferenceValue = audioSrc;
+        mgrSO.FindProperty("hud").objectReferenceValue = hud;
+        mgrSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── HUD Canvas ───────────────────────────────────────────────
+        var hudCanvasGO = new GameObject("RecordPlayerHUD_Canvas");
+        hudCanvasGO.transform.SetParent(groupGO.transform);
+        var hudCanvas = hudCanvasGO.AddComponent<Canvas>();
+        hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        hudCanvas.sortingOrder = 12;
+        var hudScaler = hudCanvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
+        hudScaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        hudScaler.referenceResolution = new Vector2(1920f, 1080f);
+        hudCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        var titleText = CreateHUDText("TitleText", hudCanvasGO.transform,
+            new Vector2(0f, 200f), 24f, "Record Title");
+        var artistText = CreateHUDText("ArtistText", hudCanvasGO.transform,
+            new Vector2(0f, 160f), 18f, "Artist");
+        var stateText = CreateHUDText("StateText", hudCanvasGO.transform,
+            new Vector2(0f, 120f), 16f, "Stopped");
+        var hintsText = CreateHUDText("HintsText", hudCanvasGO.transform,
+            new Vector2(0f, -200f), 16f, "A / D  Browse    |    Enter  Play");
+
+        // Wire RecordPlayerHUD
+        var hudSO = new SerializedObject(hud);
+        hudSO.FindProperty("titleText").objectReferenceValue = titleText;
+        hudSO.FindProperty("artistText").objectReferenceValue = artistText;
+        hudSO.FindProperty("stateText").objectReferenceValue = stateText;
+        hudSO.FindProperty("hintsText").objectReferenceValue = hintsText;
+        hudSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Start disabled (StationRoot.Activate will enable)
+        mgr.enabled = false;
+        hudCanvasGO.SetActive(false);
+
+        // ── StationRoot ──────────────────────────────────────────────
+        var stationRoot = CreateStationRoot(groupGO, StationType.RecordPlayer,
+            mgr, hudCanvasGO, stationCam);
+
+        Debug.Log($"[ApartmentSceneBuilder] Record Player station group built ({records.Length} records loaded).");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Station Root Helper
+    // ══════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Adds a StationRoot component to the given GO and wires its serialized fields.
+    /// </summary>
+    private static StationRoot CreateStationRoot(GameObject go,
+        StationType type, MonoBehaviour manager,
+        GameObject hudRoot, CinemachineCamera stationCamera = null,
+        int[] availableInPhases = null)
+    {
         var root = go.AddComponent<StationRoot>();
 
         var so = new SerializedObject(root);
@@ -615,9 +838,54 @@ public static class ApartmentSceneBuilder
             so.FindProperty("stationManager").objectReferenceValue = manager;
         if (hudRoot != null)
             so.FindProperty("hudRoot").objectReferenceValue = hudRoot;
-        so.ApplyModifiedPropertiesWithoutUndo();
 
+        if (stationCamera != null)
+        {
+            var camsProp = so.FindProperty("stationCameras");
+            camsProp.arraySize = 1;
+            camsProp.GetArrayElementAtIndex(0).objectReferenceValue = stationCamera;
+        }
+
+        if (availableInPhases != null && availableInPhases.Length > 0)
+        {
+            var phasesProp = so.FindProperty("availableInPhases");
+            phasesProp.arraySize = availableInPhases.Length;
+            for (int i = 0; i < availableInPhases.Length; i++)
+                phasesProp.GetArrayElementAtIndex(i).intValue = availableInPhases[i];
+        }
+
+        so.ApplyModifiedPropertiesWithoutUndo();
         return root;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // ReactableTag Helper
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void AddReactableTag(GameObject go, string[] tags, bool isActive)
+    {
+        var tag = go.AddComponent<ReactableTag>();
+        var so = new SerializedObject(tag);
+        var tagsProp = so.FindProperty("tags");
+        tagsProp.arraySize = tags.Length;
+        for (int i = 0; i < tags.Length; i++)
+            tagsProp.GetArrayElementAtIndex(i).stringValue = tags[i];
+        so.FindProperty("isActive").boolValue = isActive;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Material Helper
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void SetMaterial(GameObject go, Color color)
+    {
+        var rend = go.GetComponent<Renderer>();
+        if (rend == null) return;
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                               ?? Shader.Find("Standard"));
+        mat.color = color;
+        rend.sharedMaterial = mat;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -741,11 +1009,11 @@ public static class ApartmentSceneBuilder
         // Camera at couch looking +Z. Canvas at identity rotation faces -Z
         // (toward camera) — text reads correctly with no mirroring.
         var readCamGO = new GameObject("Cam_NewspaperRead");
-        readCamGO.transform.position = new Vector3(-5.5f, 1.3f, 3.0f);
-        readCamGO.transform.rotation = Quaternion.Euler(5f, 0f, 0f);
+        readCamGO.transform.position = NewspaperCamPos;
+        readCamGO.transform.rotation = Quaternion.Euler(NewspaperCamRot);
         var readCam = readCamGO.AddComponent<CinemachineCamera>();
         var readLens = LensSettings.Default;
-        readLens.FieldOfView = 48f;
+        readLens.FieldOfView = NewspaperCamFOV;
         readLens.NearClipPlane = 0.1f;
         readLens.FarClipPlane = 100f;
         readCam.Lens = readLens;
@@ -764,7 +1032,7 @@ public static class ApartmentSceneBuilder
             surfaceGO = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
-            surfaceGO.transform.position = new Vector3(-5.5f, 1.1f, 5.0f);
+            surfaceGO.transform.position = NewspaperSurfacePos;
             SetNewspaperLayerRecursive(surfaceGO, newspaperLayer);
         }
         else
@@ -772,9 +1040,9 @@ public static class ApartmentSceneBuilder
             surfaceGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
             surfaceGO.name = "NewspaperSurface";
             surfaceGO.transform.SetParent(parent.transform);
-            surfaceGO.transform.position = new Vector3(-5.5f, 1.1f, 5.0f);
+            surfaceGO.transform.position = NewspaperSurfacePos;
             surfaceGO.transform.rotation = Quaternion.identity;
-            surfaceGO.transform.localScale = new Vector3(2.5f, 1.75f, 1f);
+            surfaceGO.transform.localScale = NewspaperSurfaceScl;
             surfaceGO.layer = newspaperLayer;
             // Ensure MeshCollider with mesh assigned (required for hit.textureCoord)
             var mc = surfaceGO.GetComponent<MeshCollider>();
@@ -795,10 +1063,10 @@ public static class ApartmentSceneBuilder
         // ── WorldSpace canvas (newspaper text) ────────────────────
         // Camera looks +Z, canvas front faces -Z (toward camera) at identity.
         // No mirroring needed — positive scale on all axes.
-        float canvasScale = 0.0025f;
+        float canvasScale = NewspaperCanvasScl;
         var pivotGO = new GameObject("NewspaperOverlayPivot");
         pivotGO.transform.SetParent(parent.transform);
-        pivotGO.transform.position = new Vector3(-5.5f, 1.1f, 5.05f);
+        pivotGO.transform.position = NewspaperSurfacePos + NewspaperCanvasOff;
         pivotGO.transform.rotation = Quaternion.identity;
         pivotGO.transform.localScale = new Vector3(canvasScale, canvasScale, canvasScale);
 
@@ -817,7 +1085,10 @@ public static class ApartmentSceneBuilder
         canvasRT.localRotation = Quaternion.identity;
         canvasRT.localScale = Vector3.one;
 
-        canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        var raycaster = canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        // WorldSpace canvas needs a worldCamera for raycasting
+        canvas.worldCamera = camGO.GetComponent<UnityEngine.Camera>();
 
         // Opaque paper background
         var bgGO = new GameObject("PaperBackground");
@@ -924,13 +1195,11 @@ public static class ApartmentSceneBuilder
                 new Vector2(contentWidth - 20f, phoneFontSize + 6f),
                 "555-0000", phoneFontSize, FontStyles.Italic, TextAlignmentOptions.Left);
 
-            // Logical ad slot with UV bounds
-            float slotCenterX_abs = contentLeft + contentWidth * 0.5f;
+            // Clickable ad slot (must be child of canvas for Button raycasting)
             personalSlots[i] = CreateNewspaperAdSlot($"PersonalSlot_{i}",
-                parent.transform, newspaperLayer,
-                new Vector2(slotCenterX_abs, slotCenterY),
-                new Vector2(contentWidth, slotHeight),
-                new Vector2(NewspaperCanvasWidth, NewspaperCanvasHeight));
+                canvasGO.transform, newspaperLayer,
+                new Vector2(anchoredX, anchoredY),
+                new Vector2(contentWidth, slotHeight));
 
             var slotSO = new SerializedObject(personalSlots[i]);
             slotSO.FindProperty("nameLabel").objectReferenceValue = nameGO.GetComponent<TMP_Text>();
@@ -944,9 +1213,6 @@ public static class ApartmentSceneBuilder
         // Start overlay hidden
         pivotGO.SetActive(false);
 
-        // ── Scissors visual ───────────────────────────────────────
-        var scissorsVisual = BuildNewspaperScissors();
-
         // ── Managers ──────────────────────────────────────────────
         var managersGO = new GameObject("NewspaperManagers");
 
@@ -956,29 +1222,13 @@ public static class ApartmentSceneBuilder
         dayMgrSO.FindProperty("pool").objectReferenceValue = pool;
         dayMgrSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // CutPathEvaluator
-        var evalComp = managersGO.AddComponent<CutPathEvaluator>();
-
-        // ScissorsCutController
+        // NewspaperManager (button-based ad selection, no scissors)
         var cam = camGO.GetComponent<UnityEngine.Camera>();
-        var scissorsCtrl = managersGO.AddComponent<ScissorsCutController>();
-        var scissorsSO = new SerializedObject(scissorsCtrl);
-        scissorsSO.FindProperty("surface").objectReferenceValue =
-            surfaceGO.GetComponent<NewspaperSurface>();
-        scissorsSO.FindProperty("cam").objectReferenceValue = cam;
-        scissorsSO.FindProperty("newspaperLayer").intValue = 1 << newspaperLayer;
-        scissorsSO.FindProperty("scissorsVisual").objectReferenceValue = scissorsVisual;
-        scissorsSO.FindProperty("surfaceOffset").floatValue = -0.05f;
-        scissorsSO.ApplyModifiedPropertiesWithoutUndo();
-
-        // NewspaperManager
         var newsMgr = managersGO.AddComponent<NewspaperManager>();
         var newsMgrSO = new SerializedObject(newsMgr);
         newsMgrSO.FindProperty("dayManager").objectReferenceValue = dayMgr;
-        newsMgrSO.FindProperty("scissorsController").objectReferenceValue = scissorsCtrl;
         newsMgrSO.FindProperty("surface").objectReferenceValue =
             surfaceGO.GetComponent<NewspaperSurface>();
-        newsMgrSO.FindProperty("evaluator").objectReferenceValue = evalComp;
         newsMgrSO.FindProperty("mainCamera").objectReferenceValue = cam;
         newsMgrSO.FindProperty("newspaperOverlay").objectReferenceValue = pivotGO;
         newsMgrSO.FindProperty("readCamera").objectReferenceValue = readCam;
@@ -1159,32 +1409,52 @@ public static class ApartmentSceneBuilder
             10f, FontStyles.Normal, TextAlignmentOptions.TopLeft);
     }
 
-    // ── Newspaper ad slot (logical, UV bounds for cut evaluation) ──
+    // ── Newspaper ad slot (clickable button for ad selection) ──
 
-    private static NewspaperAdSlot CreateNewspaperAdSlot(string name, Transform parent,
-        int layer, Vector2 centerPx, Vector2 sizePx, Vector2 virtualSize)
+    private static NewspaperAdSlot CreateNewspaperAdSlot(string name, Transform canvasParent,
+        int layer, Vector2 anchoredPos, Vector2 sizePx)
     {
         var go = new GameObject(name);
-        go.transform.SetParent(parent);
+        go.transform.SetParent(canvasParent, false);
         go.layer = layer;
 
         var rt = go.AddComponent<RectTransform>();
-        rt.localPosition = Vector3.zero;
-        rt.localRotation = Quaternion.identity;
-        rt.localScale = Vector3.one;
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = sizePx;
+        rt.localScale = Vector3.one;
+
+        // Transparent Image for raycast target (required for pointer event detection)
+        var img = go.AddComponent<Image>();
+        img.color = new Color(1f, 1f, 1f, 0f);
+        img.raycastTarget = true;
+
+        // Progress fill child — radial fill overlay, starts hidden
+        var fillGO = new GameObject("ProgressFill");
+        fillGO.transform.SetParent(go.transform, false);
+        fillGO.layer = layer;
+
+        var fillRT = fillGO.AddComponent<RectTransform>();
+        fillRT.anchorMin = Vector2.zero;
+        fillRT.anchorMax = Vector2.one;
+        fillRT.offsetMin = Vector2.zero;
+        fillRT.offsetMax = Vector2.zero;
+
+        var fillImg = fillGO.AddComponent<Image>();
+        fillImg.color = new Color(1f, 1f, 1f, 0.3f);
+        fillImg.type = Image.Type.Filled;
+        fillImg.fillMethod = Image.FillMethod.Radial360;
+        fillImg.fillOrigin = (int)Image.Origin360.Top;
+        fillImg.fillAmount = 0f;
+        fillImg.raycastTarget = false;
+        fillGO.SetActive(false);
 
         var slot = go.AddComponent<NewspaperAdSlot>();
 
-        // Direct UV mapping — camera looks +Z, no mirroring needed
-        float uMin = (centerPx.x - sizePx.x * 0.5f) / virtualSize.x;
-        float vMin = (centerPx.y - sizePx.y * 0.5f) / virtualSize.y;
-        float uWidth = sizePx.x / virtualSize.x;
-        float vHeight = sizePx.y / virtualSize.y;
-
         var so = new SerializedObject(slot);
         so.FindProperty("slotRect").objectReferenceValue = rt;
-        so.FindProperty("normalizedBounds").rectValue = new Rect(uMin, vMin, uWidth, vHeight);
+        so.FindProperty("progressFill").objectReferenceValue = fillImg;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         return slot;
@@ -1318,8 +1588,8 @@ public static class ApartmentSceneBuilder
 
         // Selected hints panel (bottom center)
         var selectedHints = CreateUIPanel("SelectedHintsPanel", uiCanvasGO.transform,
-            new Vector2(0f, -200f), new Vector2(600f, 50f),
-            "Click  Pick Up / Place    |    G  Grid Snap    |    Esc  Back", 16f,
+            new Vector2(0f, -200f), new Vector2(700f, 50f),
+            "Click  Pick Up / Place / Clean    |    Enter  Station    |    Esc  Back", 16f,
             new Color(0f, 0f, 0f, 0.5f));
 
         // ── Wire serialized fields ──
@@ -1433,19 +1703,13 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // Drink Making Station (Kitchen)
+    // Drink Making Station Group (Kitchen) — with fridge door
     // ══════════════════════════════════════════════════════════════════
 
-    private struct DrinkMakingStationData
+    private static void BuildDrinkMakingStationGroup(GameObject mainCamGO, int fridgeLayer)
     {
-        public DrinkMakingManager manager;
-        public DrinkMakingHUD hud;
-        public GameObject hudRoot;
-        public CinemachineCamera stationCamera;
-    }
+        var groupGO = new GameObject("Station_DrinkMaking");
 
-    private static DrinkMakingStationData BuildDrinkMakingStation(GameObject camGO)
-    {
         // ── SO folder ────────────────────────────────────────────────
         string soDir = "Assets/ScriptableObjects/DrinkMaking";
         if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects"))
@@ -1529,8 +1793,36 @@ public static class ApartmentSceneBuilder
 
         AssetDatabase.SaveAssets();
 
+        // ── Fridge (body + animated door) ─────────────────────────────
+        // Static fridge body (back half)
+        var fridgeBody = CreateBox("FridgeBody", groupGO.transform,
+            new Vector3(-6.3f, 0.9f, -4.5f), new Vector3(0.7f, 1.8f, 0.35f),
+            new Color(0.85f, 0.85f, 0.87f));
+        fridgeBody.isStatic = true;
+
+        // Door pivot (empty at left hinge edge)
+        var doorPivotGO = new GameObject("FridgeDoorPivot");
+        doorPivotGO.transform.SetParent(groupGO.transform);
+        doorPivotGO.transform.position = new Vector3(-6.65f, 0.9f, -4.325f);
+        doorPivotGO.isStatic = false;
+
+        // Door (box, child of pivot, on Fridge layer for raycasting)
+        var fridgeDoor = CreateBox("FridgeDoor", doorPivotGO.transform,
+            new Vector3(-6.3f, 0.9f, -4.325f), new Vector3(0.7f, 1.8f, 0.35f),
+            new Color(0.87f, 0.87f, 0.89f));
+        fridgeDoor.isStatic = false;
+        fridgeDoor.layer = fridgeLayer;
+
+        // Handle (small box on door front)
+        var handle = CreateBox("FridgeHandle", fridgeDoor.transform,
+            new Vector3(-5.98f, 1.0f, -4.175f), new Vector3(0.03f, 0.15f, 0.03f),
+            new Color(0.5f, 0.5f, 0.55f));
+        handle.isStatic = false;
+        handle.layer = fridgeLayer;
+
         // ── Station camera ────────────────────────────────────────────
         var drinkCamGO = new GameObject("Cam_DrinkMaking");
+        drinkCamGO.transform.SetParent(groupGO.transform);
         drinkCamGO.transform.position = new Vector3(-4f, 1.5f, -4.5f);
         drinkCamGO.transform.rotation = Quaternion.Euler(30f, 0f, 0f);
         var drinkCam = drinkCamGO.AddComponent<CinemachineCamera>();
@@ -1542,12 +1834,10 @@ public static class ApartmentSceneBuilder
         drinkCam.Priority = 0;
 
         // ── Counter geometry (bottles, glass, stirrer) ────────────────
-        var stationParent = new GameObject("DrinkMakingStation");
-
         // Glass on counter
         var glassGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         glassGO.name = "Glass";
-        glassGO.transform.SetParent(stationParent.transform);
+        glassGO.transform.SetParent(groupGO.transform);
         glassGO.transform.position = new Vector3(-4f, 0.95f, -5.2f);
         glassGO.transform.localScale = new Vector3(0.08f, 0.10f, 0.08f);
         glassGO.isStatic = false;
@@ -1571,7 +1861,7 @@ public static class ApartmentSceneBuilder
         // Stirrer
         var stirGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         stirGO.name = "Stirrer";
-        stirGO.transform.SetParent(stationParent.transform);
+        stirGO.transform.SetParent(groupGO.transform);
         stirGO.transform.position = new Vector3(-3.85f, 0.98f, -5.2f);
         stirGO.transform.localScale = new Vector3(0.008f, 0.12f, 0.008f);
         stirGO.isStatic = false;
@@ -1594,7 +1884,7 @@ public static class ApartmentSceneBuilder
             float x = -5.2f + i * 0.35f;
             var bottleGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             bottleGO.name = $"Bottle_{ingredNames[i]}";
-            bottleGO.transform.SetParent(stationParent.transform);
+            bottleGO.transform.SetParent(groupGO.transform);
             bottleGO.transform.position = new Vector3(x, 1.05f, -5.5f);
             bottleGO.transform.localScale = new Vector3(0.04f, 0.12f, 0.04f);
             bottleGO.isStatic = false;
@@ -1616,10 +1906,11 @@ public static class ApartmentSceneBuilder
 
         // ── Managers ──────────────────────────────────────────────────
         var managersGO = new GameObject("DrinkMakingManagers");
+        managersGO.transform.SetParent(groupGO.transform);
         var mgr = managersGO.AddComponent<DrinkMakingManager>();
         var hud = managersGO.AddComponent<DrinkMakingHUD>();
 
-        var cam = camGO.GetComponent<UnityEngine.Camera>();
+        var cam = mainCamGO.GetComponent<UnityEngine.Camera>();
 
         // Wire manager
         var mgrSO = new SerializedObject(mgr);
@@ -1673,15 +1964,21 @@ public static class ApartmentSceneBuilder
         mgr.enabled = false;
         hudCanvasGO.SetActive(false);
 
-        Debug.Log("[ApartmentSceneBuilder] Drink Making station built.");
+        // ── FridgeController ──────────────────────────────────────────
+        var fridgeCtrl = groupGO.AddComponent<FridgeController>();
+        var fridgeCtrlSO = new SerializedObject(fridgeCtrl);
+        fridgeCtrlSO.FindProperty("_doorPivot").objectReferenceValue = doorPivotGO.transform;
+        fridgeCtrlSO.FindProperty("_fridgeLayer").intValue = 1 << fridgeLayer;
+        fridgeCtrlSO.FindProperty("_mainCamera").objectReferenceValue = cam;
+        fridgeCtrlSO.ApplyModifiedPropertiesWithoutUndo();
 
-        return new DrinkMakingStationData
-        {
-            manager = mgr,
-            hud = hud,
-            hudRoot = hudCanvasGO,
-            stationCamera = drinkCam
-        };
+        // ── ReactableTag on drink station (toggled when drink is delivered) ──
+        AddReactableTag(groupGO, new[] { "drink", "cocktail" }, false);
+
+        // ── StationRoot (always available — kitchen used for cleaning + watering too) ──
+        CreateStationRoot(groupGO, StationType.DrinkMaking, mgr, hudCanvasGO, drinkCam);
+
+        Debug.Log("[ApartmentSceneBuilder] Drink Making station group built (with fridge door).");
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -1767,6 +2064,12 @@ public static class ApartmentSceneBuilder
         if (furnitureRefs.coffeeTableDeliveryPoint != null)
             dsmSO.FindProperty("coffeeTableDeliveryPoint").objectReferenceValue =
                 furnitureRefs.coffeeTableDeliveryPoint;
+        if (furnitureRefs.judgmentStopPoint != null)
+            dsmSO.FindProperty("judgmentStopPoint").objectReferenceValue = furnitureRefs.judgmentStopPoint;
+
+        // Add EntranceJudgmentSequence and wire it to DateSessionManager
+        var entranceJudgments = managersGO.AddComponent<EntranceJudgmentSequence>();
+        dsmSO.FindProperty("_entranceJudgments").objectReferenceValue = entranceJudgments;
         dsmSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── PhoneController ───────────────────────────────────────────
@@ -1784,24 +2087,21 @@ public static class ApartmentSceneBuilder
             pcSO.ApplyModifiedPropertiesWithoutUndo();
 
             // Phone StationRoot (always available — ambient click)
-            var phoneStationGO = new GameObject("Station_Phone");
-            phoneStationGO.transform.SetParent(GameObject.Find("StationRoots")?.transform);
-            var phoneRoot = phoneStationGO.AddComponent<StationRoot>();
-            var phoneRootSO = new SerializedObject(phoneRoot);
-            phoneRootSO.FindProperty("stationType").enumValueIndex = (int)StationType.Phone;
-            phoneRootSO.FindProperty("stationManager").objectReferenceValue = phoneCtrl;
-            phoneRootSO.ApplyModifiedPropertiesWithoutUndo();
+            CreateStationRoot(phoneGO, StationType.Phone, phoneCtrl, null);
         }
 
         // ── CoffeeTableDelivery ───────────────────────────────────────
         if (furnitureRefs.coffeeTableDeliveryPoint != null)
         {
-            var coffeeDelivery = furnitureRefs.coffeeTableDeliveryPoint.gameObject
-                .AddComponent<CoffeeTableDelivery>();
+            var deliveryGO = furnitureRefs.coffeeTableDeliveryPoint.gameObject;
+            var coffeeDelivery = deliveryGO.AddComponent<CoffeeTableDelivery>();
             var cdSO = new SerializedObject(coffeeDelivery);
             cdSO.FindProperty("drinkSpawnPoint").objectReferenceValue =
                 furnitureRefs.coffeeTableDeliveryPoint;
             cdSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // ReactableTag for date NPC drink reactions (toggled on delivery)
+            AddReactableTag(deliveryGO, new[] { "drink" }, false);
         }
 
         // ── DateEndScreen ─────────────────────────────────────────────
@@ -2264,6 +2564,28 @@ public static class ApartmentSceneBuilder
         fadeSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log("[ApartmentSceneBuilder] ScreenFade overlay built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // NavMesh Setup
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildNavMeshSetup()
+    {
+        // Mark floor geometry as NavigationStatic for NavMesh baking
+        var apartment = GameObject.Find("ApartmentModel") ?? GameObject.Find("Apartment");
+        if (apartment != null)
+        {
+            foreach (var tf in apartment.GetComponentsInChildren<Transform>(true))
+            {
+                GameObjectUtility.SetStaticEditorFlags(tf.gameObject,
+                    GameObjectUtility.GetStaticEditorFlags(tf.gameObject)
+                    | StaticEditorFlags.NavigationStatic);
+            }
+        }
+
+        Debug.Log("[ApartmentSceneBuilder] NavMesh static flags set. " +
+                  "Remember to bake NavMesh via Window > AI > Navigation.");
     }
 
     // ══════════════════════════════════════════════════════════════════

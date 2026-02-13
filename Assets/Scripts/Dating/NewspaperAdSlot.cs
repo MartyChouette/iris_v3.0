@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class NewspaperAdSlot : MonoBehaviour
+public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     [Header("Layout")]
     [Tooltip("Positioned within the newspaper's world-space canvas.")]
@@ -25,6 +26,13 @@ public class NewspaperAdSlot : MonoBehaviour
     [Tooltip("Logo image for commercial ads.")]
     [SerializeField] private Image logoImage;
 
+    [Header("Hold-to-Clip")]
+    [Tooltip("How long the player must hold to clip the ad (seconds).")]
+    [SerializeField] private float holdDuration = 0.8f;
+
+    [Tooltip("Fill image that shows clip progress (Image.fillAmount driven).")]
+    [SerializeField] private Image progressFill;
+
     [Header("Runtime — Set by NewspaperManager")]
     [Tooltip("0-1 UV rect of this slot on the newspaper surface.")]
     [SerializeField] private Rect normalizedBounds;
@@ -33,6 +41,81 @@ public class NewspaperAdSlot : MonoBehaviour
     private CommercialAdDefinition _commercialDef;
     private bool _isPersonalAd;
     private Rect _phoneNumberBoundsUV;
+
+    private bool _isHolding;
+    private float _holdTimer;
+    private bool _completed;
+
+    // ─── Lifecycle ──────────────────────────────────────────────
+
+    private void Awake()
+    {
+        ResetProgress();
+    }
+
+    private void Update()
+    {
+        if (!_isHolding || _completed) return;
+
+        _holdTimer += Time.deltaTime;
+        float t = Mathf.Clamp01(_holdTimer / holdDuration);
+
+        if (progressFill != null)
+            progressFill.fillAmount = t;
+
+        if (t >= 1f)
+        {
+            _completed = true;
+            OnHoldComplete();
+        }
+    }
+
+    // ─── Pointer Events ─────────────────────────────────────────
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (!_isPersonalAd || _personalDef == null) return;
+        if (NewspaperManager.Instance == null) return;
+        if (NewspaperManager.Instance.CurrentState != NewspaperManager.State.ReadingPaper) return;
+
+        _isHolding = true;
+        _holdTimer = 0f;
+        _completed = false;
+
+        if (progressFill != null)
+        {
+            progressFill.gameObject.SetActive(true);
+            progressFill.fillAmount = 0f;
+        }
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (_completed) return;
+
+        // Released early — cancel
+        ResetProgress();
+    }
+
+    private void OnHoldComplete()
+    {
+        _isHolding = false;
+        NewspaperManager.Instance?.SelectPersonalAd(_personalDef);
+        // Progress visual stays filled briefly — SelectPersonalAd triggers poof + state change
+    }
+
+    private void ResetProgress()
+    {
+        _isHolding = false;
+        _holdTimer = 0f;
+        _completed = false;
+
+        if (progressFill != null)
+        {
+            progressFill.fillAmount = 0f;
+            progressFill.gameObject.SetActive(false);
+        }
+    }
 
     // ─── Public Properties ────────────────────────────────────────
 
@@ -49,6 +132,7 @@ public class NewspaperAdSlot : MonoBehaviour
     /// </summary>
     public void AssignPersonal(DatePersonalDefinition def)
     {
+        ResetProgress();
         _personalDef = def;
         _commercialDef = null;
         _isPersonalAd = true;
@@ -87,6 +171,7 @@ public class NewspaperAdSlot : MonoBehaviour
     /// </summary>
     public void AssignCommercial(CommercialAdDefinition def)
     {
+        ResetProgress();
         _personalDef = null;
         _commercialDef = def;
         _isPersonalAd = false;
@@ -118,6 +203,7 @@ public class NewspaperAdSlot : MonoBehaviour
     /// </summary>
     public void Clear()
     {
+        ResetProgress();
         _personalDef = null;
         _commercialDef = null;
         _isPersonalAd = false;

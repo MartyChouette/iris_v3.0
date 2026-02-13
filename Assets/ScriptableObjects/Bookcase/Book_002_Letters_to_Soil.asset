@@ -21,5 +21,5 @@ MonoBehaviour:
     as devotion.
   - Perhaps we are all just soil, waiting patiently for something to take root.
   spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
-  heightScale: 0.71682894
-  thicknessScale: 0.023026742
+  heightScale: 0.8102232
+  thicknessScale: 0.040328827

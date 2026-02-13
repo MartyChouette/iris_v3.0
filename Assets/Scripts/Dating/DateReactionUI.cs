@@ -31,6 +31,9 @@ public class DateReactionUI : MonoBehaviour
     private SpriteRenderer _iconRenderer;
     private GameObject _bubbleGO;
     private Coroutine _activeReaction;
+    private Camera _cachedCamera;
+    private WaitForSeconds _waitNotice;
+    private WaitForSeconds _waitReaction;
 
     private void Awake()
     {
@@ -43,14 +46,19 @@ public class DateReactionUI : MonoBehaviour
         _iconRenderer.sortingOrder = 100;
 
         _bubbleGO.SetActive(false);
+
+        _waitNotice = new WaitForSeconds(noticeDuration);
+        _waitReaction = new WaitForSeconds(reactionDuration);
     }
 
     private void LateUpdate()
     {
         // Billboard: face camera
-        if (_bubbleGO.activeSelf && Camera.main != null)
+        if (_bubbleGO.activeSelf)
         {
-            _bubbleGO.transform.rotation = Camera.main.transform.rotation;
+            if (_cachedCamera == null) _cachedCamera = Camera.main;
+            if (_cachedCamera != null)
+                _bubbleGO.transform.rotation = _cachedCamera.transform.rotation;
         }
     }
 
@@ -72,7 +80,7 @@ public class DateReactionUI : MonoBehaviour
         _iconRenderer.color = Color.white;
         _bubbleGO.transform.localScale = Vector3.one * 0.5f;
 
-        yield return new WaitForSeconds(noticeDuration);
+        yield return _waitNotice;
 
         // Reaction phase — show appropriate icon
         _iconRenderer.sprite = type switch
@@ -103,7 +111,7 @@ public class DateReactionUI : MonoBehaviour
         // Pop-in scale
         _bubbleGO.transform.localScale = Vector3.one * 0.7f;
 
-        yield return new WaitForSeconds(reactionDuration);
+        yield return _waitReaction;
 
         // Fade out
         float fadeTime = 0.3f;

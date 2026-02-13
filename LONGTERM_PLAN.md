@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 10, 2026
+**Last Updated:** February 12, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -43,25 +43,29 @@
   - Full undo support
   - Access: Window > Iris > Flower Auto Setup
 
-### Phase 5: Newspaper Dating Minigame (Done — v2 Scissors, expanded in Phase 10)
+### Phase 5: Newspaper Dating Minigame (Done — v3 Button Selection)
 - [x] **DatePersonalDefinition / CommercialAdDefinition** — ScriptableObjects for ad content
 - [x] **NewspaperPoolDefinition** — defines which ads appear in each newspaper
-- [x] **NewspaperManager** — 7-state FSM: TableView → PickingUp → ReadingPaper → Cutting → Calling → Waiting → DateArrived
-- [x] **ScissorsCutController** — mouse-driven scissors cutting on newspaper surface
-- [x] **CutPathEvaluator** — scores cut accuracy around ads
+- [x] **NewspaperManager** — 3-state FSM: ReadingPaper → Calling → Done. Button-based ad selection (click personal ad to select)
+- [x] **NewspaperAdSlot** — `[RequireComponent(typeof(Button))]`, click handler calls `NewspaperManager.SelectPersonalAd()`
 - [x] **DayManager** — manages day progression
-- [x] **NewspaperDatingSceneBuilder** — generates complete dating desk scene
-- [x] Deleted legacy MarkerController and PersonalListing (replaced by scissors + ad slots)
+- [x] Scissors cutting mechanic preserved in code (`ScissorsCutController`, `CutPathEvaluator`, `NewspaperSurface`) but not active — deferred for future use
 
-### Phase 6: Apartment Hub System (Done)
+### Phase 6: Apartment Hub System (Done — v2 Modular Stations)
 - [x] **ApartmentManager** — 4-state FSM (Browsing → Selecting → Selected → InStation), scene-scoped singleton
 - [x] **ApartmentAreaDefinition** — ScriptableObject per area (splinePosition, stationType, selectedPosition/rotation/FOV)
 - [x] **StationRoot** — activates/deactivates station manager, HUD, and Cinemachine cameras
-- [x] **StationType** enum (7 types) + **IStationManager** interface
+- [x] **StationType** enum (9 types) + **IStationManager** interface
 - [x] **ObjectGrabber** — spring-damper pick-and-place with grid snap and surface clamping
 - [x] **PlacementSurface** — bounds-constrained placement areas
-- [x] CinemachineSplineDolly on browse camera, 7-knot closed-loop spline, ShortestSplineDelta() wraparound
-- [x] 7 areas: Entrance, Kitchen (NewspaperDating), Living Room (Bookcase), Watering Nook, Flower Room, Cozy Corner (RecordPlayer), Bathroom (MirrorMakeup)
+- [x] CinemachineSplineDolly on browse camera, 4-knot closed-loop spline
+- [x] 2 active areas: Kitchen (DrinkMaking, always accessible), Living Room (Bookcase)
+- [x] **Modular station groups** — each station is a self-contained parent GO (camera, furniture, manager, HUD, ReactableTag)
+- [x] **FridgeController** — click-to-open fridge door gates DrinkMaking station entry via `ForceEnterStation()`
+- [x] **Apartment model import** — loads `aprtment blockout.obj` from Blender at 0.1 scale, procedural fallback
+- [x] **Interaction flow** — Browsing → Selected (clean, pick up objects) → Enter to enter station → Esc back
+- [x] **CleaningManager gating** — stains only interactable in Selected apartment state
+- [x] **ReactableTags** on key objects for date NPC reactions (plants, books, record player, drinks)
 
 ### Phase 7: Enhanced Bookcase Station (Done)
 - [x] **BookInteractionManager** — 11-state FSM with multi-layer raycast (Books, Drawers, Perfumes, Trinkets, CoffeeTableBooks)
@@ -86,43 +90,89 @@
 - [x] **Shared bookcase builder** — extracted `BookcaseSceneBuilder.BuildBookcaseUnit()` used by both standalone and apartment scenes, eliminating ~590 lines of duplicate code
 - [x] **Station camera skip** — stations with their own Cinemachine cameras (`StationRoot.HasStationCameras`) skip the Selected state, transitioning directly from Browsing to InStation
 
-### Phase 10: Full Dating Loop System (Done)
+### Phase 10: Full Dating Loop System (Done — v2 Three-Phase Dates)
 - [x] **GameClock** — Scene-scoped singleton driving a 7-day calendar with configurable real-time hour ticking, feeds MoodMachine "TimeOfDay" source, forced bedtime at 2am, player-initiated sleep
 - [x] **DatePreferences** — Serializable class on DatePersonalDefinition defining liked/disliked tags, preferred mood range, liked/disliked drinks, reaction strength
 - [x] **ReactableTag** — Lightweight marker component with static registry; tags apartment objects for date character discovery
-- [x] **DateSessionManager** — Scene-scoped singleton orchestrating date lifecycle (Idle → WaitingForArrival → DateInProgress → DateEnding), affection tracking (0-100), mood-match multipliers
+- [x] **DateSessionManager** — Scene-scoped singleton with 3 date sub-phases:
+  - Phase 1 (Arrival): NPC walks in, sits on couch → `OnSatDown` event
+  - Phase 2 (DrinkJudging): Player makes drink, delivers to coffee table → NPC judges
+  - Phase 3 (ApartmentJudging): NPC excursions enabled, wanders to ReactableTags, auto-ends after `apartmentJudgingDuration` (default 60s)
 - [x] **PhoneController** — Dual-mode: IStationManager station AND ambient-clickable. Rings after newspaper timer, click to answer and trigger date arrival
-- [x] **DateCharacterController** — NavMesh NPC with 7-state FSM (WalkingToCouch → Sitting → GettingUp → WalkingToTarget → Investigating → Returning → Dismissed). Periodic excursions to nearby ReactableTags
+- [x] **DateCharacterController** — NavMesh NPC with 7-state FSM. Excursions gated by `_excursionsEnabled` (only during ApartmentJudging). `OnSatDown` event fires when first sitting.
 - [x] **ReactionEvaluator** — Static utility evaluating reactables, drinks, and mood against DatePreferences → ReactionType (Like/Neutral/Dislike)
 - [x] **DateReactionUI** — World-space billboard bubble: question mark (notice) → heart/neutral/frown (opinion) with SFX and fade
 - [x] **CoffeeTableDelivery** — Auto-delivers drinks to coffee table after DrinkMakingManager scores, spawns visual cup, notifies DateSessionManager
 - [x] **DateEndScreen** — Results screen with letter grade (S≥90, A≥75, B≥60, C≥40, D<40), summary text, continue button
 - [x] **DateHistory** — Static registry tracking all completed dates across the calendar
 - [x] **DateSessionHUD** — Overlay showing date name, affection bar, clock, day number
-- [x] **DatingLoopSceneBuilder** — Full standalone test scene with room, NavMesh, furniture, cameras, reactable props, all managers, and UI
-- [x] Modified `NewspaperManager` to hand off to DateSessionManager + PhoneController instead of raw Instantiate
+- [x] **DayPhaseManager** — Single authority for daily phase transitions (Morning → Exploration → DateInProgress → Evening), camera priorities, screen fades
+- [x] **ScreenFade** — Full-screen black overlay with FadeIn/FadeOut coroutines
+- [x] **DatingLoopSceneBuilder** — Full standalone test scene
+- [x] Modified `NewspaperManager` to use button-based ad selection (scissors deferred)
 - [x] Modified `DrinkMakingManager` to bridge to CoffeeTableDelivery after scoring
 - [x] Modified `RecordPlayerManager` and `PerfumeBottle` to toggle ReactableTag.IsActive on play/stop and spray/putdown
-- [x] Added `Phone` to `StationType` enum
+- [x] Added `Phone`, `DrinkMaking` to `StationType` enum
 - [x] Added `MoodMachine` + `MoodMachineProfile` for scene-wide mood system (light, ambient, fog, rain)
 
 ---
 
-## Remaining Work
+## Vertical Slice Remaining Work
 
-### High Priority
+Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper → Prep (timed) → Date (3 phases) → Couch Scene → Flower Trimming → End of Day 1
 
-- [ ] **Memory profiling** - Run extended play sessions (20+ consecutive) watching for leaks. Historical concern from commit messages mentioning "memory leak!!!"
-- [x] **Input gating over UI** - Movement + cutting both blocked when pointer is over UI (cached per-frame `IsPointerOverGameObject()` in CuttingPlaneController)
-- [x] **Legacy Obi Fluid cleanup** - Deleted ObiEditorSettings.asset, _Recovery folder, and 5 legacy scenes with Obi components. Scripts were already clean.
+### VS-1: Core Flow (Not Yet Built)
 
-### Medium Priority
+- [ ] **Main menu scene** — Start button, title screen
+- [ ] **Tutorial card** — Overlay shown once between menu and gameplay, direct control instructions
+- [ ] **Name entry (mirror scene)** — Separate scene (hard cut). 3D Nema model with loop animation in front of bathroom mirror. Text input with profanity filter. Deferred to later — placeholder skip for now.
+- [ ] **Profanity filter** — Block slurs/bad words in name input. Word list + substring check.
+- [ ] **Photo intro sequence** — Nema poses, camera takes photo, B&W filter, photo placed next to personals ad in newspaper. Cinematic transition.
+- [ ] **Half-folded newspaper visual** — Rework newspaper mesh/canvas to cliche folded-in-half look. 3 personal ads + 2 commercial slots per day.
+- [ ] **Couch win scene** — Date succeeds → couch cuddling scene, Nema holding scissors behind her back. Separate camera angle.
+- [ ] **Flower trimming transition** — Hard cut from apartment to flower trimming scene. Load flower, get score. End of day.
 
-- [x] **Sap emission cleanup** - Consolidated to one emission source: `FlowerPartRuntime.MarkDetached()` → `SapParticleController.EmitTearWithFollow()`. XYTetherJoint now skips `TriggerBreakFluidOrDeterministicSap()` when `_partRuntime` exists. SapOnXYTether self-guards via `isAttached` check. Removed noisy debug logs from FlowerSapController, SapDecalPool, SapDecalSpawner, and XYTetherJoint.
-- [ ] **Profile on target hardware** - Test on minimum-spec machine, profile memory during particle bursts, watch for frame spikes on stem cuts
-- [x] **Material instance auditing** - Added OnDestroy cleanup to BacklightPulse and BookVolume. SapDecal and TMP_MotionBlur already had proper cleanup.
-- [x] **Coroutine WaitForSeconds caching** - Cached `WaitForSeconds(0.1f)` as static readonly in SapParticleController. Other usages are variable-delay (not cacheable).
-- [x] **Debug log compilation stripping** - Wrapped verbose Debug.Log calls in `#if UNITY_EDITOR` in MeshCreation, FlowerSessionController, CameraZoneTrigger, HorrorCameraManager. Other files already used `debugLogs` bool guards.
+### VS-2: Preparation Phase (Partially Built)
+
+- [x] **Cleaning** — CleaningManager with sponge + spray (working)
+- [x] **Object grab/place** — ObjectGrabber (working)
+- [x] **Record player** — RecordPlayerManager (working)
+- [x] **Perfume spray** — PerfumeBottle + MoodMachine (working, changes hue/filter/weather/environment SFX)
+- [x] **Coffee table books** — BookInteractionManager (working)
+- [x] **Trinkets on shelf** — DrawerController + TrinketVolume (working)
+- [ ] **Preparation timer** — Countdown after selecting newspaper ad. Call phone to skip, or doorbell rings when time expires.
+- [ ] **Outfit selection** — New system. Player chooses outfit during prep. Date judges in Phase 1.
+- [ ] **Perfect pour mechanic** — Shared one-shot click-timing game used by both plant watering and drink making. Single click at right moment for perfect pour.
+- [ ] **Pre-spawned mess** — Day 1 must start with bottles, wine stains, possible blood stains, trash from previous night. ApartmentStainSpawner needs "day 1 heavy" preset.
+- [ ] **Plant watering rework** — Convert WateringManager to use perfect-pour mechanic
+
+### VS-3: Date Phase Rework
+
+- [x] **DateSessionManager 3 phases** — Arrival, DrinkJudging, ApartmentJudging (framework done)
+- [x] **DateCharacterController excursion gating** — Only wanders in Phase 3 (done)
+- [x] **ReactableTag system** — Static registry, date NPC discovery (done)
+- [x] **DateReactionUI** — Thought bubble with emotes (done)
+- [ ] **Phase 1 rework (Entrance)** — Date arrives at door (not couch). Three sequential judgments: outfit, perfume, welcome greeting. Each with Sims-style thought bubble + emote + SFX.
+- [ ] **Phase 2 rework (Kitchen Drinks)** — Date stands by kitchen counter. Player sees drink recipe HUD, selects correct alcohol bottle from shelf, does perfect-pour. Score → date reacts.
+- [ ] **Phase 3 living room flow** — Date walks to living room with drink. Investigates: coffee table book, vinyl playing, perfume scent, shelf trinket, apartment cleanliness.
+- [ ] **Phase pass/fail gating** — If Phase 1 or 2 fails badly, date can leave early.
+
+### VS-4: Deferred
+
+- [ ] **Bathroom mirror scene** — Separate scene with hard cut. 3D Nema, mirror, name entry. Will be added later.
+- [ ] **Scissors cutting mechanic** — Code preserved (`ScissorsCutController`, `CutPathEvaluator`, `NewspaperSurface`). Not active in vertical slice.
+- [ ] **Additional apartment areas** — Entrance, Cozy Corner, Watering Nook, Flower Room, Bathroom. Code partially exists.
+- [ ] **Memory profiling** — Extended play session leak testing
+- [ ] **Profile on target hardware** — Min-spec performance testing
+
+### Previously Completed
+
+- [x] **Input gating over UI** — `IsPointerOverGameObject()` in CuttingPlaneController
+- [x] **Legacy Obi Fluid cleanup** — Deleted ObiEditorSettings.asset, _Recovery, legacy scenes
+- [x] **Sap emission cleanup** — Single emission source via FlowerPartRuntime
+- [x] **Material instance auditing** — OnDestroy cleanup in BacklightPulse, BookVolume
+- [x] **Coroutine WaitForSeconds caching** — Static readonly in SapParticleController
+- [x] **Debug log compilation stripping** — `#if UNITY_EDITOR` wrapping
 
 ### Low Priority / Nice-to-Have
 
@@ -158,11 +208,11 @@
 | UI | FlowerGradingUI, FlowerHUD_GameplayFeedback, FlowerHUD_DebugTelemetry |
 | Audio | AudioManager, JointBreakAudioResponder |
 | Data | IdealFlowerDefinition, FlowerTypeDefinition, DatePersonalDefinition, DatePreferences |
-| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, MoodMachine, ApartmentAreaDefinition |
+| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, MoodMachine, FridgeController, ApartmentAreaDefinition |
 | Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController |
-| Dating Loop | DateSessionManager, GameClock, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery |
-| Newspaper | NewspaperManager, ScissorsCutController, DayManager, CutPathEvaluator |
-| Mechanics | DrinkMakingManager, CleaningManager, WateringManager, MirrorMakeupManager |
+| Dating Loop | DateSessionManager (3-phase), GameClock, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, DayPhaseManager |
+| Newspaper | NewspaperManager (button-based), NewspaperAdSlot, DayManager, NewspaperSurface |
+| Mechanics | DrinkMakingManager, CleaningManager, WateringManager, MirrorMakeupManager, RecordPlayerManager |
 
 ### Creating a New Flower Level (Quick Start)
 1. Import your flower model into the scene

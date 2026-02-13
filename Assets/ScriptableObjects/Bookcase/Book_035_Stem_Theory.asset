@@ -22,5 +22,5 @@ MonoBehaviour:
   - 'All architecture aspires to the condition of the stem: vertical, purposeful,
     alive.'
   spineColor: {r: 0.1, g: 0.1, b: 0.25, a: 1}
-  heightScale: 0.92552066
-  thicknessScale: 0.040903747
+  heightScale: 0.8160801
+  thicknessScale: 0.04547099

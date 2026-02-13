@@ -15,5 +15,6 @@ MonoBehaviour:
   title: Petal Rain
   artist: The Pollens
   labelColor: {r: 0.8, g: 0.2, b: 0.2, a: 1}
+  moodValue: 0.3
   musicClip: {fileID: 0}
   volume: 0.7

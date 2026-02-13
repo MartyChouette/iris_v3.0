@@ -68,10 +68,7 @@ public class NewspaperHUD : MonoBehaviour
         switch (manager.CurrentState)
         {
             case NewspaperManager.State.ReadingPaper:
-                instructionLabel.SetText("Draw around a phone number to cut it out");
-                break;
-            case NewspaperManager.State.Cutting:
-                instructionLabel.SetText("Cutting...");
+                instructionLabel.SetText("Hold a personal ad to clip it out");
                 break;
             case NewspaperManager.State.Calling:
                 instructionLabel.SetText("Dialing...");

@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 552067963b988e743aca45bddee9e69b, type: 3}
+  m_Name: Date_Finance
+  m_EditorClassIdentifier: Assembly-CSharp::DatePersonalDefinition
+  characterName: Finance
+  adText: "Hedge fund analyst. Clean apartment, firm handshake. Enjoys whisky neat\
+    \ and candles that smell like ambition. No mess, no drama."
+  arrivalTimeSec: 25
+  portrait: {fileID: 0}
+  characterPrefab: {fileID: 0}
+  phoneNumberRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.05
+    width: 0.8
+    height: 0.15
+  characterModelPrefab: {fileID: 0}
+  fontSizeOverride: 0
+  preferences:
+    likedTags:
+    - clean
+    - whisky
+    - candle
+    dislikedTags:
+    - messy
+    - floral
+    preferredMoodMin: 0.3
+    preferredMoodMax: 0.6
+    likedDrinks:
+    - {fileID: 11400000, guid: e885f607d521d674491bc946003f6385, type: 2}
+    - {fileID: 11400000, guid: d6f1aede2c7defa4ca3f24a3091163e5, type: 2}
+    dislikedDrinks:
+    - {fileID: 11400000, guid: 6a3a5231bffc4934784c25151316ecfb, type: 2}
+    likedOutfitTags:
+    - formal
+    - elegant
+    dislikedOutfitTags:
+    - casual
+    - floral
+    reactionStrength: 1

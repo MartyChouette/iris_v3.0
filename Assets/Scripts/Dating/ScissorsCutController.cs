@@ -38,6 +38,9 @@ public class ScissorsCutController : MonoBehaviour
     [Tooltip("Speed of the scissors trailing the cursor (world units/sec).")]
     [SerializeField] private float scissorsSpeed = 0.5f;
 
+    [Tooltip("Offset from surface along hit normal for scissors/line visuals.")]
+    [SerializeField] private float surfaceOffset = 0.001f;
+
     [Header("Close Tolerance")]
     [Tooltip("Max UV distance from end to start to close the polygon.")]
     [SerializeField] private float closeTolerance = 0.05f;
@@ -70,6 +73,9 @@ public class ScissorsCutController : MonoBehaviour
 
     // Pre-computed cumulative arc lengths for each point
     private List<float> _cumulativeArcLengths = new List<float>();
+
+    // Cached surface normal (computed once when enabled)
+    private Vector3 _surfaceNormal;
 
     // ─── Lifecycle ────────────────────────────────────────────────
 
@@ -158,6 +164,9 @@ public class ScissorsCutController : MonoBehaviour
     {
         _isEnabled = enabled;
 
+        if (enabled && surface != null)
+            _surfaceNormal = surface.transform.forward;
+
         if (!enabled)
         {
             if (_isDrawing)
@@ -168,6 +177,41 @@ public class ScissorsCutController : MonoBehaviour
         }
     }
 
+    // ─── Ray-Plane Intersection ──────────────────────────────────
+    // Bypasses Physics.Raycast entirely — no collider needed.
+    // Computes UV from the quad's local-space hit position.
+
+    private bool RaycastSurface(Ray ray, out Vector3 hitPoint, out Vector3 hitNormal, out Vector2 hitUV)
+    {
+        hitPoint = Vector3.zero;
+        hitNormal = _surfaceNormal;
+        hitUV = Vector2.zero;
+
+        if (surface == null) return false;
+
+        Transform surfT = surface.transform;
+        Vector3 planeNormal = surfT.forward;
+        Vector3 planePoint = surfT.position;
+
+        float denom = Vector3.Dot(planeNormal, ray.direction);
+        if (Mathf.Abs(denom) < 1e-6f) return false; // ray parallel to plane
+
+        float t = Vector3.Dot(planePoint - ray.origin, planeNormal) / denom;
+        if (t < 0f) return false; // plane behind ray
+
+        hitPoint = ray.origin + ray.direction * t;
+
+        // Convert to local space — quad mesh spans -0.5..0.5 in XY
+        Vector3 local = surfT.InverseTransformPoint(hitPoint);
+
+        if (local.x < -0.5f || local.x > 0.5f || local.y < -0.5f || local.y > 0.5f)
+            return false; // outside quad bounds
+
+        hitUV = new Vector2(local.x + 0.5f, local.y + 0.5f);
+        hitNormal = planeNormal;
+        return true;
+    }
+
     // ─── Drawing ──────────────────────────────────────────────────
 
     private void TryStartDrawing()
@@ -175,7 +219,7 @@ public class ScissorsCutController : MonoBehaviour
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, newspaperLayer))
+        if (!RaycastSurface(ray, out Vector3 hitPoint, out Vector3 hitNormal, out Vector2 hitUV))
             return;
 
         _isDrawing = true;
@@ -186,9 +230,9 @@ public class ScissorsCutController : MonoBehaviour
         _scissorsArcLength = 0f;
         _scissorsLastCutIndex = 0;
 
-        Vector3 worldPoint = hit.point + hit.normal * 0.001f;
+        Vector3 worldPoint = hitPoint + hitNormal * surfaceOffset;
         _pathWorldPoints.Add(worldPoint);
-        _pathUVPoints.Add(hit.textureCoord);
+        _pathUVPoints.Add(hitUV);
         _cumulativeArcLengths.Add(0f);
 
         _lineRenderer.positionCount = 1;
@@ -209,10 +253,10 @@ public class ScissorsCutController : MonoBehaviour
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, newspaperLayer))
+        if (!RaycastSurface(ray, out Vector3 hitPoint, out Vector3 hitNormal, out Vector2 hitUV))
             return;
 
-        Vector3 worldPoint = hit.point + hit.normal * 0.001f;
+        Vector3 worldPoint = hitPoint + hitNormal * surfaceOffset;
         Vector3 lastPoint = _pathWorldPoints[_pathWorldPoints.Count - 1];
         float dist = Vector3.Distance(worldPoint, lastPoint);
 
@@ -221,7 +265,7 @@ public class ScissorsCutController : MonoBehaviour
 
         _drawnArcLength += dist;
         _pathWorldPoints.Add(worldPoint);
-        _pathUVPoints.Add(hit.textureCoord);
+        _pathUVPoints.Add(hitUV);
         _cumulativeArcLengths.Add(_drawnArcLength);
 
         _lineRenderer.positionCount = _pathWorldPoints.Count;

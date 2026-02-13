@@ -30,6 +30,13 @@ public class DatePreferences
     [Tooltip("Drink recipes this date dislikes.")]
     public DrinkRecipeDefinition[] dislikedDrinks = { };
 
+    [Header("Outfit")]
+    [Tooltip("Outfit style tags this date likes.")]
+    public string[] likedOutfitTags = { };
+
+    [Tooltip("Outfit style tags this date dislikes.")]
+    public string[] dislikedOutfitTags = { };
+
     [Header("Personality")]
     [Tooltip("Multiplier on reaction strength. >1 = expressive, <1 = reserved.")]
     public float reactionStrength = 1f;

@@ -10,7 +10,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class DateCharacterController : MonoBehaviour
 {
-    public enum CharState { WalkingToCouch, Sitting, GettingUp, WalkingToTarget, Investigating, Returning, Dismissed }
+    public enum CharState { WalkingToJudgmentPoint, WalkingToCouch, Sitting, GettingUp, WalkingToTarget, Investigating, Returning, Dismissed }
 
     // ──────────────────────────────────────────────────────────────
     // Configuration
@@ -46,18 +46,33 @@ public class DateCharacterController : MonoBehaviour
     /// </summary>
     public event Action<ReactableTag, ReactionType> OnReaction;
 
+    /// <summary>
+    /// Fired once when the character first sits down on the couch after arriving.
+    /// </summary>
+    public event Action OnSatDown;
+
+    /// <summary>
+    /// Fired when the character reaches the judgment stop point (entrance).
+    /// DateSessionManager runs entrance judgments, then calls ContinueToCouch().
+    /// </summary>
+    public event Action OnReachedJudgmentPoint;
+
     // ──────────────────────────────────────────────────────────────
     // Runtime state
     // ──────────────────────────────────────────────────────────────
     private NavMeshAgent _agent;
     private CharState _state;
     private Transform _couchTarget;
+    private Transform _judgmentStopPoint;
     private ReactableTag _currentTarget;
     private float _sitTimer;
     private float _investigateTimer;
     private float _getUpTimer;
     private Action _dismissCallback;
     private Transform _dismissTarget;
+    private bool _excursionsEnabled;
+    private bool _satDownFired;
+    private bool _judgmentPointFired;
 
     public CharState CurrentState => _state;
 
@@ -66,18 +81,44 @@ public class DateCharacterController : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
 
     /// <summary>Initialize the character after spawning.</summary>
-    public void Initialize(Transform couchTarget, Vector3 spawnPos)
+    public void Initialize(Transform couchTarget, Vector3 spawnPos, Transform judgmentPoint = null)
     {
         _agent = GetComponent<NavMeshAgent>();
         _agent.speed = walkSpeed;
 
         transform.position = spawnPos;
         _couchTarget = couchTarget;
+        _judgmentStopPoint = judgmentPoint;
 
+        if (_judgmentStopPoint != null)
+        {
+            _state = CharState.WalkingToJudgmentPoint;
+            _agent.SetDestination(_judgmentStopPoint.position);
+            Debug.Log("[DateCharacterController] Walking to judgment point.");
+        }
+        else
+        {
+            _state = CharState.WalkingToCouch;
+            _agent.SetDestination(couchTarget.position);
+            Debug.Log("[DateCharacterController] Walking to couch.");
+        }
+    }
+
+    /// <summary>Resume walking to couch after entrance judgments complete.</summary>
+    public void ContinueToCouch()
+    {
         _state = CharState.WalkingToCouch;
-        _agent.SetDestination(couchTarget.position);
+        if (_couchTarget != null && _agent != null && _agent.isOnNavMesh)
+            _agent.SetDestination(_couchTarget.position);
+        Debug.Log("[DateCharacterController] Continuing to couch after judgments.");
+    }
 
-        Debug.Log("[DateCharacterController] Walking to couch.");
+    /// <summary>Allow the character to start wandering to ReactableTags (Phase 3).</summary>
+    public void EnableExcursions()
+    {
+        _excursionsEnabled = true;
+        _sitTimer = 0f;
+        Debug.Log("[DateCharacterController] Excursions enabled.");
     }
 
     /// <summary>Force the character to investigate a specific location (e.g. drink delivery).</summary>
@@ -117,16 +158,32 @@ public class DateCharacterController : MonoBehaviour
 
         switch (_state)
         {
+            case CharState.WalkingToJudgmentPoint:
+                if (!_judgmentPointFired && HasArrived())
+                {
+                    _judgmentPointFired = true;
+                    Debug.Log("[DateCharacterController] Reached judgment point.");
+                    OnReachedJudgmentPoint?.Invoke();
+                    // Stays here until ContinueToCouch() is called
+                }
+                break;
+
             case CharState.WalkingToCouch:
                 if (HasArrived())
                 {
                     _state = CharState.Sitting;
                     _sitTimer = 0f;
+                    if (!_satDownFired)
+                    {
+                        _satDownFired = true;
+                        OnSatDown?.Invoke();
+                    }
                     Debug.Log("[DateCharacterController] Sat down on couch.");
                 }
                 break;
 
             case CharState.Sitting:
+                if (!_excursionsEnabled) break;
                 _sitTimer += Time.deltaTime;
                 if (_sitTimer >= excursionInterval)
                 {

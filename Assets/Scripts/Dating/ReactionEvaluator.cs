@@ -63,6 +63,41 @@ public static class ReactionEvaluator
         return ReactionType.Neutral;
     }
 
+    /// <summary>Evaluate an outfit against the date's style preferences.</summary>
+    public static ReactionType EvaluateOutfit(OutfitDefinition outfit, DatePreferences prefs)
+    {
+        if (outfit == null || prefs == null) return ReactionType.Neutral;
+        if (outfit.styleTags == null) return ReactionType.Neutral;
+
+        // Check liked outfit tags first
+        if (prefs.likedOutfitTags != null)
+        {
+            foreach (string tag in outfit.styleTags)
+            {
+                foreach (string liked in prefs.likedOutfitTags)
+                {
+                    if (string.Equals(tag, liked, System.StringComparison.OrdinalIgnoreCase))
+                        return ReactionType.Like;
+                }
+            }
+        }
+
+        // Check disliked outfit tags
+        if (prefs.dislikedOutfitTags != null)
+        {
+            foreach (string tag in outfit.styleTags)
+            {
+                foreach (string disliked in prefs.dislikedOutfitTags)
+                {
+                    if (string.Equals(tag, disliked, System.StringComparison.OrdinalIgnoreCase))
+                        return ReactionType.Dislike;
+                }
+            }
+        }
+
+        return ReactionType.Neutral;
+    }
+
     /// <summary>Evaluate how the current mood matches the date's preferences.</summary>
     public static ReactionType EvaluateMood(float currentMood, DatePreferences prefs)
     {

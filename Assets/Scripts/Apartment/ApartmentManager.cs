@@ -358,32 +358,8 @@ public class ApartmentManager : MonoBehaviour
 
         var area = areas[_currentAreaIndex];
 
-        // If the station has its own cameras, skip the selected camera and go straight in
-        if (area.stationType != StationType.None
-            && _stationLookup != null
-            && _stationLookup.TryGetValue(area.stationType, out var station)
-            && station.HasStationCameras)
-        {
-            // Check phase gating before entering
-            if (!station.IsAvailableInCurrentPhase())
-            {
-                Debug.Log($"[ApartmentManager] Station {area.stationType} not available in current phase.");
-                return;
-            }
-            CurrentState = State.InStation;
-            _activeStation = station;
-
-            browseCamera.Priority = PriorityInactive;
-            station.Activate();
-
-            if (objectGrabber != null)
-                objectGrabber.SetEnabled(false);
-
-            UpdateUI();
-            Debug.Log($"[ApartmentManager] Direct to station: {area.stationType}");
-            return;
-        }
-
+        // Always go through Selected state first — player can then
+        // Enter the station deliberately or interact with objects.
         CurrentState = State.Selecting;
 
         if (selectedCamera != null)
@@ -421,43 +397,22 @@ public class ApartmentManager : MonoBehaviour
 
     private void EnterSelected()
     {
-        var area = areas[_currentAreaIndex];
-
-        // If this area has a station, enter it immediately
-        if (area.stationType != StationType.None
-            && _stationLookup != null
-            && _stationLookup.TryGetValue(area.stationType, out var station))
-        {
-            // Check phase gating before entering
-            if (!station.IsAvailableInCurrentPhase())
-            {
-                // No station available — enter standard Selected state
-                CurrentState = State.Selected;
-                if (objectGrabber != null)
-                    objectGrabber.SetEnabled(true);
-                UpdateUI();
-                Debug.Log($"[ApartmentManager] Station {area.stationType} not available in current phase — Selected state.");
-                return;
-            }
-
-            CurrentState = State.InStation;
-            _activeStation = station;
-            station.Activate();
-
-            // Disable apartment-level interaction during station
-            if (objectGrabber != null)
-                objectGrabber.SetEnabled(false);
-
-            UpdateUI();
-            Debug.Log($"[ApartmentManager] Entered station: {area.stationType}");
-            return;
-        }
-
-        // No station — enter standard Selected state with object grabber
+        // Selected state — player interacts with objects and station managers here.
+        // No Enter-to-InStation: stations auto-activate from Selected camera.
         CurrentState = State.Selected;
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(true);
+
+        // Auto soft-activate area's station (manager + HUD, no camera switch)
+        var area = areas[_currentAreaIndex];
+        if (area.stationType != StationType.None && _stationLookup != null
+            && _stationLookup.TryGetValue(area.stationType, out var station)
+            && station.IsAvailableInCurrentPhase())
+        {
+            _activeStation = station;
+            station.SoftActivate();
+        }
 
         UpdateUI();
         Debug.Log("[ApartmentManager] Entered Selected state.");
@@ -466,7 +421,46 @@ public class ApartmentManager : MonoBehaviour
     private void HandleSelectedInput()
     {
         if (_cancelAction.WasPressedThisFrame())
+        {
+            // Deactivate any soft-activated station before returning to Browsing
+            if (_activeStation != null)
+            {
+                _activeStation.Deactivate();
+                _activeStation = null;
+            }
             ReturnToBrowsing();
+        }
+    }
+
+    /// <summary>
+    /// Attempt to enter the station for the current area. Called from Selected state.
+    /// </summary>
+    private void TryEnterStation()
+    {
+        var area = areas[_currentAreaIndex];
+        if (area.stationType == StationType.None) return;
+        if (_stationLookup == null) return;
+        if (!_stationLookup.TryGetValue(area.stationType, out var station)) return;
+
+        if (!station.IsAvailableInCurrentPhase())
+        {
+            Debug.Log($"[ApartmentManager] Station {area.stationType} not available in current phase.");
+            return;
+        }
+
+        CurrentState = State.InStation;
+        _activeStation = station;
+        station.Activate();
+
+        // Raise station cameras (if any), lower selected camera
+        if (station.HasStationCameras && selectedCamera != null)
+            selectedCamera.Priority = PriorityInactive;
+
+        if (objectGrabber != null)
+            objectGrabber.SetEnabled(false);
+
+        UpdateUI();
+        Debug.Log($"[ApartmentManager] Entered station: {area.stationType}");
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -496,6 +490,9 @@ public class ApartmentManager : MonoBehaviour
             _activeStation = null;
         }
 
+        // Close fridge door when leaving DrinkMaking
+        FridgeController.Instance?.CloseDoor();
+
         // Return to Selected state (shows grabber + selected hints)
         CurrentState = State.Selected;
 
@@ -508,6 +505,30 @@ public class ApartmentManager : MonoBehaviour
 
         UpdateUI();
         Debug.Log("[ApartmentManager] Exited station → Selected.");
+    }
+
+    /// <summary>
+    /// Force-enter a station by type (used by FridgeController to enter DrinkMaking).
+    /// </summary>
+    public void ForceEnterStation(StationType type)
+    {
+        if (_stationLookup == null) return;
+        if (!_stationLookup.TryGetValue(type, out var station)) return;
+        if (!station.IsAvailableInCurrentPhase()) return;
+
+        _activeStation = station;
+        station.Activate();
+        CurrentState = State.InStation;
+
+        browseCamera.Priority = PriorityInactive;
+        if (selectedCamera != null)
+            selectedCamera.Priority = PriorityInactive;
+
+        if (objectGrabber != null)
+            objectGrabber.SetEnabled(false);
+
+        UpdateUI();
+        Debug.Log($"[ApartmentManager] ForceEnterStation: {type}");
     }
 
     // ──────────────────────────────────────────────────────────────

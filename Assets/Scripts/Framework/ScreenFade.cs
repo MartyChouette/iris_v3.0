@@ -24,8 +24,8 @@ public class ScreenFade : MonoBehaviour
 
         if (_canvasGroup != null)
         {
-            _canvasGroup.alpha = 0f;
-            _canvasGroup.blocksRaycasts = false;
+            _canvasGroup.alpha = 1f;
+            _canvasGroup.blocksRaycasts = true;
         }
     }
 

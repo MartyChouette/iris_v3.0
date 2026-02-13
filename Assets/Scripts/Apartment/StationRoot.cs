@@ -78,6 +78,21 @@ public class StationRoot : MonoBehaviour
     }
 
     /// <summary>
+    /// Enable the station manager and show its HUD but do NOT raise camera priorities.
+    /// Used during Exploration phase for Selected-state-only interaction.
+    /// </summary>
+    public void SoftActivate()
+    {
+        if (stationManager != null)
+            stationManager.enabled = true;
+
+        if (hudRoot != null)
+            hudRoot.SetActive(true);
+
+        Debug.Log($"[StationRoot] Soft-activated station: {stationType}");
+    }
+
+    /// <summary>
     /// Disable the station manager, hide its HUD, and lower camera priorities.
     /// </summary>
     public void Deactivate()

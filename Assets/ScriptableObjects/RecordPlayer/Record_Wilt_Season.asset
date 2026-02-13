@@ -15,5 +15,6 @@ MonoBehaviour:
   title: Wilt Season
   artist: The Gardeners
   labelColor: {r: 0.7, g: 0.5, b: 0.2, a: 1}
+  moodValue: 0.3
   musicClip: {fileID: 0}
   volume: 0.7

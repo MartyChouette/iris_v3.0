@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using Unity.Cinemachine;
+using TMPro;
 
 /// <summary>
 /// Single authority for daily phase transitions, camera priorities, and screen fades.
@@ -64,11 +65,24 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("Duration of fade-to-black and fade-from-black in seconds.")]
     [SerializeField] private float _fadeDuration = 0.5f;
 
+    [Header("Preparation Timer")]
+    [Tooltip("Duration of the preparation phase in seconds.")]
+    [SerializeField] private float _prepDuration = 120f;
+
+    [Tooltip("TMP_Text displaying the countdown timer.")]
+    [SerializeField] private TMP_Text _prepTimerText;
+
+    [Tooltip("Panel root for the prep timer UI.")]
+    [SerializeField] private GameObject _prepTimerPanel;
+
     [Header("Events")]
     public UnityEvent<int> OnPhaseChanged;
 
     private const int PriorityActive = 30;
     private const int PriorityInactive = 0;
+
+    private float _prepTimer;
+    private bool _prepTimerActive;
 
     public DayPhase CurrentPhase => _currentPhase;
 
@@ -104,6 +118,58 @@ public class DayPhaseManager : MonoBehaviour
             DateSessionManager.Instance.OnDateSessionEnded.RemoveListener(EnterEvening);
         }
         if (Instance == this) Instance = null;
+    }
+
+    private void Update()
+    {
+        if (!_prepTimerActive) return;
+
+        _prepTimer -= Time.deltaTime;
+
+        if (_prepTimerText != null)
+        {
+            int mins = Mathf.FloorToInt(Mathf.Max(_prepTimer, 0f) / 60f);
+            int secs = Mathf.FloorToInt(Mathf.Max(_prepTimer, 0f) % 60f);
+            _prepTimerText.SetText("{0}:{1:00}", mins, secs);
+        }
+
+        if (_prepTimer <= 0f)
+        {
+            _prepTimerActive = false;
+            OnPrepTimerExpired();
+        }
+    }
+
+    // ─── Prep Timer ──────────────────────────────────────────────────
+
+    private void StartPrepTimer()
+    {
+        _prepTimer = _prepDuration;
+        _prepTimerActive = true;
+        if (_prepTimerPanel != null) _prepTimerPanel.SetActive(true);
+        Debug.Log($"[DayPhaseManager] Prep timer started: {_prepDuration}s.");
+    }
+
+    private void StopPrepTimer()
+    {
+        _prepTimerActive = false;
+        if (_prepTimerPanel != null) _prepTimerPanel.SetActive(false);
+    }
+
+    private void OnPrepTimerExpired()
+    {
+        StopPrepTimer();
+        Debug.Log("[DayPhaseManager] Prep timer expired — doorbell!");
+
+        // Date arrives via doorbell
+        PhoneController.Instance?.PlayDoorbell();
+    }
+
+    /// <summary>Called by PhoneController when player clicks phone to end prep early.</summary>
+    public void EndPrepEarly()
+    {
+        StopPrepTimer();
+        Debug.Log("[DayPhaseManager] Prep ended early by player.");
     }
 
     // ─── Public entry points (called by events) ─────────────────────
@@ -150,7 +216,8 @@ public class DayPhaseManager : MonoBehaviour
                 StartCoroutine(ExplorationTransition());
                 break;
             case DayPhase.DateInProgress:
-                // DateCharacterController spawns via existing DateSessionManager flow
+                // Stop prep timer — date is in progress
+                StopPrepTimer();
                 break;
             case DayPhase.Evening:
                 // DateEndScreen shows via existing DateSessionManager flow
@@ -184,7 +251,9 @@ public class DayPhaseManager : MonoBehaviour
         if (_newspaperHUD != null)
             _newspaperHUD.SetActive(true);
 
-        yield break;
+        // 5. Fade in from black (scene started fully black)
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -233,5 +302,8 @@ public class DayPhaseManager : MonoBehaviour
         // 8. Fade in from black
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        // 9. Start preparation countdown
+        StartPrepTimer();
     }
 }

@@ -12,6 +12,14 @@ public class DateSessionManager : MonoBehaviour
 
     public enum SessionState { Idle, WaitingForArrival, DateInProgress, DateEnding }
 
+    /// <summary>
+    /// Sub-phases within DateInProgress:
+    ///   Arrival         — NPC walks in, sits on couch
+    ///   DrinkJudging    — Player makes and delivers a drink, NPC judges it
+    ///   ApartmentJudging— NPC wanders, investigates ReactableTags, judges apartment
+    /// </summary>
+    public enum DatePhase { None, Arrival, DrinkJudging, ApartmentJudging }
+
     // ──────────────────────────────────────────────────────────────
     // Configuration
     // ──────────────────────────────────────────────────────────────
@@ -35,6 +43,10 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Affection lost from a Dislike reaction.")]
     [SerializeField] private float dislikeAffection = -4f;
 
+    [Header("Date Phases")]
+    [Tooltip("Seconds the apartment judging phase lasts before the date ends.")]
+    [SerializeField] private float apartmentJudgingDuration = 60f;
+
     [Header("Ambient Check")]
     [Tooltip("Seconds between ambient mood evaluations.")]
     [SerializeField] private float moodCheckInterval = 15f;
@@ -52,6 +64,12 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Where drinks are delivered (coffee table).")]
     [SerializeField] private Transform coffeeTableDeliveryPoint;
 
+    [Tooltip("Where the NPC pauses for entrance judgments (between entrance and couch).")]
+    [SerializeField] private Transform judgmentStopPoint;
+
+    [Tooltip("Runs the 3 entrance judgments (outfit, mood, cleanliness).")]
+    [SerializeField] private EntranceJudgmentSequence _entranceJudgments;
+
     [Header("Events")]
     public UnityEvent<DatePersonalDefinition> OnDateSessionStarted;
     public UnityEvent<float> OnAffectionChanged;
@@ -61,6 +79,7 @@ public class DateSessionManager : MonoBehaviour
     // Runtime state
     // ──────────────────────────────────────────────────────────────
     private SessionState _state = SessionState.Idle;
+    private DatePhase _datePhase = DatePhase.None;
     private DatePersonalDefinition _currentDate;
     private float _affection;
     private float _moodCheckTimer;
@@ -68,11 +87,13 @@ public class DateSessionManager : MonoBehaviour
     private GameObject _dateCharacterGO;
     private float _arrivalTimer;
     private bool _arrivalTimerActive;
+    private float _apartmentJudgingTimer;
 
     // ──────────────────────────────────────────────────────────────
     // Public API
     // ──────────────────────────────────────────────────────────────
     public SessionState CurrentState => _state;
+    public DatePhase CurrentDatePhase => _datePhase;
     public DatePersonalDefinition CurrentDate => _currentDate;
     public float Affection => _affection;
     public bool IsDateActive => _state == SessionState.DateInProgress;
@@ -113,12 +134,27 @@ public class DateSessionManager : MonoBehaviour
 
         if (_state != SessionState.DateInProgress) return;
 
-        // Periodic mood check
-        _moodCheckTimer += Time.deltaTime;
-        if (_moodCheckTimer >= moodCheckInterval)
+        // Apartment judging timer — auto-end date when it expires
+        if (_datePhase == DatePhase.ApartmentJudging)
         {
-            _moodCheckTimer = 0f;
-            EvaluateAmbientMood();
+            _apartmentJudgingTimer += Time.deltaTime;
+            if (_apartmentJudgingTimer >= apartmentJudgingDuration)
+            {
+                Debug.Log("[DateSessionManager] Apartment judging phase complete.");
+                EndDate();
+                return;
+            }
+        }
+
+        // Periodic mood check (only during ApartmentJudging)
+        if (_datePhase == DatePhase.ApartmentJudging)
+        {
+            _moodCheckTimer += Time.deltaTime;
+            if (_moodCheckTimer >= moodCheckInterval)
+            {
+                _moodCheckTimer = 0f;
+                EvaluateAmbientMood();
+            }
         }
     }
 
@@ -126,14 +162,17 @@ public class DateSessionManager : MonoBehaviour
     // Session Flow
     // ──────────────────────────────────────────────────────────────
 
-    /// <summary>Called after newspaper ad is cut — date is on the way. Starts arrival timer.</summary>
+    /// <summary>
+    /// Called after newspaper ad is selected — date is pending.
+    /// Arrival is triggered externally by DayPhaseManager (prep timer expired)
+    /// or PhoneController (player clicks phone to end prep early).
+    /// </summary>
     public void ScheduleDate(DatePersonalDefinition date)
     {
         _currentDate = date;
         _state = SessionState.WaitingForArrival;
-        _arrivalTimer = date.arrivalTimeSec;
-        _arrivalTimerActive = true;
-        Debug.Log($"[DateSessionManager] Scheduled date with {date.characterName}. Arriving in {date.arrivalTimeSec}s.");
+        _arrivalTimerActive = false; // Arrival now controlled by prep timer, not internal timer
+        Debug.Log($"[DateSessionManager] Scheduled date with {date.characterName}. Waiting for prep phase to end.");
     }
 
     /// <summary>Called when the arrival timer expires — triggers phone ring or direct arrival.</summary>
@@ -157,15 +196,17 @@ public class DateSessionManager : MonoBehaviour
         }
 
         _state = SessionState.DateInProgress;
+        _datePhase = DatePhase.Arrival;
         _affection = startingAffection;
         _moodCheckTimer = 0f;
+        _apartmentJudgingTimer = 0f;
 
         // Spawn character
         SpawnDateCharacter();
 
         OnDateSessionStarted?.Invoke(_currentDate);
         OnAffectionChanged?.Invoke(_affection);
-        Debug.Log($"[DateSessionManager] Date with {_currentDate.characterName} started! Affection: {_affection}");
+        Debug.Log($"[DateSessionManager] Phase 1: Arrival — {_currentDate.characterName} walking in.");
     }
 
     /// <summary>Apply a reaction to affection (called by DateCharacterController or drink delivery).</summary>
@@ -202,7 +243,55 @@ public class DateSessionManager : MonoBehaviour
         if (_dateCharacter != null && coffeeTableDeliveryPoint != null)
             _dateCharacter.InvestigateSpecific(coffeeTableDeliveryPoint);
 
-        Debug.Log($"[DateSessionManager] Drink received: {recipe?.drinkName} (score={score}) → {reactionType}");
+        Debug.Log($"[DateSessionManager] Phase 2 → 3: Drink received: {recipe?.drinkName} (score={score}) → {reactionType}");
+
+        // Transition to Phase 3: Apartment Judging
+        EnterApartmentJudging();
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Date Phase Transitions
+    // ──────────────────────────────────────────────────────────────
+
+    private void OnCharacterReachedJudgmentPoint()
+    {
+        if (_datePhase != DatePhase.Arrival) return;
+        Debug.Log("[DateSessionManager] NPC reached judgment point — running entrance judgments.");
+        StartCoroutine(RunEntranceJudgmentsAndContinue());
+    }
+
+    private IEnumerator RunEntranceJudgmentsAndContinue()
+    {
+        if (_entranceJudgments != null && _currentDate != null)
+        {
+            var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
+            yield return _entranceJudgments.RunJudgments(reactionUI, _currentDate);
+        }
+
+        // Resume walking to couch
+        if (_dateCharacter != null)
+            _dateCharacter.ContinueToCouch();
+    }
+
+    private void OnCharacterSatDown()
+    {
+        if (_datePhase != DatePhase.Arrival) return;
+
+        _datePhase = DatePhase.DrinkJudging;
+        Debug.Log("[DateSessionManager] Phase 2: DrinkJudging — make a drink and deliver it!");
+    }
+
+    private void EnterApartmentJudging()
+    {
+        _datePhase = DatePhase.ApartmentJudging;
+        _apartmentJudgingTimer = 0f;
+        _moodCheckTimer = 0f;
+
+        // Enable NPC excursions so they walk around and judge items
+        if (_dateCharacter != null)
+            _dateCharacter.EnableExcursions();
+
+        Debug.Log("[DateSessionManager] Phase 3: ApartmentJudging — NPC exploring apartment.");
     }
 
     /// <summary>End the current date session and show results.</summary>
@@ -211,6 +300,7 @@ public class DateSessionManager : MonoBehaviour
         if (_state == SessionState.Idle || _state == SessionState.DateEnding) return;
 
         _state = SessionState.DateEnding;
+        _datePhase = DatePhase.None;
         Debug.Log($"[DateSessionManager] Ending date with {_currentDate?.characterName}. Final affection: {_affection:F1}");
 
         // Record history
@@ -279,10 +369,12 @@ public class DateSessionManager : MonoBehaviour
         // Initialize
         Vector3 spawnPosition = dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero;
         Transform couch = couchSeatTarget != null ? couchSeatTarget : transform;
-        _dateCharacter.Initialize(couch, spawnPosition);
+        _dateCharacter.Initialize(couch, spawnPosition, judgmentStopPoint);
 
-        // Subscribe to reactions
+        // Subscribe to reactions and sat-down event
         _dateCharacter.OnReaction += HandleCharacterReaction;
+        _dateCharacter.OnSatDown += OnCharacterSatDown;
+        _dateCharacter.OnReachedJudgmentPoint += OnCharacterReachedJudgmentPoint;
     }
 
     private void HandleCharacterReaction(ReactableTag tag, ReactionType type)

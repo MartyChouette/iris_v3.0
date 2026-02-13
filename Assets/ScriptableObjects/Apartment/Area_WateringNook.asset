@@ -17,8 +17,8 @@ MonoBehaviour:
   stationType: 0
   splinePosition: 0.429
   lookAtPosition: {x: 0, y: 0, z: 0}
-  selectedPosition: {x: -2, y: 1.8, z: 5.5}
-  selectedRotation: {x: 30, y: 0, z: 0}
+  selectedPosition: {x: -2.5, y: 3, z: 7.5}
+  selectedRotation: {x: 28, y: 180, z: 0}
   selectedFOV: 48
   browseBlendDuration: 0.8
   selectBlendDuration: 0.5

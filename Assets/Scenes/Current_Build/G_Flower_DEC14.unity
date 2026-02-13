@@ -12436,7 +12436,7 @@ MonoBehaviour:
   criteria: 3
   testSpace: 0
   armDelay: 0.05
-  breakForce: 20
+  breakForce: 15
   relativeSpeedThreshold: 6
   ownSpeedThreshold: 8
   absoluteTravelThreshold: 5

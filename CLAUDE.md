@@ -4,7 +4,7 @@
 
 Iris v3.0 is a contemplative flower-trimming game (thesis project). Unity 6.0.3, URP, C#. Players cut stems with scissors, evaluated against ideal rules for score and "days alive."
 
-The game centers on an **apartment hub** — a spline-dolly camera browses 7 areas, each with a station (bookcase, newspaper dating, record player, mirror makeup, etc.). Stations are entered via `StationRoot` and managed by `ApartmentManager`.
+The game centers on an **apartment hub** — a spline-dolly camera browses 2 areas (Kitchen, Living Room), each with a station. Stations are entered via `StationRoot` and managed by `ApartmentManager`. The apartment model is imported from Blender (`aprtment blockout.obj`) at 0.1 scale.
 
 ## Build & Run
 
@@ -18,9 +18,8 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 7 are
 | Menu Path | Script | What It Does |
 |-----------|--------|--------------|
 | Window > Iris > Flower Auto Setup | `Assets/Editor/FlowerAutoSetup.cs` | Auto-wires flower components from a model |
-| Window > Iris > Build Apartment Scene | `Assets/Editor/ApartmentSceneBuilder.cs` | Generates full apartment hub with all 7 areas and stations |
+| Window > Iris > Build Apartment Scene | `Assets/Editor/ApartmentSceneBuilder.cs` | Generates apartment hub with Kitchen + Living Room, modular station groups, dating loop |
 | Window > Iris > Build Bookcase Browsing Scene | `Assets/Editor/BookcaseSceneBuilder.cs` | Generates standalone bookcase station scene |
-| Window > Iris > Build Newspaper Dating Scene | `Assets/Editor/NewspaperDatingSceneBuilder.cs` | Generates newspaper dating desk scene |
 | Window > Iris > Build Dating Loop Scene | `Assets/Editor/DatingLoopSceneBuilder.cs` | Generates standalone dating loop test scene with full gameplay loop |
 | Window > Iris > Build Camera Test Scene | `Assets/Editor/CameraTestSceneBuilder.cs` | Generates Cinemachine camera test room |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
@@ -53,6 +52,9 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 7 are
 | `PhoneController` | Scene-scoped | `Assets/Scripts/Dating/PhoneController.cs` |
 | `CoffeeTableDelivery` | Scene-scoped | `Assets/Scripts/Dating/CoffeeTableDelivery.cs` |
 | `DateEndScreen` | Scene-scoped | `Assets/Scripts/Dating/DateEndScreen.cs` |
+| `FridgeController` | Scene-scoped | `Assets/Scripts/Apartment/FridgeController.cs` |
+| `CleaningManager` | Scene-scoped | `Assets/Scripts/Mechanics/Cleaning/CleaningManager.cs` |
+| `DayPhaseManager` | Scene-scoped | `Assets/Scripts/Framework/DayPhaseManager.cs` |
 
 ## Script Directory Map
 
@@ -76,62 +78,192 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 7 are
 
 ```
 ApartmentManager (Browsing → Selecting → Selected → InStation)
-       │ left/right input                          ↑ (skip if station has cameras)
+       │ A/D input                                 ↑ Esc
        ▼                                           │
-CinemachineSplineDolly (7-knot closed-loop spline)
-       │ Enter key
-       ▼
+CinemachineSplineDolly (4-knot closed-loop spline)
+       │ Enter key                                 │
+       ▼                                           │
+Selected state (clean stains, pick up / place objects)
+       │ Enter key                                 │
+       ▼                                           │
 StationRoot.Activate() → raises station cameras to priority 30
-       │
-       ▼
-IStationManager (BookInteractionManager, NewspaperManager, RecordPlayerManager, MirrorMakeupManager, PhoneController)
+       │                                           │
+       ▼                                           │
+IStationManager (BookInteractionManager, DrinkMakingManager, RecordPlayerManager)
 ```
 
-- `ApartmentAreaDefinition` — ScriptableObject per area (splinePosition, stationType, camera settings)
-- `StationRoot` — Marker on each station root, manages activate/deactivate of manager + HUD + cameras
-- Stations with their own `stationCameras` skip the Selected state entirely (direct Browsing → InStation)
-- `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
+### Current Areas (2)
 
-## Dating Loop Architecture (v3 — Full Loop)
+| Area | StationType | splinePosition | Notes |
+|------|-------------|----------------|-------|
+| Kitchen | DrinkMaking | 0.0 | Always accessible, fridge gates DrinkMaking entry |
+| Living Room | Bookcase | 0.5 | BookInteractionManager |
 
+### Modular Station Groups
+
+Each station is a self-contained parent GO. Moving the parent repositions everything:
 ```
-GameClock (7-day calendar, real-time hour tick, MoodMachine "TimeOfDay" source)
-       │ each morning
-       ▼
-DayManager.AdvanceDay() → NewspaperManager regenerates ads
-       │ click newspaper → cut ad
-       ▼
-NewspaperManager (TableView → PickingUp → ReadingPaper → Cutting → Calling → Waiting → DateArrived)
-       │ DateArrived
-       ▼
-PhoneController.StartRinging() → player clicks phone → AnswerPhone()
-       │
-       ▼
-DateSessionManager (Idle → WaitingForArrival → DateInProgress → DateEnding)
-       │ spawns character
-       ▼
-DateCharacterController (WalkingToCouch → Sitting → GettingUp → WalkingToTarget → Investigating → Returning)
-       │ investigates ReactableTag objects
-       ▼
-ReactionEvaluator → ReactionType (Like/Neutral/Dislike) → affection ±
-       │ player ends date or forced bedtime
-       ▼
-DateEndScreen (grade: S/A/B/C/D) → DateHistory records entry
-       │ continue
-       ▼
-GameClock.GoToBed() → next morning
+Station_{Name}/
+  ├─ Cam_{Name}           ← CinemachineCamera (priority 0, raised to 30 on Activate)
+  ├─ {Furniture GOs}
+  ├─ {Manager GO}         ← XxxManager + XxxHUD components
+  ├─ StationRoot           ← stationType, stationManager, hudRoot, stationCameras
+  └─ ReactableTag          ← for date NPC reactions
 ```
 
 ### Key Components
-- `DatePreferences` on `DatePersonalDefinition` — liked/disliked tags, mood range, drinks
-- `ReactableTag` — lightweight marker + static registry on apartment objects
-- `CoffeeTableDelivery` — auto-delivers drinks after DrinkMakingManager scores
-- `MoodMachine` mood matching multiplies affection gains/losses
-- `DateReactionUI` — world-space thought bubble (? → heart/meh/frown)
-- All cross-references use `?.` null-checks — works in standalone test scene or apartment
+- `ApartmentAreaDefinition` — ScriptableObject per area (splinePosition, stationType, camera settings)
+- `StationRoot` — Marker on each station root, manages activate/deactivate of manager + HUD + cameras
+- `FridgeController` — Click-to-open fridge door that gates DrinkMaking station via `ApartmentManager.ForceEnterStation()`
+- `CleaningManager` — Only responds in Selected apartment state (stain interaction gating)
+- `ObjectGrabber` — Spring-damper pick-and-place, active in Selected state
+- `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
+
+### Scene Builder Position Config
+
+Newspaper layout is controlled by constants at top of `ApartmentSceneBuilder.cs` (lines 38-47):
+
+| Constant | Default | Purpose |
+|----------|---------|---------|
+| `NewspaperCamPos` | (-5.5, 1.3, 3.0) | Read camera position |
+| `NewspaperCamRot` | (5, 0, 0) | Read camera rotation (degrees) |
+| `NewspaperCamFOV` | 48 | Read camera field of view |
+| `NewspaperSurfacePos` | (-5.5, 1.1, 5.0) | Newspaper quad position |
+| `NewspaperSurfaceScl` | (2.5, 1.75, 1) | Newspaper quad scale |
+| `NewspaperCanvasOff` | (0, 0, 0.05) | Canvas offset from surface |
+| `NewspaperCanvasScl` | 0.0025 | Canvas world-space scale |
+| `NewspaperTossPos` | (-3.5, 0.42, 3.0) | Where newspaper lands after reading |
+| `NewspaperTossRot` | (90, 10, 0) | Tossed newspaper rotation |
+
+Station group positions (lines 30-32):
+
+| Constant | Default | Purpose |
+|----------|---------|---------|
+| `BookcaseStationPos` | (-6.3, 0, 3.0) | Bookcase station in living room |
+| `RecordPlayerStationPos` | (-2, 0, 5) | Record player in living room |
+| `DrinkMakingStationPos` | (-4, 0, -5.2) | Drink station in kitchen |
+
+Edit these, then re-run **Window > Iris > Build Apartment Scene** to regenerate.
+
+## Vertical Slice — Full Game Flow
+
+```
+Menu → Tutorial Card → Name Entry (mirror) → Photo/Ad Intro → Newspaper
+→ Preparation (timed) → Date (3 phases) → Couch Scene → Flower Trimming → End of Day
+```
+
+### 1. Menu → Start
+- Main menu with start button
+- Tutorial card shown between menu and game start (direct, explains controls)
+
+### 2. Name Entry (Bathroom Mirror) — DEFERRED, separate scene added later
+- Separate scene (hard cut). 3D "Nema" model in front of bathroom mirror, looping idle animation
+- Text input for player name with **profanity filter** (block slurs / bad words)
+- On confirm: camera takes a "photo" of Nema posing
+
+### 3. Photo → Newspaper Intro
+- Photo of Nema goes black & white
+- Photo appears next to her personals ad in the newspaper
+- Transition into the newspaper reading view
+
+### 4. Newspaper (Morning Phase)
+- **Visual:** Half-folded newspaper (cliche folded-in-half look), open to personals section
+- **Layout:** 3 personal ads + 2 commercial ad slots per day
+- Button-based ad selection — click a personal ad to choose your date
+- Each of the 3 dates has unique preferences for apartment items, drinks, decor
+- Scissors cutting mechanic preserved in code but not active (deferred)
+
+### 5. Preparation Phase (Timed)
+After selecting a date, a timer starts. The apartment starts messy (bottles, wine stains, possible blood stains from last night). Player prepares:
+
+| Action | Station/System | Notes |
+|--------|---------------|-------|
+| Clean stains (wine, blood, trash, bottles) | CleaningManager | Sponge + spray tools |
+| Water plants | WateringManager | One-shot perfect pour mechanic (click timing) |
+| Choose coffee table book | BookInteractionManager | Leave on coffee table for date to see |
+| Choose vinyl record | RecordPlayerManager | Playing during date affects reactions |
+| Spray perfume | PerfumeBottle | Changes hue, filter, weather, environment SFX via MoodMachine |
+| Leave out trinket/gundam | DrawerController → shelf | Shelf display for date to react to |
+| Choose outfit | **NEW: OutfitSelector** | Judged in date Phase 1 |
+
+**End of prep:** Player calls on phone to start date early, OR timer expires and doorbell rings.
+
+### 6. Date Phase 1 — Entrance (First Impressions)
+Date NPC arrives at door. Three judgments with Sims-style thought bubble + emote + SFX:
+
+1. **Outfit** — based on date's style preferences
+2. **Perfume** — "What is that perfume?" reaction
+3. **Welcome/greeting** — how player greets them
+
+Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX → affection ±
+
+### 7. Date Phase 2 — Kitchen (Drink Making)
+- Date stands by kitchen counter
+- Player is given drink recipes (shown on HUD)
+- **Select** correct alcohol bottle from shelf
+- **Perfect pour** — one-shot click-timing mechanic (same as plant watering)
+- Drink scored → date reacts with thought bubble
+- If passed → proceed to Phase 3
+
+### 8. Date Phase 3 — Living Room (Apartment Judging)
+- Date takes their drink to living room
+- Walks around, investigates key items (ReactableTags):
+  - Coffee table book, vinyl playing, perfume scent, trinket on shelf, cleanliness
+- Each item: thought bubble → reaction → affection ±
+- Phase ends after duration or all items investigated
+
+### 9. Win/Lose Outcome
+- **Win (score threshold met):** Couch cuddling scene — Nema and date on couch, Nema secretly holding scissors behind her back
+- **Hard cut** to flower trimming scene
+- Load flower, trim it, get score
+- **End of Day 1**
+
+### 10. Vertical Slice Notes
+- Day 1 MUST start with a mess from previous night (pre-spawned stains, bottles, trash)
+- Tutorial card at start is mandatory — direct instructions, not subtle
+- This is a single-day vertical slice demonstrating the full loop
+
+## Existing Systems (What's Built)
+
+| System | Status | Key Files |
+|--------|--------|-----------|
+| Apartment hub (2 areas) | Working | ApartmentManager, ApartmentSceneBuilder |
+| Spline camera browsing | Working | CinemachineSplineDolly, 4-knot loop |
+| Newspaper (button selection) | Working | NewspaperManager, NewspaperAdSlot |
+| Cleaning (sponge + spray) | Working | CleaningManager, CleanableSurface |
+| Object grab/place | Working | ObjectGrabber, PlacementSurface |
+| Bookcase interaction | Working | BookInteractionManager, BookVolume |
+| Record player | Working | RecordPlayerManager, RecordPlayerHUD |
+| Perfume spray | Working | PerfumeBottle, EnvironmentMoodController |
+| Drink making | Working | DrinkMakingManager (needs rework to perfect-pour) |
+| Fridge door mechanic | Working | FridgeController |
+| Date session (3 phases) | Working | DateSessionManager, DateCharacterController |
+| Date reactions | Working | ReactionEvaluator, DateReactionUI, ReactableTag |
+| Coffee table delivery | Working | CoffeeTableDelivery |
+| Date end screen | Working | DateEndScreen |
+| Flower trimming | Working | FlowerGameBrain, FlowerSessionController |
+| Day phase management | Working | DayPhaseManager, ScreenFade |
+| MoodMachine | Working | MoodMachine, MoodMachineProfile |
+| GameClock | Working | GameClock (7-day calendar) |
+
+## Not Yet Built
+
+| System | Notes |
+|--------|-------|
+| Main menu | Scene + UI |
+| Tutorial card | Overlay between menu and gameplay |
+| Name entry (mirror scene) | Deferred — separate scene, hard cut, added later |
+| Photo intro sequence | Camera pose → B&W photo → newspaper transition |
+| Half-folded newspaper visual | Rework newspaper mesh/canvas to folded look |
+| Outfit selection | New system — choose outfit, date judges in Phase 1 |
+| Perfect pour mechanic | One-shot click-timing (shared by watering + drink making) |
+| Date Phase 1 rework | Entrance judgments: outfit, perfume, welcome |
+| Date Phase 2 rework | Kitchen counter, recipe selection, bottle pick, perfect pour |
+| Couch win scene | Cuddling + scissors behind back |
+| Flower trimming transition | Hard cut from apartment to flower scene, load flower |
+| Pre-spawned mess | Day 1 starting state with stains, bottles, trash |
+| Profanity filter | Block bad words in name entry |
 
 ## Roadmap Reference
 
-See `LONGTERM_PLAN.md` for full backlog. Key remaining items:
-- Memory profiling (historical leak concern)
-- Profile on target hardware
+See `LONGTERM_PLAN.md` for full backlog and implementation phases.

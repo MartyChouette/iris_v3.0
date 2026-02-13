@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5467a6acf12dd554288885423b174038, type: 3}
+  m_Name: Ingredient_White_Wine
+  m_EditorClassIdentifier: Assembly-CSharp::DrinkIngredientDefinition
+  ingredientName: White Wine
+  liquidColor: {r: 0.9, g: 0.85, b: 0.5, a: 0.6}
+  pourRate: 0.13
+  fizziness: 0.1
+  foamRateMultiplier: 1.2
+  foamSettleRate: 0.25
+  flattenRate: 0
+  viscosity: 0.4

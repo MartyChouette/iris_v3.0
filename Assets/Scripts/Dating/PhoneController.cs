@@ -42,6 +42,7 @@ public class PhoneController : MonoBehaviour, IStationManager
     private InputAction _clickAction;
     private InputAction _mousePositionAction;
     private Camera _mainCamera;
+    private static readonly WaitForSeconds s_waitCallSequence = new WaitForSeconds(0.5f);
 
     // ──────────────────────────────────────────────────────────────
     // IStationManager
@@ -69,6 +70,8 @@ public class PhoneController : MonoBehaviour, IStationManager
 
         if (ringVisual != null)
             ringVisual.SetActive(false);
+
+        _mainCamera = Camera.main;
     }
 
     private void OnEnable()
@@ -90,6 +93,24 @@ public class PhoneController : MonoBehaviour, IStationManager
 
     private void Update()
     {
+        // During Exploration (Idle state), clicking phone ends prep early and triggers arrival
+        if (_state == PhoneState.Idle && _pendingDate != null)
+        {
+            if (DayPhaseManager.Instance != null
+                && DayPhaseManager.Instance.CurrentPhase == DayPhaseManager.DayPhase.Exploration
+                && _clickAction.WasPressedThisFrame())
+            {
+                if (CheckPhoneRaycast())
+                {
+                    Debug.Log("[PhoneController] Phone clicked during prep — ending prep early.");
+                    DayPhaseManager.Instance.EndPrepEarly();
+                    DateSessionManager.Instance?.OnDateCharacterArrived();
+                    _pendingDate = null;
+                    return;
+                }
+            }
+        }
+
         if (_state == PhoneState.Ringing)
         {
             // Pulse visual
@@ -109,22 +130,9 @@ public class PhoneController : MonoBehaviour, IStationManager
             }
 
             // Ambient click detection
-            if (_clickAction.WasPressedThisFrame())
+            if (_clickAction.WasPressedThisFrame() && CheckPhoneRaycast())
             {
-                if (_mainCamera == null) _mainCamera = Camera.main;
-                if (_mainCamera != null)
-                {
-                    Vector2 screenPos = _mousePositionAction.ReadValue<Vector2>();
-                    Ray ray = _mainCamera.ScreenPointToRay(screenPos);
-                    if (Physics.Raycast(ray, out RaycastHit hit, 100f, phoneLayer))
-                    {
-                        if (hit.collider.gameObject == gameObject ||
-                            hit.collider.transform.IsChildOf(transform))
-                        {
-                            AnswerPhone();
-                        }
-                    }
-                }
+                AnswerPhone();
             }
         }
     }
@@ -186,9 +194,25 @@ public class PhoneController : MonoBehaviour, IStationManager
         DateSessionManager.Instance?.OnDateCharacterArrived();
     }
 
+    private bool CheckPhoneRaycast()
+    {
+        if (_mainCamera == null) _mainCamera = Camera.main;
+        if (_mainCamera == null) return false;
+
+        Vector2 screenPos = _mousePositionAction.ReadValue<Vector2>();
+        Ray ray = _mainCamera.ScreenPointToRay(screenPos);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, phoneLayer))
+        {
+            return hit.collider.gameObject == gameObject ||
+                   hit.collider.transform.IsChildOf(transform);
+        }
+        return false;
+    }
+
     private IEnumerator CallSequence()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return s_waitCallSequence;
 
         DateSessionManager.Instance?.OnDateCharacterArrived();
 

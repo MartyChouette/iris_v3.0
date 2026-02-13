@@ -19,4 +19,5 @@ MonoBehaviour:
   lightingColor: {r: 1, g: 0.85, b: 0.65, a: 1}
   lightIntensity: 0.9
   moodParticleColor: {r: 0.9, g: 0.6, b: 0.3, a: 0.4}
+  moodValue: 0.5
   spraySFX: {fileID: 0}
