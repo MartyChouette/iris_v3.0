@@ -25,6 +25,7 @@ public static class ApartmentSceneBuilder
     private const string CleanableLayerName = "Cleanable";
     private const string PhoneLayerName = "Phone";
     private const string FridgeLayerName = "Fridge";
+    private const string PlantsLayerName = "Plants";
 
     // ─── Station Group Positions ─────────────────────────────────
     private static readonly Vector3 BookcaseStationPos  = new Vector3(-6.3f, 0f, 3.0f);
@@ -65,6 +66,7 @@ public static class ApartmentSceneBuilder
         int cleanableLayer = EnsureLayer(CleanableLayerName);
         int phoneLayer = EnsureLayer(PhoneLayerName);
         int fridgeLayer = EnsureLayer(FridgeLayerName);
+        int plantsLayer = EnsureLayer(PlantsLayerName);
 
         // ── 1. Lighting ──
         var lightGO = new GameObject("Directional Light");
@@ -140,6 +142,9 @@ public static class ApartmentSceneBuilder
 
         // ── 13. Ambient cleaning (not a station) ──
         var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer);
+
+        // ── 13b. Ambient watering (not a station) ──
+        BuildAmbientWatering(camGO, plantsLayer);
 
         // ── 14. DayPhaseManager (orchestrates daily loop) ──
         BuildDayPhaseManager(newspaperData, cleaningData, apartmentUI);
@@ -374,16 +379,7 @@ public static class ApartmentSceneBuilder
             new Vector3(-3.5f, 1.05f, 5.7f), new Vector3(0.1f, 0.2f, 0.1f),
             new Color(0.3f, 0.4f, 0.6f));
 
-        // Small plant on sun ledge
-        var plantPotGO = CreateBox("SmallPlant_Pot", parent,
-            new Vector3(-4.1f, 0.98f, 5.7f), new Vector3(0.12f, 0.1f, 0.12f),
-            new Color(0.6f, 0.35f, 0.25f));
-        CreateBox("SmallPlant_Leaves", parent,
-            new Vector3(-4.1f, 1.1f, 5.7f), new Vector3(0.15f, 0.12f, 0.15f),
-            new Color(0.2f, 0.5f, 0.2f));
-
-        // ReactableTag on potted plant
-        AddReactableTag(plantPotGO, new[] { "plant", "greenery" }, true);
+        // Small plant on sun ledge (WaterablePlant wired by BuildAmbientWatering)
 
         // ReactableTag on mecha figurine (decoration)
         var mechaGO = GameObject.Find("MechaFigurine");
@@ -2472,6 +2468,156 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
+    // Ambient Watering
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildAmbientWatering(GameObject camGO, int plantsLayer)
+    {
+        // ── Load existing PlantDefinition SOs ──────────────────────────
+        string soDir = "Assets/ScriptableObjects/Watering";
+        string[] plantAssetNames = { "Plant_Fern", "Plant_Cactus", "Plant_Succulent" };
+        var plantDefs = new PlantDefinition[plantAssetNames.Length];
+        for (int i = 0; i < plantAssetNames.Length; i++)
+        {
+            string path = $"{soDir}/{plantAssetNames[i]}.asset";
+            plantDefs[i] = AssetDatabase.LoadAssetAtPath<PlantDefinition>(path);
+            if (plantDefs[i] == null)
+                Debug.LogWarning($"[ApartmentSceneBuilder] Missing PlantDefinition: {path}");
+        }
+
+        // ── Plant positions in apartment ───────────────────────────────
+        Vector3[] plantPositions =
+        {
+            new Vector3(-4.1f, 0.98f, 5.7f),   // Sun ledge (living room)
+            new Vector3(-2.8f, 0.98f, 5.7f),   // Sun ledge (living room, right)
+            new Vector3(-5.0f, 0.01f, -3.0f),  // Kitchen floor corner
+        };
+
+        var plantsParent = new GameObject("WaterablePlants");
+
+        for (int i = 0; i < plantPositions.Length; i++)
+        {
+            var def = plantDefs[i % plantDefs.Length];
+            string plantName = def != null ? def.plantName : $"Plant{i}";
+
+            var plantRoot = new GameObject($"Plant_{plantName}");
+            plantRoot.transform.SetParent(plantsParent.transform);
+            plantRoot.transform.position = plantPositions[i];
+            plantRoot.layer = plantsLayer;
+            plantRoot.isStatic = false;
+
+            // WaterablePlant marker
+            var wp = plantRoot.AddComponent<WaterablePlant>();
+            wp.definition = def;
+
+            // BoxCollider on root for easy clicking
+            var col = plantRoot.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.07f, 0f);
+            col.size = new Vector3(0.14f, 0.20f, 0.14f);
+
+            // Pot visual
+            Color potColor = def != null ? def.potColor : new Color(0.6f, 0.35f, 0.25f);
+            var potGO = CreateBox("Pot", plantRoot.transform,
+                new Vector3(0f, 0.03f, 0f), new Vector3(0.12f, 0.1f, 0.12f), potColor);
+            potGO.layer = plantsLayer;
+            potGO.isStatic = false;
+
+            // Stem
+            Color plantColor = def != null ? def.plantColor : new Color(0.2f, 0.5f, 0.2f);
+            var stemGO = CreateBox("Stem", plantRoot.transform,
+                new Vector3(0f, 0.12f, 0f), new Vector3(0.02f, 0.10f, 0.02f), plantColor);
+            stemGO.layer = plantsLayer;
+
+            // Leaves
+            var leafL = CreateBox("LeafL", plantRoot.transform,
+                new Vector3(-0.04f, 0.14f, 0f), new Vector3(0.06f, 0.03f, 0.02f), plantColor);
+            leafL.layer = plantsLayer;
+            var leafR = CreateBox("LeafR", plantRoot.transform,
+                new Vector3(0.04f, 0.16f, 0f), new Vector3(0.06f, 0.03f, 0.02f), plantColor);
+            leafR.layer = plantsLayer;
+
+            // ReactableTag for date reactions
+            AddReactableTag(plantRoot, new[] { "plant", "greenery" }, true);
+        }
+
+        // ── PotController (hidden simulation) ──────────────────────────
+        var potHiddenGO = new GameObject("PotController");
+        potHiddenGO.transform.SetParent(plantsParent.transform);
+        var potCtrl = potHiddenGO.AddComponent<PotController>();
+        var potCtrlSO = new SerializedObject(potCtrl);
+        potCtrlSO.FindProperty("potWorldHeight").floatValue = 0.10f;
+        potCtrlSO.FindProperty("potWorldRadius").floatValue = 0.04f;
+        potCtrlSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── WateringManager + WateringHUD ──────────────────────────────
+        var managersGO = new GameObject("AmbientWateringManagers");
+        managersGO.transform.SetParent(plantsParent.transform);
+        var mgr = managersGO.AddComponent<WateringManager>();
+        var hud = managersGO.AddComponent<WateringHUD>();
+
+        var cam = camGO.GetComponent<UnityEngine.Camera>();
+
+        var mgrSO = new SerializedObject(mgr);
+        mgrSO.FindProperty("_plantLayer").intValue = 1 << plantsLayer;
+        mgrSO.FindProperty("_pot").objectReferenceValue = potCtrl;
+        mgrSO.FindProperty("_hud").objectReferenceValue = hud;
+        mgrSO.FindProperty("_mainCamera").objectReferenceValue = cam;
+        mgrSO.FindProperty("_scoreDisplayTime").floatValue = 2f;
+        mgrSO.FindProperty("_overflowPenalty").floatValue = 30f;
+        mgrSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── Watering HUD Canvas ────────────────────────────────────────
+        var canvasGO = new GameObject("WateringHUD_Canvas");
+        canvasGO.transform.SetParent(managersGO.transform);
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 14;
+        canvasGO.AddComponent<CanvasScaler>();
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        // HUD panel (hidden when idle)
+        var hudPanelGO = new GameObject("WateringHUDPanel");
+        hudPanelGO.transform.SetParent(canvasGO.transform);
+        var hudPanelRT = hudPanelGO.AddComponent<RectTransform>();
+        hudPanelRT.anchorMin = Vector2.zero;
+        hudPanelRT.anchorMax = Vector2.one;
+        hudPanelRT.offsetMin = Vector2.zero;
+        hudPanelRT.offsetMax = Vector2.zero;
+        hudPanelRT.localScale = Vector3.one;
+
+        var plantNameLabel = CreateHUDText("PlantNameLabel", hudPanelGO.transform,
+            new Vector2(0f, 280f), 22f, "");
+        var waterLevelLabel = CreateHUDText("WaterLevelLabel", hudPanelGO.transform,
+            new Vector2(350f, 40f), 18f, "");
+        var foamLevelLabel = CreateHUDText("FoamLevelLabel", hudPanelGO.transform,
+            new Vector2(350f, 0f), 18f, "");
+        var targetLabel = CreateHUDText("TargetLabel", hudPanelGO.transform,
+            new Vector2(350f, -40f), 16f, "");
+
+        var overflowWarning = CreateHUDText("OverflowWarning", hudPanelGO.transform,
+            new Vector2(0f, 60f), 22f, "Overflowing!");
+        overflowWarning.color = new Color(1f, 0.25f, 0.2f);
+        overflowWarning.gameObject.SetActive(false);
+
+        var scoreLabel = CreateHUDText("ScoreLabel", hudPanelGO.transform,
+            new Vector2(0f, 0f), 20f, "");
+
+        // Wire HUD
+        var hudSO = new SerializedObject(hud);
+        hudSO.FindProperty("manager").objectReferenceValue = mgr;
+        hudSO.FindProperty("plantNameLabel").objectReferenceValue = plantNameLabel;
+        hudSO.FindProperty("waterLevelLabel").objectReferenceValue = waterLevelLabel;
+        hudSO.FindProperty("foamLevelLabel").objectReferenceValue = foamLevelLabel;
+        hudSO.FindProperty("targetLabel").objectReferenceValue = targetLabel;
+        hudSO.FindProperty("scoreLabel").objectReferenceValue = scoreLabel;
+        hudSO.FindProperty("overflowWarning").objectReferenceValue = overflowWarning.gameObject;
+        hudSO.FindProperty("hudPanel").objectReferenceValue = hudPanelGO;
+        hudSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log("[ApartmentSceneBuilder] Ambient watering system built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
     // DayPhaseManager
     // ══════════════════════════════════════════════════════════════════
 
@@ -2561,6 +2707,9 @@ public static class ApartmentSceneBuilder
         var fade = go.AddComponent<ScreenFade>();
         var fadeSO = new SerializedObject(fade);
         fadeSO.FindProperty("_canvasGroup").objectReferenceValue = cg;
+        fadeSO.FindProperty("defaultFadeOutDuration").floatValue = 0.5f;
+        fadeSO.FindProperty("defaultFadeInDuration").floatValue = 0.5f;
+        // Easing curves use EaseInOut by default (set in ScreenFade field initializers)
         fadeSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log("[ApartmentSceneBuilder] ScreenFade overlay built.");
