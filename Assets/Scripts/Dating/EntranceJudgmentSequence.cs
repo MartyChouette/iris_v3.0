@@ -66,7 +66,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         var surfaces = FindObjectsByType<CleanableSurface>(FindObjectsSortMode.None);
         foreach (var s in surfaces)
         {
-            if (s.gameObject.activeInHierarchy && !s.IsClean)
+            if (s.gameObject.activeInHierarchy && !s.IsFullyClean)
                 dirtyCount++;
         }
 
