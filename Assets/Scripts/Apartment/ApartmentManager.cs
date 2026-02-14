@@ -8,7 +8,7 @@ using TMPro;
 
 public class ApartmentManager : MonoBehaviour
 {
-    public enum State { Browsing, Selecting, Selected, InStation }
+    public enum State { Browsing, InStation }
 
     public static ApartmentManager Instance { get; private set; }
 
@@ -22,9 +22,6 @@ public class ApartmentManager : MonoBehaviour
     [Header("Cameras")]
     [Tooltip("Cinemachine camera used for browse vantage (should have CinemachineSplineDolly).")]
     [SerializeField] private CinemachineCamera browseCamera;
-
-    [Tooltip("Cinemachine camera used for selected/interaction view.")]
-    [SerializeField] private CinemachineCamera selectedCamera;
 
     [Tooltip("CinemachineBrain on the main camera. Auto-found if null.")]
     [SerializeField] private CinemachineBrain brain;
@@ -61,9 +58,6 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Panel showing browse-mode control hints.")]
     [SerializeField] private GameObject browseHintsPanel;
 
-    [Tooltip("Panel showing selected-mode control hints.")]
-    [SerializeField] private GameObject selectedHintsPanel;
-
     // ──────────────────────────────────────────────────────────────
     // Constants
     // ──────────────────────────────────────────────────────────────
@@ -85,8 +79,6 @@ public class ApartmentManager : MonoBehaviour
     public State CurrentState { get; private set; } = State.Browsing;
 
     private int _currentAreaIndex;
-    private float _blendTimer;
-    private float _blendDuration;
     private Vector3 _basePosition;
     private Vector3 _currentParallaxOffset;
     private Vector3 _currentLookAt;
@@ -180,7 +172,7 @@ public class ApartmentManager : MonoBehaviour
         }
 
         if (objectGrabber != null)
-            objectGrabber.SetEnabled(false);
+            objectGrabber.SetEnabled(true);
 
         _currentAreaIndex = 0;
         _currentSplineT = areas[0].splinePosition;
@@ -227,16 +219,6 @@ public class ApartmentManager : MonoBehaviour
                 HandleBrowsingInput();
                 break;
 
-            case State.Selecting:
-                _blendTimer -= Time.deltaTime;
-                if (_blendTimer <= 0f)
-                    EnterSelected();
-                break;
-
-            case State.Selected:
-                HandleSelectedInput();
-                break;
-
             case State.InStation:
                 HandleInStationInput();
                 break;
@@ -267,8 +249,6 @@ public class ApartmentManager : MonoBehaviour
 
         if (!_browseSuppressed)
             browseCamera.Priority = PriorityActive;
-        if (selectedCamera != null)
-            selectedCamera.Priority = PriorityInactive;
     }
 
     private void UpdateDollyAnimation()
@@ -325,7 +305,7 @@ public class ApartmentManager : MonoBehaviour
             CycleArea(1);
 
         if (_selectAction.WasPressedThisFrame() && !_isDollyAnimating)
-            BeginSelecting();
+            TryEnterStation();
     }
 
     private void CycleArea(int direction)
@@ -348,92 +328,14 @@ public class ApartmentManager : MonoBehaviour
         Debug.Log($"[ApartmentManager] Browsing: {area.areaName}");
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // Selecting (transition state)
-    // ──────────────────────────────────────────────────────────────
+    /// <summary>Navigate to the previous area. Called by UI button.</summary>
+    public void NavigateLeft() => CycleArea(-1);
 
-    private void BeginSelecting()
-    {
-        if (areas == null || areas.Length == 0) return;
-
-        var area = areas[_currentAreaIndex];
-
-        // Always go through Selected state first — player can then
-        // Enter the station deliberately or interact with objects.
-        CurrentState = State.Selecting;
-
-        if (selectedCamera != null)
-        {
-            selectedCamera.transform.position = area.selectedPosition;
-            selectedCamera.transform.rotation = Quaternion.Euler(area.selectedRotation);
-            var selectedLens = selectedCamera.Lens;
-            selectedLens.FieldOfView = area.selectedFOV;
-            selectedCamera.Lens = selectedLens;
-        }
-
-        _basePosition = area.selectedPosition;
-        _currentParallaxOffset = Vector3.zero;
-
-        if (brain != null)
-        {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut, area.selectBlendDuration);
-        }
-
-        browseCamera.Priority = PriorityInactive;
-        if (selectedCamera != null)
-            selectedCamera.Priority = PriorityActive;
-
-        _blendDuration = area.selectBlendDuration;
-        _blendTimer = _blendDuration;
-
-        UpdateUI();
-        Debug.Log($"[ApartmentManager] Selecting: {area.areaName}");
-    }
-
-    // ──────────────────────────────────────────────────────────────
-    // Selected
-    // ──────────────────────────────────────────────────────────────
-
-    private void EnterSelected()
-    {
-        // Selected state — player interacts with objects and station managers here.
-        // No Enter-to-InStation: stations auto-activate from Selected camera.
-        CurrentState = State.Selected;
-
-        if (objectGrabber != null)
-            objectGrabber.SetEnabled(true);
-
-        // Auto soft-activate area's station (manager + HUD, no camera switch)
-        var area = areas[_currentAreaIndex];
-        if (area.stationType != StationType.None && _stationLookup != null
-            && _stationLookup.TryGetValue(area.stationType, out var station)
-            && station.IsAvailableInCurrentPhase())
-        {
-            _activeStation = station;
-            station.SoftActivate();
-        }
-
-        UpdateUI();
-        Debug.Log("[ApartmentManager] Entered Selected state.");
-    }
-
-    private void HandleSelectedInput()
-    {
-        if (_cancelAction.WasPressedThisFrame())
-        {
-            // Deactivate any soft-activated station before returning to Browsing
-            if (_activeStation != null)
-            {
-                _activeStation.Deactivate();
-                _activeStation = null;
-            }
-            ReturnToBrowsing();
-        }
-    }
+    /// <summary>Navigate to the next area. Called by UI button.</summary>
+    public void NavigateRight() => CycleArea(1);
 
     /// <summary>
-    /// Attempt to enter the station for the current area. Called from Selected state.
+    /// Attempt to enter the station for the current area. Called from Browsing state.
     /// </summary>
     private void TryEnterStation()
     {
@@ -452,9 +354,8 @@ public class ApartmentManager : MonoBehaviour
         _activeStation = station;
         station.Activate();
 
-        // Raise station cameras (if any), lower selected camera
-        if (station.HasStationCameras && selectedCamera != null)
-            selectedCamera.Priority = PriorityInactive;
+        // Lower browse camera so station cameras win
+        browseCamera.Priority = PriorityInactive;
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(false);
@@ -493,18 +394,27 @@ public class ApartmentManager : MonoBehaviour
         // Close fridge door when leaving DrinkMaking
         FridgeController.Instance?.CloseDoor();
 
-        // Return to Selected state (shows grabber + selected hints)
-        CurrentState = State.Selected;
+        // Return to Browsing
+        CurrentState = State.Browsing;
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(true);
 
-        // Re-raise selected camera (station may have lowered it)
-        if (selectedCamera != null)
-            selectedCamera.Priority = PriorityActive;
+        // Re-raise browse camera at current dolly position
+        _currentSplineT = areas[_currentAreaIndex].splinePosition;
+        _targetSplineT = _currentSplineT;
+        _isDollyAnimating = false;
 
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut,
+                areas[_currentAreaIndex].browseBlendDuration);
+        }
+
+        ApplyDollyPosition(_currentSplineT, hardCut: false);
         UpdateUI();
-        Debug.Log("[ApartmentManager] Exited station → Selected.");
+        Debug.Log("[ApartmentManager] Exited station → Browsing.");
     }
 
     /// <summary>
@@ -521,8 +431,6 @@ public class ApartmentManager : MonoBehaviour
         CurrentState = State.InStation;
 
         browseCamera.Priority = PriorityInactive;
-        if (selectedCamera != null)
-            selectedCamera.Priority = PriorityInactive;
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(false);
@@ -532,54 +440,21 @@ public class ApartmentManager : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────────────────────
-    // Return to Browsing
-    // ──────────────────────────────────────────────────────────────
-
-    private void ReturnToBrowsing()
-    {
-        CurrentState = State.Browsing;
-
-        if (objectGrabber != null)
-            objectGrabber.SetEnabled(false);
-
-        // Re-activate browse dolly camera
-        _currentSplineT = areas[_currentAreaIndex].splinePosition;
-        _targetSplineT = _currentSplineT;
-        _isDollyAnimating = false;
-
-        if (brain != null)
-        {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut,
-                areas[_currentAreaIndex].browseBlendDuration);
-        }
-
-        ApplyDollyPosition(_currentSplineT, hardCut: false);
-        UpdateUI();
-
-        Debug.Log("[ApartmentManager] Returned to Browsing.");
-    }
-
-    // ──────────────────────────────────────────────────────────────
     // UI
     // ──────────────────────────────────────────────────────────────
 
     private void UpdateUI()
     {
         bool browsing = CurrentState == State.Browsing;
-        bool selected = CurrentState == State.Selected;
 
         if (areaNamePanel != null)
-            areaNamePanel.SetActive(browsing || CurrentState == State.Selecting);
+            areaNamePanel.SetActive(browsing);
 
         if (areaNameText != null && areas != null && areas.Length > 0)
             areaNameText.text = areas[_currentAreaIndex].areaName;
 
         if (browseHintsPanel != null)
             browseHintsPanel.SetActive(browsing);
-
-        if (selectedHintsPanel != null)
-            selectedHintsPanel.SetActive(selected);
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -593,7 +468,7 @@ public class ApartmentManager : MonoBehaviour
 
     private void ApplyLookAt()
     {
-        if (CurrentState != State.Browsing && CurrentState != State.Selecting) return;
+        if (CurrentState != State.Browsing) return;
         if (browseCamera == null || areas == null || areas.Length == 0) return;
 
         // Smoothly move the look-at target toward the current area's focus point
@@ -615,15 +490,11 @@ public class ApartmentManager : MonoBehaviour
 
     private void ApplyParallax()
     {
-        if (CurrentState == State.Selecting || CurrentState == State.InStation) return;
+        if (CurrentState == State.InStation) return;
         if (parallaxMaxOffset <= 0f) return;
+        if (browseCamera == null) return;
 
-        CinemachineCamera activeCam = CurrentState == State.Selected ? selectedCamera : browseCamera;
-        if (activeCam == null) return;
-
-        // For browse state with dolly, read base position from dolly's evaluated transform
-        if (CurrentState == State.Browsing)
-            _basePosition = activeCam.transform.position;
+        _basePosition = browseCamera.transform.position;
 
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
         float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
@@ -631,17 +502,13 @@ public class ApartmentManager : MonoBehaviour
         nx = Mathf.Clamp(nx, -1f, 1f);
         ny = Mathf.Clamp(ny, -1f, 1f);
 
-        Transform camT = activeCam.transform;
+        Transform camT = browseCamera.transform;
         Vector3 targetOffset = (camT.right * -nx + camT.up * -ny) * parallaxMaxOffset;
 
         _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
             Time.deltaTime * parallaxSmoothing);
 
-        // Apply parallax offset — works in both Browse and Selected states
-        if (CurrentState == State.Browsing)
-            camT.position += _currentParallaxOffset; // add on top of dolly position
-        else if (CurrentState == State.Selected)
-            camT.position = _basePosition + _currentParallaxOffset;
+        camT.position += _currentParallaxOffset;
     }
 
     // ──────────────────────────────────────────────────────────────

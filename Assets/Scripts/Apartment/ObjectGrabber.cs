@@ -19,11 +19,14 @@ public class ObjectGrabber : MonoBehaviour
 
     [Header("Grid Snap")]
     [Tooltip("Grid cell size in world units (X/Z).")]
-    [SerializeField] private float gridSize = 0.5f;
+    [SerializeField] private float gridSize = 0.1f;
 
-    [Header("Rotation")]
-    [Tooltip("Degrees rotated per scroll tick.")]
+    [Header("Scroll Behavior")]
+    [Tooltip("Degrees rotated per scroll tick (MMB + scroll).")]
     [SerializeField] private float rotationStep = 15f;
+
+    [Tooltip("World units of depth change per scroll tick.")]
+    [SerializeField] private float depthStep = 0.3f;
 
     [Header("Raycast")]
     [Tooltip("Layer mask for placeable objects.")]
@@ -39,6 +42,7 @@ public class ObjectGrabber : MonoBehaviour
     // Inline InputActions (same pattern as MarkerController)
     private InputAction _mousePosition;
     private InputAction _mouseClick;
+    private InputAction _middleClickAction;
     private InputAction _gridToggle;
     private InputAction _scrollAction;
 
@@ -48,6 +52,7 @@ public class ObjectGrabber : MonoBehaviour
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;
+    private float _grabDepth;
 
     // Shadow preview
     private GameObject _shadowGO;
@@ -63,6 +68,7 @@ public class ObjectGrabber : MonoBehaviour
 
         _mousePosition = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
         _mouseClick = new InputAction("MouseClick", InputActionType.Button, "<Mouse>/leftButton");
+        _middleClickAction = new InputAction("MiddleClick", InputActionType.Button, "<Mouse>/middleButton");
         _gridToggle = new InputAction("GridToggle", InputActionType.Button, "<Keyboard>/g");
         _scrollAction = new InputAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
 
@@ -73,6 +79,7 @@ public class ObjectGrabber : MonoBehaviour
     {
         _mousePosition.Enable();
         _mouseClick.Enable();
+        _middleClickAction.Enable();
         _gridToggle.Enable();
         _scrollAction.Enable();
     }
@@ -81,6 +88,7 @@ public class ObjectGrabber : MonoBehaviour
     {
         _mousePosition.Disable();
         _mouseClick.Disable();
+        _middleClickAction.Disable();
         _gridToggle.Disable();
         _scrollAction.Disable();
     }
@@ -109,11 +117,11 @@ public class ObjectGrabber : MonoBehaviour
                 Place();
         }
 
-        // Update grab target, scroll rotation, and shadow while holding
+        // Update grab target, scroll input, and shadow while holding
         if (_held != null)
         {
             UpdateGrabTarget();
-            UpdateScrollRotation();
+            UpdateScrollInput();
             UpdateShadow();
         }
     }
@@ -159,6 +167,7 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb = placeable.GetComponent<Rigidbody>();
         _heldRb.useGravity = false;
         _grabTarget = _heldRb.worldCenterOfMass;
+        _grabDepth = Vector3.Dot(_heldRb.worldCenterOfMass - cam.transform.position, cam.transform.forward);
 
         placeable.OnPickedUp();
         ShowShadow(true);
@@ -202,8 +211,9 @@ public class ObjectGrabber : MonoBehaviour
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        // Project cursor onto plane perpendicular to camera forward (same as GrabPull)
-        var plane = new Plane(-cam.transform.forward, _heldRb.worldCenterOfMass);
+        // Project cursor onto plane at _grabDepth distance along camera forward
+        Vector3 planePoint = cam.transform.position + cam.transform.forward * _grabDepth;
+        var plane = new Plane(-cam.transform.forward, planePoint);
         if (plane.Raycast(ray, out float enter))
             _grabTarget = ray.GetPoint(enter);
     }
@@ -238,11 +248,22 @@ public class ObjectGrabber : MonoBehaviour
         return bestPos;
     }
 
-    private void UpdateScrollRotation()
+    private void UpdateScrollInput()
     {
         float scroll = _scrollAction.ReadValue<float>();
-        if (Mathf.Abs(scroll) > 0.01f)
+        if (Mathf.Abs(scroll) < 0.01f) return;
+
+        if (_middleClickAction.IsPressed())
+        {
+            // MMB + scroll → rotate
             _held.transform.Rotate(Vector3.up, rotationStep * Mathf.Sign(scroll), Space.World);
+        }
+        else
+        {
+            // Scroll alone → adjust grab depth
+            _grabDepth += Mathf.Sign(scroll) * depthStep;
+            _grabDepth = Mathf.Max(0.5f, _grabDepth); // don't let objects go behind camera
+        }
     }
 
     // ── Shadow preview ──────────────────────────────────────────────────

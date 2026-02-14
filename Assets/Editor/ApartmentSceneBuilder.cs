@@ -136,7 +136,7 @@ public static class ApartmentSceneBuilder
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── 11. ApartmentManager + UI ──
-        var apartmentUI = BuildApartmentManager(cameras.browse, cameras.selected, cameras.dolly,
+        var apartmentUI = BuildApartmentManager(cameras.browse, cameras.dolly,
             grabber, areaDefs);
 
         // ── 12. Dating infrastructure (GameClock, DateSessionManager, PhoneController, etc.) ──
@@ -525,7 +525,6 @@ public static class ApartmentSceneBuilder
     private struct CameraRefs
     {
         public CinemachineCamera browse;
-        public CinemachineCamera selected;
         public CinemachineSplineDolly dolly;
     }
 
@@ -550,19 +549,7 @@ public static class ApartmentSceneBuilder
         dolly.CameraPosition = 0f;
         dolly.CameraRotation = CinemachineSplineDolly.RotationMode.Default;
 
-        // Selected camera (starts inactive — positioned per-area by ApartmentManager)
-        var selectedGO = new GameObject("Cam_Selected");
-        selectedGO.transform.SetParent(parent.transform);
-        selectedGO.transform.position = new Vector3(0f, 3.2f, -7.5f);
-        var selected = selectedGO.AddComponent<CinemachineCamera>();
-        var selectedLens = LensSettings.Default;
-        selectedLens.FieldOfView = 48f;
-        selectedLens.NearClipPlane = 0.1f;
-        selectedLens.FarClipPlane = 500f;
-        selected.Lens = selectedLens;
-        selected.Priority = 0;
-
-        return new CameraRefs { browse = browse, selected = selected, dolly = dolly };
+        return new CameraRefs { browse = browse, dolly = dolly };
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -1557,7 +1544,7 @@ public static class ApartmentSceneBuilder
     // ══════════════════════════════════════════════════════════════════
 
     private static GameObject BuildApartmentManager(
-        CinemachineCamera browseCam, CinemachineCamera selectedCam,
+        CinemachineCamera browseCam,
         CinemachineSplineDolly dolly,
         ObjectGrabber grabber, ApartmentAreaDefinition[] areaDefs)
     {
@@ -1580,15 +1567,23 @@ public static class ApartmentSceneBuilder
 
         // Browse hints panel (bottom center)
         var browseHints = CreateUIPanel("BrowseHintsPanel", uiCanvasGO.transform,
-            new Vector2(0f, -200f), new Vector2(500f, 50f),
-            "A / D  Cycle Areas    |    Enter  Select", 16f,
+            new Vector2(0f, -200f), new Vector2(600f, 50f),
+            "< / >  Cycle  |  Enter  Station  |  Click  Interact", 16f,
             new Color(0f, 0f, 0f, 0.5f));
 
-        // Selected hints panel (bottom center)
-        var selectedHints = CreateUIPanel("SelectedHintsPanel", uiCanvasGO.transform,
-            new Vector2(0f, -200f), new Vector2(700f, 50f),
-            "Click  Pick Up / Place / Clean    |    Enter  Station    |    Esc  Back", 16f,
-            new Color(0f, 0f, 0f, 0.5f));
+        // ── Nav buttons (left/right arrows) ──
+        var navLeftBtn = CreateNavButton("NavLeft", uiCanvasGO.transform,
+            new Vector2(-350f, 0f), "\u25C0");
+        var navRightBtn = CreateNavButton("NavRight", uiCanvasGO.transform,
+            new Vector2(350f, 0f), "\u25B6");
+
+        // Wire nav button onClick → ApartmentManager.NavigateLeft / NavigateRight
+        UnityEventTools.AddPersistentListener(
+            navLeftBtn.GetComponent<Button>().onClick,
+            new UnityEngine.Events.UnityAction(manager.NavigateLeft));
+        UnityEventTools.AddPersistentListener(
+            navRightBtn.GetComponent<Button>().onClick,
+            new UnityEngine.Events.UnityAction(manager.NavigateRight));
 
         // ── Wire serialized fields ──
         var so = new SerializedObject(manager);
@@ -1601,7 +1596,6 @@ public static class ApartmentSceneBuilder
 
         // Cameras
         so.FindProperty("browseCamera").objectReferenceValue = browseCam;
-        so.FindProperty("selectedCamera").objectReferenceValue = selectedCam;
         so.FindProperty("browseDolly").objectReferenceValue = dolly;
 
         // Interaction
@@ -1612,7 +1606,6 @@ public static class ApartmentSceneBuilder
         so.FindProperty("areaNameText").objectReferenceValue =
             areaNamePanel.GetComponentInChildren<TMP_Text>();
         so.FindProperty("browseHintsPanel").objectReferenceValue = browseHints;
-        so.FindProperty("selectedHintsPanel").objectReferenceValue = selectedHints;
 
         so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -1620,6 +1613,43 @@ public static class ApartmentSceneBuilder
         uiCanvasGO.SetActive(false);
 
         return uiCanvasGO;
+    }
+
+    private static GameObject CreateNavButton(string name, Transform parent,
+        Vector2 anchoredPos, string label)
+    {
+        var btnGO = new GameObject(name);
+        btnGO.transform.SetParent(parent);
+
+        var rt = btnGO.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(60f, 60f);
+        rt.anchoredPosition = anchoredPos;
+        rt.localScale = Vector3.one;
+
+        var img = btnGO.AddComponent<Image>();
+        img.color = new Color(0f, 0f, 0f, 0.4f);
+
+        btnGO.AddComponent<Button>();
+
+        var textGO = new GameObject("Label");
+        textGO.transform.SetParent(btnGO.transform);
+
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = Vector2.zero;
+        textRT.offsetMax = Vector2.zero;
+        textRT.localScale = Vector3.one;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = 28f;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+
+        return btnGO;
     }
 
     // ══════════════════════════════════════════════════════════════════

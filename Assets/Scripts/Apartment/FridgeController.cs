@@ -86,9 +86,9 @@ public class FridgeController : MonoBehaviour
         if (_state != DoorState.Closed) return;
         if (!_clickAction.WasPressedThisFrame()) return;
 
-        // Only respond during Selected apartment state
+        // Only respond during Browsing apartment state
         if (ApartmentManager.Instance == null) return;
-        if (ApartmentManager.Instance.CurrentState != ApartmentManager.State.Selected)
+        if (ApartmentManager.Instance.CurrentState != ApartmentManager.State.Browsing)
             return;
 
         if (_mainCamera == null) return;

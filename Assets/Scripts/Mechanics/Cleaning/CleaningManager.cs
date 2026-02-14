@@ -157,9 +157,9 @@ public class CleaningManager : MonoBehaviour
     {
         if (_mainCamera == null) return;
 
-        // Only allow cleaning interaction in the Selected apartment state
+        // Only allow cleaning interaction while Browsing the apartment
         if (ApartmentManager.Instance != null
-            && ApartmentManager.Instance.CurrentState != ApartmentManager.State.Selected)
+            && ApartmentManager.Instance.CurrentState != ApartmentManager.State.Browsing)
         {
             SetToolVisual(Vector3.zero, false);
             _hoveredSurface = null;

@@ -85,9 +85,9 @@ public class OutfitSelector : MonoBehaviour
         if (_isOpen) return;
         if (!_clickAction.WasPressedThisFrame()) return;
 
-        // Only during Selected apartment state
+        // Only during Browsing apartment state
         if (ApartmentManager.Instance == null) return;
-        if (ApartmentManager.Instance.CurrentState != ApartmentManager.State.Selected)
+        if (ApartmentManager.Instance.CurrentState != ApartmentManager.State.Browsing)
             return;
 
         if (_mainCamera == null) _mainCamera = Camera.main;
