@@ -276,9 +276,54 @@ public class PlaceableObject : MonoBehaviour
 
         if (!inView)
         {
-            Debug.Log($"[PlaceableObject] {name} out of camera view after drop — respawning.");
-            Respawn();
+            // Place on nearest surface instead of raw respawn
+            var nearest = FindNearestSurface(transform.position);
+            if (nearest != null)
+            {
+                var hit = nearest.ProjectOntoSurface(transform.position);
+                float halfY = 0f;
+                var col = GetComponent<Collider>();
+                if (col != null)
+                    halfY = Mathf.Abs(Vector3.Dot(col.bounds.extents, hit.surfaceNormal.normalized));
+
+                Vector3 pos = hit.worldPosition + hit.surfaceNormal * halfY;
+                Quaternion rot = nearest.IsVertical
+                    ? Quaternion.LookRotation(-hit.surfaceNormal, Vector3.up)
+                    : transform.rotation;
+
+                Debug.Log($"[PlaceableObject] {name} out of view after drop — placed on {nearest.name}.");
+                OnPlaced(nearest, false, pos, rot);
+            }
+            else
+            {
+                Debug.Log($"[PlaceableObject] {name} out of view, no surface found — respawning.");
+                Respawn();
+            }
         }
+    }
+
+    private PlacementSurface FindNearestSurface(Vector3 worldPos)
+    {
+        var all = FindObjectsByType<PlacementSurface>(FindObjectsSortMode.None);
+        PlacementSurface best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (var surface in all)
+        {
+            if (surface == null) continue;
+            // Skip walls for non-wallmount objects
+            if (surface.IsVertical && !canWallMount) continue;
+
+            Vector3 clamped = surface.ClampToSurface(worldPos);
+            float dist = (clamped - worldPos).sqrMagnitude;
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = surface;
+            }
+        }
+
+        return best;
     }
 
     // ── Safety: Placement validation timer ────────────────────────────
