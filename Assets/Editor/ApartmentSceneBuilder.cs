@@ -27,6 +27,7 @@ public static class ApartmentSceneBuilder
     private const string FridgeLayerName = "Fridge";
     private const string PlantsLayerName = "Plants";
     private const string GlassLayerName = "Glass";
+    private const string SurfacesLayerName = "Surfaces";
 
     // ─── Station Group Positions ─────────────────────────────────
     private static readonly Vector3 BookcaseStationPos  = new Vector3(-6.3f, 0f, 3.0f);
@@ -69,6 +70,7 @@ public static class ApartmentSceneBuilder
         int fridgeLayer = EnsureLayer(FridgeLayerName);
         int plantsLayer = EnsureLayer(PlantsLayerName);
         int glassLayer = EnsureLayer(GlassLayerName);
+        int surfacesLayer = EnsureLayer(SurfacesLayerName);
 
         // ── 1. Lighting ──
         var lightGO = new GameObject("Directional Light");
@@ -120,19 +122,20 @@ public static class ApartmentSceneBuilder
         // ── 9. Area SOs (Kitchen, Living Room, Cozy Corner) ──
         var areaDefs = BuildAreaDefinitions();
 
-        // ── 10. ObjectGrabber ──
+        // ── 10. Placement surfaces (tables + walls) ──
+        BuildPlacementSurfaces(furnitureRefs, surfacesLayer);
+        BuildWallSurfaces(surfacesLayer);
+
+        // ── 10b. Wall placeables (paintings, diploma) ──
+        BuildWallPlaceables(placeableLayer);
+
+        // ── 10c. ObjectGrabber ──
         var grabberGO = new GameObject("ObjectGrabber");
         var grabber = grabberGO.AddComponent<ObjectGrabber>();
         var grabberSO = new SerializedObject(grabber);
         grabberSO.FindProperty("placeableLayer").intValue = 1 << placeableLayer;
-
-        // Wire placement surfaces
-        var allSurfaces = BuildPlacementSurfaces(furnitureRefs);
-        var surfacesProp = grabberSO.FindProperty("surfaces");
-        surfacesProp.arraySize = allSurfaces.Length;
-        for (int i = 0; i < allSurfaces.Length; i++)
-            surfacesProp.GetArrayElementAtIndex(i).objectReferenceValue = allSurfaces[i];
-
+        grabberSO.FindProperty("surfaceLayer").intValue = 1 << surfacesLayer;
+        grabberSO.FindProperty("gridSize").floatValue = 0.2f;
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── 11. ApartmentManager + UI ──
@@ -463,30 +466,141 @@ public static class ApartmentSceneBuilder
     // Placement Surfaces
     // ══════════════════════════════════════════════════════════════════
 
-    private static PlacementSurface[] BuildPlacementSurfaces(FurnitureRefs refs)
+    private static void BuildPlacementSurfaces(FurnitureRefs refs, int surfacesLayer)
     {
-        var surfaces = new PlacementSurface[2];
+        // Coffee table surface (horizontal)
+        AddSurface(refs.coffeeTable, new Bounds(
+            Vector3.zero, new Vector3(1.0f, 0.1f, 0.6f)),
+            PlacementSurface.SurfaceAxis.Up, surfacesLayer);
 
-        // Coffee table surface
-        surfaces[0] = AddSurface(refs.coffeeTable, new Bounds(
-            Vector3.zero, new Vector3(1.0f, 0.1f, 0.6f)));
+        // Kitchen table surface (horizontal)
+        AddSurface(refs.kitchenTable, new Bounds(
+            Vector3.zero, new Vector3(1.2f, 0.1f, 0.8f)),
+            PlacementSurface.SurfaceAxis.Up, surfacesLayer);
 
-        // Kitchen table surface
-        surfaces[1] = AddSurface(refs.kitchenTable, new Bounds(
-            Vector3.zero, new Vector3(1.2f, 0.1f, 0.8f)));
-
-        return surfaces;
+        // Kitchen counter surface (horizontal)
+        // Counter_Top is at (-4, 0.85, -5.2), scale (3, 0.08, 0.7)
+        var counterTop = GameObject.Find("Counter_Top");
+        if (counterTop != null)
+        {
+            AddSurface(counterTop, new Bounds(
+                Vector3.zero, new Vector3(3.0f, 0.1f, 0.7f)),
+                PlacementSurface.SurfaceAxis.Up, surfacesLayer);
+        }
     }
 
-    private static PlacementSurface AddSurface(GameObject surfaceGO, Bounds localBounds)
+    private static PlacementSurface AddSurface(GameObject surfaceGO, Bounds localBounds,
+        PlacementSurface.SurfaceAxis axis, int layer)
     {
         var surface = surfaceGO.AddComponent<PlacementSurface>();
 
         var so = new SerializedObject(surface);
         so.FindProperty("localBounds").boundsValue = localBounds;
+        so.FindProperty("normalAxis").enumValueIndex = (int)axis;
+        so.FindProperty("surfaceLayerIndex").intValue = layer;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         return surface;
+    }
+
+    private static void BuildWallSurfaces(int surfacesLayer)
+    {
+        var parent = new GameObject("WallSurfaces");
+
+        // Living room back wall (facing -Z into room)
+        var lrWall = new GameObject("WallSurface_LivingRoom");
+        lrWall.transform.SetParent(parent.transform);
+        lrWall.transform.position = new Vector3(-4.5f, 1.8f, 5.9f);
+        lrWall.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // forward faces -Z (into room)
+        AddSurface(lrWall, new Bounds(
+            Vector3.zero, new Vector3(3.0f, 2.0f, 0.05f)),
+            PlacementSurface.SurfaceAxis.Forward, surfacesLayer);
+
+        // Kitchen side wall (facing +Z into room)
+        var kitchenWall = new GameObject("WallSurface_Kitchen");
+        kitchenWall.transform.SetParent(parent.transform);
+        kitchenWall.transform.position = new Vector3(-5.5f, 1.5f, -5.5f);
+        kitchenWall.transform.rotation = Quaternion.identity; // forward faces +Z (into room)
+        AddSurface(kitchenWall, new Bounds(
+            Vector3.zero, new Vector3(2.0f, 1.5f, 0.05f)),
+            PlacementSurface.SurfaceAxis.Forward, surfacesLayer);
+
+        Debug.Log("[ApartmentSceneBuilder] Built 2 wall surfaces.");
+    }
+
+    private static void BuildWallPlaceables(int placeableLayer)
+    {
+        var parent = new GameObject("WallPlaceables");
+
+        // ── Living room paintings ──
+        CreateWallPlaceable("Painting_Flowers", parent.transform,
+            new Vector3(-5.0f, 2.2f, 5.85f), new Vector3(0.5f, 0.35f, 0.03f),
+            new Color(0.6f, 0.4f, 0.5f), placeableLayer,
+            Quaternion.Euler(0f, 180f, 0f), // face into room
+            "Painting");
+
+        CreateWallPlaceable("Painting_Sunset", parent.transform,
+            new Vector3(-3.8f, 2.0f, 5.85f), new Vector3(0.4f, 0.3f, 0.03f),
+            new Color(0.8f, 0.5f, 0.3f), placeableLayer,
+            Quaternion.Euler(0f, 180f, 0f),
+            "Painting");
+
+        // ── Kitchen diploma ──
+        CreateWallPlaceable("Diploma_Floristry", parent.transform,
+            new Vector3(-5.0f, 1.8f, -5.45f), new Vector3(0.3f, 0.22f, 0.02f),
+            new Color(0.9f, 0.88f, 0.8f), placeableLayer,
+            Quaternion.identity, // face +Z into room
+            "Diploma");
+
+        Debug.Log("[ApartmentSceneBuilder] Built 3 wall placeables (2 paintings, 1 diploma).");
+    }
+
+    private static GameObject CreateWallPlaceable(string name, Transform parent,
+        Vector3 position, Vector3 scale, Color color, int layer,
+        Quaternion wallRotation, string reactableTag)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = name;
+        go.transform.SetParent(parent);
+        go.transform.position = position;
+        go.transform.localScale = scale;
+        go.transform.rotation = wallRotation;
+        go.layer = layer;
+        go.isStatic = false;
+
+        var rend = go.GetComponent<Renderer>();
+        if (rend != null)
+        {
+            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                   ?? Shader.Find("Standard"));
+            mat.color = color;
+            rend.sharedMaterial = mat;
+        }
+
+        var rb = go.AddComponent<Rigidbody>();
+        rb.mass = 0.5f;
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
+        var placeable = go.AddComponent<PlaceableObject>();
+        var placeableSO = new SerializedObject(placeable);
+        placeableSO.FindProperty("canWallMount").boolValue = true;
+        placeableSO.FindProperty("crookedAngleRange").floatValue = 12f;
+        placeableSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Apply crooked offset
+        Vector3 wallNormal = wallRotation * Vector3.forward;
+        placeable.ApplyCrookedOffset(wallNormal);
+
+        // Add ReactableTag for date reactions
+        var tag = go.AddComponent<ReactableTag>();
+        var tagSO = new SerializedObject(tag);
+        var tagsProp = tagSO.FindProperty("tags");
+        tagsProp.arraySize = 1;
+        tagsProp.GetArrayElementAtIndex(0).stringValue = reactableTag;
+        tagSO.ApplyModifiedPropertiesWithoutUndo();
+
+        return go;
     }
 
     // ══════════════════════════════════════════════════════════════════
