@@ -51,6 +51,8 @@ public class ObjectGrabber : MonoBehaviour
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;
+    private float _fallbackDepth;
+    private RigidbodyConstraints _originalConstraints;
 
     // Surface tracking
     private PlacementSurface _currentSurface;
@@ -103,7 +105,6 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (!_isEnabled) return;
 
-        // Toggle grid snap
         if (_gridToggle.WasPressedThisFrame())
         {
             _gridSnap = !_gridSnap;
@@ -118,7 +119,6 @@ public class ObjectGrabber : MonoBehaviour
                 Place();
         }
 
-        // Update grab target, scroll input, and shadow while holding
         if (_held != null)
         {
             UpdateGrabTarget();
@@ -131,7 +131,7 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (_held == null || _heldRb == null) return;
 
-        // Tether snap-back: teleport if too far from grab target
+        // Tether snap-back
         if (Vector3.Distance(_heldRb.position, _grabTarget) > maxTetherDistance)
         {
             _heldRb.position = _grabTarget;
@@ -175,6 +175,15 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb.isKinematic = false;
         _grabTarget = _heldRb.worldCenterOfMass;
 
+        // Store depth for floating fallback when cursor isn't over a surface
+        _fallbackDepth = Vector3.Dot(
+            _heldRb.worldCenterOfMass - cam.transform.position,
+            cam.transform.forward);
+
+        // Lock rotation so collisions don't spin the object
+        _originalConstraints = _heldRb.constraints;
+        _heldRb.constraints = _originalConstraints | RigidbodyConstraints.FreezeRotation;
+
         _currentSurface = placeable.LastPlacedSurface;
         _lastValidSurface = _currentSurface;
         _wallRotation = 0f;
@@ -201,11 +210,9 @@ public class ObjectGrabber : MonoBehaviour
             ? _currentSurface.SnapToGrid(hitResult.worldPosition, gridSize)
             : hitResult.worldPosition;
 
-        // Offset along surface normal so object sits ON the surface
         float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
         pos += hitResult.surfaceNormal * halfExtent;
 
-        // Compute rotation
         Quaternion rot;
         if (_currentSurface.IsVertical)
         {
@@ -217,7 +224,10 @@ public class ObjectGrabber : MonoBehaviour
             rot = _held.transform.rotation;
         }
 
+        // Restore constraints before placement configures the rigidbody
+        _heldRb.constraints = _originalConstraints;
         _heldRb.linearVelocity = Vector3.zero;
+
         _held.OnPlaced(_currentSurface, _gridSnap, pos, rot);
         _held = null;
         _heldRb = null;
@@ -227,7 +237,7 @@ public class ObjectGrabber : MonoBehaviour
         ShowShadow(false);
     }
 
-    // ── Grab target (surface raycast) ────────────────────────────────
+    // ── Grab target (surface raycast with depth-plane fallback) ──────
 
     private void UpdateGrabTarget()
     {
@@ -237,16 +247,8 @@ public class ObjectGrabber : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
         {
             var surface = hit.collider.GetComponentInParent<PlacementSurface>();
-            if (surface != null)
+            if (surface != null && (!surface.IsVertical || _held.CanWallMount))
             {
-                // Skip vertical surfaces for non-wallmount objects
-                if (surface.IsVertical && !_held.CanWallMount)
-                {
-                    _currentSurface = null;
-                    _isOnWall = false;
-                    return;
-                }
-
                 _currentSurface = surface;
                 _lastValidSurface = surface;
                 _isOnWall = surface.IsVertical;
@@ -261,7 +263,11 @@ public class ObjectGrabber : MonoBehaviour
 
                 _grabTarget = pos;
 
-                // Preview wall alignment
+                // Track depth so fallback stays smooth if cursor leaves surface
+                _fallbackDepth = Vector3.Dot(
+                    _grabTarget - cam.transform.position,
+                    cam.transform.forward);
+
                 if (_isOnWall)
                     _held.AlignToWall(hitResult.surfaceNormal, _wallRotation);
 
@@ -269,9 +275,14 @@ public class ObjectGrabber : MonoBehaviour
             }
         }
 
-        // No surface hit — keep last grab target (object clings to last position)
+        // No valid surface — float at fallback depth following cursor
         _currentSurface = null;
         _isOnWall = false;
+
+        Vector3 planePoint = cam.transform.position + cam.transform.forward * _fallbackDepth;
+        var plane = new Plane(-cam.transform.forward, planePoint);
+        if (plane.Raycast(ray, out float enter))
+            _grabTarget = ray.GetPoint(enter);
     }
 
     // ── Scroll input ─────────────────────────────────────────────────
@@ -283,12 +294,11 @@ public class ObjectGrabber : MonoBehaviour
 
         if (_isOnWall)
         {
-            // On wall: scroll adjusts rotation (straighten/tilt)
             _wallRotation += rotationStep * Mathf.Sign(scroll);
         }
         else
         {
-            // On table: scroll rotates around Y
+            // On table or floating: rotate around Y
             _held.transform.Rotate(Vector3.up, rotationStep * Mathf.Sign(scroll), Space.World);
         }
     }
@@ -301,7 +311,6 @@ public class ObjectGrabber : MonoBehaviour
         if (col == null) return 0f;
 
         Vector3 extents = col.bounds.extents;
-        // Project extents onto normal direction
         return Mathf.Abs(Vector3.Dot(extents, normal.normalized));
     }
 
@@ -315,7 +324,6 @@ public class ObjectGrabber : MonoBehaviour
         var mf = _shadowGO.AddComponent<MeshFilter>();
         _shadowRenderer = _shadowGO.AddComponent<MeshRenderer>();
 
-        // Procedural quad
         var mesh = new Mesh { name = "ShadowQuad" };
         mesh.vertices = new[]
         {
@@ -333,7 +341,6 @@ public class ObjectGrabber : MonoBehaviour
         mesh.RecalculateNormals();
         mf.sharedMesh = mesh;
 
-        // Procedural soft-circle texture
         int texSize = 32;
         var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
         tex.filterMode = FilterMode.Bilinear;
@@ -357,8 +364,8 @@ public class ObjectGrabber : MonoBehaviour
         _shadowMat = new Material(shader);
         _shadowMat.mainTexture = tex;
         _shadowMat.color = s_shadowValid;
-        _shadowMat.SetFloat("_Surface", 1f); // Transparent
-        _shadowMat.SetFloat("_Blend", 0f);   // Alpha
+        _shadowMat.SetFloat("_Surface", 1f);
+        _shadowMat.SetFloat("_Blend", 0f);
         _shadowMat.renderQueue = 3000;
         _shadowRenderer.sharedMaterial = _shadowMat;
         _shadowRenderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -383,7 +390,6 @@ public class ObjectGrabber : MonoBehaviour
         bool valid = false;
         Vector3 shadowPos = _heldRb.position + Vector3.down * 0.5f;
         Quaternion shadowRot = Quaternion.identity;
-        Vector3 surfaceNormal = Vector3.up;
 
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
         {
@@ -393,8 +399,7 @@ public class ObjectGrabber : MonoBehaviour
                 bool canPlace = !surface.IsVertical || _held.CanWallMount;
                 var hitResult = surface.ProjectOntoSurface(hit.point);
                 shadowPos = hitResult.worldPosition + hitResult.surfaceNormal * 0.01f;
-                surfaceNormal = hitResult.surfaceNormal;
-                shadowRot = Quaternion.FromToRotation(Vector3.up, surfaceNormal);
+                shadowRot = Quaternion.FromToRotation(Vector3.up, hitResult.surfaceNormal);
                 valid = canPlace;
             }
         }
@@ -403,7 +408,6 @@ public class ObjectGrabber : MonoBehaviour
         _shadowGO.transform.position = shadowPos;
         _shadowGO.transform.rotation = shadowRot;
 
-        // Scale to match held object's footprint
         var col = _held.GetComponent<Collider>();
         if (col != null)
         {
@@ -425,7 +429,9 @@ public class ObjectGrabber : MonoBehaviour
 
         if (!enabled && _held != null)
         {
-            // Force-drop onto nearest surface instead of letting it fall into void
+            // Restore rotation constraints before configuring rigidbody
+            _heldRb.constraints = _originalConstraints;
+
             var nearest = FindNearestSurface(_heldRb.position);
             if (nearest != null)
             {
@@ -441,7 +447,6 @@ public class ObjectGrabber : MonoBehaviour
             }
             else
             {
-                // No surface found — just drop with gravity
                 _heldRb.useGravity = true;
                 _heldRb.linearVelocity = Vector3.zero;
                 _held.OnDropped();

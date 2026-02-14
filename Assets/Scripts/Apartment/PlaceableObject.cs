@@ -32,8 +32,10 @@ public class PlaceableObject : MonoBehaviour
     private Renderer _renderer;
     private Material _instanceMat;
     private Color _originalColor;
-    private int _originalRenderQueue;
-    private int _originalZTest;
+
+    // Silhouette overlay (see-through when occluded)
+    private Material _silhouetteMat;
+    private GameObject _silhouetteGO;
 
     private Vector3 _lastValidPosition;
     private Quaternion _lastValidRotation;
@@ -52,10 +54,18 @@ public class PlaceableObject : MonoBehaviour
             _instanceMat = new Material(_renderer.sharedMaterial);
             _renderer.material = _instanceMat;
             _originalColor = _instanceMat.color;
-            _originalRenderQueue = _instanceMat.renderQueue;
-            _originalZTest = _instanceMat.HasProperty("_ZTest")
-                ? _instanceMat.GetInt("_ZTest")
-                : (int)CompareFunction.LessEqual;
+        }
+
+        // Build silhouette material once (reused each pickup)
+        var silShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (silShader == null) silShader = Shader.Find("Sprites/Default");
+        if (silShader != null)
+        {
+            _silhouetteMat = new Material(silShader);
+            _silhouetteMat.SetFloat("_Surface", 1f); // Transparent
+            _silhouetteMat.SetFloat("_Blend", 0f);   // Alpha
+            _silhouetteMat.SetInt("_ZTest", (int)CompareFunction.Greater);
+            _silhouetteMat.renderQueue = 3100;
         }
 
         _lastValidPosition = transform.position;
@@ -91,7 +101,6 @@ public class PlaceableObject : MonoBehaviour
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
 
-            // Wall objects respawn kinematic
             if (_lastPlacedSurface != null && _lastPlacedSurface.IsVertical)
             {
                 _rb.isKinematic = true;
@@ -110,8 +119,9 @@ public class PlaceableObject : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_instanceMat != null)
-            Destroy(_instanceMat);
+        if (_instanceMat != null) Destroy(_instanceMat);
+        if (_silhouetteMat != null) Destroy(_silhouetteMat);
+        if (_silhouetteGO != null) Destroy(_silhouetteGO);
     }
 
     // ── Grabbed / Released ────────────────────────────────────────────
@@ -125,18 +135,15 @@ public class PlaceableObject : MonoBehaviour
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
 
-        // Detach from wall if needed
         if (_rb != null)
             _rb.isKinematic = false;
 
-        // X-ray outline: draw on top of everything while held
+        // Brightness boost on main material
         if (_instanceMat != null)
-        {
             _instanceMat.color = _originalColor * heldBrightness;
-            _instanceMat.renderQueue = 4000;
-            if (_instanceMat.HasProperty("_ZTest"))
-                _instanceMat.SetInt("_ZTest", (int)CompareFunction.Always);
-        }
+
+        // Spawn silhouette child mesh (renders only where occluded by furniture)
+        BuildSilhouette();
 
         if (_validationCoroutine != null)
         {
@@ -179,7 +186,6 @@ public class PlaceableObject : MonoBehaviour
             }
         }
 
-        // Start placement validation for horizontal surfaces
         if (surface != null && !surface.IsVertical)
         {
             if (_validationCoroutine != null) StopCoroutine(_validationCoroutine);
@@ -190,33 +196,89 @@ public class PlaceableObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by ObjectGrabber if placement is cancelled (e.g. area exit).
+    /// Called by ObjectGrabber if placement is cancelled (e.g. area exit without a surface).
     /// </summary>
     public void OnDropped()
     {
         CurrentState = State.Resting;
         RestoreMaterial();
+
+        // Check if we ended up somewhere the player can't see
+        StartCoroutine(CheckVisibilityAfterDrop());
+
         Debug.Log($"[PlaceableObject] {name} dropped.");
     }
 
     // ── Wall alignment ────────────────────────────────────────────────
 
-    /// <summary>
-    /// Orient this object flat against a wall. Called each frame by ObjectGrabber while held over a wall.
-    /// </summary>
     public void AlignToWall(Vector3 wallNormal, float rotationAngle)
     {
         transform.rotation = Quaternion.LookRotation(-wallNormal, Vector3.up)
             * Quaternion.AngleAxis(rotationAngle, Vector3.forward);
     }
 
-    /// <summary>
-    /// Apply a random crooked rotation. Called once at spawn by the scene builder.
-    /// </summary>
     public void ApplyCrookedOffset(Vector3 wallNormal)
     {
         float angle = Random.Range(-crookedAngleRange, crookedAngleRange);
         transform.rotation *= Quaternion.AngleAxis(angle, -wallNormal);
+    }
+
+    // ── Silhouette overlay (see-through furniture) ────────────────────
+
+    private void BuildSilhouette()
+    {
+        if (_silhouetteMat == null) return;
+
+        var mf = GetComponent<MeshFilter>();
+        if (mf == null || mf.sharedMesh == null) return;
+
+        // Tint: washed-out version of object color at 35% opacity
+        _silhouetteMat.color = new Color(
+            _originalColor.r * 0.5f + 0.5f,
+            _originalColor.g * 0.5f + 0.5f,
+            _originalColor.b * 0.5f + 0.5f,
+            0.35f);
+
+        _silhouetteGO = new GameObject("Silhouette");
+        _silhouetteGO.transform.SetParent(transform, false);
+
+        var silMF = _silhouetteGO.AddComponent<MeshFilter>();
+        silMF.sharedMesh = mf.sharedMesh;
+
+        var silRend = _silhouetteGO.AddComponent<MeshRenderer>();
+        silRend.sharedMaterial = _silhouetteMat;
+        silRend.shadowCastingMode = ShadowCastingMode.Off;
+        silRend.receiveShadows = false;
+    }
+
+    private void DestroySilhouette()
+    {
+        if (_silhouetteGO != null)
+        {
+            Destroy(_silhouetteGO);
+            _silhouetteGO = null;
+        }
+    }
+
+    // ── Safety: drop visibility check ─────────────────────────────────
+
+    private IEnumerator CheckVisibilityAfterDrop()
+    {
+        yield return new WaitForSeconds(2f);
+
+        if (CurrentState != State.Resting) yield break;
+
+        var cam = Camera.main;
+        if (cam == null) yield break;
+
+        Vector3 vp = cam.WorldToViewportPoint(transform.position);
+        bool inView = vp.z > 0f && vp.x > -0.1f && vp.x < 1.1f && vp.y > -0.1f && vp.y < 1.1f;
+
+        if (!inView)
+        {
+            Debug.Log($"[PlaceableObject] {name} out of camera view after drop — respawning.");
+            Respawn();
+        }
     }
 
     // ── Safety: Placement validation timer ────────────────────────────
@@ -228,7 +290,6 @@ public class PlaceableObject : MonoBehaviour
         if (CurrentState != State.Placed || _lastPlacedSurface == null)
             yield break;
 
-        // Check if still within surface bounds or close to last valid position
         bool onSurface = _lastPlacedSurface.ContainsWorldPoint(transform.position);
         bool nearValid = Vector3.Distance(transform.position, _lastValidPosition) < 0.5f;
 
@@ -274,10 +335,9 @@ public class PlaceableObject : MonoBehaviour
 
     private void RestoreMaterial()
     {
-        if (_instanceMat == null) return;
-        _instanceMat.color = _originalColor;
-        _instanceMat.renderQueue = _originalRenderQueue;
-        if (_instanceMat.HasProperty("_ZTest"))
-            _instanceMat.SetInt("_ZTest", _originalZTest);
+        if (_instanceMat != null)
+            _instanceMat.color = _originalColor;
+
+        DestroySilhouette();
     }
 }
