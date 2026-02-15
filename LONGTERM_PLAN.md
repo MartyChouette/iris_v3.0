@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 12, 2026
+**Last Updated:** February 14, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -115,6 +115,24 @@
 - [x] Added `Phone`, `DrinkMaking` to `StationType` enum
 - [x] Added `MoodMachine` + `MoodMachineProfile` for scene-wide mood system (light, ambient, fog, rain)
 
+### Phase 11: Apartment Polish & Camera Preset System (Done)
+- [x] **Perfume one-click puff** — Single click spray replaces multi-step pick-up/hold/spray flow. Bottle stays on shelf.
+- [x] **Picture position drift fix** — Skip `ApplyCrookedOffset()` when `PlaceableLayout.json` exists (only apply crook on first build)
+- [x] **UI layout spread** — Repositioned browse UI to screen edges (area name top-center, hints bottom-center, nav arrows at edges)
+- [x] **Prep timer panel** — Countdown UI (top-right) wired to DayPhaseManager's `_prepTimerPanel` and `_prepTimerText`
+- [x] **Hover highlight** — `InteractableHighlight` now toggle-based (off by default), `ApartmentManager` hover raycast drives highlight on/off
+- [x] **NavMesh crash fix** — `DateCharacterController.Initialize()` uses `NavMesh.SamplePosition` + `Warp` before any `SetDestination`
+- [x] **Camera preset system** — Full A/B/C camera comparison tool:
+  - `CameraPresetDefinition` SO (namespace `Iris.Apartment`) with per-area configs
+  - `CameraTestController` — keyboard shortcuts (1/2/3, backtick), smooth lerp transitions
+  - Full `LensSettings` per area (FOV, near/far, dutch, ortho, physical camera properties)
+  - `VolumeProfile` per area for post-processing (color grading, bloom, vignette, DoF)
+  - Light intensity multiplier + color tint per area (applied on top of MoodMachine base)
+  - Mouse parallax works on top of preset cameras via `ApartmentManager.SetPresetBase()`
+  - `CameraPresetDefinitionEditor` — Scene View frustum gizmos + "Capture" button per area
+  - SOs preserved across rebuilds (only write defaults on first creation)
+- [x] **Two-layer lighting architecture** — MoodMachine (player actions → global mood) + preset system (per-camera VolumeProfile + light overrides)
+
 ---
 
 ## Vertical Slice Remaining Work
@@ -140,7 +158,7 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 - [x] **Perfume spray** — PerfumeBottle + MoodMachine (working, changes hue/filter/weather/environment SFX)
 - [x] **Coffee table books** — BookInteractionManager (working)
 - [x] **Trinkets on shelf** — DrawerController + TrinketVolume (working)
-- [ ] **Preparation timer** — Countdown after selecting newspaper ad. Call phone to skip, or doorbell rings when time expires.
+- [x] **Preparation timer UI** — Countdown panel (top-right) wired to DayPhaseManager. Auto-shows/hides on prep start/end.
 - [ ] **Outfit selection** — New system. Player chooses outfit during prep. Date judges in Phase 1.
 - [ ] **Perfect pour mechanic** — Shared one-shot click-timing game used by both plant watering and drink making. Single click at right moment for perfect pour.
 - [ ] **Pre-spawned mess** — Day 1 must start with bottles, wine stains, possible blood stains, trash from previous night. ApartmentStainSpawner needs "day 1 heavy" preset.
@@ -157,7 +175,22 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 - [ ] **Phase 3 living room flow** — Date walks to living room with drink. Investigates: coffee table book, vinyl playing, perfume scent, shelf trinket, apartment cleanliness.
 - [ ] **Phase pass/fail gating** — If Phase 1 or 2 fails badly, date can leave early.
 
-### VS-4: Deferred
+### VS-4: Nema's Life Systems (Design Doc: DESIGN_NEMA_LIFE.md)
+
+- [ ] **Calendar system** — Physical in-apartment calendar (wall/desk), clickable, shows current day, scheduled dates, completed dates, disappeared dates. `CalendarData` backing store.
+- [ ] **Time gates** — Mail arrives at 4pm daily, dates don't start until 8pm. GameClock expansion.
+- [ ] **Mail system** — Daily 4pm delivery via GameClock event. Contains: newspaper, letters from dates, bills/flyers, missing person notices (escalating horror). SO-driven content pool.
+- [ ] **Nema placeholder** — Visible player character in kitchen and living room. Contextual idle animations (leaning on counter, sitting on couch, swaying to music, reading mail). `NemaController` with room-aware state machine. All meshes/animations swappable via SO/prefab references.
+- [ ] **Disco ball** — Clickable ceiling object, triggers Nema dance animation at current position. Particle effects (mirror reflections). Swappable mesh + particles.
+- [ ] **Date disappearance mechanic** — Dates that go "very well" (high affection) → person vanishes. Stops appearing in newspaper, doesn't respond to calls. No explicit violence — horror through implication.
+- [ ] **Souvenir system** — After date disappears, one of their items appears in apartment (necklace, ring, hat, sweater, watch, scarf). Persistent across days. Accumulates. New dates react to them via ReactableTag ("whose ring is that?"). `SouvenirDefinition` SO per item.
+- [ ] **Repeat dates** — Same person returns, remembers previous visits. Relationship deepens. Eventually they might disappear too.
+- [ ] **Convention demo mode** — 7-minute timer, curated slice of the full loop.
+- [ ] **Feedback system** — Easy player feedback collection when time limits expire (convention demo end, demo end).
+- [ ] **Save game system** — Full game state persistence: calendar day, date history, knowledge, item states, souvenirs, apartment layout. Auto-save on sleep, manual save from pause. `GameSaveData` JSON container. Existing `SaveManager` extended or replaced.
+- [ ] **Player knowledge system (dating journal)** — Per-date, per-phase insight unlocks. Even if rejected at Phase 2, player keeps Phase 1+2 knowledge. Reveals DatePreferences progressively. Journal UI accessible from apartment (notebook/phone). Tracks: preferences learned, times encountered, highest phase reached, disappeared status. Integrates with ReactionEvaluator + DateEndScreen.
+
+### VS-5: Deferred
 
 - [ ] **Bathroom mirror scene** — Separate scene with hard cut. 3D Nema, mirror, name entry. Will be added later.
 - [ ] **Scissors cutting mechanic** — Code preserved (`ScissorsCutController`, `CutPathEvaluator`, `NewspaperSurface`). Not active in vertical slice.
@@ -208,7 +241,8 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 | UI | FlowerGradingUI, FlowerHUD_GameplayFeedback, FlowerHUD_DebugTelemetry |
 | Audio | AudioManager, JointBreakAudioResponder |
 | Data | IdealFlowerDefinition, FlowerTypeDefinition, DatePersonalDefinition, DatePreferences |
-| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, MoodMachine, FridgeController, ApartmentAreaDefinition |
+| Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, MoodMachine, FridgeController, ApartmentAreaDefinition, InteractableHighlight |
+| Camera Presets | CameraPresetDefinition, CameraTestController, CameraPresetDefinitionEditor (gizmos + capture) |
 | Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController |
 | Dating Loop | DateSessionManager (3-phase), GameClock, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, DayPhaseManager |
 | Newspaper | NewspaperManager (button-based), NewspaperAdSlot, DayManager, NewspaperSurface |

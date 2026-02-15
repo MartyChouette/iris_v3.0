@@ -66,7 +66,8 @@ Players tend to flowers by cutting stems, removing withered leaves, and arrangin
 | **UI** | Gameplay feedback HUD, grading screen, debug telemetry |
 | **Audio** | Singleton AudioManager with spatial SFX |
 | **Data** | ScriptableObject flower definitions for data-driven scoring |
-| **Apartment Hub** | Spline-dolly camera browsing 7 areas, station enter/exit FSM |
+| **Apartment Hub** | Spline-dolly camera browsing 7 areas, station enter/exit FSM, hover highlights |
+| **Camera Presets** | A/B/C camera comparison: LensSettings, VolumeProfile, light overrides, editor gizmos |
 | **Bookcase Station** | 4-row bookcase with books, perfumes, drawers, trinkets, coffee table books |
 | **Dating Loop** | Full dating lifecycle: calendar, newspaper ads, phone, 3D date character, affection tracking, grading |
 | **Mechanic Prototypes** | 10 standalone minigame prototypes (drink making, cleaning, watering, etc.) |
@@ -85,6 +86,27 @@ ApartmentManager FSM:
 **7 Areas:** Entrance, Kitchen (NewspaperDating), Living Room (Bookcase), Watering Nook, Flower Room, Cozy Corner (RecordPlayer), Bathroom (MirrorMakeup)
 
 Stations with their own Cinemachine cameras skip the intermediate Selected state and transition directly from Browsing to InStation.
+
+## Camera Preset System
+
+Compare different visual directions per apartment area. Each preset stores per-area camera position, rotation, full Cinemachine `LensSettings`, a URP `VolumeProfile`, and light overrides.
+
+```
+Two-layer lighting stack:
+
+Player actions → MoodMachine → base light / ambient / fog / rain  (global mood)
+                                    ↓
+Camera preset  → VolumeProfile  → color grading, bloom, DoF, vignette  (per-camera look)
+               → light multipliers → intensity / color tint on top of mood
+```
+
+**Controls:** Press `1`/`2`/`3` to switch presets, backtick to clear. UI buttons in bottom-left corner.
+
+**Editor tools:**
+- Select a `CameraPresetDefinition` SO → frustum wireframes appear in Scene View
+- "Capture Scene View → [Area]" button grabs position, rotation, and full lens settings
+
+**LensSettings** includes physical camera properties (aperture, focus distance, ISO, shutter speed, sensor size, anamorphism). All properties lerp smoothly during transitions.
 
 ## Dating Loop
 
@@ -146,7 +168,7 @@ Assets/
 │   ├── Fluids/             # Sap particle system, decal pooling
 │   ├── UI/                 # HUD, grading, debug telemetry
 │   ├── Tags/               # Marker components (StemPieceMarker, etc.)
-│   ├── Apartment/          # Hub system: ApartmentManager, StationRoot, MoodMachine
+│   ├── Apartment/          # Hub system: ApartmentManager, StationRoot, MoodMachine, CameraPresets
 │   ├── Bookcase/           # BookInteractionManager, BookVolume, PerfumeBottle, etc.
 │   ├── Dating/             # Dating loop: DateSessionManager, GameClock, PhoneController, etc.
 │   └── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
@@ -157,5 +179,7 @@ Assets/
 ## Development
 
 See [LONGTERM_PLAN.md](LONGTERM_PLAN.md) for the project roadmap and remaining work items.
+
+See [DEV_JOURNAL.md](DEV_JOURNAL.md) for session-by-session development notes.
 
 See [CODEBASE_QUALITY_ASSESSMENT.md](CODEBASE_QUALITY_ASSESSMENT.md) for the full technical audit.

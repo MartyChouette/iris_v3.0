@@ -26,7 +26,7 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 2 are
 
 ## Code Conventions
 
-- **No namespace** on most scripts. Exceptions: `Iris.Camera`, `DynamicMeshCutter`
+- **No namespace** on most scripts. Exceptions: `Iris.Camera`, `Iris.Apartment`, `DynamicMeshCutter`
 - **Private fields:** `_camelCase`. **Static fields:** `s_camelCase`
 - **Singletons:** Scene-scoped pattern (no DontDestroyOnLoad) — see `HorrorCameraManager`. Exception: `AudioManager` uses DontDestroyOnLoad
 - **ScriptableObjects:** `[CreateAssetMenu]`, `[Header]`/`[Tooltip]` on all fields
@@ -118,6 +118,31 @@ Station_{Name}/
 - `CleaningManager` — Only responds in Selected apartment state (stain interaction gating)
 - `ObjectGrabber` — Spring-damper pick-and-place, active in Selected state
 - `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
+- `InteractableHighlight` — Toggle-based rim light on hover (off by default, driven by `ApartmentManager` hover raycast)
+
+### Camera Preset System
+
+Compare different visual directions per area. Each preset is a `CameraPresetDefinition` SO (namespace `Iris.Apartment`).
+
+```
+CameraPresetDefinition (SO)
+  └─ AreaCameraConfig[] (per area, index-matched to ApartmentManager.areas[])
+       ├─ position, rotation          ← camera transform
+       ├─ LensSettings lens           ← FOV, near/far, dutch, ortho, physical camera
+       ├─ VolumeProfile               ← URP post-processing (color grading, bloom, DoF)
+       ├─ lightIntensityMultiplier    ← scales directional light on top of MoodMachine
+       └─ lightColorTint              ← tints directional light on top of MoodMachine
+```
+
+**Two-layer lighting:**
+- Layer 1: `MoodMachine` (player actions → global mood → base light/ambient/fog/rain)
+- Layer 2: Camera preset (`VolumeProfile` + light overrides → per-camera visual treatment)
+
+**Controls:** `1`/`2`/`3` apply presets, backtick clears. Mouse parallax works on top of presets.
+
+**Editor:** Select a preset SO → frustum wireframes in Scene View + "Capture Scene View" buttons per area.
+
+**Files:** `CameraPresetDefinition.cs`, `CameraTestController.cs`, `CameraPresetDefinitionEditor.cs`
 
 ### Scene Builder Position Config
 

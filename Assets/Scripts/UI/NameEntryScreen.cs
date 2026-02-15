@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
@@ -58,6 +59,7 @@ public class NameEntryScreen : MonoBehaviour
     private InputAction _navLeft;
     private InputAction _navRight;
     private InputAction _selectAction;
+    private InputAction _mouseClick;
 
     // ── Runtime state ──────────────────────────────────────────────
     private int _cursorRow;
@@ -107,6 +109,9 @@ public class NameEntryScreen : MonoBehaviour
         _selectAction = new InputAction("GridSelect", InputActionType.Button);
         _selectAction.AddBinding("<Keyboard>/enter");
         _selectAction.AddBinding("<Keyboard>/space");
+
+        _mouseClick = new InputAction("GridClick", InputActionType.Button);
+        _mouseClick.AddBinding("<Mouse>/leftButton");
     }
 
     private void OnEnable()
@@ -116,6 +121,7 @@ public class NameEntryScreen : MonoBehaviour
         _navLeft.Enable();
         _navRight.Enable();
         _selectAction.Enable();
+        _mouseClick.Enable();
     }
 
     private void OnDisable()
@@ -125,6 +131,7 @@ public class NameEntryScreen : MonoBehaviour
         _navLeft.Disable();
         _navRight.Disable();
         _selectAction.Disable();
+        _mouseClick.Disable();
     }
 
     private void OnDestroy()
@@ -190,8 +197,72 @@ public class NameEntryScreen : MonoBehaviour
             changed = true;
         }
 
+        // Mouse click on grid cell
+        if (_mouseClick.WasPressedThisFrame() && _gridText != null)
+        {
+            int linkIndex = TMP_TextUtilities.FindIntersectingLink(
+                _gridText, Input.mousePosition, null);
+            if (linkIndex >= 0)
+            {
+                var linkInfo = _gridText.textInfo.linkInfo[linkIndex];
+                string linkId = linkInfo.GetLinkID();
+                if (TryParseCellLink(linkId, out int row, out int col))
+                {
+                    _cursorRow = row;
+                    _cursorCol = col;
+                    HandleSelect();
+                    changed = true;
+                }
+            }
+        }
+
+        // Mouse hover — move cursor to hovered cell
+        if (_gridText != null)
+        {
+            int hoverLink = TMP_TextUtilities.FindIntersectingLink(
+                _gridText, Input.mousePosition, null);
+            if (hoverLink >= 0)
+            {
+                var linkInfo = _gridText.textInfo.linkInfo[hoverLink];
+                string linkId = linkInfo.GetLinkID();
+                if (TryParseCellLink(linkId, out int row, out int col))
+                {
+                    if (row != _cursorRow || col != _cursorCol)
+                    {
+                        _cursorRow = row;
+                        _cursorCol = col;
+                        changed = true;
+                    }
+                }
+            }
+        }
+
         if (changed)
             RefreshDisplay();
+    }
+
+    private bool TryParseCellLink(string linkId, out int row, out int col)
+    {
+        row = 0;
+        col = 0;
+        // Format: "r{row}c{col}" for char cells, "cmd{index}" for commands
+        if (linkId.StartsWith("cmd"))
+        {
+            row = CharRows; // command row
+            if (int.TryParse(linkId.Substring(3), out int cmd))
+            {
+                col = cmd * 3;
+                return true;
+            }
+            return false;
+        }
+        if (linkId.Length >= 4 && linkId[0] == 'r' && linkId[2] == 'c')
+        {
+            if (int.TryParse(linkId.Substring(1, 1), out row) &&
+                int.TryParse(linkId.Substring(3), out col))
+                return true;
+        }
+        return false;
     }
 
     // ── Selection ──────────────────────────────────────────────────
@@ -294,7 +365,7 @@ public class NameEntryScreen : MonoBehaviour
 
         var sb = new System.Text.StringBuilder();
 
-        // Character rows
+        // Character rows — each cell wrapped in <link> for mouse detection
         for (int r = 0; r < CharRows; r++)
         {
             for (int c = 0; c < GridCols; c++)
@@ -302,11 +373,12 @@ public class NameEntryScreen : MonoBehaviour
                 char ch = _charGrid[r][c];
                 string display = ch == ' ' ? "  " : ch.ToString();
                 bool selected = (r == _cursorRow && c == _cursorCol);
+                string linkId = $"r{r}c{c}";
 
                 if (selected)
-                    sb.Append($"<color={_highlightHex}>[{display}]</color>");
+                    sb.Append($"<link={linkId}><color={_highlightHex}>[{display}]</color></link>");
                 else
-                    sb.Append($" {display} ");
+                    sb.Append($"<link={linkId}> {display} </link>");
 
                 if (c < GridCols - 1)
                     sb.Append(' ');
@@ -316,16 +388,17 @@ public class NameEntryScreen : MonoBehaviour
 
         sb.Append('\n');
 
-        // Command row
+        // Command row — each command wrapped in <link>
         int cmdSelected = (_cursorRow >= CharRows) ? GetCommandIndex() : -1;
 
         string[] cmdLabels = { "BACK", "SPACE", "OK" };
         for (int i = 0; i < 3; i++)
         {
+            string cmdLink = $"cmd{i}";
             if (i == cmdSelected)
-                sb.Append($"<color={_highlightHex}>[ {cmdLabels[i]} ]</color>");
+                sb.Append($"<link={cmdLink}><color={_highlightHex}>[ {cmdLabels[i]} ]</color></link>");
             else
-                sb.Append($"<color={_dimHex}>  {cmdLabels[i]}  </color>");
+                sb.Append($"<link={cmdLink}><color={_dimHex}>  {cmdLabels[i]}  </color></link>");
 
             if (i < 2)
                 sb.Append("    ");
@@ -351,6 +424,7 @@ public class NameEntryScreen : MonoBehaviour
         _navLeft.Disable();
         _navRight.Disable();
         _selectAction.Disable();
+        _mouseClick.Disable();
 
         // Hide entire screen (disables OnEnable re-enabling inputs too)
         if (_canvas != null)

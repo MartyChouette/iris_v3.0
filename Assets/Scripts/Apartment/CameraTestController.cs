@@ -1,18 +1,28 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using Unity.Cinemachine;
 using UnityEngine.UI;
+using Iris.Apartment;
 
 public class CameraTestController : MonoBehaviour
 {
     [Header("Presets")]
-    [Tooltip("Camera presets to compare (V1, V2, V3).")]
+    [Tooltip("Camera presets to compare (V1–V9).")]
     [SerializeField] private CameraPresetDefinition[] presets;
 
     [Header("References")]
     [SerializeField] private CinemachineCamera browseCamera;
     [SerializeField] private CinemachineBrain brain;
     [SerializeField] private ApartmentManager apartmentManager;
+
+    [Header("Post-Processing")]
+    [Tooltip("Volume component whose profile is swapped per preset.")]
+    [SerializeField] private Volume presetVolume;
+
+    [Header("Lighting")]
+    [Tooltip("Directional light to apply preset tint/intensity multipliers to.")]
+    [SerializeField] private Light directionalLight;
 
     [Header("Transition")]
     [SerializeField, Range(1f, 15f)] private float transitionSpeed = 5f;
@@ -27,47 +37,54 @@ public class CameraTestController : MonoBehaviour
     private int _activePresetIndex = -1;
     private Vector3 _targetPos;
     private Quaternion _targetRot;
-    private float _targetFovOrOrtho;
-    private bool _targetIsOrtho;
+    private LensSettings _targetLens;
     private bool _isTransitioning;
 
-    // Current lerped values (for smooth transition before handing to ApartmentManager)
     private Vector3 _currentPos;
     private Quaternion _currentRot;
 
-    // Keyboard shortcuts
-    private InputAction _preset1Action;
-    private InputAction _preset2Action;
-    private InputAction _preset3Action;
+    // Light baseline
+    private float _baseLightIntensity;
+    private Color _baseLightColor;
+    private bool _baseLightCaptured;
+
+    // Volume baseline
+    private VolumeProfile _baseVolumeProfile;
+
+    // Keyboard: 1-9 for presets, backtick to clear
+    private InputAction[] _presetActions;
     private InputAction _clearPresetAction;
 
     private void Awake()
     {
-        _preset1Action = new InputAction("Preset1", InputActionType.Button, "<Keyboard>/1");
-        _preset2Action = new InputAction("Preset2", InputActionType.Button, "<Keyboard>/2");
-        _preset3Action = new InputAction("Preset3", InputActionType.Button, "<Keyboard>/3");
-        _clearPresetAction = new InputAction("ClearPreset", InputActionType.Button, "<Keyboard>/backquote");
+        // Create actions for keys 1-9
+        _presetActions = new InputAction[9];
+        for (int i = 0; i < 9; i++)
+        {
+            int keyNum = i + 1;
+            _presetActions[i] = new InputAction($"Preset{keyNum}", InputActionType.Button,
+                $"<Keyboard>/{keyNum}");
+        }
+        _clearPresetAction = new InputAction("ClearPreset", InputActionType.Button,
+            "<Keyboard>/backquote");
     }
 
     private void OnEnable()
     {
-        _preset1Action.Enable();
-        _preset2Action.Enable();
-        _preset3Action.Enable();
+        for (int i = 0; i < _presetActions.Length; i++)
+            _presetActions[i].Enable();
         _clearPresetAction.Enable();
     }
 
     private void OnDisable()
     {
-        _preset1Action.Disable();
-        _preset2Action.Disable();
-        _preset3Action.Disable();
+        for (int i = 0; i < _presetActions.Length; i++)
+            _presetActions[i].Disable();
         _clearPresetAction.Disable();
     }
 
     private void Start()
     {
-        // Wire button onClick at runtime (persistent listeners break on int params)
         if (presetButtons != null)
         {
             for (int i = 0; i < presetButtons.Length; i++)
@@ -77,6 +94,16 @@ public class CameraTestController : MonoBehaviour
                 presetButtons[i].onClick.AddListener(() => ApplyPreset(index));
             }
         }
+
+        if (directionalLight != null)
+        {
+            _baseLightIntensity = directionalLight.intensity;
+            _baseLightColor = directionalLight.color;
+            _baseLightCaptured = true;
+        }
+
+        if (presetVolume != null)
+            _baseVolumeProfile = presetVolume.profile;
     }
 
     public void ApplyPreset(int index)
@@ -111,21 +138,35 @@ public class CameraTestController : MonoBehaviour
         SetBrainOrthoOverride(false);
         UpdateButtonHighlights();
 
+        if (presetVolume != null && _baseVolumeProfile != null)
+            presetVolume.profile = _baseVolumeProfile;
+
+        if (directionalLight != null && _baseLightCaptured)
+        {
+            directionalLight.intensity = _baseLightIntensity;
+            directionalLight.color = _baseLightColor;
+        }
+
         if (apartmentManager != null)
             apartmentManager.ClearPresetBase();
     }
 
     private void ApplyForArea(CameraPresetDefinition preset, int areaIndex, bool immediate)
     {
-        if (preset.areaConfigs == null || areaIndex >= preset.areaConfigs.Length) return;
+        if (preset == null || preset.areaConfigs == null || areaIndex >= preset.areaConfigs.Length) return;
 
         var config = preset.areaConfigs[areaIndex];
         _targetPos = config.position;
         _targetRot = Quaternion.Euler(config.rotation);
-        _targetFovOrOrtho = config.fovOrOrthoSize;
-        _targetIsOrtho = preset.orthographic;
+        _targetLens = config.lens;
 
-        SetBrainOrthoOverride(true);
+        bool isOrtho = _targetLens.ModeOverride == LensSettings.OverrideModes.Orthographic;
+        SetBrainOrthoOverride(isOrtho);
+
+        if (presetVolume != null && config.volumeProfile != null)
+            presetVolume.profile = config.volumeProfile;
+
+        ApplyLightOverrides(config);
 
         if (immediate)
         {
@@ -137,7 +178,6 @@ public class CameraTestController : MonoBehaviour
         }
         else
         {
-            // Start lerp from current camera position
             if (browseCamera != null)
             {
                 _currentPos = browseCamera.transform.position;
@@ -147,13 +187,33 @@ public class CameraTestController : MonoBehaviour
         }
     }
 
+    private void ApplyLightOverrides(AreaCameraConfig config)
+    {
+        if (directionalLight == null || !_baseLightCaptured) return;
+
+        float multiplier = config.lightIntensityMultiplier > 0f
+            ? config.lightIntensityMultiplier
+            : 1f;
+        directionalLight.intensity = _baseLightIntensity * multiplier;
+
+        Color tint = config.lightColorTint.a > 0f
+            ? config.lightColorTint
+            : Color.white;
+        directionalLight.color = _baseLightColor * tint;
+    }
+
     private void Update()
     {
-        // Keyboard shortcuts
-        if (_preset1Action.WasPressedThisFrame()) ApplyPreset(0);
-        else if (_preset2Action.WasPressedThisFrame()) ApplyPreset(1);
-        else if (_preset3Action.WasPressedThisFrame()) ApplyPreset(2);
-        else if (_clearPresetAction.WasPressedThisFrame()) ClearPreset();
+        // Keyboard shortcuts: 1-9 for presets, backtick to clear
+        for (int i = 0; i < _presetActions.Length; i++)
+        {
+            if (_presetActions[i].WasPressedThisFrame() && i < (presets != null ? presets.Length : 0))
+            {
+                ApplyPreset(i);
+                break;
+            }
+        }
+        if (_clearPresetAction.WasPressedThisFrame()) ClearPreset();
 
         if (!_isTransitioning || _activePresetIndex < 0 || browseCamera == null) return;
 
@@ -162,13 +222,29 @@ public class CameraTestController : MonoBehaviour
         _currentPos = Vector3.Lerp(_currentPos, _targetPos, step);
         _currentRot = Quaternion.Slerp(_currentRot, _targetRot, step);
 
-        // Lerp FOV / ortho size
+        // Lerp lens values
         var lens = browseCamera.Lens;
-        if (_targetIsOrtho)
-            lens.OrthographicSize = Mathf.Lerp(lens.OrthographicSize, _targetFovOrOrtho, step);
+        bool isOrtho = _targetLens.ModeOverride == LensSettings.OverrideModes.Orthographic;
+        if (isOrtho)
+            lens.OrthographicSize = Mathf.Lerp(lens.OrthographicSize, _targetLens.OrthographicSize, step);
         else
-            lens.FieldOfView = Mathf.Lerp(lens.FieldOfView, _targetFovOrOrtho, step);
-        ApplyLensMode(ref lens);
+            lens.FieldOfView = Mathf.Lerp(lens.FieldOfView, _targetLens.FieldOfView, step);
+        lens.NearClipPlane = Mathf.Lerp(lens.NearClipPlane, _targetLens.NearClipPlane, step);
+        lens.FarClipPlane = Mathf.Lerp(lens.FarClipPlane, _targetLens.FarClipPlane, step);
+        lens.Dutch = Mathf.Lerp(lens.Dutch, _targetLens.Dutch, step);
+        lens.ModeOverride = _targetLens.ModeOverride;
+
+        // Lerp physical lens properties
+        var phys = lens.PhysicalProperties;
+        var targetPhys = _targetLens.PhysicalProperties;
+        phys.Aperture = Mathf.Lerp(phys.Aperture, targetPhys.Aperture, step);
+        phys.FocusDistance = Mathf.Lerp(phys.FocusDistance, targetPhys.FocusDistance, step);
+        phys.Iso = (int)Mathf.Lerp(phys.Iso, targetPhys.Iso, step);
+        phys.ShutterSpeed = Mathf.Lerp(phys.ShutterSpeed, targetPhys.ShutterSpeed, step);
+        phys.Anamorphism = Mathf.Lerp(phys.Anamorphism, targetPhys.Anamorphism, step);
+        phys.BarrelClipping = Mathf.Lerp(phys.BarrelClipping, targetPhys.BarrelClipping, step);
+        lens.PhysicalProperties = phys;
+
         browseCamera.Lens = lens;
 
         FeedToApartmentManager();
@@ -188,34 +264,34 @@ public class CameraTestController : MonoBehaviour
     private void FeedToApartmentManager()
     {
         if (apartmentManager != null)
-            apartmentManager.SetPresetBase(_currentPos, _currentRot, _targetFovOrOrtho);
+        {
+            float fov = _targetLens.ModeOverride == LensSettings.OverrideModes.Orthographic
+                ? _targetLens.OrthographicSize
+                : _targetLens.FieldOfView;
+            apartmentManager.SetPresetBase(_currentPos, _currentRot, fov);
+        }
     }
 
     private void ApplyLens()
     {
         if (browseCamera == null) return;
-        var lens = browseCamera.Lens;
-        if (_targetIsOrtho)
-            lens.OrthographicSize = _targetFovOrOrtho;
-        else
-            lens.FieldOfView = _targetFovOrOrtho;
-        ApplyLensMode(ref lens);
-        browseCamera.Lens = lens;
+        browseCamera.Lens = _targetLens;
     }
 
-    private void ApplyLensMode(ref LensSettings lens)
-    {
-        lens.ModeOverride = _targetIsOrtho
-            ? LensSettings.OverrideModes.Orthographic
-            : LensSettings.OverrideModes.None;
-    }
-
-    private void SetBrainOrthoOverride(bool enable)
+    private void SetBrainOrthoOverride(bool ortho)
     {
         if (brain == null) return;
         var lmo = brain.LensModeOverride;
-        lmo.Enabled = enable;
+        lmo.Enabled = ortho;
+        if (ortho)
+            lmo.DefaultMode = LensSettings.OverrideModes.Orthographic;
         brain.LensModeOverride = lmo;
+
+        // Cinemachine doesn't always reset the output camera's projection
+        // when the override is disabled — force it explicitly
+        var cam = brain.GetComponent<UnityEngine.Camera>();
+        if (cam != null)
+            cam.orthographic = ortho;
     }
 
     private void UpdateButtonHighlights()

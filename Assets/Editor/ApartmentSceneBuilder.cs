@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Events;
 using Unity.Cinemachine;
 using TMPro;
 using UnityEngine.UI;
+using Iris.Apartment;
 
 /// <summary>
 /// Editor utility that programmatically builds the apartment hub scene with
@@ -2018,27 +2020,71 @@ public static class ApartmentSceneBuilder
         if (!AssetDatabase.IsValidFolder(soDir))
             AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Apartment");
 
-        // ── Preset SOs ──
-        var v1 = CreateCameraPreset("CameraPreset_V1", soDir, "V1 — High Angle", false,
+        // ── Preset SOs (9 presets, keys 1-9) ──
+        var v1 = CreateCameraPreset("CameraPreset_V1", soDir, "V1 — High Angle",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.0f, 3.5f, -3.5f), rotation = new Vector3(35f, 45f, 0f), fovOrOrthoSize = 48f },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 3.5f, 2.0f),   rotation = new Vector3(30f, 60f, 0f), fovOrOrthoSize = 48f },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.0f, 3.5f, -3.5f), rotation = new Vector3(35f, 45f, 0f), lens = MakeLens(48f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 3.5f, 2.0f),   rotation = new Vector3(30f, 60f, 0f), lens = MakeLens(48f) },
             });
 
-        var v2 = CreateCameraPreset("CameraPreset_V2", soDir, "V2 — Low & Wide", false,
+        var v2 = CreateCameraPreset("CameraPreset_V2", soDir, "V2 — Low & Wide",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 1.8f, -5.5f), rotation = new Vector3(15f, 30f, 0f), fovOrOrthoSize = 62f },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-0.5f, 1.8f, 1.0f),  rotation = new Vector3(12f, 50f, 0f), fovOrOrthoSize = 62f },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 1.8f, -5.5f), rotation = new Vector3(15f, 30f, 0f), lens = MakeLens(62f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-0.5f, 1.8f, 1.0f),  rotation = new Vector3(12f, 50f, 0f), lens = MakeLens(62f) },
             });
 
-        var v3 = CreateCameraPreset("CameraPreset_V3", soDir, "V3 — Isometric Ortho", true,
+        var v3 = CreateCameraPreset("CameraPreset_V3", soDir, "V3 — Isometric Ortho",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 6.0f, -4.5f), rotation = new Vector3(55f, 45f, 0f), fovOrOrthoSize = 3.5f },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(1.0f, 6.0f, 2.5f),   rotation = new Vector3(55f, 45f, 0f), fovOrOrthoSize = 3.5f },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 6.0f, -4.5f), rotation = new Vector3(55f, 45f, 0f), lens = MakeLensOrtho(3.5f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(1.0f, 6.0f, 2.5f),   rotation = new Vector3(55f, 45f, 0f), lens = MakeLensOrtho(3.5f) },
             });
+
+        var v4 = CreateCameraPreset("CameraPreset_V4", soDir, "V4 — Overhead",
+            new AreaCameraConfig[]
+            {
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 5.0f, -3.5f), rotation = new Vector3(75f, 0f, 0f), lens = MakeLens(40f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 5.0f, 2.5f),   rotation = new Vector3(75f, 0f, 0f), lens = MakeLens(40f) },
+            });
+
+        var v5 = CreateCameraPreset("CameraPreset_V5", soDir, "V5 — Dutch Tilt",
+            new AreaCameraConfig[]
+            {
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-3.0f, 2.5f, -4.0f), rotation = new Vector3(20f, 40f, 0f), lens = MakeLensDutch(52f, 12f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-1.0f, 2.5f, 1.5f),  rotation = new Vector3(18f, 55f, 0f), lens = MakeLensDutch(52f, -10f) },
+            });
+
+        var v6 = CreateCameraPreset("CameraPreset_V6", soDir, "V6 — Tight Close-Up",
+            new AreaCameraConfig[]
+            {
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 1.5f, -3.0f), rotation = new Vector3(10f, 35f, 0f), lens = MakeLens(32f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 1.5f, 2.0f),   rotation = new Vector3(8f, 50f, 0f),  lens = MakeLens(32f) },
+            });
+
+        var v7 = CreateCameraPreset("CameraPreset_V7", soDir, "V7 — Ultra Wide",
+            new AreaCameraConfig[]
+            {
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.5f, 2.8f, -5.0f), rotation = new Vector3(25f, 35f, 0f), lens = MakeLens(80f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 2.8f, 0.5f),   rotation = new Vector3(22f, 55f, 0f), lens = MakeLens(80f) },
+            });
+
+        var v8 = CreateCameraPreset("CameraPreset_V8", soDir, "V8 — Side Profile",
+            new AreaCameraConfig[]
+            {
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-5.0f, 2.0f, -3.5f), rotation = new Vector3(15f, 90f, 0f), lens = MakeLens(50f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-4.0f, 2.0f, 2.5f),  rotation = new Vector3(12f, 80f, 0f), lens = MakeLens(50f) },
+            });
+
+        var v9 = CreateCameraPreset("CameraPreset_V9", soDir, "V9 — Surveillance",
+            new AreaCameraConfig[]
+            {
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-0.5f, 4.0f, -6.0f), rotation = new Vector3(40f, 20f, 0f), lens = MakeLens(35f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(2.0f, 4.0f, 0.5f),   rotation = new Vector3(42f, -30f, 0f), lens = MakeLens(35f) },
+            });
+
+        var allPresets = new CameraPresetDefinition[] { v1, v2, v3, v4, v5, v6, v7, v8, v9 };
 
         // ── Controller GO ──
         var controllerGO = new GameObject("CameraTestController");
@@ -2055,10 +2101,13 @@ public static class ApartmentSceneBuilder
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
-        string[] labels = { "V1", "V2", "V3" };
-        var buttons = new Button[3];
-        for (int i = 0; i < 3; i++)
+        string[] labels = { "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9" };
+        var buttons = new Button[9];
+        for (int i = 0; i < 9; i++)
         {
+            int col = i % 3;
+            int row = 2 - i / 3; // top row = V1-V3, middle = V4-V6, bottom = V7-V9
+
             var btnGO = new GameObject($"Btn_{labels[i]}");
             btnGO.transform.SetParent(canvasGO.transform);
 
@@ -2066,8 +2115,8 @@ public static class ApartmentSceneBuilder
             rt.anchorMin = new Vector2(0f, 0f);
             rt.anchorMax = new Vector2(0f, 0f);
             rt.pivot = new Vector2(0f, 0f);
-            rt.sizeDelta = new Vector2(70f, 40f);
-            rt.anchoredPosition = new Vector2(20f + i * 80f, 20f);
+            rt.sizeDelta = new Vector2(60f, 32f);
+            rt.anchoredPosition = new Vector2(20f + col * 68f, 20f + row * 38f);
             rt.localScale = Vector3.one;
 
             var img = btnGO.AddComponent<Image>();
@@ -2089,7 +2138,7 @@ public static class ApartmentSceneBuilder
 
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
             tmp.text = labels[i];
-            tmp.fontSize = 20f;
+            tmp.fontSize = 16f;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
 
@@ -2101,18 +2150,32 @@ public static class ApartmentSceneBuilder
         var ctrlSO = new SerializedObject(controller);
 
         var presetsProp = ctrlSO.FindProperty("presets");
-        presetsProp.arraySize = 3;
-        presetsProp.GetArrayElementAtIndex(0).objectReferenceValue = v1;
-        presetsProp.GetArrayElementAtIndex(1).objectReferenceValue = v2;
-        presetsProp.GetArrayElementAtIndex(2).objectReferenceValue = v3;
+        presetsProp.arraySize = allPresets.Length;
+        for (int i = 0; i < allPresets.Length; i++)
+            presetsProp.GetArrayElementAtIndex(i).objectReferenceValue = allPresets[i];
 
         ctrlSO.FindProperty("browseCamera").objectReferenceValue = browseCam;
         ctrlSO.FindProperty("brain").objectReferenceValue = brain;
 
         var btnsProp = ctrlSO.FindProperty("presetButtons");
-        btnsProp.arraySize = 3;
-        for (int i = 0; i < 3; i++)
+        btnsProp.arraySize = buttons.Length;
+        for (int i = 0; i < buttons.Length; i++)
             btnsProp.GetArrayElementAtIndex(i).objectReferenceValue = buttons[i];
+
+        // Create a Volume for preset post-processing swaps
+        var volumeGO = new GameObject("PresetVolume");
+        volumeGO.transform.SetParent(controllerGO.transform);
+        var volume = volumeGO.AddComponent<Volume>();
+        volume.isGlobal = true;
+        volume.weight = 1f;
+        volume.priority = 10; // Above default volume
+        ctrlSO.FindProperty("presetVolume").objectReferenceValue = volume;
+
+        // Wire directional light
+        var dirLightGO = GameObject.Find("Directional Light");
+        if (dirLightGO != null)
+            ctrlSO.FindProperty("directionalLight").objectReferenceValue =
+                dirLightGO.GetComponent<Light>();
 
         // Find ApartmentManager and wire bidirectional references
         var aptManager = Object.FindAnyObjectByType<ApartmentManager>();
@@ -2130,11 +2193,11 @@ public static class ApartmentSceneBuilder
             ctrlSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        Debug.Log("[ApartmentSceneBuilder] CameraTestController wired with 3 presets.");
+        Debug.Log("[ApartmentSceneBuilder] CameraTestController wired with 3 presets + Volume + directional light.");
     }
 
     private static CameraPresetDefinition CreateCameraPreset(
-        string assetName, string directory, string label, bool orthographic,
+        string assetName, string directory, string label,
         AreaCameraConfig[] configs)
     {
         string path = $"{directory}/{assetName}.asset";
@@ -2147,7 +2210,6 @@ public static class ApartmentSceneBuilder
         {
             // Only set defaults on first creation — preserve user edits on rebuild
             def.label = label;
-            def.orthographic = orthographic;
             def.areaConfigs = configs;
             AssetDatabase.CreateAsset(def, path);
         }
@@ -2157,6 +2219,33 @@ public static class ApartmentSceneBuilder
         }
 
         return def;
+    }
+
+    private static LensSettings MakeLens(float fov, float near = 0.3f, float far = 1000f)
+    {
+        var lens = LensSettings.Default;
+        lens.FieldOfView = fov;
+        lens.NearClipPlane = near;
+        lens.FarClipPlane = far;
+        lens.ModeOverride = LensSettings.OverrideModes.None;
+        return lens;
+    }
+
+    private static LensSettings MakeLensOrtho(float orthoSize, float near = 0.3f, float far = 1000f)
+    {
+        var lens = LensSettings.Default;
+        lens.OrthographicSize = orthoSize;
+        lens.NearClipPlane = near;
+        lens.FarClipPlane = far;
+        lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
+        return lens;
+    }
+
+    private static LensSettings MakeLensDutch(float fov, float dutch, float near = 0.3f, float far = 1000f)
+    {
+        var lens = MakeLens(fov, near, far);
+        lens.Dutch = dutch;
+        return lens;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -2173,7 +2262,7 @@ public static class ApartmentSceneBuilder
         var anchorGO = new GameObject("ReadingAnchor");
         anchorGO.transform.SetParent(camGO.transform);
         anchorGO.transform.localPosition = new Vector3(0f, -0.1f, 0.5f);
-        anchorGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        anchorGO.transform.localRotation = Quaternion.identity;
 
         // Title hint UI
         var uiCanvasGO = new GameObject("BookUI_Canvas");

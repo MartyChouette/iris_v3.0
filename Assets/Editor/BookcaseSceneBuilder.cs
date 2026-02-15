@@ -346,7 +346,7 @@ public static class BookcaseSceneBuilder
         var anchorGO = new GameObject("ReadingAnchor");
         anchorGO.transform.SetParent(camGO.transform);
         anchorGO.transform.localPosition = new Vector3(0f, -0.1f, 0.5f);
-        anchorGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        anchorGO.transform.localRotation = Quaternion.identity;
 
         // Inspect anchor — child of camera, slightly closer
         var inspectAnchor = new GameObject("InspectAnchor");
@@ -525,6 +525,9 @@ public static class BookcaseSceneBuilder
 
                 bookGO.AddComponent<InteractableHighlight>();
 
+                // Title text on the spine (front face, visible on shelf)
+                BuildBookSpineTitle(bookGO.transform, title, thickness, bookHeight, bookDepth);
+
                 xCursor += thickness + Random.Range(MinGap, MaxGap);
                 bookIndex++;
             }
@@ -542,11 +545,13 @@ public static class BookcaseSceneBuilder
 
         var canvasGO = new GameObject("PageCanvas");
         canvasGO.transform.SetParent(pagesRoot.transform);
-        canvasGO.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.001f);
-        canvasGO.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        canvasGO.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.02f);
+        canvasGO.transform.localRotation = Quaternion.identity;
 
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 10;
 
         var canvasRT = canvasGO.GetComponent<RectTransform>();
         canvasRT.sizeDelta = new Vector2(900f, 400f);
@@ -592,6 +597,44 @@ public static class BookcaseSceneBuilder
 
         pagesRoot.SetActive(false);
         return pagesRoot;
+    }
+
+    private static void BuildBookSpineTitle(Transform bookTransform, string title, float thickness, float height, float depth)
+    {
+        // Spine title on the front face (-Z), rotated 90° so text reads bottom-to-top
+        var spineCanvas = new GameObject("SpineTitle");
+        spineCanvas.transform.SetParent(bookTransform);
+        spineCanvas.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.0005f);
+        spineCanvas.transform.localRotation = Quaternion.identity;
+
+        var canvas = spineCanvas.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+
+        var canvasRT = spineCanvas.GetComponent<RectTransform>();
+        // Canvas sized to the spine face (width = book thickness, height = book height)
+        canvasRT.sizeDelta = new Vector2(400f, 200f);
+        float canvasScale = height / 400f * 0.9f; // fit to spine height with padding
+        canvasRT.localScale = new Vector3(canvasScale, canvasScale, canvasScale);
+
+        var textGO = new GameObject("Title");
+        textGO.transform.SetParent(spineCanvas.transform);
+
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = new Vector2(4f, 4f);
+        textRT.offsetMax = new Vector2(-4f, -4f);
+        textRT.localScale = Vector3.one;
+        textRT.localRotation = Quaternion.Euler(0f, 0f, 90f); // Rotate text to read bottom-to-top
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = title;
+        tmp.fontSize = 32f;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = new Color(0.95f, 0.92f, 0.85f); // Light text on colored spine
+        tmp.enableWordWrapping = false;
+        tmp.overflowMode = TextOverflowModes.Ellipsis;
     }
 
     // ════════════════════════════════════════════════════════════════════

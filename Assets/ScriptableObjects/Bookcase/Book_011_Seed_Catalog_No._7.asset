@@ -19,5 +19,5 @@ MonoBehaviour:
   - 'Item 12C: Forget-me-nots. Self-explanatory. Plant near things you wish to remember.'
   - 'Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway.'
   spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
-  heightScale: 0.8136025
-  thicknessScale: 0.023542808
+  heightScale: 0.70808697
+  thicknessScale: 0.028158452
