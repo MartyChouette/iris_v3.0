@@ -92,6 +92,7 @@ public class SapDecalSpawner : MonoBehaviour
 
     private void SpawnDecal(Vector3 position, Vector3 normal, float size)
     {
+        if (SapDecalPool.Instance == null) return;
         SapDecal decal = SapDecalPool.Instance.Get();
         if (decal == null) return;
 

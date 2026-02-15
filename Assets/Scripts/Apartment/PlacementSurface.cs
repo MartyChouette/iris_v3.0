@@ -165,6 +165,35 @@ public class PlacementSurface : MonoBehaviour
     public float SurfaceY =>
         transform.TransformPoint(new Vector3(0f, localBounds.center.y + localBounds.extents.y, 0f)).y;
 
+    // ── Static utility ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Find the nearest PlacementSurface to a world position.
+    /// Optionally skip vertical surfaces (for non-wallmount objects).
+    /// </summary>
+    public static PlacementSurface FindNearest(Vector3 worldPos, bool skipVertical = false)
+    {
+        var all = Object.FindObjectsByType<PlacementSurface>(FindObjectsSortMode.None);
+        PlacementSurface best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (var surface in all)
+        {
+            if (surface == null) continue;
+            if (skipVertical && surface.IsVertical) continue;
+
+            Vector3 clamped = surface.ClampToSurface(worldPos);
+            float dist = (clamped - worldPos).sqrMagnitude;
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = surface;
+            }
+        }
+
+        return best;
+    }
+
     // ── Gizmo ────────────────────────────────────────────────────────
 
     private void OnDrawGizmosSelected()

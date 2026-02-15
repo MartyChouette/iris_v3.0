@@ -49,7 +49,15 @@ public class DayManager : MonoBehaviour
 
     private void Start()
     {
-        // Generate day 1 ads
+        // Day 1 is deferred until NameEntryScreen calls BeginDay1()
+    }
+
+    /// <summary>
+    /// Called by NameEntryScreen after the player confirms their name.
+    /// Generates day 1 ads and fires the OnNewNewspaper event.
+    /// </summary>
+    public void BeginDay1()
+    {
         GenerateTodayAds();
         OnNewNewspaper?.Invoke();
     }

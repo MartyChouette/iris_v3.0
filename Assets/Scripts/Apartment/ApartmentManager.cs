@@ -1,14 +1,11 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Splines;
 using Unity.Cinemachine;
-using Unity.Mathematics;
 using TMPro;
 
 public class ApartmentManager : MonoBehaviour
 {
-    public enum State { Browsing, InStation }
+    public enum State { Browsing }
 
     public static ApartmentManager Instance { get; private set; }
 
@@ -20,33 +17,34 @@ public class ApartmentManager : MonoBehaviour
     [SerializeField] private ApartmentAreaDefinition[] areas;
 
     [Header("Cameras")]
-    [Tooltip("Cinemachine camera used for browse vantage (should have CinemachineSplineDolly).")]
+    [Tooltip("Cinemachine camera used for browsing. Controlled directly by ApartmentManager.")]
     [SerializeField] private CinemachineCamera browseCamera;
 
     [Tooltip("CinemachineBrain on the main camera. Auto-found if null.")]
     [SerializeField] private CinemachineBrain brain;
 
-    [Header("Spline Dolly")]
-    [Tooltip("CinemachineSplineDolly on the browse camera. Auto-found if null.")]
-    [SerializeField] private CinemachineSplineDolly browseDolly;
-
-    [Tooltip("Speed of spline-t animation (units per second in normalized space).")]
-    [SerializeField, Range(0.1f, 3f)] private float dollyAnimSpeed = 0.8f;
-
-    [Header("Look-At")]
-    [Tooltip("How fast the camera rotates to face the current area's look-at point.")]
-    [SerializeField, Range(1f, 20f)] private float lookAtSmoothing = 5f;
+    [Header("Transition")]
+    [Tooltip("How fast the camera lerps between area positions (higher = faster).")]
+    [SerializeField, Range(1f, 15f)] private float transitionSpeed = 5f;
 
     [Header("Cursor Parallax")]
     [Tooltip("Maximum camera shift distance toward cursor.")]
-    [SerializeField, Range(0f, 2f)] private float parallaxMaxOffset = 0.3f;
+    [SerializeField, Range(0f, 0.5f)] private float parallaxMaxOffset = 0.05f;
 
     [Tooltip("Smoothing speed for parallax follow.")]
     [SerializeField, Range(1f, 20f)] private float parallaxSmoothing = 8f;
 
+    [Header("World Bounds")]
+    [Tooltip("Objects outside this box are recovered to the nearest surface.")]
+    [SerializeField] private Bounds worldBounds = new Bounds(new Vector3(-3f, 1.5f, 0f), new Vector3(16f, 8f, 20f));
+
     [Header("Interaction")]
     [Tooltip("ObjectGrabber to enable/disable based on state.")]
     [SerializeField] private ObjectGrabber objectGrabber;
+
+    [Header("Camera Test")]
+    [Tooltip("Optional camera preset test controller for A/B/C comparison.")]
+    [SerializeField] private CameraTestController cameraTestController;
 
     [Header("UI")]
     [Tooltip("Panel showing the current area name during browsing.")]
@@ -69,31 +67,39 @@ public class ApartmentManager : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
     private InputAction _navigateLeftAction;
     private InputAction _navigateRightAction;
-    private InputAction _selectAction;
-    private InputAction _cancelAction;
     private InputAction _mousePositionAction;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state
     // ──────────────────────────────────────────────────────────────
     public State CurrentState { get; private set; } = State.Browsing;
+    public bool IsTransitioning => _isTransitioning;
+    public int CurrentAreaIndex => _currentAreaIndex;
 
     private int _currentAreaIndex;
-    private Vector3 _basePosition;
-    private Vector3 _currentParallaxOffset;
-    private Vector3 _currentLookAt;
 
-    // Spline dolly animation
-    private float _currentSplineT;
-    private float _targetSplineT;
-    private bool _isDollyAnimating;
+    // Base camera state (parallax-free, lerped between areas)
+    private Vector3 _basePosition;
+    private Quaternion _baseRotation;
+    private float _baseFOV;
+
+    // Transition targets
+    private Vector3 _targetPosition;
+    private Quaternion _targetRotation;
+    private float _targetFOV;
+    private bool _isTransitioning;
+
+    // Parallax offset (applied on top of base, never fed back)
+    private Vector3 _currentParallaxOffset;
 
     // Browse camera suppression (DayPhaseManager lowers during Morning)
     private bool _browseSuppressed;
 
-    // Station lookup
-    private Dictionary<StationType, StationRoot> _stationLookup;
-    private StationRoot _activeStation;
+    // Preset override (CameraTestController feeds its target here for parallax)
+    private bool _presetOverrideActive;
+
+    // Hover highlight tracking
+    private InteractableHighlight _hoveredHighlight;
 
     private void Awake()
     {
@@ -111,9 +117,6 @@ public class ApartmentManager : MonoBehaviour
         if (brain == null)
             Debug.LogError("[ApartmentManager] No CinemachineBrain found in scene.");
 
-        if (browseDolly == null && browseCamera != null)
-            browseDolly = browseCamera.GetComponent<CinemachineSplineDolly>();
-
         // Inline InputActions
         _navigateLeftAction = new InputAction("NavLeft", InputActionType.Button);
         _navigateLeftAction.AddBinding("<Keyboard>/a");
@@ -123,12 +126,6 @@ public class ApartmentManager : MonoBehaviour
         _navigateRightAction.AddBinding("<Keyboard>/d");
         _navigateRightAction.AddBinding("<Keyboard>/rightArrow");
 
-        _selectAction = new InputAction("Select", InputActionType.Button);
-        _selectAction.AddBinding("<Keyboard>/enter");
-        _selectAction.AddBinding("<Keyboard>/space");
-
-        _cancelAction = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
-
         _mousePositionAction = new InputAction("MousePosition", InputActionType.Value,
             "<Mouse>/position");
     }
@@ -137,8 +134,6 @@ public class ApartmentManager : MonoBehaviour
     {
         _navigateLeftAction.Enable();
         _navigateRightAction.Enable();
-        _selectAction.Enable();
-        _cancelAction.Enable();
         _mousePositionAction.Enable();
     }
 
@@ -146,8 +141,6 @@ public class ApartmentManager : MonoBehaviour
     {
         _navigateLeftAction.Disable();
         _navigateRightAction.Disable();
-        _selectAction.Disable();
-        _cancelAction.Disable();
         _mousePositionAction.Disable();
     }
 
@@ -159,30 +152,15 @@ public class ApartmentManager : MonoBehaviour
             return;
         }
 
-        // Build station lookup from all StationRoot components in scene
-        _stationLookup = new Dictionary<StationType, StationRoot>();
-        var stations = FindObjectsByType<StationRoot>(FindObjectsSortMode.None);
-        foreach (var station in stations)
-        {
-            if (station.Type != StationType.None && !_stationLookup.ContainsKey(station.Type))
-            {
-                _stationLookup[station.Type] = station;
-                station.Deactivate(); // Ensure all start deactivated
-            }
-        }
+        PlaceableObject.SetWorldBounds(worldBounds);
 
         if (objectGrabber != null)
             objectGrabber.SetEnabled(true);
 
         _currentAreaIndex = 0;
-        _currentSplineT = areas[0].splinePosition;
-        _targetSplineT = _currentSplineT;
-        _currentLookAt = areas[0].lookAtPosition;
-        ApplyDollyPosition(_currentSplineT, hardCut: true);
+        ApplyCameraImmediate(areas[0]);
 
-        // Restore smooth blend after the initial hard cut — otherwise the
-        // brain stays on Cut(0) and the first priority-based camera switch
-        // (Morning read camera → Exploration browse camera) snaps instead of blending.
+        // Restore smooth blend after the initial hard cut
         if (brain != null)
         {
             brain.DefaultBlend = new CinemachineBlendDefinition(
@@ -201,7 +179,6 @@ public class ApartmentManager : MonoBehaviour
     /// Called by DayPhaseManager to raise or lower the browse camera.
     /// During Morning phase the browse camera should be suppressed so
     /// the read camera wins without a competing priority-20 camera.
-    /// Also prevents ApplyDollyPosition from re-raising the browse camera.
     /// </summary>
     public void SetBrowseCameraActive(bool active)
     {
@@ -212,80 +189,77 @@ public class ApartmentManager : MonoBehaviour
 
     private void Update()
     {
-        switch (CurrentState)
-        {
-            case State.Browsing:
-                UpdateDollyAnimation();
-                HandleBrowsingInput();
-                break;
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
+            return;
 
-            case State.InStation:
-                HandleInStationInput();
-                break;
-        }
-
+        UpdateTransition();
+        HandleBrowsingInput();
         ApplyParallax();
+        UpdateHoverHighlight();
     }
 
     // ──────────────────────────────────────────────────────────────
-    // Spline Dolly Animation
+    // Camera Transition (pos/rot/FOV lerp)
     // ──────────────────────────────────────────────────────────────
 
-    private void ApplyDollyPosition(float t, bool hardCut)
+    private void ApplyCameraImmediate(ApartmentAreaDefinition area)
     {
-        if (browseDolly != null)
-        {
-            browseDolly.CameraPosition = t;
-        }
+        if (browseCamera == null) return;
 
-        if (brain != null)
-        {
-            if (hardCut)
-            {
-                brain.DefaultBlend = new CinemachineBlendDefinition(
-                    CinemachineBlendDefinition.Styles.Cut, 0f);
-            }
-        }
+        _basePosition = area.cameraPosition;
+        _baseRotation = Quaternion.Euler(area.cameraRotation);
+        _baseFOV = area.cameraFOV;
+
+        _targetPosition = _basePosition;
+        _targetRotation = _baseRotation;
+        _targetFOV = _baseFOV;
+        _isTransitioning = false;
+        _currentParallaxOffset = Vector3.zero;
+
+        // Write to transform
+        var t = browseCamera.transform;
+        t.position = _basePosition;
+        t.rotation = _baseRotation;
+
+        var lens = browseCamera.Lens;
+        lens.FieldOfView = _baseFOV;
+        browseCamera.Lens = lens;
 
         if (!_browseSuppressed)
             browseCamera.Priority = PriorityActive;
+
+        // Hard cut for initial position
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.Cut, 0f);
+        }
     }
 
-    private void UpdateDollyAnimation()
+    private void UpdateTransition()
     {
-        if (!_isDollyAnimating) return;
+        if (cameraTestController != null && cameraTestController.ActivePresetIndex >= 0) return;
+        if (!_isTransitioning) return;
+        if (browseCamera == null) return;
 
-        float delta = ShortestSplineDelta(_currentSplineT, _targetSplineT);
-        if (Mathf.Abs(delta) < 0.001f)
+        float step = transitionSpeed * Time.deltaTime;
+
+        _basePosition = Vector3.Lerp(_basePosition, _targetPosition, step);
+        _baseRotation = Quaternion.Slerp(_baseRotation, _targetRotation, step);
+        _baseFOV = Mathf.Lerp(_baseFOV, _targetFOV, step);
+
+        // Check if close enough to stop
+        bool posClose = (_basePosition - _targetPosition).sqrMagnitude < 0.0001f;
+        bool rotClose = Quaternion.Angle(_baseRotation, _targetRotation) < 0.05f;
+        bool fovClose = Mathf.Abs(_baseFOV - _targetFOV) < 0.05f;
+
+        if (posClose && rotClose && fovClose)
         {
-            _currentSplineT = _targetSplineT;
-            _isDollyAnimating = false;
+            _basePosition = _targetPosition;
+            _baseRotation = _targetRotation;
+            _baseFOV = _targetFOV;
+            _isTransitioning = false;
         }
-        else
-        {
-            float step = dollyAnimSpeed * Time.deltaTime;
-            if (Mathf.Abs(delta) <= step)
-                _currentSplineT = _targetSplineT;
-            else
-                _currentSplineT += Mathf.Sign(delta) * step;
-
-            // Wrap to [0, 1)
-            _currentSplineT = (_currentSplineT % 1f + 1f) % 1f;
-        }
-
-        if (browseDolly != null)
-            browseDolly.CameraPosition = _currentSplineT;
-    }
-
-    /// <summary>
-    /// Shortest signed delta on a closed [0,1) loop from 'from' to 'to'.
-    /// </summary>
-    private static float ShortestSplineDelta(float from, float to)
-    {
-        float delta = to - from;
-        if (delta > 0.5f) delta -= 1f;
-        else if (delta < -0.5f) delta += 1f;
-        return delta;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -294,18 +268,10 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandleBrowsingInput()
     {
-        // During Morning phase, block navigation — newspaper is forced
-        if (DayPhaseManager.Instance != null
-            && DayPhaseManager.Instance.CurrentPhase == DayPhaseManager.DayPhase.Morning)
-            return;
-
         if (_navigateLeftAction.WasPressedThisFrame())
             CycleArea(-1);
         else if (_navigateRightAction.WasPressedThisFrame())
             CycleArea(1);
-
-        if (_selectAction.WasPressedThisFrame() && !_isDollyAnimating)
-            TryEnterStation();
     }
 
     private void CycleArea(int direction)
@@ -315,14 +281,23 @@ public class ApartmentManager : MonoBehaviour
         _currentAreaIndex = (_currentAreaIndex + direction + areas.Length) % areas.Length;
         var area = areas[_currentAreaIndex];
 
-        _targetSplineT = area.splinePosition;
-        _isDollyAnimating = true;
-
-        if (brain != null)
+        if (cameraTestController != null && cameraTestController.ActivePresetIndex >= 0)
         {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut, area.browseBlendDuration);
+            cameraTestController.OnAreaChanged(_currentAreaIndex);
+            if (!_browseSuppressed)
+                browseCamera.Priority = PriorityActive;
+            UpdateUI();
+            Debug.Log($"[ApartmentManager] Browsing: {area.areaName}");
+            return;
         }
+
+        _targetPosition = area.cameraPosition;
+        _targetRotation = Quaternion.Euler(area.cameraRotation);
+        _targetFOV = area.cameraFOV;
+        _isTransitioning = true;
+
+        if (!_browseSuppressed)
+            browseCamera.Priority = PriorityActive;
 
         UpdateUI();
         Debug.Log($"[ApartmentManager] Browsing: {area.areaName}");
@@ -334,181 +309,120 @@ public class ApartmentManager : MonoBehaviour
     /// <summary>Navigate to the next area. Called by UI button.</summary>
     public void NavigateRight() => CycleArea(1);
 
-    /// <summary>
-    /// Attempt to enter the station for the current area. Called from Browsing state.
-    /// </summary>
-    private void TryEnterStation()
-    {
-        var area = areas[_currentAreaIndex];
-        if (area.stationType == StationType.None) return;
-        if (_stationLookup == null) return;
-        if (!_stationLookup.TryGetValue(area.stationType, out var station)) return;
-
-        if (!station.IsAvailableInCurrentPhase())
-        {
-            Debug.Log($"[ApartmentManager] Station {area.stationType} not available in current phase.");
-            return;
-        }
-
-        CurrentState = State.InStation;
-        _activeStation = station;
-        station.Activate();
-
-        // Lower browse camera so station cameras win
-        browseCamera.Priority = PriorityInactive;
-
-        if (objectGrabber != null)
-            objectGrabber.SetEnabled(false);
-
-        UpdateUI();
-        Debug.Log($"[ApartmentManager] Entered station: {area.stationType}");
-    }
-
-    // ──────────────────────────────────────────────────────────────
-    // InStation
-    // ──────────────────────────────────────────────────────────────
-
-    private void HandleInStationInput()
-    {
-        if (!_cancelAction.WasPressedThisFrame()) return;
-
-        // Only allow exit when the station's manager is at its idle state
-        if (_activeStation != null)
-        {
-            var manager = _activeStation.Manager;
-            if (manager != null && !manager.IsAtIdleState)
-                return;
-        }
-
-        ExitStation();
-    }
-
-    private void ExitStation()
-    {
-        if (_activeStation != null)
-        {
-            _activeStation.Deactivate();
-            _activeStation = null;
-        }
-
-        // Close fridge door when leaving DrinkMaking
-        FridgeController.Instance?.CloseDoor();
-
-        // Return to Browsing
-        CurrentState = State.Browsing;
-
-        if (objectGrabber != null)
-            objectGrabber.SetEnabled(true);
-
-        // Re-raise browse camera at current dolly position
-        _currentSplineT = areas[_currentAreaIndex].splinePosition;
-        _targetSplineT = _currentSplineT;
-        _isDollyAnimating = false;
-
-        if (brain != null)
-        {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut,
-                areas[_currentAreaIndex].browseBlendDuration);
-        }
-
-        ApplyDollyPosition(_currentSplineT, hardCut: false);
-        UpdateUI();
-        Debug.Log("[ApartmentManager] Exited station → Browsing.");
-    }
-
-    /// <summary>
-    /// Force-enter a station by type (used by FridgeController to enter DrinkMaking).
-    /// </summary>
-    public void ForceEnterStation(StationType type)
-    {
-        if (_stationLookup == null) return;
-        if (!_stationLookup.TryGetValue(type, out var station)) return;
-        if (!station.IsAvailableInCurrentPhase()) return;
-
-        _activeStation = station;
-        station.Activate();
-        CurrentState = State.InStation;
-
-        browseCamera.Priority = PriorityInactive;
-
-        if (objectGrabber != null)
-            objectGrabber.SetEnabled(false);
-
-        UpdateUI();
-        Debug.Log($"[ApartmentManager] ForceEnterStation: {type}");
-    }
-
     // ──────────────────────────────────────────────────────────────
     // UI
     // ──────────────────────────────────────────────────────────────
 
     private void UpdateUI()
     {
-        bool browsing = CurrentState == State.Browsing;
-
         if (areaNamePanel != null)
-            areaNamePanel.SetActive(browsing);
+            areaNamePanel.SetActive(true);
 
         if (areaNameText != null && areas != null && areas.Length > 0)
             areaNameText.text = areas[_currentAreaIndex].areaName;
 
         if (browseHintsPanel != null)
-            browseHintsPanel.SetActive(browsing);
+            browseHintsPanel.SetActive(true);
     }
 
     // ──────────────────────────────────────────────────────────────
-    // Look-At (runs in LateUpdate, after Cinemachine)
+    // Preset Override (CameraTestController feeds values here)
     // ──────────────────────────────────────────────────────────────
 
-    private void LateUpdate()
+    /// <summary>
+    /// Called by CameraTestController to set the parallax base from a preset.
+    /// ApartmentManager applies mouse parallax on top of these values.
+    /// </summary>
+    public void SetPresetBase(Vector3 pos, Quaternion rot, float fov)
     {
-        ApplyLookAt();
+        _basePosition = pos;
+        _baseRotation = rot;
+        _baseFOV = fov;
+        _presetOverrideActive = true;
     }
 
-    private void ApplyLookAt()
+    /// <summary>Called by CameraTestController when preset is cleared.</summary>
+    public void ClearPresetBase()
     {
-        if (CurrentState != State.Browsing) return;
-        if (browseCamera == null || areas == null || areas.Length == 0) return;
-
-        // Smoothly move the look-at target toward the current area's focus point
-        Vector3 targetLookAt = areas[_currentAreaIndex].lookAtPosition;
-        _currentLookAt = Vector3.Lerp(_currentLookAt, targetLookAt, Time.deltaTime * lookAtSmoothing);
-
-        // Rotate the camera to face the look-at point
-        Vector3 dir = _currentLookAt - browseCamera.transform.position;
-        if (dir.sqrMagnitude < 0.001f) return;
-
-        Quaternion targetRot = Quaternion.LookRotation(dir);
-        browseCamera.transform.rotation = Quaternion.Slerp(
-            browseCamera.transform.rotation, targetRot, Time.deltaTime * lookAtSmoothing);
+        _presetOverrideActive = false;
+        // Snap back to current area
+        if (areas != null && areas.Length > 0)
+        {
+            var area = areas[_currentAreaIndex];
+            _basePosition = area.cameraPosition;
+            _baseRotation = Quaternion.Euler(area.cameraRotation);
+            _baseFOV = area.cameraFOV;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────
-    // Cursor Parallax
+    // Cursor Parallax (offset on top of base — never feeds back)
     // ──────────────────────────────────────────────────────────────
 
     private void ApplyParallax()
     {
-        if (CurrentState == State.InStation) return;
-        if (parallaxMaxOffset <= 0f) return;
         if (browseCamera == null) return;
 
-        _basePosition = browseCamera.transform.position;
+        // Always write base + offset to transform, even with parallax disabled
+        var t = browseCamera.transform;
+
+        if (parallaxMaxOffset > 0f)
+        {
+            Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
+            float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
+            float ny = (mousePos.y / Screen.height - 0.5f) * 2f;
+            nx = Mathf.Clamp(nx, -1f, 1f);
+            ny = Mathf.Clamp(ny, -1f, 1f);
+
+            // Use base rotation for offset direction (never reads from transform)
+            Vector3 right = _baseRotation * Vector3.right;
+            Vector3 up = _baseRotation * Vector3.up;
+            Vector3 targetOffset = (right * -nx + up * -ny) * parallaxMaxOffset;
+
+            _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
+                Time.deltaTime * parallaxSmoothing);
+        }
+
+        // Write final position = base + parallax offset
+        t.position = _basePosition + _currentParallaxOffset;
+        t.rotation = _baseRotation;
+
+        // Skip lens override when preset is active (CameraTestController owns the lens)
+        if (!_presetOverrideActive)
+        {
+            var lens = browseCamera.Lens;
+            lens.FieldOfView = _baseFOV;
+            browseCamera.Lens = lens;
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Hover Highlight
+    // ──────────────────────────────────────────────────────────────
+
+    private void UpdateHoverHighlight()
+    {
+        var cam = UnityEngine.Camera.main;
+        if (cam == null) return;
 
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
-        float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
-        float ny = (mousePos.y / Screen.height - 0.5f) * 2f;
-        nx = Mathf.Clamp(nx, -1f, 1f);
-        ny = Mathf.Clamp(ny, -1f, 1f);
+        Ray ray = cam.ScreenPointToRay(mousePos);
 
-        Transform camT = browseCamera.transform;
-        Vector3 targetOffset = (camT.right * -nx + camT.up * -ny) * parallaxMaxOffset;
+        InteractableHighlight hit = null;
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, 50f))
+        {
+            hit = hitInfo.collider.GetComponentInParent<InteractableHighlight>();
+        }
 
-        _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
-            Time.deltaTime * parallaxSmoothing);
+        if (hit == _hoveredHighlight) return;
 
-        camT.position += _currentParallaxOffset;
+        if (_hoveredHighlight != null)
+            _hoveredHighlight.SetHighlighted(false);
+
+        _hoveredHighlight = hit;
+
+        if (_hoveredHighlight != null)
+            _hoveredHighlight.SetHighlighted(true);
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -520,41 +434,33 @@ public class ApartmentManager : MonoBehaviour
     {
         if (areas == null || areas.Length == 0) return;
 
-        // Resolve the spline container from the dolly
-        SplineContainer container = null;
-        if (browseDolly != null)
-            container = browseDolly.Spline;
-        if (container == null || container.Spline == null) return;
-
-        var spline = container.Spline;
+        // World bounds box
+        Gizmos.color = new Color(0f, 1f, 0f, 0.15f);
+        Gizmos.DrawWireCube(worldBounds.center, worldBounds.size);
 
         for (int i = 0; i < areas.Length; i++)
         {
             var area = areas[i];
             if (area == null) continue;
 
-            SplineUtility.Evaluate(spline, area.splinePosition,
-                out float3 localPos, out float3 tangent, out float3 up);
-            Vector3 worldPos = container.transform.TransformPoint((Vector3)localPos);
+            Vector3 pos = area.cameraPosition;
+            Quaternion rot = Quaternion.Euler(area.cameraRotation);
 
-            // Sphere at spline stop
+            // Sphere at camera position
             bool isCurrent = Application.isPlaying && i == _currentAreaIndex;
             Gizmos.color = isCurrent ? Color.yellow : Color.cyan;
-            Gizmos.DrawSphere(worldPos, 0.15f);
-            Gizmos.DrawLine(worldPos, worldPos + Vector3.up * 0.5f);
+            Gizmos.DrawSphere(pos, 0.15f);
+
+            // Forward direction ray
+            Gizmos.color = new Color(1f, 0.5f, 0f, 0.8f);
+            Gizmos.DrawRay(pos, rot * Vector3.forward * 1.5f);
 
             // Label
             var style = new GUIStyle(UnityEditor.EditorStyles.boldLabel)
             {
                 normal = { textColor = isCurrent ? Color.yellow : Color.white }
             };
-            UnityEditor.Handles.Label(worldPos + Vector3.up * 0.6f, area.areaName, style);
-
-            // Line from spline stop to look-at target
-            Gizmos.color = new Color(1f, 1f, 1f, 0.25f);
-            Gizmos.DrawLine(worldPos, area.lookAtPosition);
-            Gizmos.color = new Color(1f, 0.5f, 0f, 0.6f);
-            Gizmos.DrawWireSphere(area.lookAtPosition, 0.1f);
+            UnityEditor.Handles.Label(pos + Vector3.up * 0.3f, area.areaName, style);
         }
     }
 #endif

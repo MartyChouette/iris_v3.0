@@ -86,20 +86,31 @@ public class DateCharacterController : MonoBehaviour
         _agent = GetComponent<NavMeshAgent>();
         _agent.speed = walkSpeed;
 
+        // Warp onto NavMesh so agent is active before calling SetDestination
+        _agent.enabled = false;
         transform.position = spawnPos;
+        _agent.enabled = true;
+
+        if (NavMesh.SamplePosition(spawnPos, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+            _agent.Warp(hit.position);
+        else
+            Debug.LogWarning($"[DateCharacterController] No NavMesh near spawn {spawnPos}");
+
         _couchTarget = couchTarget;
         _judgmentStopPoint = judgmentPoint;
 
         if (_judgmentStopPoint != null)
         {
             _state = CharState.WalkingToJudgmentPoint;
-            _agent.SetDestination(_judgmentStopPoint.position);
+            if (_agent.isOnNavMesh)
+                _agent.SetDestination(_judgmentStopPoint.position);
             Debug.Log("[DateCharacterController] Walking to judgment point.");
         }
         else
         {
             _state = CharState.WalkingToCouch;
-            _agent.SetDestination(couchTarget.position);
+            if (_agent.isOnNavMesh)
+                _agent.SetDestination(couchTarget.position);
             Debug.Log("[DateCharacterController] Walking to couch.");
         }
     }
@@ -130,7 +141,8 @@ public class DateCharacterController : MonoBehaviour
         _state = CharState.GettingUp;
         _getUpTimer = 0f;
 
-        _agent.SetDestination(target.position);
+        if (_agent != null && _agent.isOnNavMesh)
+            _agent.SetDestination(target.position);
     }
 
     /// <summary>Dismiss the character — walks to exit, then calls onComplete.</summary>

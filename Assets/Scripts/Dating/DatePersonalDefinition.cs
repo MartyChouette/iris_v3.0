@@ -53,6 +53,24 @@ public class DatePersonalDefinition : ScriptableObject
     public int fontSizeOverride;
 
     // ──────────────────────────────────────────────────────────────
+    // Keywords
+    // ──────────────────────────────────────────────────────────────
+    [Header("Keywords")]
+    [Tooltip("Hoverable keywords in the ad text with commentary tooltips.")]
+    public KeywordEntry[] keywords;
+
+    [System.Serializable]
+    public struct KeywordEntry
+    {
+        [Tooltip("Exact substring in adText to turn into a hoverable link.")]
+        public string keyword;
+
+        [TextArea(1, 3)]
+        [Tooltip("Commentary shown in the tooltip when hovering this keyword.")]
+        public string commentary;
+    }
+
+    // ──────────────────────────────────────────────────────────────
     // Preferences
     // ──────────────────────────────────────────────────────────────
     [Header("Preferences")]

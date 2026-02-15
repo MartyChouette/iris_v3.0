@@ -17,8 +17,9 @@ public class DateSessionHUD : MonoBehaviour
 
     private void Update()
     {
-        bool showDate = DateSessionManager.Instance != null &&
-                        DateSessionManager.Instance.CurrentState != DateSessionManager.SessionState.Idle;
+        var dsm = DateSessionManager.Instance;
+        bool showDate = dsm != null &&
+                        dsm.CurrentState != DateSessionManager.SessionState.Idle;
 
         if (hudRoot != null)
             hudRoot.SetActive(showDate);
@@ -26,11 +27,11 @@ public class DateSessionHUD : MonoBehaviour
         if (!showDate) return;
 
         // Date info
-        if (dateNameText != null && DateSessionManager.Instance.CurrentDate != null)
-            dateNameText.text = DateSessionManager.Instance.CurrentDate.characterName;
+        if (dateNameText != null && dsm.CurrentDate != null)
+            dateNameText.text = dsm.CurrentDate.characterName;
 
         // Affection
-        float aff = DateSessionManager.Instance.Affection;
+        float aff = dsm.Affection;
         if (affectionText != null)
             affectionText.text = $"{aff:F0}%";
 
@@ -42,16 +43,17 @@ public class DateSessionHUD : MonoBehaviour
         }
 
         // Clock
-        if (clockText != null && GameClock.Instance != null)
+        var clock = GameClock.Instance;
+        if (clockText != null && clock != null)
         {
-            float hour = Mathf.Repeat(GameClock.Instance.CurrentHour, 24f);
+            float hour = Mathf.Repeat(clock.CurrentHour, 24f);
             int h = Mathf.FloorToInt(hour);
             int m = Mathf.FloorToInt((hour - h) * 60f);
             clockText.text = $"{h:D2}:{m:D2}";
         }
 
         // Day
-        if (dayText != null && GameClock.Instance != null)
-            dayText.text = $"Day {GameClock.Instance.CurrentDay}";
+        if (dayText != null && clock != null)
+            dayText.text = $"Day {clock.CurrentDay}";
     }
 }

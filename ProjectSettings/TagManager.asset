@@ -37,10 +37,10 @@ TagManager:
   - NewspaperBaker
   - Phone
   - Fridge
-  - 
-  - 
-  - 
-  - 
+  - Glass
+  - Surfaces
+  - VinylStack
+  - Turntable
   - 
   m_SortingLayers:
   - name: Default

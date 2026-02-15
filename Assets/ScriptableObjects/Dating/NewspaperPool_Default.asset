@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: NewspaperPool_Default
   m_EditorClassIdentifier: Assembly-CSharp::NewspaperPoolDefinition
   personalAds:
-  - {fileID: 11400000, guid: 17d418f15320a2d4e873f08e38b3ca57, type: 2}
-  - {fileID: 11400000, guid: 0bce63e5e2932eb45806fb62f1f655e8, type: 2}
-  - {fileID: 11400000, guid: 97f87918d9ab12f4bb6edac9ef1a0ca9, type: 2}
-  - {fileID: 11400000, guid: 372fbfc1d56d7d84088f980566afc390, type: 2}
+  - {fileID: 11400000, guid: 759b6176caad4994580ad514a66a7db9, type: 2}
+  - {fileID: 11400000, guid: 3a6683e4f2911b74f82c0ebac45f358a, type: 2}
+  - {fileID: 11400000, guid: c901ebbf2774c184b93c89ed768fea90, type: 2}
+  - {fileID: 11400000, guid: 88a72d4a38cbc3b479c7219163717b9c, type: 2}
   commercialAds:
   - {fileID: 11400000, guid: 36af1ccfec8febe49af411a6195fbcdd, type: 2}
   - {fileID: 11400000, guid: 2d33d7191e7d39e4b82c297ce6e89509, type: 2}

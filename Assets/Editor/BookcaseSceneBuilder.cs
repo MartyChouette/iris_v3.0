@@ -523,6 +523,8 @@ public static class BookcaseSceneBuilder
 
                 so.ApplyModifiedPropertiesWithoutUndo();
 
+                bookGO.AddComponent<InteractableHighlight>();
+
                 xCursor += thickness + Random.Range(MinGap, MaxGap);
                 bookIndex++;
             }
@@ -641,6 +643,7 @@ public static class BookcaseSceneBuilder
             bottleGO.layer = perfumesLayer;
 
             var bottle = bottleGO.AddComponent<PerfumeBottle>();
+            bottleGO.AddComponent<InteractableHighlight>();
 
             // Spray particle system child
             var sprayGO = new GameObject("SprayParticles");
@@ -772,6 +775,7 @@ public static class BookcaseSceneBuilder
             drawerGO.layer = drawersLayer;
 
             var drawer = drawerGO.AddComponent<DrawerController>();
+            drawerGO.AddComponent<InteractableHighlight>();
 
             // Trinket contents inside this drawer
             var contentsRoot = new GameObject($"DrawerContents_{d}");
@@ -801,6 +805,7 @@ public static class BookcaseSceneBuilder
                 trinketGO.layer = trinketsLayer;
 
                 var trinketVol = trinketGO.AddComponent<TrinketVolume>();
+                trinketGO.AddComponent<InteractableHighlight>();
 
                 // Display slot position for this trinket
                 float displayX = displayStartX + trinketIndex * displaySpacing;
@@ -893,6 +898,7 @@ public static class BookcaseSceneBuilder
             bookGO.layer = coffeeTableBooksLayer;
 
             var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
+            bookGO.AddComponent<InteractableHighlight>();
 
             var cbSO = new SerializedObject(coffeeBook);
             cbSO.FindProperty("definition").objectReferenceValue = def;

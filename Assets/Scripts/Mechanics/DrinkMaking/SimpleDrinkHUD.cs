@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Simple overlay HUD for the perfect-pour drink system.
-/// Shows recipe selection panel, drink name, fill/foam/target levels, overflow warning, and score.
+/// Shows recipe selection panel, drink name, visual pour bar, and score.
 /// </summary>
 [DisallowMultipleComponent]
 public class SimpleDrinkHUD : MonoBehaviour
@@ -11,17 +11,12 @@ public class SimpleDrinkHUD : MonoBehaviour
     [Header("References")]
     public SimpleDrinkManager manager;
 
-    [Header("Labels")]
+    [Header("UI")]
+    public PourBarUI pourBar;
     public TMP_Text drinkNameLabel;
-    public TMP_Text fillLevelLabel;
-    public TMP_Text foamLevelLabel;
-    public TMP_Text targetLabel;
     public TMP_Text scoreLabel;
 
     [Header("Panels")]
-    [Tooltip("Overflow warning (red, shown when foam > 85%).")]
-    public GameObject overflowWarning;
-
     [Tooltip("Root panel — hidden when ChoosingRecipe.")]
     public GameObject hudPanel;
 
@@ -50,6 +45,7 @@ public class SimpleDrinkHUD : MonoBehaviour
     {
         if (recipePanel != null) recipePanel.SetActive(true);
         if (hudPanel != null) hudPanel.SetActive(false);
+        if (pourBar != null) pourBar.SetVisible(false);
     }
 
     private void UpdatePouring()
@@ -64,26 +60,18 @@ public class SimpleDrinkHUD : MonoBehaviour
 
         if (!manager.PourStarted)
         {
-            // Waiting for player to click the glass
-            if (fillLevelLabel != null) fillLevelLabel.text = "";
-            if (foamLevelLabel != null) foamLevelLabel.text = "";
-            if (targetLabel != null) targetLabel.text = "";
-            if (overflowWarning != null) overflowWarning.SetActive(false);
+            if (pourBar != null) pourBar.SetVisible(false);
             if (scoreLabel != null) scoreLabel.text = "Click the glass to pour";
             return;
         }
 
-        if (fillLevelLabel != null)
-            fillLevelLabel.SetText("Fill: {0}%", (int)(manager.FillLevel * 100f));
-
-        if (foamLevelLabel != null)
-            foamLevelLabel.SetText("Foam: {0}%", (int)(manager.FoamLevel * 100f));
-
-        if (targetLabel != null && recipe != null)
-            targetLabel.SetText("Target: {0}%", (int)(recipe.idealFillLevel * 100f));
-
-        if (overflowWarning != null)
-            overflowWarning.SetActive(manager.FoamLevel > 0.85f);
+        if (pourBar != null && recipe != null)
+        {
+            pourBar.SetVisible(true);
+            pourBar.SetLevels(manager.FillLevel, manager.FoamLevel, recipe.idealFillLevel, recipe.fillTolerance);
+            pourBar.SetOverflowing(manager.Overflowed);
+            pourBar.SetLiquidColor(recipe.liquidColor);
+        }
 
         if (scoreLabel != null)
             scoreLabel.text = "";
@@ -99,16 +87,15 @@ public class SimpleDrinkHUD : MonoBehaviour
         if (drinkNameLabel != null)
             drinkNameLabel.text = recipe != null ? recipe.drinkName : "";
 
-        if (fillLevelLabel != null) fillLevelLabel.text = "";
-        if (foamLevelLabel != null) foamLevelLabel.text = "";
-        if (targetLabel != null) targetLabel.text = "";
-
-        if (overflowWarning != null)
-            overflowWarning.SetActive(false);
+        if (pourBar != null)
+        {
+            pourBar.SetOverflowing(false);
+            pourBar.ShowScore($"Score: {manager.lastScore}");
+        }
 
         if (scoreLabel != null)
         {
-            scoreLabel.text = $"Score: {manager.lastScore}\nFill: {(int)manager.lastFillScore}  Bonus: {(int)manager.lastBonusScore}  Overflow: {(int)manager.lastOverflowScore}";
+            scoreLabel.text = $"Fill: {(int)manager.lastFillScore}  Bonus: {(int)manager.lastBonusScore}  Overflow: {(int)manager.lastOverflowScore}";
         }
     }
 }

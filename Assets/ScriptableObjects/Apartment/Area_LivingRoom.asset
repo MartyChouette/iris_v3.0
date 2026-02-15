@@ -13,12 +13,9 @@ MonoBehaviour:
   m_Name: Area_LivingRoom
   m_EditorClassIdentifier: Assembly-CSharp::ApartmentAreaDefinition
   areaName: Living Room
-  description: Bookcase, coffee table, couch.
+  description: Bookcase, coffee table.
   stationType: 1
-  splinePosition: 0.5
-  lookAtPosition: {x: -6.3, y: 1.2, z: 3}
-  selectedPosition: {x: -7, y: 3.5, z: 3}
-  selectedRotation: {x: 30, y: 60, z: 0}
-  selectedFOV: 48
+  cameraPosition: {x: 0.5, y: 3.5, z: 2}
+  cameraRotation: {x: 30, y: 60, z: 0}
+  cameraFOV: 48
   browseBlendDuration: 0.8
-  selectBlendDuration: 0.5

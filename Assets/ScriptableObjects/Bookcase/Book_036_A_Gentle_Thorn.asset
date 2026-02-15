@@ -21,6 +21,6 @@ MonoBehaviour:
     learn.
   - Gentleness, she decided, was not the absence of thorns but the willingness to
     reach past them.
-  spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
-  heightScale: 0.74994916
-  thicknessScale: 0.0464541
+  spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
+  heightScale: 0.7599406
+  thicknessScale: 0.020384988

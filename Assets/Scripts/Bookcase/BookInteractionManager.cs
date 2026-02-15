@@ -13,8 +13,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         DrawerOpening,
         DrawerOpen,
         DrawerClosing,
-        HoldingPerfume,
-        Spraying,
         Inspecting,
         MovingCoffeeBook
     }
@@ -89,7 +87,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
 
     // Perfume state
     private PerfumeBottle _hoveredPerfume;
-    private PerfumeBottle _activePerfume;
 
     // Trinket state
     private TrinketVolume _hoveredTrinket;
@@ -157,6 +154,9 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
 
     private void Update()
     {
+        if (DayPhaseManager.Instance == null || !DayPhaseManager.Instance.IsInteractionPhase)
+            return;
+
         switch (CurrentState)
         {
             case State.Browsing:
@@ -179,12 +179,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
                 break;
             case State.DrawerClosing:
                 UpdateDrawerClosing();
-                break;
-            case State.HoldingPerfume:
-                UpdateHoldingPerfume();
-                break;
-            case State.Spraying:
-                UpdateSpraying();
                 break;
             case State.Inspecting:
                 UpdateInspecting();
@@ -361,7 +355,7 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             return;
         }
 
-        // Perfume click
+        // Perfume click — single click sprays immediately
         if (_hoveredPerfume != null)
         {
             if (isDoubleClick && itemInspector != null)
@@ -374,9 +368,7 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
                 CurrentState = State.Inspecting;
                 return;
             }
-            _activePerfume = _hoveredPerfume;
-            ClearPerfumeHover();
-            BeginHoldPerfume();
+            _hoveredPerfume.SprayOnce();
             return;
         }
 
@@ -681,69 +673,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         if (_activeDrawer != null && _activeDrawer.CurrentState == DrawerController.State.Closed)
         {
             _activeDrawer = null;
-            CurrentState = State.Browsing;
-        }
-    }
-
-    // ──────────────────────────────────────────────────────────────
-    // Perfume
-    // ──────────────────────────────────────────────────────────────
-
-    private void BeginHoldPerfume()
-    {
-        CurrentState = State.HoldingPerfume;
-        HideHint();
-        _activePerfume.PickUp();
-    }
-
-    private void UpdateHoldingPerfume()
-    {
-        // Hold LMB → start spraying
-        if (_clickAction.IsPressed())
-        {
-            CurrentState = State.Spraying;
-            _activePerfume.StartSpray();
-            return;
-        }
-
-        // Cancel → put back without spraying
-        if (_cancelAction.WasPressedThisFrame())
-        {
-            _activePerfume.PutDown();
-            _activePerfume = null;
-            CurrentState = State.Browsing;
-        }
-    }
-
-    private void UpdateSpraying()
-    {
-        if (_activePerfume == null)
-        {
-            CurrentState = State.Browsing;
-            return;
-        }
-
-        _activePerfume.UpdateSpray();
-
-        // Check if spray threshold met
-        if (_activePerfume.SprayComplete && moodController != null)
-        {
-            moodController.ApplyPerfumeMood(_activePerfume.Definition);
-        }
-
-        // Release LMB → stop spraying, return to holding
-        if (!_clickAction.IsPressed())
-        {
-            _activePerfume.StopSpray();
-            CurrentState = State.HoldingPerfume;
-        }
-
-        // Cancel during spray → stop and put back
-        if (_cancelAction.WasPressedThisFrame())
-        {
-            _activePerfume.StopSpray();
-            _activePerfume.PutDown();
-            _activePerfume = null;
             CurrentState = State.Browsing;
         }
     }

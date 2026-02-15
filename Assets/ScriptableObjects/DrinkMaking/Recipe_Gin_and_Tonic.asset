@@ -13,11 +13,17 @@ MonoBehaviour:
   m_Name: Recipe_Gin_and_Tonic
   m_EditorClassIdentifier: Assembly-CSharp::DrinkRecipeDefinition
   drinkName: Gin & Tonic
-  requiredGlass: {fileID: 11400000, guid: 1dab99e96b9592941b07d9d66a967601, type: 2}
+  requiredGlass: {fileID: 0}
   ingredients: []
   portionNormalized: []
   requiresStir: 0
-  stirDuration: 0
+  stirDuration: 2
   perfectStirSpeedMin: 1.5
   perfectStirSpeedMax: 4
   baseScore: 100
+  idealFillLevel: 0.75
+  fillTolerance: 0.1
+  pourRate: 0.15
+  foamRateMultiplier: 2
+  foamSettleRate: 0.25
+  liquidColor: {r: 0.85, g: 0.9, b: 0.7, a: 0.6}

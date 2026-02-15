@@ -26,6 +26,9 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
     [Tooltip("HUD reference for state-driven display.")]
     [SerializeField] private SimpleDrinkHUD _hud;
 
+    [Tooltip("HUD canvas — hidden until the player picks a recipe.")]
+    [SerializeField] private Canvas _hudCanvas;
+
     [Header("Scoring")]
     [Tooltip("How long the score displays before returning to ChoosingRecipe.")]
     [SerializeField] private float _scoreDisplayTime = 2f;
@@ -109,6 +112,16 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
 
     void Update()
     {
+        if (DayPhaseManager.Instance == null || !DayPhaseManager.Instance.IsDrinkPhase)
+        {
+            if (CurrentState != State.ChoosingRecipe)
+            {
+                _activeRecipe = null;
+                CurrentState = State.ChoosingRecipe;
+            }
+            return;
+        }
+
         if (_mainCamera == null) return;
 
         switch (CurrentState)
@@ -131,6 +144,9 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
     {
         if (CurrentState != State.ChoosingRecipe) return;
         if (availableRecipes == null || index < 0 || index >= availableRecipes.Length) return;
+
+        if (_hudCanvas != null && !_hudCanvas.gameObject.activeSelf)
+            _hudCanvas.gameObject.SetActive(true);
 
         _activeRecipe = availableRecipes[index];
         _fillLevel = 0f;

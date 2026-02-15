@@ -157,6 +157,14 @@ public class CleaningManager : MonoBehaviour
     {
         if (_mainCamera == null) return;
 
+        // Block cleaning outside interaction phases (name entry, newspaper, date end)
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
+        {
+            SetToolVisual(Vector3.zero, false);
+            _hoveredSurface = null;
+            return;
+        }
+
         // Only allow cleaning interaction while Browsing the apartment
         if (ApartmentManager.Instance != null
             && ApartmentManager.Instance.CurrentState != ApartmentManager.State.Browsing)

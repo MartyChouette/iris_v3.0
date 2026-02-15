@@ -99,6 +99,9 @@ public class WateringManager : MonoBehaviour
 
     void Update()
     {
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
+            return;
+
         if (_mainCamera == null) return;
 
         switch (CurrentState)

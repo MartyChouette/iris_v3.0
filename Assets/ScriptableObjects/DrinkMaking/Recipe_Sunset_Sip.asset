@@ -13,11 +13,17 @@ MonoBehaviour:
   m_Name: Recipe_Sunset_Sip
   m_EditorClassIdentifier: Assembly-CSharp::DrinkRecipeDefinition
   drinkName: Sunset Sip
-  requiredGlass: {fileID: 11400000, guid: 1dab99e96b9592941b07d9d66a967601, type: 2}
+  requiredGlass: {fileID: 0}
   ingredients: []
   portionNormalized: []
   requiresStir: 0
-  stirDuration: 0
+  stirDuration: 2
   perfectStirSpeedMin: 1.5
   perfectStirSpeedMax: 4
   baseScore: 90
+  idealFillLevel: 0.65
+  fillTolerance: 0.1
+  pourRate: 0.2
+  foamRateMultiplier: 2.5
+  foamSettleRate: 0.25
+  liquidColor: {r: 0.95, g: 0.45, b: 0.25, a: 0.7}

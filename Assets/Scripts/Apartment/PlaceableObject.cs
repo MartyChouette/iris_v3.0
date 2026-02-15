@@ -12,10 +12,7 @@ public class PlaceableObject : MonoBehaviour
     [SerializeField] private float heldBrightness = 1.4f;
 
     [Header("Respawn")]
-    [Tooltip("Y position below which the object teleports back to its last valid position.")]
-    [SerializeField] private float fallThresholdY = -5f;
-
-    [Tooltip("Seconds after falling below threshold before respawn (prevents flicker).")]
+    [Tooltip("Seconds after leaving world bounds before recovery (prevents flicker).")]
     [SerializeField] private float respawnDelay = 0.5f;
 
     [Header("Wall Mount")]
@@ -24,6 +21,13 @@ public class PlaceableObject : MonoBehaviour
 
     [Tooltip("Random rotation range (degrees) applied when spawned on a wall.")]
     [SerializeField] private float crookedAngleRange = 12f;
+
+    // ── Static world bounds (set by ApartmentManager) ─────────────────
+    private static Bounds s_worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
+    private static bool s_boundsSet;
+
+    /// <summary>Set the world bounding box. Objects outside this are recovered to the nearest surface.</summary>
+    public static void SetWorldBounds(Bounds bounds) { s_worldBounds = bounds; s_boundsSet = true; }
 
     public State CurrentState { get; private set; } = State.Resting;
     public bool CanWallMount => canWallMount;
@@ -77,12 +81,12 @@ public class PlaceableObject : MonoBehaviour
     {
         if (CurrentState == State.Held) return;
 
-        if (transform.position.y < fallThresholdY)
+        if (!s_worldBounds.Contains(transform.position))
         {
             _fallTimer += Time.deltaTime;
             if (_fallTimer >= respawnDelay)
             {
-                Respawn();
+                RecoverToNearestSurface();
                 _fallTimer = 0f;
             }
         }
@@ -92,8 +96,9 @@ public class PlaceableObject : MonoBehaviour
         }
     }
 
-    private void Respawn()
+    private void RecoverToNearestSurface()
     {
+        // Snap back to the last known-good position (preserves exact depth for wall items)
         transform.position = _lastValidPosition;
         transform.rotation = _lastValidRotation;
         if (_rb != null)
@@ -114,7 +119,7 @@ public class PlaceableObject : MonoBehaviour
         }
         CurrentState = State.Resting;
         StartFlash();
-        Debug.Log($"[PlaceableObject] {name} respawned at {_lastValidPosition}.");
+        Debug.Log($"[PlaceableObject] {name} out of bounds — respawned at {_lastValidPosition}.");
     }
 
     private void OnDestroy()
@@ -296,34 +301,15 @@ public class PlaceableObject : MonoBehaviour
             }
             else
             {
-                Debug.Log($"[PlaceableObject] {name} out of view, no surface found — respawning.");
-                Respawn();
+                Debug.Log($"[PlaceableObject] {name} out of view, no surface found — recovering.");
+                RecoverToNearestSurface();
             }
         }
     }
 
     private PlacementSurface FindNearestSurface(Vector3 worldPos)
     {
-        var all = FindObjectsByType<PlacementSurface>(FindObjectsSortMode.None);
-        PlacementSurface best = null;
-        float bestDist = float.MaxValue;
-
-        foreach (var surface in all)
-        {
-            if (surface == null) continue;
-            // Skip walls for non-wallmount objects
-            if (surface.IsVertical && !canWallMount) continue;
-
-            Vector3 clamped = surface.ClampToSurface(worldPos);
-            float dist = (clamped - worldPos).sqrMagnitude;
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                best = surface;
-            }
-        }
-
-        return best;
+        return PlacementSurface.FindNearest(worldPos, skipVertical: !canWallMount);
     }
 
     // ── Safety: Placement validation timer ────────────────────────────

@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 552067963b988e743aca45bddee9e69b, type: 3}
+  m_Name: Date_Clover
+  m_EditorClassIdentifier: Assembly-CSharp::DatePersonalDefinition
+  characterName: Clover
+  adText: I cook from scratch, keep a peaceful home, and take pride in caring for
+    my person. Soft, gentle, and a little catlike - seeking someone who'll treat
+    me accordingly.
+  arrivalTimeSec: 50
+  portrait: {fileID: 0}
+  characterPrefab: {fileID: 0}
+  phoneNumberRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.05
+    width: 0.8
+    height: 0.15
+  characterModelPrefab: {fileID: 0}
+  fontSizeOverride: 0
+  keywords:
+  - keyword: cook from scratch
+    commentary: She means it. Everything from scratch. No shortcuts.
+  - keyword: peaceful home
+    commentary: She takes pride in the space. She'll notice what you've done with
+      yours.
+  - keyword: catlike
+    commentary: Soft and gentle, but on her own terms. Don't push.
+  preferences:
+    likedTags:
+    - plant
+    - greenery
+    - book
+    dislikedTags:
+    - mecha
+    - gundam
+    - music
+    preferredMoodMin: 0
+    preferredMoodMax: 0.3
+    likedDrinks: []
+    dislikedDrinks: []
+    likedOutfitTags: []
+    dislikedOutfitTags: []
+    reactionStrength: 1

@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 552067963b988e743aca45bddee9e69b, type: 3}
+  m_Name: Date_Sage
+  m_EditorClassIdentifier: Assembly-CSharp::DatePersonalDefinition
+  characterName: Sage
+  adText: Single. Intuitive. Self-employed. I can sense you are reading this right
+    now. You have been through a lot lately (haven't we all), and you sometimes overthink
+    at night. There is a name that starts with a letter, and it still affects you.
+    I'm feeling an upcoming change - possibly travel, possibly a haircut.
+  arrivalTimeSec: 25
+  portrait: {fileID: 0}
+  characterPrefab: {fileID: 0}
+  phoneNumberRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.05
+    width: 0.8
+    height: 0.15
+  characterModelPrefab: {fileID: 0}
+  fontSizeOverride: 0
+  keywords:
+  - keyword: overthink at night
+    commentary: First date comes with a spontaneous reading (donation suggested).
+  - keyword: upcoming change
+    commentary: They'll land one eerie, specific truth about you - and accidentally
+      drop a piece of your lore.
+  - keyword: a letter
+    commentary: Warm, attentive, and weirdly good at making people feel seen. May
+      offer... substances.
+  preferences:
+    likedTags:
+    - perfume
+    - plant
+    - greenery
+    - incense
+    - book
+    dislikedTags:
+    - mecha
+    - gundam
+    preferredMoodMin: 0.5
+    preferredMoodMax: 0.9
+    likedDrinks: []
+    dislikedDrinks: []
+    likedOutfitTags: []
+    dislikedOutfitTags: []
+    reactionStrength: 1.4

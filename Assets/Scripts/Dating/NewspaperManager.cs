@@ -39,6 +39,12 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     [SerializeField] private NewspaperAdSlot[] personalSlots;
     [SerializeField] private NewspaperAdSlot[] commercialSlots;
 
+    [Tooltip("Nema's own ad slot (decorative, non-interactive).")]
+    [SerializeField] private NewspaperAdSlot nemaAdSlot;
+
+    [Tooltip("Optional portrait sprite for Nema's ad.")]
+    [SerializeField] private Sprite nemaPortrait;
+
     // ─── Calling Phase ────────────────────────────────────────────
     [Header("Calling Phase")]
     [SerializeField] private float callingDuration = 2f;
@@ -251,6 +257,10 @@ public class NewspaperManager : MonoBehaviour, IStationManager
                     commercialSlots[i].Clear();
             }
         }
+
+        // Populate Nema's own ad slot
+        if (nemaAdSlot != null)
+            nemaAdSlot.AssignPlayerAd(nemaPortrait);
 
         // Reset cut surface for new newspaper
         if (surface != null)

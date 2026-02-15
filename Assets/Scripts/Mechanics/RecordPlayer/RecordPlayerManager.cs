@@ -32,12 +32,25 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
     [Tooltip("RecordPlayerHUD component.")]
     [SerializeField] private RecordPlayerHUD hud;
 
+    [Tooltip("HUD canvas — hidden until the player interacts.")]
+    [SerializeField] private Canvas _hudCanvas;
+
+    [Header("Click Interaction")]
+    [Tooltip("Layer mask for the vinyl stack (click to browse).")]
+    [SerializeField] private LayerMask _vinylStackLayer;
+
+    [Tooltip("Layer mask for the turntable/disc (click to play/stop).")]
+    [SerializeField] private LayerMask _turntableLayer;
+
+    [Tooltip("Main camera (auto-found if null).")]
+    [SerializeField] private Camera _mainCamera;
+
     // ──────────────────────────────────────────────────────────────
     // Inline InputActions
     // ──────────────────────────────────────────────────────────────
-    private InputAction _navLeftAction;
-    private InputAction _navRightAction;
     private InputAction _playStopAction;
+    private InputAction _clickAction;
+    private InputAction _mousePosition;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state
@@ -70,31 +83,28 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
             recordRenderer.material = _labelMat;
         }
 
-        _navLeftAction = new InputAction("NavLeft", InputActionType.Button);
-        _navLeftAction.AddBinding("<Keyboard>/a");
-        _navLeftAction.AddBinding("<Keyboard>/leftArrow");
-
-        _navRightAction = new InputAction("NavRight", InputActionType.Button);
-        _navRightAction.AddBinding("<Keyboard>/d");
-        _navRightAction.AddBinding("<Keyboard>/rightArrow");
-
         _playStopAction = new InputAction("PlayStop", InputActionType.Button);
-        _playStopAction.AddBinding("<Keyboard>/enter");
         _playStopAction.AddBinding("<Keyboard>/space");
+
+        _clickAction = new InputAction("RecordClick", InputActionType.Button, "<Mouse>/leftButton");
+        _mousePosition = new InputAction("RecordPointer", InputActionType.Value, "<Mouse>/position");
+
+        if (_mainCamera == null)
+            _mainCamera = Camera.main;
     }
 
     private void OnEnable()
     {
-        _navLeftAction.Enable();
-        _navRightAction.Enable();
         _playStopAction.Enable();
+        _clickAction.Enable();
+        _mousePosition.Enable();
     }
 
     private void OnDisable()
     {
-        _navLeftAction.Disable();
-        _navRightAction.Disable();
         _playStopAction.Disable();
+        _clickAction.Disable();
+        _mousePosition.Disable();
 
         // Stop playback when disabled
         if (CurrentState == State.Playing)
@@ -109,6 +119,13 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
 
     private void Update()
     {
+        if (DayPhaseManager.Instance == null || !DayPhaseManager.Instance.IsInteractionPhase)
+        {
+            if (CurrentState == State.Playing)
+                StopPlayback();
+            return;
+        }
+
         switch (CurrentState)
         {
             case State.Browsing:
@@ -130,13 +147,10 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
     {
         if (records == null || records.Length == 0) return;
 
-        if (_navLeftAction.WasPressedThisFrame())
-            CycleRecord(-1);
-        else if (_navRightAction.WasPressedThisFrame())
-            CycleRecord(1);
-
         if (_playStopAction.WasPressedThisFrame())
             StartPlayback();
+
+        HandleClickInput();
     }
 
     private void CycleRecord(int direction)
@@ -154,12 +168,49 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
     {
         if (_playStopAction.WasPressedThisFrame())
             StopPlayback();
+
+        HandleClickInput();
+    }
+
+    private void HandleClickInput()
+    {
+        if (_mainCamera == null || !_clickAction.WasPressedThisFrame()) return;
+
+        Vector2 mousePos = _mousePosition.ReadValue<Vector2>();
+        Ray ray = _mainCamera.ScreenPointToRay(mousePos);
+
+        // Click vinyl stack → cycle to next record
+        if (Physics.Raycast(ray, out _, 50f, _vinylStackLayer))
+        {
+            if (CurrentState == State.Playing)
+                StopPlayback();
+            ShowHUDCanvas();
+            CycleRecord(1);
+            return;
+        }
+
+        // Click turntable → toggle play/stop
+        if (Physics.Raycast(ray, out _, 50f, _turntableLayer))
+        {
+            if (CurrentState == State.Playing)
+                StopPlayback();
+            else
+                StartPlayback();
+        }
+    }
+
+    private void ShowHUDCanvas()
+    {
+        if (_hudCanvas != null && !_hudCanvas.gameObject.activeSelf)
+            _hudCanvas.gameObject.SetActive(true);
     }
 
     private void StartPlayback()
     {
         if (records == null || records.Length == 0) return;
+        _currentRecordIndex = Mathf.Clamp(_currentRecordIndex, 0, records.Length - 1);
 
+        ShowHUDCanvas();
         var record = records[_currentRecordIndex];
         CurrentState = State.Playing;
 

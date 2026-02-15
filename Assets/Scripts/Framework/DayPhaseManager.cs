@@ -86,6 +86,13 @@ public class DayPhaseManager : MonoBehaviour
 
     public DayPhase CurrentPhase => _currentPhase;
 
+    /// <summary>True during Exploration or DateInProgress — stations can accept input.</summary>
+    public bool IsInteractionPhase => _currentPhase == DayPhase.Exploration
+                                   || _currentPhase == DayPhase.DateInProgress;
+
+    /// <summary>True only during DateInProgress — drink making is allowed.</summary>
+    public bool IsDrinkPhase => _currentPhase == DayPhase.DateInProgress;
+
     // ─── Lifecycle ──────────────────────────────────────────────────
 
     private void Awake()
@@ -262,19 +269,17 @@ public class DayPhaseManager : MonoBehaviour
 
     private IEnumerator ExplorationTransition()
     {
-        // 1. Fade to black
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+        // Smooth camera blend — no fade. Cinemachine brain handles the transition.
 
-        // 2. Lower read camera
+        // 1. Lower read camera → browse camera wins via priority
         if (_readCamera != null)
             _readCamera.Priority = PriorityInactive;
 
-        // 3. Raise browse camera (ApartmentManager owns its priority value)
+        // 2. Raise browse camera (ApartmentManager owns its priority value)
         if (ApartmentManager.Instance != null)
             ApartmentManager.Instance.SetBrowseCameraActive(true);
 
-        // 4. Toss newspaper to coffee table
+        // 3. Toss newspaper to coffee table
         if (_tossedNewspaperPosition != null)
         {
             var surface = _newspaperManager != null ? _newspaperManager.NewspaperTransform : null;
@@ -285,25 +290,24 @@ public class DayPhaseManager : MonoBehaviour
             }
         }
 
-        // 5. Disable newspaper manager (done for the day)
+        // 4. Disable newspaper manager (done for the day)
         if (_newspaperManager != null)
             _newspaperManager.enabled = false;
 
-        // 6. UI: show apartment browse, hide newspaper HUD
+        // 5. UI: show apartment browse, hide newspaper HUD
         if (_apartmentUI != null)
             _apartmentUI.SetActive(true);
         if (_newspaperHUD != null)
             _newspaperHUD.SetActive(false);
 
-        // 7. Spawn daily stains
+        // 6. Spawn daily stains
         if (_stainSpawner != null)
             _stainSpawner.SpawnDailyStains();
 
-        // 8. Fade in from black
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+        // 7. Wait for Cinemachine blend to finish (default 0.8s EaseInOut)
+        yield return new WaitForSeconds(0.9f);
 
-        // 9. Start preparation countdown
+        // 8. Start preparation countdown
         StartPrepTimer();
     }
 }

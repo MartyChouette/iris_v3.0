@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 552067963b988e743aca45bddee9e69b, type: 3}
+  m_Name: Date_Sterling
+  m_EditorClassIdentifier: Assembly-CSharp::DatePersonalDefinition
+  characterName: Sterling
+  adText: 'FINANCE GENT (proudly atypical), unmarried. Seeking wife, or partner to
+    adore and spoil (ski trip on the table). Enjoys the classics: watches, gym, and
+    whiskey. Confident he''s a rare breed. Photo appreciated with reply.'
+  arrivalTimeSec: 45
+  portrait: {fileID: 0}
+  characterPrefab: {fileID: 0}
+  phoneNumberRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.05
+    width: 0.8
+    height: 0.15
+  characterModelPrefab: {fileID: 0}
+  fontSizeOverride: 0
+  keywords:
+  - keyword: rare breed
+    commentary: Confident. Very confident. He will yap about wine and whiskey all
+      night.
+  - keyword: ski trip
+    commentary: He'll bring you a gift - that was gifted to him by someone else.
+  - keyword: watches, gym, and whiskey
+    commentary: Wearing a suit. Just got off work. Will complain about work.
+  preferences:
+    likedTags:
+    - vinyl
+    - drink
+    - cocktail
+    dislikedTags:
+    - plant
+    - greenery
+    - incense
+    preferredMoodMin: 0.1
+    preferredMoodMax: 0.4
+    likedDrinks: []
+    dislikedDrinks: []
+    likedOutfitTags: []
+    dislikedOutfitTags: []
+    reactionStrength: 0.9

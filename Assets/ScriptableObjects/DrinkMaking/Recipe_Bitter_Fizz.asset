@@ -13,11 +13,17 @@ MonoBehaviour:
   m_Name: Recipe_Bitter_Fizz
   m_EditorClassIdentifier: Assembly-CSharp::DrinkRecipeDefinition
   drinkName: Bitter Fizz
-  requiredGlass: {fileID: 11400000, guid: 11718faadc02ac34393ce6ccb8661c3b, type: 2}
+  requiredGlass: {fileID: 0}
   ingredients: []
   portionNormalized: []
-  requiresStir: 1
-  stirDuration: 1.5
+  requiresStir: 0
+  stirDuration: 2
   perfectStirSpeedMin: 1.5
   perfectStirSpeedMax: 4
   baseScore: 110
+  idealFillLevel: 0.8
+  fillTolerance: 0.12
+  pourRate: 0.12
+  foamRateMultiplier: 3
+  foamSettleRate: 0.2
+  liquidColor: {r: 0.5, g: 0.3, b: 0.15, a: 0.8}

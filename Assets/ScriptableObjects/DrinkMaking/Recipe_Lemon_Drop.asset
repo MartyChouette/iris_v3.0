@@ -13,11 +13,17 @@ MonoBehaviour:
   m_Name: Recipe_Lemon_Drop
   m_EditorClassIdentifier: Assembly-CSharp::DrinkRecipeDefinition
   drinkName: Lemon Drop
-  requiredGlass: {fileID: 11400000, guid: cb322ee0dc9f613409e09b1d40d19a85, type: 2}
+  requiredGlass: {fileID: 0}
   ingredients: []
   portionNormalized: []
-  requiresStir: 1
+  requiresStir: 0
   stirDuration: 2
   perfectStirSpeedMin: 1.5
   perfectStirSpeedMax: 4
   baseScore: 120
+  idealFillLevel: 0.7
+  fillTolerance: 0.08
+  pourRate: 0.18
+  foamRateMultiplier: 1.5
+  foamSettleRate: 0.3
+  liquidColor: {r: 1, g: 0.95, b: 0.4, a: 0.7}

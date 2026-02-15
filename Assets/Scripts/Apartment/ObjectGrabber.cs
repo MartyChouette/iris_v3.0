@@ -103,6 +103,9 @@ public class ObjectGrabber : MonoBehaviour
 
     private void Update()
     {
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
+            return;
+
         if (!_isEnabled) return;
 
         if (_gridToggle.WasPressedThisFrame())
@@ -244,7 +247,11 @@ public class ObjectGrabber : MonoBehaviour
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
+        // During dolly animation, keep object on screen-space depth plane
+        // so it travels with the cursor instead of clinging to the old room
+        bool dollying = ApartmentManager.Instance != null && ApartmentManager.Instance.IsTransitioning;
+
+        if (!dollying && Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
         {
             var surface = hit.collider.GetComponentInParent<PlacementSurface>();
             if (surface != null && (!surface.IsVertical || _held.CanWallMount))
@@ -275,7 +282,7 @@ public class ObjectGrabber : MonoBehaviour
             }
         }
 
-        // No valid surface — float at fallback depth following cursor
+        // No valid surface or dollying — float at fallback depth following cursor
         _currentSurface = null;
         _isOnWall = false;
 
@@ -463,22 +470,6 @@ public class ObjectGrabber : MonoBehaviour
 
     private PlacementSurface FindNearestSurface(Vector3 worldPos)
     {
-        var allSurfaces = FindObjectsByType<PlacementSurface>(FindObjectsSortMode.None);
-        PlacementSurface best = null;
-        float bestDist = float.MaxValue;
-
-        foreach (var surface in allSurfaces)
-        {
-            if (surface == null) continue;
-            Vector3 clamped = surface.ClampToSurface(worldPos);
-            float dist = (clamped - worldPos).sqrMagnitude;
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                best = surface;
-            }
-        }
-
-        return best;
+        return PlacementSurface.FindNearest(worldPos);
     }
 }

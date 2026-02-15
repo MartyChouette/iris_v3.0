@@ -211,53 +211,32 @@ public static class WateringSceneBuilder
             new Vector2(0f, -30f), new Vector2(400f, 40f),
             "", 24f, TextAlignmentOptions.Center);
 
-        // Water level (right side)
-        var waterLabel = CreateLabel("WaterLevelLabel", hudPanelGO.transform,
-            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-            new Vector2(-80f, 30f), new Vector2(150f, 30f),
-            "", 18f, TextAlignmentOptions.Right);
-
-        // Foam level (right side, below water)
-        var foamLabel = CreateLabel("FoamLevelLabel", hudPanelGO.transform,
-            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-            new Vector2(-80f, -10f), new Vector2(150f, 30f),
-            "", 18f, TextAlignmentOptions.Right);
-
-        // Target hint (right side, below foam)
-        var targetLabel = CreateLabel("TargetLabel", hudPanelGO.transform,
-            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-            new Vector2(-80f, -50f), new Vector2(150f, 30f),
-            "", 16f, TextAlignmentOptions.Right);
-
-        // Overflow warning
-        var overflowGO = CreateLabel("OverflowWarning", hudPanelGO.transform,
-            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(0f, 60f), new Vector2(300f, 40f),
-            "Overflowing!", 22f, TextAlignmentOptions.Center);
-        overflowGO.GetComponent<TMP_Text>().color = new Color(1f, 0.25f, 0.2f);
-        overflowGO.SetActive(false);
-
-        // Score label (center)
-        var scoreLabel = CreateLabel("ScoreLabel", hudPanelGO.transform,
-            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(0f, 0f), new Vector2(500f, 120f),
-            "", 20f, TextAlignmentOptions.Center);
+        // PourBarUI — positioned on right side
+        var pourBarGO = new GameObject("PourBar");
+        pourBarGO.transform.SetParent(hudPanelGO.transform, false);
+        var pourBarRT = pourBarGO.AddComponent<RectTransform>();
+        pourBarRT.anchorMin = new Vector2(1f, 0.5f);
+        pourBarRT.anchorMax = new Vector2(1f, 0.5f);
+        pourBarRT.sizeDelta = new Vector2(60f, 220f);
+        pourBarRT.anchoredPosition = new Vector2(-60f, 0f);
+        pourBarRT.localScale = Vector3.one;
+        var pourBar = pourBarGO.AddComponent<PourBarUI>();
+        pourBar.barHeight = 200f;
+        pourBar.barWidth = 40f;
+        pourBar.liquidColor = new Color(0.3f, 0.55f, 0.85f, 0.9f);
+        pourBar.foamColor = new Color(0.5f, 0.38f, 0.22f, 0.7f);
 
         // Instruction hint (bottom-center, always visible)
         CreateLabel("InstructionLabel", canvasGO.transform,
             new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
             new Vector2(0f, 40f), new Vector2(500f, 30f),
-            "Click on a plant to water it \u2014 hold to pour!", 16f, TextAlignmentOptions.Center);
+            "Click on a plant to water it - hold to pour!", 16f, TextAlignmentOptions.Center);
 
         // ── Wire HUD ─────────────────────────────────────────────────
         var hudSO = new SerializedObject(hud);
         hudSO.FindProperty("manager").objectReferenceValue = mgr;
         hudSO.FindProperty("plantNameLabel").objectReferenceValue = plantNameLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("waterLevelLabel").objectReferenceValue = waterLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("foamLevelLabel").objectReferenceValue = foamLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("targetLabel").objectReferenceValue = targetLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("scoreLabel").objectReferenceValue = scoreLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("overflowWarning").objectReferenceValue = overflowGO;
+        hudSO.FindProperty("pourBar").objectReferenceValue = pourBar;
         hudSO.FindProperty("hudPanel").objectReferenceValue = hudPanelGO;
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 

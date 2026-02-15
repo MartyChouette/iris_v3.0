@@ -37,6 +37,10 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     [Tooltip("0-1 UV rect of this slot on the newspaper surface.")]
     [SerializeField] private Rect normalizedBounds;
 
+    [Header("Player Ad")]
+    [Tooltip("If true, this slot shows the player's own ad (non-interactive).")]
+    [SerializeField] private bool _isPlayerAd;
+
     private DatePersonalDefinition _personalDef;
     private CommercialAdDefinition _commercialDef;
     private bool _isPersonalAd;
@@ -74,6 +78,7 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (_isPlayerAd) return; // Player's own ad is decorative
         if (!_isPersonalAd || _personalDef == null) return;
         if (NewspaperManager.Instance == null) return;
         if (NewspaperManager.Instance.CurrentState != NewspaperManager.State.ReadingPaper) return;
@@ -100,8 +105,8 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     private void OnHoldComplete()
     {
         _isHolding = false;
-        NewspaperManager.Instance?.SelectPersonalAd(_personalDef);
-        // Progress visual stays filled briefly — SelectPersonalAd triggers poof + state change
+        if (_personalDef != null)
+            NewspaperManager.Instance?.SelectPersonalAd(_personalDef);
     }
 
     private void ResetProgress()
@@ -141,7 +146,31 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
             nameLabel.SetText(def.characterName);
 
         if (adLabel != null)
-            adLabel.SetText(def.adText);
+        {
+            string adText = def.adText;
+
+            // Wrap keywords in <link> tags for hover tooltips
+            var tooltip = adLabel.GetComponent<KeywordTooltip>();
+            if (tooltip != null)
+            {
+                tooltip.Clear();
+                if (def.keywords != null)
+                {
+                    string unvisitedHex = "4588FF";
+                    for (int k = 0; k < def.keywords.Length; k++)
+                    {
+                        var kw = def.keywords[k];
+                        if (string.IsNullOrEmpty(kw.keyword)) continue;
+                        string linkId = $"kw_{k}";
+                        string wrapped = $"<link=\"{linkId}\"><color=#{unvisitedHex}><u>{kw.keyword}</u></color></link>";
+                        adText = adText.Replace(kw.keyword, wrapped);
+                        tooltip.RegisterKeyword(linkId, kw.commentary);
+                    }
+                }
+            }
+
+            adLabel.text = adText;
+        }
 
         if (phoneNumberLabel != null)
         {
@@ -164,6 +193,45 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
             logoImage.gameObject.SetActive(false);
 
         ComputePhoneNumberUV();
+    }
+
+    /// <summary>
+    /// Populate this slot as the player's own personal ad (decorative, non-interactive).
+    /// </summary>
+    public void AssignPlayerAd(Sprite portrait)
+    {
+        ResetProgress();
+        _personalDef = null;
+        _commercialDef = null;
+        _isPersonalAd = false; // Not a selectable personal ad
+        _isPlayerAd = true;
+
+        if (nameLabel != null)
+            nameLabel.text = PlayerData.PlayerName;
+
+        if (adLabel != null)
+            adLabel.text = "Seeking beauty in the everyday. Loves flowers, quiet mornings, and sharp scissors.";
+
+        if (phoneNumberLabel != null)
+        {
+            phoneNumberLabel.gameObject.SetActive(true);
+            phoneNumberLabel.text = "555-" + PlayerData.PlayerName.GetHashCode().ToString("X4").Substring(0, 4);
+        }
+
+        if (portraitImage != null)
+        {
+            bool hasPortrait = portrait != null;
+            portraitImage.gameObject.SetActive(hasPortrait);
+            if (hasPortrait) portraitImage.sprite = portrait;
+        }
+        if (logoImage != null)
+            logoImage.gameObject.SetActive(false);
+
+        // Hide progress fill for player ad
+        if (progressFill != null)
+            progressFill.gameObject.SetActive(false);
+
+        _phoneNumberBoundsUV = Rect.zero;
     }
 
     /// <summary>
