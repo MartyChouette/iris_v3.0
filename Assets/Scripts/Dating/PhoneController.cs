@@ -21,6 +21,9 @@ public class PhoneController : MonoBehaviour, IStationManager
     [SerializeField] private AudioClip pickupSFX;
     [SerializeField] private AudioClip doorbellSFX;
 
+    [Tooltip("SFX played when the player clicks the phone to call the date early.")]
+    [SerializeField] private AudioClip callOutgoingSFX;
+
     [Header("Visuals")]
     [Tooltip("Pulsing indicator that shows the phone is ringing.")]
     [SerializeField] private GameObject ringVisual;
@@ -102,6 +105,8 @@ public class PhoneController : MonoBehaviour, IStationManager
             {
                 if (CheckPhoneRaycast())
                 {
+                    if (callOutgoingSFX != null && AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX(callOutgoingSFX);
                     Debug.Log("[PhoneController] Phone clicked during prep — ending prep early.");
                     DayPhaseManager.Instance.EndPrepEarly();
                     DateSessionManager.Instance?.OnDateCharacterArrived();

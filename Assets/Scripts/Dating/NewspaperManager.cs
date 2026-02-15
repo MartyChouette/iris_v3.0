@@ -50,6 +50,9 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     [SerializeField] private float callingDuration = 2f;
     [SerializeField] private AudioClip phoneRingSFX;
 
+    [Tooltip("SFX played when the player selects a date's personal ad.")]
+    [SerializeField] private AudioClip dateSelectedSFX;
+
     // ─── UI ───────────────────────────────────────────────────────
     [Header("UI")]
     [SerializeField] private GameObject callingUI;
@@ -168,6 +171,9 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
         _selectedDefinition = def;
         OnDateSelected?.Invoke(def);
+
+        if (dateSelectedSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(dateSelectedSFX);
 
         // Hide overlay
         if (newspaperOverlay != null)

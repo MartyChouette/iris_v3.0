@@ -38,6 +38,15 @@ public class WateringManager : MonoBehaviour
     public AudioClip overflowSFX;
     public AudioClip scoreSFX;
 
+    [Tooltip("SFX played when a plant is clicked to start watering.")]
+    public AudioClip plantClickSFX;
+
+    [Tooltip("SFX played on a perfect watering score.")]
+    public AudioClip perfectSFX;
+
+    [Tooltip("SFX played on a failed watering score.")]
+    public AudioClip failSFX;
+
     // ── Public read-only API ─────────────────────────────────────────
 
     public State CurrentState { get; private set; } = State.Idle;
@@ -135,6 +144,8 @@ public class WateringManager : MonoBehaviour
 
                 if (plant != null && plant.definition != null)
                 {
+                    if (plantClickSFX != null && AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX(plantClickSFX);
                     BeginPouring(plant.definition);
                 }
             }
@@ -216,6 +227,13 @@ public class WateringManager : MonoBehaviour
 
         if (AudioManager.Instance != null && scoreSFX != null)
             AudioManager.Instance.PlaySFX(scoreSFX);
+
+        // Perfect / fail SFX based on score threshold
+        bool isPerfect = !_pot.Overflowed && fillNorm > 0.9f;
+        if (isPerfect && perfectSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(perfectSFX);
+        else if (!isPerfect && lastScore < 30 && failSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(failSFX);
 
         CurrentState = State.Scoring;
         _scoreTimer = _scoreDisplayTime;

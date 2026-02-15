@@ -28,6 +28,12 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
     [Tooltip("AudioSource for music playback. Auto-added if null.")]
     [SerializeField] private AudioSource audioSource;
 
+    [Tooltip("SFX played when browsing/cycling to a new record.")]
+    [SerializeField] private AudioClip browseSFX;
+
+    [Tooltip("SFX played when starting playback (changing song).")]
+    [SerializeField] private AudioClip playSFX;
+
     [Header("HUD")]
     [Tooltip("RecordPlayerHUD component.")]
     [SerializeField] private RecordPlayerHUD hud;
@@ -157,6 +163,10 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
     {
         _currentRecordIndex = (_currentRecordIndex + direction + records.Length) % records.Length;
         ApplyRecordVisual();
+
+        if (browseSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(browseSFX);
+
         Debug.Log($"[RecordPlayerManager] Browsing: {records[_currentRecordIndex].title}");
     }
 
@@ -222,6 +232,9 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
         }
 
         MoodMachine.Instance?.SetSource("Music", record.moodValue);
+
+        if (playSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(playSFX);
 
         var reactable = GetComponent<ReactableTag>();
         if (reactable != null) reactable.IsActive = true;

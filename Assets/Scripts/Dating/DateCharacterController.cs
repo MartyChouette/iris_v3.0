@@ -37,6 +37,13 @@ public class DateCharacterController : MonoBehaviour
     [Tooltip("Seconds for the get-up transition.")]
     [SerializeField] private float getUpDuration = 0.5f;
 
+    [Header("Audio")]
+    [Tooltip("SFX played when the NPC starts investigating an item.")]
+    [SerializeField] private AudioClip investigateSFX;
+
+    [Tooltip("SFX played when the NPC reacts to an item.")]
+    [SerializeField] private AudioClip reactionSFX;
+
     // ──────────────────────────────────────────────────────────────
     // Events
     // ──────────────────────────────────────────────────────────────
@@ -217,6 +224,8 @@ public class DateCharacterController : MonoBehaviour
                 {
                     _state = CharState.Investigating;
                     _investigateTimer = 0f;
+                    if (investigateSFX != null && AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX(investigateSFX);
                     Debug.Log("[DateCharacterController] Investigating...");
                 }
                 break;
@@ -308,6 +317,10 @@ public class DateCharacterController : MonoBehaviour
         if (dateSession == null || dateSession.CurrentDate == null) return;
 
         var reaction = ReactionEvaluator.EvaluateReactable(_currentTarget, dateSession.CurrentDate.preferences);
+
+        if (reactionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(reactionSFX);
+
         OnReaction?.Invoke(_currentTarget, reaction);
 
         Debug.Log($"[DateCharacterController] Reacted to {_currentTarget.gameObject.name}: {reaction}");

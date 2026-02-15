@@ -255,6 +255,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             _hoveredBook = book;
             _hoveredBook.OnHoverEnter();
             ShowHint(_hoveredBook.Definition != null ? _hoveredBook.Definition.title : "Book");
+            if (hoverSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(hoverSFX);
         }
     }
 
@@ -271,6 +273,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             _hoveredDrawer = drawer;
             _hoveredDrawer.OnHoverEnter();
             ShowHint("Drawer");
+            if (hoverSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(hoverSFX);
         }
     }
 
@@ -287,6 +291,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             _hoveredPerfume = perfume;
             _hoveredPerfume.OnHoverEnter();
             ShowHint(_hoveredPerfume.Definition != null ? _hoveredPerfume.Definition.perfumeName : "Perfume");
+            if (hoverSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(hoverSFX);
         }
     }
 
@@ -303,6 +309,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             _hoveredTrinket = trinket;
             _hoveredTrinket.OnHoverEnter();
             ShowHint(_hoveredTrinket.Definition != null ? _hoveredTrinket.Definition.trinketName : "Trinket");
+            if (hoverSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(hoverSFX);
         }
     }
 
@@ -319,6 +327,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             _hoveredCoffeeBook = coffeeBook;
             _hoveredCoffeeBook.OnHoverEnter();
             ShowHint(_hoveredCoffeeBook.Definition != null ? _hoveredCoffeeBook.Definition.title : "Coffee Table Book");
+            if (hoverSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(hoverSFX);
         }
     }
 
@@ -346,6 +356,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         if (_hoveredBook != null)
         {
             if (isDoubleClick) return; // books use Reading, not inspection
+            if (selectSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(selectSFX);
             _activeBook = _hoveredBook;
             ClearBookHover();
             BeginPullOut();
@@ -355,6 +367,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         // Drawer click
         if (_hoveredDrawer != null)
         {
+            if (selectSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(selectSFX);
             _activeDrawer = _hoveredDrawer;
             ClearDrawerHover();
             BeginDrawerOpen();

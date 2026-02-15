@@ -54,6 +54,19 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Affection drift per check when mood matches.")]
     [SerializeField] private float ambientMoodDrift = 0.5f;
 
+    [Header("Audio")]
+    [Tooltip("SFX played when the date character arrives.")]
+    [SerializeField] private AudioClip dateArrivedSFX;
+
+    [Tooltip("SFX played on a Like reaction.")]
+    [SerializeField] private AudioClip likeSFX;
+
+    [Tooltip("SFX played on a Dislike reaction.")]
+    [SerializeField] private AudioClip dislikeSFX;
+
+    [Tooltip("SFX played when transitioning to a new date phase.")]
+    [SerializeField] private AudioClip phaseTransitionSFX;
+
     [Header("References")]
     [Tooltip("Where the date character spawns (apartment entrance).")]
     [SerializeField] private Transform dateSpawnPoint;
@@ -204,6 +217,9 @@ public class DateSessionManager : MonoBehaviour
         // Spawn character
         SpawnDateCharacter();
 
+        if (dateArrivedSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(dateArrivedSFX);
+
         OnDateSessionStarted?.Invoke(_currentDate);
         OnAffectionChanged?.Invoke(_affection);
         Debug.Log($"[DateSessionManager] Phase 1: Arrival — {_currentDate.characterName} walking in.");
@@ -224,6 +240,12 @@ public class DateSessionManager : MonoBehaviour
 
         delta *= magnitude * GetMoodMultiplier() * _currentDate.preferences.reactionStrength;
         _affection = Mathf.Clamp(_affection + delta, 0f, 100f);
+
+        // Reaction SFX
+        if (type == ReactionType.Like && likeSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(likeSFX);
+        else if (type == ReactionType.Dislike && dislikeSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(dislikeSFX);
 
         OnAffectionChanged?.Invoke(_affection);
         Debug.Log($"[DateSessionManager] Reaction: {type} (delta={delta:+0.0;-0.0}) → Affection: {_affection:F1}");
@@ -278,6 +300,10 @@ public class DateSessionManager : MonoBehaviour
         if (_datePhase != DatePhase.Arrival) return;
 
         _datePhase = DatePhase.DrinkJudging;
+
+        if (phaseTransitionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
         Debug.Log("[DateSessionManager] Phase 2: DrinkJudging — make a drink and deliver it!");
     }
 
@@ -286,6 +312,9 @@ public class DateSessionManager : MonoBehaviour
         _datePhase = DatePhase.ApartmentJudging;
         _apartmentJudgingTimer = 0f;
         _moodCheckTimer = 0f;
+
+        if (phaseTransitionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
 
         // Enable NPC excursions so they walk around and judge items
         if (_dateCharacter != null)

@@ -75,6 +75,13 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("Panel root for the prep timer UI.")]
     [SerializeField] private GameObject _prepTimerPanel;
 
+    [Header("Audio")]
+    [Tooltip("SFX played at the start of a new day (morning transition).")]
+    [SerializeField] private AudioClip nextDaySFX;
+
+    [Tooltip("SFX played when prep timer hits 10 seconds remaining.")]
+    [SerializeField] private AudioClip timerWarningSFX;
+
     [Header("Events")]
     public UnityEvent<int> OnPhaseChanged;
 
@@ -83,6 +90,7 @@ public class DayPhaseManager : MonoBehaviour
 
     private float _prepTimer;
     private bool _prepTimerActive;
+    private bool _timerWarningPlayed;
 
     public DayPhase CurrentPhase => _currentPhase;
 
@@ -140,6 +148,14 @@ public class DayPhaseManager : MonoBehaviour
             _prepTimerText.SetText("{0}:{1:00}", mins, secs);
         }
 
+        // Warning SFX at 10 seconds
+        if (!_timerWarningPlayed && _prepTimer <= 10f && _prepTimer > 0f)
+        {
+            _timerWarningPlayed = true;
+            if (timerWarningSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(timerWarningSFX);
+        }
+
         if (_prepTimer <= 0f)
         {
             _prepTimerActive = false;
@@ -153,6 +169,7 @@ public class DayPhaseManager : MonoBehaviour
     {
         _prepTimer = _prepDuration;
         _prepTimerActive = true;
+        _timerWarningPlayed = false;
         if (_prepTimerPanel != null) _prepTimerPanel.SetActive(true);
         Debug.Log($"[DayPhaseManager] Prep timer started: {_prepDuration}s.");
     }
@@ -240,6 +257,9 @@ public class DayPhaseManager : MonoBehaviour
 
     private IEnumerator MorningTransition()
     {
+        if (nextDaySFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(nextDaySFX);
+
         // 1. Suppress browse camera so it doesn't compete with read camera
         if (ApartmentManager.Instance != null)
             ApartmentManager.Instance.SetBrowseCameraActive(false);

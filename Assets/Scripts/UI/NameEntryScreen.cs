@@ -19,6 +19,13 @@ public class NameEntryScreen : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private int _maxNameLength = 8;
 
+    [Header("Audio")]
+    [Tooltip("SFX played when the player confirms their name.")]
+    [SerializeField] private AudioClip confirmSFX;
+
+    [Tooltip("SFX played when selecting a letter or command.")]
+    [SerializeField] private AudioClip selectLetterSFX;
+
     // ── Grid definition ────────────────────────────────────────────
     // 7 rows: 6 character rows (9 cols each) + 1 command row (3 zones)
     private static readonly char[][] _charGrid = {
@@ -269,6 +276,9 @@ public class NameEntryScreen : MonoBehaviour
 
     private void HandleSelect()
     {
+        if (selectLetterSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(selectLetterSFX);
+
         if (_cursorRow < CharRows)
         {
             // Character selected
@@ -416,6 +426,10 @@ public class NameEntryScreen : MonoBehaviour
             name = "Nema";
 
         PlayerData.PlayerName = name;
+
+        if (confirmSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(confirmSFX);
+
         Debug.Log($"[NameEntryScreen] Player name set to: {name}");
 
         // Disable input so it doesn't conflict with apartment systems

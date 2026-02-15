@@ -41,6 +41,15 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
     public AudioClip overflowSFX;
     public AudioClip scoreSFX;
 
+    [Tooltip("SFX played when selecting a recipe.")]
+    public AudioClip recipeSelectSFX;
+
+    [Tooltip("SFX played on a perfect drink score.")]
+    public AudioClip perfectSFX;
+
+    [Tooltip("SFX played on a failed drink score.")]
+    public AudioClip failSFX;
+
     // ── Public read-only API ─────────────────────────────────────────
 
     public State CurrentState { get; private set; } = State.ChoosingRecipe;
@@ -156,6 +165,9 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         _pourStarted = false;
         CurrentState = State.Pouring;
 
+        if (recipeSelectSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(recipeSelectSFX);
+
         Debug.Log($"[SimpleDrinkManager] Selected recipe: {_activeRecipe.drinkName}");
     }
 
@@ -254,6 +266,13 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
 
         if (AudioManager.Instance != null && scoreSFX != null)
             AudioManager.Instance.PlaySFX(scoreSFX);
+
+        // Perfect / fail SFX based on score threshold
+        bool isPerfect = !_overflowed && fillNorm > 0.9f;
+        if (isPerfect && perfectSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(perfectSFX);
+        else if (!isPerfect && lastScore < 30 && failSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(failSFX);
 
         // Deliver drink to coffee table
         CoffeeTableDelivery.Instance?.DeliverDrink(_activeRecipe, _activeRecipe.liquidColor, lastScore);
