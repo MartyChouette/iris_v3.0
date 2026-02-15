@@ -15,13 +15,13 @@ MonoBehaviour:
   label: "V4 \u2014 Overhead"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: -2, y: 5, z: -3.5}
-    rotation: {x: 75, y: 0, z: 0}
+    position: {x: 3.2264638, y: 4.8284903, z: -9.021572}
+    rotation: {x: 26.09759, y: 330.55725, z: 1.2178211}
     lens:
-      FieldOfView: 40
+      FieldOfView: 60.000004
       OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      NearClipPlane: 0.0450701
+      FarClipPlane: 9014.0205
       Dutch: 0
       ModeOverride: 0
       PhysicalProperties:
@@ -36,17 +36,17 @@ MonoBehaviour:
         Curvature: {x: 2, y: 11}
         BarrelClipping: 0.25
         Anamorphism: 0
-    volumeProfile: {fileID: 0}
+    volumeProfile: {fileID: 11400000, guid: ec4227ddbc3b71e428a843e9551058ef, type: 2}
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
   - areaLabel: Living Room
-    position: {x: 0, y: 5, z: 2.5}
-    rotation: {x: 75, y: 0, z: 0}
+    position: {x: -4.555634, y: 5.090692, z: -1.9967362}
+    rotation: {x: 38.470722, y: 56.12086, z: 1.3528216}
     lens:
-      FieldOfView: 40
+      FieldOfView: 60.000004
       OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      NearClipPlane: 0.0450701
+      FarClipPlane: 9014.0205
       Dutch: 0
       ModeOverride: 0
       PhysicalProperties:

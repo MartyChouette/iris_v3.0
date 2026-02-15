@@ -71,6 +71,12 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
     [Tooltip("SFX played when putting a book back (optional).")]
     [SerializeField] private AudioClip putBackSFX;
 
+    [Tooltip("SFX played when hovering over an interactable item.")]
+    [SerializeField] private AudioClip hoverSFX;
+
+    [Tooltip("SFX played when clicking/selecting an item.")]
+    [SerializeField] private AudioClip selectSFX;
+
     public State CurrentState { get; private set; } = State.Browsing;
 
     private InputAction _mousePositionAction;

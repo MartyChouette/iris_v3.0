@@ -205,8 +205,9 @@ public class ObjectGrabber : MonoBehaviour
         // Must be over a surface to place
         if (_currentSurface == null) return;
 
-        // Can't place non-wallmount items on walls
+        // Wall items only on walls, table items only on tables
         if (_currentSurface.IsVertical && !_held.CanWallMount) return;
+        if (!_currentSurface.IsVertical && _held.WallOnly) return;
 
         var hitResult = _currentSurface.ProjectOntoSurface(_heldRb.position);
         Vector3 pos = _gridSnap
@@ -254,7 +255,10 @@ public class ObjectGrabber : MonoBehaviour
         if (!dollying && Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
         {
             var surface = hit.collider.GetComponentInParent<PlacementSurface>();
-            if (surface != null && (!surface.IsVertical || _held.CanWallMount))
+            bool surfaceValid = surface != null
+                && (!surface.IsVertical || _held.CanWallMount)
+                && (surface.IsVertical || !_held.WallOnly);
+            if (surfaceValid)
             {
                 _currentSurface = surface;
                 _lastValidSurface = surface;
@@ -403,7 +407,8 @@ public class ObjectGrabber : MonoBehaviour
             var surface = hit.collider.GetComponentInParent<PlacementSurface>();
             if (surface != null)
             {
-                bool canPlace = !surface.IsVertical || _held.CanWallMount;
+                bool canPlace = (!surface.IsVertical || _held.CanWallMount)
+                    && (surface.IsVertical || !_held.WallOnly);
                 var hitResult = surface.ProjectOntoSurface(hit.point);
                 shadowPos = hitResult.worldPosition + hitResult.surfaceNormal * 0.01f;
                 shadowRot = Quaternion.FromToRotation(Vector3.up, hitResult.surfaceNormal);
@@ -439,7 +444,7 @@ public class ObjectGrabber : MonoBehaviour
             // Restore rotation constraints before configuring rigidbody
             _heldRb.constraints = _originalConstraints;
 
-            var nearest = FindNearestSurface(_heldRb.position);
+            var nearest = FindNearestSurfaceForHeld(_heldRb.position);
             if (nearest != null)
             {
                 var hitResult = nearest.ProjectOntoSurface(_heldRb.position);
@@ -468,8 +473,11 @@ public class ObjectGrabber : MonoBehaviour
         }
     }
 
-    private PlacementSurface FindNearestSurface(Vector3 worldPos)
+    private PlacementSurface FindNearestSurfaceForHeld(Vector3 worldPos)
     {
-        return PlacementSurface.FindNearest(worldPos);
+        if (_held == null) return PlacementSurface.FindNearest(worldPos);
+        return PlacementSurface.FindNearest(worldPos,
+            skipVertical: !_held.CanWallMount,
+            skipHorizontal: _held.WallOnly);
     }
 }

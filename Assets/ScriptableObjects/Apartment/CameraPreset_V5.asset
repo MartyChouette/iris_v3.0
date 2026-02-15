@@ -15,13 +15,13 @@ MonoBehaviour:
   label: "V5 \u2014 Dutch Tilt"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: -3, y: 2.5, z: -4}
-    rotation: {x: 20, y: 40, z: 0}
+    position: {x: 2.2046602, y: 1.1914134, z: -5.773284}
+    rotation: {x: 350.4, y: -5.32, z: 23.9}
     lens:
-      FieldOfView: 52
+      FieldOfView: 60.000004
       OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      NearClipPlane: 0.0450701
+      FarClipPlane: 9014.0205
       Dutch: 12
       ModeOverride: 0
       PhysicalProperties:
@@ -40,13 +40,13 @@ MonoBehaviour:
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
   - areaLabel: Living Room
-    position: {x: -1, y: 2.5, z: 1.5}
-    rotation: {x: 18, y: 55, z: 0}
+    position: {x: -4.601932, y: 4.1898923, z: -1.6764345}
+    rotation: {x: 18, y: 55, z: 1.2690364}
     lens:
-      FieldOfView: 52
+      FieldOfView: 60.000004
       OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      NearClipPlane: 0.0450701
+      FarClipPlane: 9014.0205
       Dutch: -10
       ModeOverride: 0
       PhysicalProperties:

@@ -15,15 +15,15 @@ MonoBehaviour:
   label: "V9 \u2014 Surveillance"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: -0.5, y: 4, z: -6}
-    rotation: {x: 40, y: 20, z: 0}
+    position: {x: -7.421945, y: 6.9611187, z: -9.648032}
+    rotation: {x: 27.014744, y: 54.18433, z: 1.1328996}
     lens:
-      FieldOfView: 35
-      OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      FieldOfView: 60
+      OrthographicSize: 3.8101735
+      NearClipPlane: 0.038101736
+      FarClipPlane: 7620.347
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
@@ -40,15 +40,15 @@ MonoBehaviour:
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
   - areaLabel: Living Room
-    position: {x: 2, y: 4, z: 0.5}
-    rotation: {x: 42, y: -30, z: 0}
+    position: {x: -9.022187, y: 6.327363, z: 2.0247698}
+    rotation: {x: 26.212725, y: 97.02519, z: 1.12818}
     lens:
-      FieldOfView: 35
-      OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      FieldOfView: 60
+      OrthographicSize: 3.646099
+      NearClipPlane: 0.036460992
+      FarClipPlane: 7292.198
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}

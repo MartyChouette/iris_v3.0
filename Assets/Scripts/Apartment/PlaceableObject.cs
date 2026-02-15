@@ -15,9 +15,12 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Seconds after leaving world bounds before recovery (prevents flicker).")]
     [SerializeField] private float respawnDelay = 0.5f;
 
-    [Header("Wall Mount")]
+    [Header("Surface Restrictions")]
     [Tooltip("If true, this object can be placed on vertical (wall) surfaces.")]
     [SerializeField] private bool canWallMount;
+
+    [Tooltip("If true, this object can ONLY be placed on walls (rejects tables/shelves).")]
+    [SerializeField] private bool wallOnly;
 
     [Tooltip("Random rotation range (degrees) applied when spawned on a wall.")]
     [SerializeField] private float crookedAngleRange = 12f;
@@ -31,6 +34,7 @@ public class PlaceableObject : MonoBehaviour
 
     public State CurrentState { get; private set; } = State.Resting;
     public bool CanWallMount => canWallMount;
+    public bool WallOnly => wallOnly;
     public PlacementSurface LastPlacedSurface => _lastPlacedSurface;
 
     private Renderer _renderer;
@@ -309,7 +313,9 @@ public class PlaceableObject : MonoBehaviour
 
     private PlacementSurface FindNearestSurface(Vector3 worldPos)
     {
-        return PlacementSurface.FindNearest(worldPos, skipVertical: !canWallMount);
+        return PlacementSurface.FindNearest(worldPos,
+            skipVertical: !canWallMount,
+            skipHorizontal: wallOnly);
     }
 
     // ── Safety: Placement validation timer ────────────────────────────

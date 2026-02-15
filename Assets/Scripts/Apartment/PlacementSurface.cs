@@ -169,9 +169,9 @@ public class PlacementSurface : MonoBehaviour
 
     /// <summary>
     /// Find the nearest PlacementSurface to a world position.
-    /// Optionally skip vertical surfaces (for non-wallmount objects).
+    /// Optionally skip vertical or horizontal surfaces.
     /// </summary>
-    public static PlacementSurface FindNearest(Vector3 worldPos, bool skipVertical = false)
+    public static PlacementSurface FindNearest(Vector3 worldPos, bool skipVertical = false, bool skipHorizontal = false)
     {
         var all = Object.FindObjectsByType<PlacementSurface>(FindObjectsSortMode.None);
         PlacementSurface best = null;
@@ -181,6 +181,7 @@ public class PlacementSurface : MonoBehaviour
         {
             if (surface == null) continue;
             if (skipVertical && surface.IsVertical) continue;
+            if (skipHorizontal && !surface.IsVertical) continue;
 
             Vector3 clamped = surface.ClampToSurface(worldPos);
             float dist = (clamped - worldPos).sqrMagnitude;

@@ -15,15 +15,15 @@ MonoBehaviour:
   label: "V6 \u2014 Tight Close-Up"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: -2, y: 1.5, z: -3}
-    rotation: {x: 10, y: 35, z: 0}
+    position: {x: -0.88730216, y: 4.007378, z: -12.19707}
+    rotation: {x: 11.089234, y: 12.3981, z: 1.1015873}
     lens:
-      FieldOfView: 32
-      OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      FieldOfView: 60
+      OrthographicSize: 2.816902
+      NearClipPlane: 0.028169017
+      FarClipPlane: 5633.8037
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
@@ -40,15 +40,15 @@ MonoBehaviour:
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
   - areaLabel: Living Room
-    position: {x: 0, y: 1.5, z: 2}
-    rotation: {x: 8, y: 50, z: 0}
+    position: {x: -6.1920476, y: 5.20148, z: 8.6833725}
+    rotation: {x: 16.015793, y: 141.86848, z: 1.1171113}
     lens:
-      FieldOfView: 32
-      OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      FieldOfView: 60
+      OrthographicSize: 3.646099
+      NearClipPlane: 0.036460992
+      FarClipPlane: 7292.198
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}

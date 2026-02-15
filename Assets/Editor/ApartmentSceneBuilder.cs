@@ -703,6 +703,7 @@ public static class ApartmentSceneBuilder
         var placeable = go.AddComponent<PlaceableObject>();
         var placeableSO = new SerializedObject(placeable);
         placeableSO.FindProperty("canWallMount").boolValue = true;
+        placeableSO.FindProperty("wallOnly").boolValue = true;
         placeableSO.FindProperty("crookedAngleRange").floatValue = 12f;
         placeableSO.ApplyModifiedPropertiesWithoutUndo();
 
