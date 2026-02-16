@@ -67,6 +67,14 @@ public static class ApartmentSceneBuilder
     [MenuItem("Window/Iris/Build Apartment Scene")]
     public static void Build()
     {
+        if (!EditorUtility.DisplayDialog(
+                "Rebuild Apartment Scene",
+                "This will CREATE A NEW SCENE from scratch and discard whatever is currently open.\n\n" +
+                "Any unsaved changes to the current scene will be lost.\n\n" +
+                "Are you sure?",
+                "Rebuild", "Cancel"))
+            return;
+
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         int placeableLayer = EnsureLayer(PlaceableLayerName);
