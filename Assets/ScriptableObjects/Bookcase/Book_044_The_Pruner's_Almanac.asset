@@ -21,6 +21,6 @@ MonoBehaviour:
     prune on the solstice.'
   - 'October: Let the dead heads stand. The goldfinches need the seeds more than
     you need tidiness.'
-  spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
-  heightScale: 0.7695452
-  thicknessScale: 0.05332154
+  spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
+  heightScale: 0.78950524
+  thicknessScale: 0.034356028

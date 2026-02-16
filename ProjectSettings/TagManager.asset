@@ -41,7 +41,7 @@ TagManager:
   - Surfaces
   - VinylStack
   - Turntable
-  - 
+  - FridgeHandle
   m_SortingLayers:
   - name: Default
     uniqueID: 0

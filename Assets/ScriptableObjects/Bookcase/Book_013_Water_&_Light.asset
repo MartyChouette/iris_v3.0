@@ -20,6 +20,6 @@ MonoBehaviour:
   - Too much light bleaches. Too little starves. The plant's whole life is a negotiation
     between extremes.
   - The best gardeners understand that water and light are not gifts. They are partnerships.
-  spineColor: {r: 0.1, g: 0.1, b: 0.25, a: 1}
-  heightScale: 0.8469678
-  thicknessScale: 0.022208154
+  spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
+  heightScale: 0.79201055
+  thicknessScale: 0.027680758

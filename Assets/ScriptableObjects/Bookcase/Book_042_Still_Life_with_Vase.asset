@@ -21,6 +21,6 @@ MonoBehaviour:
     on the table.'
   - She arranged the flowers not for beauty but for conversation. The lily had something
     to say to the rose.
-  spineColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
-  heightScale: 0.7507011
-  thicknessScale: 0.04634812
+  spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
+  heightScale: 0.8738651
+  thicknessScale: 0.03658859
