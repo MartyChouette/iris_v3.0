@@ -21,6 +21,6 @@ MonoBehaviour:
     its circular argument.'
   - Some flowers are better preserved in memory than in books. But we press them
     anyway.
-  spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
-  heightScale: 0.71285427
-  thicknessScale: 0.043643672
+  spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
+  heightScale: 0.8356737
+  thicknessScale: 0.025695315
