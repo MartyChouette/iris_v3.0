@@ -3,9 +3,9 @@ using UnityEngine;
 
 /// <summary>
 /// Runs the 3 entrance judgments when a date arrives:
-///   1. Outfit    — evaluated against date's style preferences
+///   1. Cleanliness — based on remaining uncleaned stains
 ///   2. Perfume/Mood — evaluated against date's preferred mood range
-///   3. Cleanliness — based on remaining uncleaned stains
+///   3. Outfit       — evaluated against date's style preferences (null = skip)
 /// Each judgment: pause → thought bubble → emote → affection change → brief wait.
 /// </summary>
 public class EntranceJudgmentSequence : MonoBehaviour
@@ -33,13 +33,13 @@ public class EntranceJudgmentSequence : MonoBehaviour
 
         yield return new WaitForSeconds(_preJudgmentPause);
 
-        // --- Judgment 1: Outfit ---
+        // --- Judgment 1: Cleanliness ---
         PlayJudgingSFX();
-        var outfitReaction = EvaluateOutfit(date);
-        reactionUI?.ShowReaction(outfitReaction);
-        DateSessionManager.Instance?.ApplyReaction(outfitReaction);
-        if (outfitReaction == ReactionType.Dislike) PlaySneezeSFX();
-        Debug.Log($"[EntranceJudgmentSequence] Outfit: {outfitReaction}");
+        var cleanReaction = EvaluateCleanliness();
+        reactionUI?.ShowReaction(cleanReaction);
+        DateSessionManager.Instance?.ApplyReaction(cleanReaction);
+        if (cleanReaction == ReactionType.Dislike) PlaySneezeSFX();
+        Debug.Log($"[EntranceJudgmentSequence] Cleanliness: {cleanReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
 
         // --- Judgment 2: Perfume / Mood ---
@@ -51,13 +51,13 @@ public class EntranceJudgmentSequence : MonoBehaviour
         Debug.Log($"[EntranceJudgmentSequence] Perfume/Mood: {moodReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
 
-        // --- Judgment 3: Cleanliness ---
+        // --- Judgment 3: Outfit ---
         PlayJudgingSFX();
-        var cleanReaction = EvaluateCleanliness();
-        reactionUI?.ShowReaction(cleanReaction);
-        DateSessionManager.Instance?.ApplyReaction(cleanReaction);
-        if (cleanReaction == ReactionType.Dislike) PlaySneezeSFX();
-        Debug.Log($"[EntranceJudgmentSequence] Cleanliness: {cleanReaction}");
+        var outfitReaction = EvaluateOutfit(date);
+        reactionUI?.ShowReaction(outfitReaction);
+        DateSessionManager.Instance?.ApplyReaction(outfitReaction);
+        if (outfitReaction == ReactionType.Dislike) PlaySneezeSFX();
+        Debug.Log($"[EntranceJudgmentSequence] Outfit: {outfitReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
     }
 

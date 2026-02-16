@@ -131,12 +131,19 @@ public class DateCharacterController : MonoBehaviour
         Debug.Log("[DateCharacterController] Continuing to couch after judgments.");
     }
 
-    /// <summary>Allow the character to start wandering to ReactableTags (Phase 3).</summary>
+    /// <summary>Allow the character to start wandering to ReactableTags.</summary>
     public void EnableExcursions()
     {
         _excursionsEnabled = true;
         _sitTimer = 0f;
         Debug.Log("[DateCharacterController] Excursions enabled.");
+    }
+
+    /// <summary>Stop the character from starting new excursions (Reveal phase).</summary>
+    public void DisableExcursions()
+    {
+        _excursionsEnabled = false;
+        Debug.Log("[DateCharacterController] Excursions disabled.");
     }
 
     /// <summary>Force the character to investigate a specific location (e.g. drink delivery).</summary>

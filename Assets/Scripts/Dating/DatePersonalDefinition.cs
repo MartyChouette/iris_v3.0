@@ -71,6 +71,13 @@ public class DatePersonalDefinition : ScriptableObject
     }
 
     // ──────────────────────────────────────────────────────────────
+    // Flower Gift
+    // ──────────────────────────────────────────────────────────────
+    [Header("Flower Gift")]
+    [Tooltip("Flower prefab given on successful date.")]
+    public GameObject flowerPrefab;
+
+    // ──────────────────────────────────────────────────────────────
     // Preferences
     // ──────────────────────────────────────────────────────────────
     [Header("Preferences")]

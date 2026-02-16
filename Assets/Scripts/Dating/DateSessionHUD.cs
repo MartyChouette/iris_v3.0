@@ -15,6 +15,28 @@ public class DateSessionHUD : MonoBehaviour
     [SerializeField] private TMP_Text clockText;
     [SerializeField] private TMP_Text dayText;
 
+    [Header("Phase Display")]
+    [SerializeField] private TMP_Text phaseText;
+    [SerializeField] private TMP_Text revealItemText;
+
+    private void OnEnable()
+    {
+        var dsm = DateSessionManager.Instance;
+        if (dsm != null) dsm.OnRevealReaction += HandleRevealReaction;
+    }
+
+    private void OnDisable()
+    {
+        var dsm = DateSessionManager.Instance;
+        if (dsm != null) dsm.OnRevealReaction -= HandleRevealReaction;
+    }
+
+    private void HandleRevealReaction(DateSessionManager.AccumulatedReaction reaction)
+    {
+        if (revealItemText != null)
+            revealItemText.text = $"{reaction.itemName}: {reaction.type}";
+    }
+
     private void Update()
     {
         var dsm = DateSessionManager.Instance;
@@ -24,7 +46,11 @@ public class DateSessionHUD : MonoBehaviour
         if (hudRoot != null)
             hudRoot.SetActive(showDate);
 
-        if (!showDate) return;
+        if (!showDate)
+        {
+            if (revealItemText != null) revealItemText.text = "";
+            return;
+        }
 
         // Date info
         if (dateNameText != null && dsm.CurrentDate != null)
@@ -41,6 +67,22 @@ public class DateSessionHUD : MonoBehaviour
             affectionBar.maxValue = 100f;
             affectionBar.value = aff;
         }
+
+        // Phase label
+        if (phaseText != null)
+        {
+            phaseText.text = dsm.CurrentDatePhase switch
+            {
+                DateSessionManager.DatePhase.Arrival => "Arrival",
+                DateSessionManager.DatePhase.BackgroundJudging => "Date in Progress",
+                DateSessionManager.DatePhase.Reveal => "The Verdict",
+                _ => ""
+            };
+        }
+
+        // Clear reveal text when not in Reveal phase
+        if (dsm.CurrentDatePhase != DateSessionManager.DatePhase.Reveal && revealItemText != null)
+            revealItemText.text = "";
 
         // Clock
         var clock = GameClock.Instance;

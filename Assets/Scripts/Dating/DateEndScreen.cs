@@ -31,6 +31,7 @@ public class DateEndScreen : MonoBehaviour
     [SerializeField] private float _fadeDuration = 0.8f;
 
     private bool _transitioning;
+    private bool _dateWasFailed;
 
     private void Awake()
     {
@@ -55,14 +56,15 @@ public class DateEndScreen : MonoBehaviour
     }
 
     /// <summary>Show the date end screen with results.</summary>
-    public void Show(DatePersonalDefinition date, float affection)
+    public void Show(DatePersonalDefinition date, float affection, bool failed = false)
     {
         if (screenRoot == null) return;
 
         screenRoot.SetActive(true);
         _transitioning = false;
+        _dateWasFailed = failed;
 
-        string grade = ComputeGrade(affection);
+        string grade = failed ? "F" : ComputeGrade(affection);
 
         if (dateNameText != null)
             dateNameText.text = date != null ? date.characterName : "???";
@@ -73,34 +75,38 @@ public class DateEndScreen : MonoBehaviour
         if (gradeText != null)
         {
             gradeText.text = grade;
-            gradeText.color = grade switch
-            {
-                "S" => new Color(1f, 0.84f, 0f),
-                "A" => new Color(0.4f, 1f, 0.4f),
-                "B" => new Color(0.4f, 0.8f, 1f),
-                "C" => new Color(1f, 0.8f, 0.4f),
-                _ => new Color(1f, 0.4f, 0.4f)
-            };
+            gradeText.color = grade == "F"
+                ? new Color(1f, 0.3f, 0.3f)
+                : grade switch
+                {
+                    "S" => new Color(1f, 0.84f, 0f),
+                    "A" => new Color(0.4f, 1f, 0.4f),
+                    "B" => new Color(0.4f, 0.8f, 1f),
+                    "C" => new Color(1f, 0.8f, 0.4f),
+                    _ => new Color(1f, 0.4f, 0.4f)
+                };
         }
 
         if (summaryText != null)
         {
-            summaryText.text = grade switch
-            {
-                "S" => "A perfect connection! They'll definitely call back.",
-                "A" => "A wonderful time together. Very promising!",
-                "B" => "A pleasant evening. Room for improvement.",
-                "C" => "An awkward date. Better luck next time.",
-                _ => "That did not go well at all..."
-            };
+            summaryText.text = failed
+                ? "They left early..."
+                : grade switch
+                {
+                    "S" => "A perfect connection! They'll definitely call back.",
+                    "A" => "A wonderful time together. Very promising!",
+                    "B" => "A pleasant evening. Room for improvement.",
+                    "C" => "An awkward date. Better luck next time.",
+                    _ => "That did not go well at all..."
+                };
         }
 
         // Play SFX
-        AudioClip clip = affection >= 60f ? goodDateSFX : badDateSFX;
+        AudioClip clip = failed ? badDateSFX : (affection >= 60f ? goodDateSFX : badDateSFX);
         if (clip != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(clip);
 
-        Debug.Log($"[DateEndScreen] Grade: {grade} (Affection: {affection:F0}%)");
+        Debug.Log($"[DateEndScreen] Grade: {grade} (Affection: {affection:F0}%) Failed: {failed}");
     }
 
     /// <summary>Compute letter grade from affection score.</summary>
@@ -120,8 +126,8 @@ public class DateEndScreen : MonoBehaviour
         if (screenRoot != null)
             screenRoot.SetActive(false);
 
-        // Load flower trimming scene if configured
-        if (_flowerSceneIndex >= 0)
+        // Only load flower scene on success
+        if (!_dateWasFailed && _flowerSceneIndex >= 0)
         {
             _transitioning = true;
             if (ScreenFade.Instance != null && _fadeDuration > 0f)
@@ -131,7 +137,9 @@ public class DateEndScreen : MonoBehaviour
         }
         else
         {
-            Debug.Log("[DateEndScreen] No flower scene configured. Staying in apartment.");
+            Debug.Log(_dateWasFailed
+                ? "[DateEndScreen] Date failed — no flower scene."
+                : "[DateEndScreen] No flower scene configured. Staying in apartment.");
         }
     }
 

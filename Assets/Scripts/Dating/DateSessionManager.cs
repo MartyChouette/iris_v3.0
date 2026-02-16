@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,11 +15,11 @@ public class DateSessionManager : MonoBehaviour
 
     /// <summary>
     /// Sub-phases within DateInProgress:
-    ///   Arrival         — NPC walks in, sits on couch
-    ///   DrinkJudging    — Player makes and delivers a drink, NPC judges it
-    ///   ApartmentJudging— NPC wanders, investigates ReactableTags, judges apartment
+    ///   Arrival           — NPC walks in, entrance judgments, sits on couch
+    ///   BackgroundJudging — NPC excursions run in parallel with drink making
+    ///   Reveal            — NPC sits, accumulated reactions replayed one-by-one
     /// </summary>
-    public enum DatePhase { None, Arrival, DrinkJudging, ApartmentJudging }
+    public enum DatePhase { None, Arrival, BackgroundJudging, Reveal }
 
     // ──────────────────────────────────────────────────────────────
     // Configuration
@@ -43,9 +44,15 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Affection lost from a Dislike reaction.")]
     [SerializeField] private float dislikeAffection = -4f;
 
-    [Header("Date Phases")]
-    [Tooltip("Seconds the apartment judging phase lasts before the date ends.")]
-    [SerializeField] private float apartmentJudgingDuration = 60f;
+    [Header("Fail Thresholds")]
+    [Tooltip("Affection below this after Arrival → NPC leaves.")]
+    [SerializeField] private float _arrivalFailThreshold = 25f;
+
+    [Tooltip("Affection below this after drink delivery → NPC leaves.")]
+    [SerializeField] private float _bgJudgingFailThreshold = 20f;
+
+    [Tooltip("Affection below this after Reveal → NPC leaves without flower.")]
+    [SerializeField] private float _revealFailThreshold = 30f;
 
     [Header("Ambient Check")]
     [Tooltip("Seconds between ambient mood evaluations.")]
@@ -89,6 +96,21 @@ public class DateSessionManager : MonoBehaviour
     public UnityEvent<DatePersonalDefinition, float> OnDateSessionEnded;
 
     // ──────────────────────────────────────────────────────────────
+    // Accumulated reactions (replayed during Reveal)
+    // ──────────────────────────────────────────────────────────────
+    public struct AccumulatedReaction
+    {
+        public string itemName;
+        public ReactionType type;
+    }
+
+    /// <summary>Flower prefab stashed after a successful date for the flower trimming scene.</summary>
+    public static GameObject PendingFlowerPrefab { get; set; }
+
+    /// <summary>Fired for each reaction during the Reveal phase replay.</summary>
+    public event System.Action<AccumulatedReaction> OnRevealReaction;
+
+    // ──────────────────────────────────────────────────────────────
     // Runtime state
     // ──────────────────────────────────────────────────────────────
     private SessionState _state = SessionState.Idle;
@@ -100,7 +122,7 @@ public class DateSessionManager : MonoBehaviour
     private GameObject _dateCharacterGO;
     private float _arrivalTimer;
     private bool _arrivalTimerActive;
-    private float _apartmentJudgingTimer;
+    private readonly List<AccumulatedReaction> _accumulatedReactions = new();
 
     // ──────────────────────────────────────────────────────────────
     // Public API
@@ -147,20 +169,8 @@ public class DateSessionManager : MonoBehaviour
 
         if (_state != SessionState.DateInProgress) return;
 
-        // Apartment judging timer — auto-end date when it expires
-        if (_datePhase == DatePhase.ApartmentJudging)
-        {
-            _apartmentJudgingTimer += Time.deltaTime;
-            if (_apartmentJudgingTimer >= apartmentJudgingDuration)
-            {
-                Debug.Log("[DateSessionManager] Apartment judging phase complete.");
-                EndDate();
-                return;
-            }
-        }
-
-        // Periodic mood check (only during ApartmentJudging)
-        if (_datePhase == DatePhase.ApartmentJudging)
+        // Periodic mood check during BackgroundJudging
+        if (_datePhase == DatePhase.BackgroundJudging)
         {
             _moodCheckTimer += Time.deltaTime;
             if (_moodCheckTimer >= moodCheckInterval)
@@ -212,7 +222,7 @@ public class DateSessionManager : MonoBehaviour
         _datePhase = DatePhase.Arrival;
         _affection = startingAffection;
         _moodCheckTimer = 0f;
-        _apartmentJudgingTimer = 0f;
+        _accumulatedReactions.Clear();
 
         // Spawn character
         SpawnDateCharacter();
@@ -261,14 +271,13 @@ public class DateSessionManager : MonoBehaviour
 
         ApplyReaction(reactionType, magnitude);
 
-        // Have the date character investigate the drink
-        if (_dateCharacter != null && coffeeTableDeliveryPoint != null)
-            _dateCharacter.InvestigateSpecific(coffeeTableDeliveryPoint);
+        Debug.Log($"[DateSessionManager] Drink received: {recipe?.drinkName} (score={score}) → {reactionType}");
 
-        Debug.Log($"[DateSessionManager] Phase 2 → 3: Drink received: {recipe?.drinkName} (score={score}) → {reactionType}");
+        // Fail check after drink
+        if (CheckPhaseFailAndExit(_bgJudgingFailThreshold)) return;
 
-        // Transition to Phase 3: Apartment Judging
-        EnterApartmentJudging();
+        // Transition to Reveal phase
+        EnterReveal();
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -299,40 +308,91 @@ public class DateSessionManager : MonoBehaviour
     {
         if (_datePhase != DatePhase.Arrival) return;
 
-        _datePhase = DatePhase.DrinkJudging;
+        // Fail check after entrance judgments
+        if (CheckPhaseFailAndExit(_arrivalFailThreshold)) return;
 
-        if (phaseTransitionSFX != null && AudioManager.Instance != null)
-            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
-
-        Debug.Log("[DateSessionManager] Phase 2: DrinkJudging — make a drink and deliver it!");
-    }
-
-    private void EnterApartmentJudging()
-    {
-        _datePhase = DatePhase.ApartmentJudging;
-        _apartmentJudgingTimer = 0f;
+        _datePhase = DatePhase.BackgroundJudging;
         _moodCheckTimer = 0f;
+        _accumulatedReactions.Clear();
 
-        if (phaseTransitionSFX != null && AudioManager.Instance != null)
-            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
-
-        // Enable NPC excursions so they walk around and judge items
+        // Enable excursions immediately — NPC wanders while player makes drink
         if (_dateCharacter != null)
             _dateCharacter.EnableExcursions();
 
-        Debug.Log("[DateSessionManager] Phase 3: ApartmentJudging — NPC exploring apartment.");
+        if (phaseTransitionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
+        Debug.Log("[DateSessionManager] Phase 2: BackgroundJudging — NPC exploring while player makes drink.");
     }
 
-    /// <summary>End the current date session and show results.</summary>
+    private void EnterReveal()
+    {
+        _datePhase = DatePhase.Reveal;
+
+        // Disable excursions — NPC sits on couch for reveal
+        if (_dateCharacter != null)
+            _dateCharacter.DisableExcursions();
+
+        if (phaseTransitionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
+        Debug.Log("[DateSessionManager] Phase 3: Reveal — replaying accumulated reactions.");
+        StartCoroutine(RunRevealSequence());
+    }
+
+    /// <summary>Public safety fallback (e.g. GameClock bed time). Routes to fail or succeed based on affection.</summary>
     public void EndDate()
+    {
+        if (_state == SessionState.Idle || _state == SessionState.DateEnding) return;
+
+        if (_affection < _revealFailThreshold)
+            FailDate();
+        else
+            SucceedDate();
+    }
+
+    /// <summary>Returns true (and triggers failure) if affection is below threshold.</summary>
+    private bool CheckPhaseFailAndExit(float threshold)
+    {
+        if (_affection < threshold)
+        {
+            Debug.Log($"[DateSessionManager] Affection {_affection:F1} < {threshold} — date failed!");
+            FailDate();
+            return true;
+        }
+        return false;
+    }
+
+    private void FailDate()
     {
         if (_state == SessionState.Idle || _state == SessionState.DateEnding) return;
 
         _state = SessionState.DateEnding;
         _datePhase = DatePhase.None;
-        Debug.Log($"[DateSessionManager] Ending date with {_currentDate?.characterName}. Final affection: {_affection:F1}");
+        Debug.Log($"[DateSessionManager] Date FAILED with {_currentDate?.characterName}. Affection: {_affection:F1}");
 
-        // Record history
+        DateHistory.Record(new DateHistory.DateHistoryEntry
+        {
+            name = _currentDate?.characterName ?? "Unknown",
+            day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 0,
+            affection = _affection,
+            grade = "F"
+        });
+
+        DismissCharacter();
+        OnDateSessionEnded?.Invoke(_currentDate, _affection);
+        DateEndScreen.Instance?.Show(_currentDate, _affection, failed: true);
+        _state = SessionState.Idle;
+    }
+
+    private void SucceedDate()
+    {
+        if (_state == SessionState.Idle || _state == SessionState.DateEnding) return;
+
+        _state = SessionState.DateEnding;
+        _datePhase = DatePhase.None;
+        Debug.Log($"[DateSessionManager] Date SUCCEEDED with {_currentDate?.characterName}. Affection: {_affection:F1}");
+
         DateHistory.Record(new DateHistory.DateHistoryEntry
         {
             name = _currentDate?.characterName ?? "Unknown",
@@ -341,7 +401,18 @@ public class DateSessionManager : MonoBehaviour
             grade = DateEndScreen.ComputeGrade(_affection)
         });
 
-        // Dismiss character
+        // Stash flower prefab for the flower trimming scene
+        if (_currentDate != null && _currentDate.flowerPrefab != null)
+            PendingFlowerPrefab = _currentDate.flowerPrefab;
+
+        DismissCharacter();
+        OnDateSessionEnded?.Invoke(_currentDate, _affection);
+        DateEndScreen.Instance?.Show(_currentDate, _affection, failed: false);
+        _state = SessionState.Idle;
+    }
+
+    private void DismissCharacter()
+    {
         if (_dateCharacter != null && dateSpawnPoint != null)
         {
             _dateCharacter.Dismiss(dateSpawnPoint, () =>
@@ -352,13 +423,6 @@ public class DateSessionManager : MonoBehaviour
                 _dateCharacter = null;
             });
         }
-
-        OnDateSessionEnded?.Invoke(_currentDate, _affection);
-
-        // Show end screen
-        DateEndScreen.Instance?.Show(_currentDate, _affection);
-
-        _state = SessionState.Idle;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -413,6 +477,39 @@ public class DateSessionManager : MonoBehaviour
         // Show reaction bubble on the character
         var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
         reactionUI?.ShowReaction(type);
+
+        // Accumulate during BackgroundJudging for Reveal replay
+        if (_datePhase == DatePhase.BackgroundJudging && tag != null)
+        {
+            _accumulatedReactions.Add(new AccumulatedReaction
+            {
+                itemName = tag.gameObject.name,
+                type = type
+            });
+        }
+    }
+
+    private IEnumerator RunRevealSequence()
+    {
+        var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
+
+        yield return new WaitForSeconds(1f);
+
+        foreach (var reaction in _accumulatedReactions)
+        {
+            reactionUI?.ShowReaction(reaction.type);
+            OnRevealReaction?.Invoke(reaction);
+            Debug.Log($"[DateSessionManager] Reveal: {reaction.itemName} → {reaction.type}");
+            yield return new WaitForSeconds(2f);
+        }
+
+        yield return new WaitForSeconds(1f);
+
+        // Final fail check
+        if (CheckPhaseFailAndExit(_revealFailThreshold))
+            yield break;
+
+        SucceedDate();
     }
 
     private void EvaluateAmbientMood()
