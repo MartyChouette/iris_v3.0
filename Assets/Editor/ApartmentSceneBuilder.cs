@@ -2181,6 +2181,13 @@ public static class ApartmentSceneBuilder
 
             var aptSO = new SerializedObject(aptManager);
             aptSO.FindProperty("cameraTestController").objectReferenceValue = controller;
+
+            // Wire V1 preset as the default browse angles
+            string v1Path = $"{soDir}/CameraPreset_V1.asset";
+            var v1Preset = AssetDatabase.LoadAssetAtPath<CameraPresetDefinition>(v1Path);
+            if (v1Preset != null)
+                aptSO.FindProperty("defaultPreset").objectReferenceValue = v1Preset;
+
             aptSO.ApplyModifiedPropertiesWithoutUndo();
         }
         else

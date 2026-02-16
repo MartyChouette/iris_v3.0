@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using TMPro;
+using Iris.Apartment;
 
 public class ApartmentManager : MonoBehaviour
 {
@@ -45,6 +46,10 @@ public class ApartmentManager : MonoBehaviour
     [Header("Camera Test")]
     [Tooltip("Optional camera preset test controller for A/B/C comparison.")]
     [SerializeField] private CameraTestController cameraTestController;
+
+    [Header("Default Preset")]
+    [Tooltip("Camera preset used as the default browse angles (e.g. V1). If set, overrides ApartmentAreaDefinition camera values.")]
+    [SerializeField] private CameraPresetDefinition defaultPreset;
 
     [Header("UI")]
     [Tooltip("Panel showing the current area name during browsing.")]
@@ -202,13 +207,35 @@ public class ApartmentManager : MonoBehaviour
     // Camera Transition (pos/rot/FOV lerp)
     // ──────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Reads camera position/rotation/FOV for an area index.
+    /// Prefers defaultPreset SO; falls back to ApartmentAreaDefinition.
+    /// </summary>
+    private void GetCameraValues(int areaIndex, out Vector3 pos, out Quaternion rot, out float fov)
+    {
+        if (defaultPreset != null &&
+            defaultPreset.areaConfigs != null &&
+            areaIndex < defaultPreset.areaConfigs.Length)
+        {
+            var cfg = defaultPreset.areaConfigs[areaIndex];
+            pos = cfg.position;
+            rot = Quaternion.Euler(cfg.rotation);
+            fov = cfg.lens.FieldOfView;
+            return;
+        }
+
+        // Fallback to area definition
+        var area = areas[areaIndex];
+        pos = area.cameraPosition;
+        rot = Quaternion.Euler(area.cameraRotation);
+        fov = area.cameraFOV;
+    }
+
     private void ApplyCameraImmediate(ApartmentAreaDefinition area)
     {
         if (browseCamera == null) return;
 
-        _basePosition = area.cameraPosition;
-        _baseRotation = Quaternion.Euler(area.cameraRotation);
-        _baseFOV = area.cameraFOV;
+        GetCameraValues(_currentAreaIndex, out _basePosition, out _baseRotation, out _baseFOV);
 
         _targetPosition = _basePosition;
         _targetRotation = _baseRotation;
@@ -291,9 +318,7 @@ public class ApartmentManager : MonoBehaviour
             return;
         }
 
-        _targetPosition = area.cameraPosition;
-        _targetRotation = Quaternion.Euler(area.cameraRotation);
-        _targetFOV = area.cameraFOV;
+        GetCameraValues(_currentAreaIndex, out _targetPosition, out _targetRotation, out _targetFOV);
         _isTransitioning = true;
 
         if (!_browseSuppressed)
@@ -345,13 +370,10 @@ public class ApartmentManager : MonoBehaviour
     public void ClearPresetBase()
     {
         _presetOverrideActive = false;
-        // Snap back to current area
+        // Snap back to current area (reads from defaultPreset if set)
         if (areas != null && areas.Length > 0)
         {
-            var area = areas[_currentAreaIndex];
-            _basePosition = area.cameraPosition;
-            _baseRotation = Quaternion.Euler(area.cameraRotation);
-            _baseFOV = area.cameraFOV;
+            GetCameraValues(_currentAreaIndex, out _basePosition, out _baseRotation, out _baseFOV);
         }
     }
 
