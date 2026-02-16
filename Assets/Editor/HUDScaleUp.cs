@@ -8,25 +8,25 @@ using TMPro;
 /// </summary>
 public static class HUDScaleUp
 {
-    // ── Target values (original values × 4) ──
+    // ── Target values (original values × 2.5) ──
     // Pour bar: original was 200h × 40w
-    private const float BarHeight = 800f;
-    private const float BarWidth = 160f;
+    private const float BarHeight = 500f;
+    private const float BarWidth = 100f;
     // Pour bar container RT: original was 60 × 220
-    private const float BarRTWidth = 240f;
-    private const float BarRTHeight = 880f;
+    private const float BarRTWidth = 150f;
+    private const float BarRTHeight = 550f;
 
     // Font sizes: originals were 22 (plant name), 24 (drink name), 20 (score), 18 (buttons)
-    private const float PlantNameFontSize = 88f;
-    private const float DrinkNameFontSize = 96f;
-    private const float ScoreFontSize = 80f;
-    private const float RecipeTitleFontSize = 96f;
-    private const float RecipeButtonFontSize = 72f;
+    private const float PlantNameFontSize = 55f;
+    private const float DrinkNameFontSize = 60f;
+    private const float ScoreFontSize = 50f;
+    private const float RecipeTitleFontSize = 60f;
+    private const float RecipeButtonFontSize = 45f;
 
     // Recipe button sizes: original was 300 × 40, spacing 50
-    private const float ButtonWidth = 1200f;
-    private const float ButtonHeight = 160f;
-    private const float ButtonSpacing = 200f;
+    private const float ButtonWidth = 750f;
+    private const float ButtonHeight = 100f;
+    private const float ButtonSpacing = 125f;
 
     [MenuItem("Window/Iris/Set Pour HUDs to Large Size")]
     public static void SetPourHUDsLarge()
