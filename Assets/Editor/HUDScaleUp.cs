@@ -3,105 +3,125 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// One-click editor tool to scale up Watering and Drink HUD elements 4x
-/// in the current scene. Finds components on inactive GameObjects too.
-/// Run once, then delete this script.
+/// Sets Watering and Drink HUD elements to large absolute sizes.
+/// Idempotent — safe to run multiple times, always produces the same result.
 /// </summary>
 public static class HUDScaleUp
 {
-    private const float Scale = 4f;
+    // ── Target values (original values × 4) ──
+    // Pour bar: original was 200h × 40w
+    private const float BarHeight = 800f;
+    private const float BarWidth = 160f;
+    // Pour bar container RT: original was 60 × 220
+    private const float BarRTWidth = 240f;
+    private const float BarRTHeight = 880f;
 
-    [MenuItem("Window/Iris/Scale Up Pour HUDs (4x)")]
-    public static void ScaleUpPourHUDs()
+    // Font sizes: originals were 22 (plant name), 24 (drink name), 20 (score), 18 (buttons)
+    private const float PlantNameFontSize = 88f;
+    private const float DrinkNameFontSize = 96f;
+    private const float ScoreFontSize = 80f;
+    private const float RecipeTitleFontSize = 96f;
+    private const float RecipeButtonFontSize = 72f;
+
+    // Recipe button sizes: original was 300 × 40, spacing 50
+    private const float ButtonWidth = 1200f;
+    private const float ButtonHeight = 160f;
+    private const float ButtonSpacing = 200f;
+
+    [MenuItem("Window/Iris/Set Pour HUDs to Large Size")]
+    public static void SetPourHUDsLarge()
     {
         int changed = 0;
 
-        // ── Watering HUD — reached via the active WateringHUD component ──
+        // ── Watering HUD ──
         var wateringHUDs = Object.FindObjectsByType<WateringHUD>(FindObjectsSortMode.None);
         foreach (var hud in wateringHUDs)
         {
             if (hud.plantNameLabel != null)
-            {
-                ScaleFont(hud.plantNameLabel, ref changed);
-            }
+                SetFont(hud.plantNameLabel, PlantNameFontSize, ref changed);
 
             if (hud.pourBar != null)
-            {
-                ScalePourBar(hud.pourBar, ref changed);
-            }
+                SetPourBar(hud.pourBar, ref changed);
         }
 
-        // ── Drink HUD — reached via the active SimpleDrinkHUD component ──
+        // ── Drink HUD ──
         var drinkHUDs = Object.FindObjectsByType<SimpleDrinkHUD>(FindObjectsSortMode.None);
         foreach (var hud in drinkHUDs)
         {
             if (hud.drinkNameLabel != null)
-                ScaleFont(hud.drinkNameLabel, ref changed);
+                SetFont(hud.drinkNameLabel, DrinkNameFontSize, ref changed);
 
             if (hud.scoreLabel != null)
-                ScaleFont(hud.scoreLabel, ref changed);
+                SetFont(hud.scoreLabel, ScoreFontSize, ref changed);
 
             if (hud.pourBar != null)
-                ScalePourBar(hud.pourBar, ref changed);
+                SetPourBar(hud.pourBar, ref changed);
 
-            // Scale recipe panel contents
+            // Recipe panel
             if (hud.recipePanel != null)
             {
-                // Scale panel itself
-                ScaleRect(hud.recipePanel.GetComponent<RectTransform>(), ref changed);
-
-                // Scale all child labels
-                var labels = hud.recipePanel.GetComponentsInChildren<TMP_Text>(true);
-                foreach (var label in labels)
-                    ScaleFont(label, ref changed);
-
-                // Scale button RectTransforms (skip the panel root)
-                var rects = hud.recipePanel.GetComponentsInChildren<RectTransform>(true);
-                foreach (var rt in rects)
+                // Title label
+                var titleTF = hud.recipePanel.transform.Find("RecipePanelTitle");
+                if (titleTF != null)
                 {
-                    if (rt.gameObject == hud.recipePanel) continue;
-                    ScaleRect(rt, ref changed);
+                    var titleTMP = titleTF.GetComponent<TMP_Text>();
+                    if (titleTMP != null)
+                        SetFont(titleTMP, RecipeTitleFontSize, ref changed);
                 }
-            }
 
-            // Scale HUD panel (fill/score area)
-            if (hud.hudPanel != null)
-            {
-                ScaleRect(hud.hudPanel.GetComponent<RectTransform>(), ref changed);
+                // Buttons — find by Btn_ prefix
+                int btnIndex = 0;
+                foreach (Transform child in hud.recipePanel.transform)
+                {
+                    if (!child.name.StartsWith("Btn_")) continue;
+                    var btnRT = child.GetComponent<RectTransform>();
+                    if (btnRT != null)
+                    {
+                        float yPos = (160f - btnIndex * ButtonSpacing);
+                        Undo.RecordObject(btnRT, "Set button size");
+                        btnRT.sizeDelta = new Vector2(ButtonWidth, ButtonHeight);
+                        btnRT.anchoredPosition = new Vector2(0f, yPos);
+                        EditorUtility.SetDirty(btnRT);
+                        changed++;
+                    }
+
+                    // Button text
+                    var btnTMP = child.GetComponentInChildren<TMP_Text>(true);
+                    if (btnTMP != null)
+                        SetFont(btnTMP, RecipeButtonFontSize, ref changed);
+
+                    btnIndex++;
+                }
             }
         }
 
-        Debug.Log($"[HUDScaleUp] Scaled {changed} elements {Scale}x. Ctrl+Z to undo.");
+        Debug.Log($"[HUDScaleUp] Set {changed} elements to large size. Ctrl+Z to undo.");
     }
 
-    private static void ScalePourBar(PourBarUI bar, ref int changed)
+    private static void SetPourBar(PourBarUI bar, ref int changed)
     {
-        Undo.RecordObject(bar, "Scale PourBarUI");
-        bar.barHeight *= Scale;
-        bar.barWidth *= Scale;
+        Undo.RecordObject(bar, "Set PourBarUI size");
+        bar.barHeight = BarHeight;
+        bar.barWidth = BarWidth;
         EditorUtility.SetDirty(bar);
         changed++;
 
         var rt = bar.GetComponent<RectTransform>();
         if (rt != null)
-            ScaleRect(rt, ref changed);
+        {
+            Undo.RecordObject(rt, "Set PourBarUI RT size");
+            rt.sizeDelta = new Vector2(BarRTWidth, BarRTHeight);
+            // Keep position where it is — don't move it
+            EditorUtility.SetDirty(rt);
+            changed++;
+        }
     }
 
-    private static void ScaleFont(TMP_Text label, ref int changed)
+    private static void SetFont(TMP_Text label, float size, ref int changed)
     {
-        Undo.RecordObject(label, "Scale font");
-        label.fontSize *= Scale;
+        Undo.RecordObject(label, "Set font size");
+        label.fontSize = size;
         EditorUtility.SetDirty(label);
-        changed++;
-    }
-
-    private static void ScaleRect(RectTransform rt, ref int changed)
-    {
-        if (rt == null) return;
-        Undo.RecordObject(rt, "Scale RectTransform");
-        rt.sizeDelta = new Vector2(rt.sizeDelta.x * Scale, rt.sizeDelta.y * Scale);
-        rt.anchoredPosition *= Scale;
-        EditorUtility.SetDirty(rt);
         changed++;
     }
 }
