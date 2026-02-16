@@ -67,9 +67,6 @@ public static class ApartmentSceneBuilder
     [MenuItem("Window/Iris/Build Apartment Scene")]
     public static void Build()
     {
-        // Snapshot current placeable positions before destroying the scene
-        SaveLayout();
-
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         int placeableLayer = EnsureLayer(PlaceableLayerName);
@@ -142,9 +139,6 @@ public static class ApartmentSceneBuilder
         // ── 10b. Wall placeables (paintings, diploma) ──
         BuildWallPlaceables(placeableLayer);
 
-        // ── 10b2. Restore saved placeable positions ──
-        RestoreLayout();
-
         // ── 10c. ObjectGrabber ──
         var grabberGO = new GameObject("ObjectGrabber");
         var grabber = grabberGO.AddComponent<ObjectGrabber>();
@@ -215,7 +209,7 @@ public static class ApartmentSceneBuilder
                 GameObjectUtility.SetStaticEditorFlags(tf.gameObject,
                     StaticEditorFlags.ContributeGI | StaticEditorFlags.OccluderStatic
                     | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.NavigationStatic
-                    | StaticEditorFlags.ReflectionProbeStatic | StaticEditorFlags.BatchingStatic);
+                    | StaticEditorFlags.ReflectionProbeStatic);
             }
 
             // Add MeshColliders to any children with MeshFilter but no Collider
