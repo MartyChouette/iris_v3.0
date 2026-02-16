@@ -12,7 +12,7 @@ using System.Collections.Generic;
 /// </summary>
 public static class WiltingClockSceneBuilder
 {
-    [MenuItem("Window/Iris/Build Wilting Clock Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Wilting Clock Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

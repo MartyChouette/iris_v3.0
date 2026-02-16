@@ -10,7 +10,7 @@ using TMPro;
 /// </summary>
 public static class WateringSceneBuilder
 {
-    [MenuItem("Window/Iris/Build Watering Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Watering Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ───────────────────────────────────────

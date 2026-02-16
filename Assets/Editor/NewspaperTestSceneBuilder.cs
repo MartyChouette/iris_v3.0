@@ -17,7 +17,7 @@ public static class NewspaperTestSceneBuilder
     private const int CanvasWidth = 1000;
     private const int CanvasHeight = 700;
 
-    [MenuItem("Window/Iris/Build Newspaper Test Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Newspaper Test Scene")]
     public static void Build()
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);

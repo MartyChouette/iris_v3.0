@@ -21,7 +21,7 @@ public static class GraftingSceneBuilder
         public List<FlowerPartRuntime> parts;
     }
 
-    [MenuItem("Window/Iris/Build Grafting Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Grafting Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

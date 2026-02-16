@@ -13,7 +13,7 @@ public static class CleaningSceneBuilder
 {
     private const string CleanableLayerName = "Cleanable";
 
-    [MenuItem("Window/Iris/Build Cleaning Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Cleaning Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

@@ -11,13 +11,13 @@ using TMPro;
 /// </summary>
 public static class MirrorMakeupSceneBuilder
 {
-    [MenuItem("Window/Iris/Build Mirror Makeup Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Mirror Makeup Scene")]
     public static void Build()
     {
         BuildInternal(null);
     }
 
-    [MenuItem("Window/Iris/Build Mirror Makeup Scene (Import Head)")]
+    [MenuItem("Window/Iris/Archived Builders/Build Mirror Makeup Scene (Import Head)")]
     public static void BuildWithImportedHead()
     {
         string path = EditorUtility.OpenFilePanel(

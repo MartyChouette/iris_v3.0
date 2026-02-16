@@ -25,7 +25,7 @@ public static class DatingLoopSceneBuilder
     private const int CanvasWidth = 1000;
     private const int CanvasHeight = 700;
 
-    [MenuItem("Window/Iris/Build Dating Loop Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Dating Loop Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ───────────────────────────────────────

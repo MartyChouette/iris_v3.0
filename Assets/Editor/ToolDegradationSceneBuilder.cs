@@ -13,7 +13,7 @@ using UnityEngine.UI;
 /// </summary>
 public static class ToolDegradationSceneBuilder
 {
-    [MenuItem("Window/Iris/Build Tool Degradation Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Tool Degradation Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

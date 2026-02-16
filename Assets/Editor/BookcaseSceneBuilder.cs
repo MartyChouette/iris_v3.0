@@ -232,7 +232,7 @@ public static class BookcaseSceneBuilder
         new Color(0.5f, 0.2f, 0.3f),
     };
 
-    [MenuItem("Window/Iris/Build Bookcase Browsing Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Bookcase Browsing Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

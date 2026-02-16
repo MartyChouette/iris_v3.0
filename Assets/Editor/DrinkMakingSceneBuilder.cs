@@ -10,7 +10,7 @@ using TMPro;
 /// </summary>
 public static class DrinkMakingSceneBuilder
 {
-    [MenuItem("Window/Iris/Build Drink Making Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Drink Making Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

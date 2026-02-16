@@ -25,7 +25,7 @@ public static class PestSystemSceneBuilder
         public List<FlowerPartRuntime> parts;
     }
 
-    [MenuItem("Window/Iris/Build Pest System Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Pest System Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────

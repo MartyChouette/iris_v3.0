@@ -11,7 +11,7 @@ using System.Collections.Generic;
 /// </summary>
 public static class StemSoundSceneBuilder
 {
-    [MenuItem("Window/Iris/Build Stem Sound Scene")]
+    [MenuItem("Window/Iris/Archived Builders/Build Stem Sound Scene")]
     public static void Build()
     {
         // ── 0. New empty scene ─────────────────────────────────────────
