@@ -68,7 +68,7 @@ public class SimpleDrinkHUD : MonoBehaviour
         if (pourBar != null && recipe != null)
         {
             pourBar.SetVisible(true);
-            pourBar.SetLevels(manager.FillLevel, manager.FoamLevel, recipe.idealFillLevel, recipe.fillTolerance);
+            pourBar.SetLevels(manager.FillLevel, manager.FoamLevel, manager.OscillatingTarget, recipe.fillTolerance);
             pourBar.SetOverflowing(manager.Overflowed);
             pourBar.SetLiquidColor(recipe.liquidColor);
         }

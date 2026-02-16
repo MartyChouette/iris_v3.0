@@ -68,6 +68,10 @@ public class WateringManager : MonoBehaviour
     private PlantDefinition _activePlant;
     private bool _overflowSFXPlayed;
     private float _scoreTimer;
+    private float _pourTime;
+
+    /// <summary>Current oscillating target level (updates each frame while pouring).</summary>
+    public float OscillatingTarget { get; private set; }
 
     // ── Singleton lifecycle ──────────────────────────────────────────
 
@@ -163,6 +167,10 @@ public class WateringManager : MonoBehaviour
         }
 
         _overflowSFXPlayed = false;
+        _pourTime = 0f;
+        OscillatingTarget = def.idealWaterLevel;
+        if (_pot != null)
+            _pot.TargetLevel = def.idealWaterLevel;
         CurrentState = State.Pouring;
 
         Debug.Log($"[WateringManager] Pouring: {def.plantName}");
@@ -172,6 +180,19 @@ public class WateringManager : MonoBehaviour
 
     private void UpdatePouring()
     {
+        // Update oscillating target every frame
+        if (_activePlant != null)
+        {
+            _pourTime += Time.deltaTime;
+            float amp = _activePlant.targetOscAmplitude;
+            float spd = _activePlant.targetOscSpeed;
+            OscillatingTarget = _activePlant.idealWaterLevel
+                + amp * Mathf.Sin(2f * Mathf.PI * spd * _pourTime);
+
+            if (_pot != null)
+                _pot.TargetLevel = OscillatingTarget;
+        }
+
         if (_clickAction.IsPressed())
         {
             if (_pot != null)
@@ -208,8 +229,8 @@ public class WateringManager : MonoBehaviour
 
         var def = _pot.definition;
 
-        // Fill score (0-70): how close water is to ideal level
-        float fillDist = Mathf.Abs(_pot.WaterLevel - def.idealWaterLevel);
+        // Fill score (0-70): how close water is to the oscillating target at release
+        float fillDist = Mathf.Abs(_pot.WaterLevel - OscillatingTarget);
         float fillNorm = Mathf.Clamp01(1f - fillDist / Mathf.Max(def.waterTolerance, 0.001f));
         lastFillScore = fillNorm * 70f;
 

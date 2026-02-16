@@ -61,7 +61,7 @@ public class WateringHUD : MonoBehaviour
 
         if (pourBar != null && pot != null && plant != null)
         {
-            pourBar.SetLevels(pot.WaterLevel, pot.FoamLevel, plant.idealWaterLevel, plant.waterTolerance);
+            pourBar.SetLevels(pot.WaterLevel, pot.FoamLevel, manager.OscillatingTarget, plant.waterTolerance);
             pourBar.SetOverflowing(pot.FoamLevel >= 1f);
         }
     }

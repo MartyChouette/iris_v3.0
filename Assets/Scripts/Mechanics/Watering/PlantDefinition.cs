@@ -44,7 +44,13 @@ public class PlantDefinition : ScriptableObject
     public float pourRate = 0.12f;
 
     [Tooltip("Foam rises this many times faster than water (dirt bubbles up).")]
-    public float foamRateMultiplier = 2.0f;
+    public float foamRateMultiplier = 1.3f;
+
+    [Tooltip("Oscillations per second for the moving target line.")]
+    public float targetOscSpeed = 0.5f;
+
+    [Tooltip("How far the target swings above/below idealWaterLevel.")]
+    public float targetOscAmplitude = 0.15f;
 
     [Tooltip("Units/sec foam collapses toward water level when not pouring.")]
     public float foamSettleRate = 0.25f;

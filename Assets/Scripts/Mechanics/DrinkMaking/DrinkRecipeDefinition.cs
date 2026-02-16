@@ -50,7 +50,13 @@ public class DrinkRecipeDefinition : ScriptableObject
     public float pourRate = 0.15f;
 
     [Tooltip("Foam rises this many times faster than liquid.")]
-    public float foamRateMultiplier = 2f;
+    public float foamRateMultiplier = 1.3f;
+
+    [Tooltip("Oscillations per second for the moving target line.")]
+    public float targetOscSpeed = 0.4f;
+
+    [Tooltip("How far the target swings above/below idealFillLevel.")]
+    public float targetOscAmplitude = 0.12f;
 
     [Tooltip("Units/sec foam settles when not pouring.")]
     public float foamSettleRate = 0.25f;

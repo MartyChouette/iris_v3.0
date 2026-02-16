@@ -81,6 +81,10 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
     private bool _overflowSFXPlayed;
     private bool _pourStarted;
     private float _scoreTimer;
+    private float _pourTime;
+
+    /// <summary>Current oscillating target level (updates each frame while pouring).</summary>
+    public float OscillatingTarget { get; private set; }
 
     // ── Singleton lifecycle ──────────────────────────────────────────
 
@@ -163,6 +167,8 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         _overflowed = false;
         _overflowSFXPlayed = false;
         _pourStarted = false;
+        _pourTime = 0f;
+        OscillatingTarget = _activeRecipe.idealFillLevel;
         CurrentState = State.Pouring;
 
         if (recipeSelectSFX != null && AudioManager.Instance != null)
@@ -175,6 +181,16 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
 
     private void UpdatePouring()
     {
+        // Update oscillating target every frame
+        if (_activeRecipe != null)
+        {
+            _pourTime += Time.deltaTime;
+            float amp = _activeRecipe.targetOscAmplitude;
+            float spd = _activeRecipe.targetOscSpeed;
+            OscillatingTarget = _activeRecipe.idealFillLevel
+                + amp * Mathf.Sin(2f * Mathf.PI * spd * _pourTime);
+        }
+
         // First click must hit the glass to begin pouring
         if (!_pourStarted)
         {
@@ -195,7 +211,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         {
             float dt = Time.deltaTime;
             float rate = _activeRecipe != null ? _activeRecipe.pourRate : 0.15f;
-            float foamMult = _activeRecipe != null ? _activeRecipe.foamRateMultiplier : 2f;
+            float foamMult = _activeRecipe != null ? _activeRecipe.foamRateMultiplier : 1.3f;
 
             _fillLevel += rate * dt;
             _foamLevel += rate * foamMult * dt;
@@ -247,8 +263,8 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
             return;
         }
 
-        // Fill score (0-70): how close fill is to ideal level
-        float fillDist = Mathf.Abs(_fillLevel - _activeRecipe.idealFillLevel);
+        // Fill score (0-70): how close fill is to the oscillating target at release
+        float fillDist = Mathf.Abs(_fillLevel - OscillatingTarget);
         float fillNorm = Mathf.Clamp01(1f - fillDist / Mathf.Max(_activeRecipe.fillTolerance, 0.001f));
         lastFillScore = fillNorm * 70f;
 

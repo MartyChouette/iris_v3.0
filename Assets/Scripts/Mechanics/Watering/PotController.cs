@@ -75,6 +75,9 @@ public class PotController : MonoBehaviour
     public bool Overflowed => _overflowed;
     public bool IsPouring => _isPouring;
 
+    /// <summary>Externally-set target level for the fill line marker (written by WateringManager each frame).</summary>
+    public float TargetLevel { get; set; }
+
     /// <summary>
     /// How close the water level is to the ideal fill line (1 = perfect, 0 = way off).
     /// </summary>
@@ -230,10 +233,10 @@ public class PotController : MonoBehaviour
             }
         }
 
-        // Fill line at ideal water level
+        // Fill line tracks the oscillating target level
         if (fillLineMarker != null)
         {
-            float fillY = definition.idealWaterLevel * h;
+            float fillY = TargetLevel * h;
             fillLineMarker.localPosition = new Vector3(0f, fillY, 0f);
         }
 
