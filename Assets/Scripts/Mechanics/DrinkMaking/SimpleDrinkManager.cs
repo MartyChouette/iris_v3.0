@@ -151,6 +151,19 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         }
     }
 
+    // ── Public API ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Activates the HUD canvas so recipe buttons are visible. Called by FridgeController on door open.
+    /// </summary>
+    public void ShowRecipePanel()
+    {
+        if (_hudCanvas != null && !_hudCanvas.gameObject.activeSelf)
+            _hudCanvas.gameObject.SetActive(true);
+        CurrentState = State.ChoosingRecipe;
+        Debug.Log("[SimpleDrinkManager] Recipe panel shown.");
+    }
+
     // ── Recipe selection (called by UI buttons) ──────────────────────
 
     public void SelectRecipe(int index)

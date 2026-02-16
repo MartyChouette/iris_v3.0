@@ -113,7 +113,7 @@ public class FridgeController : MonoBehaviour
         yield return TweenDoor(_closedRotation, _openRotation);
         _state = DoorState.Open;
 
-        // DrinkMaking manager is already soft-activated from Selected state — no ForceEnter needed.
+        SimpleDrinkManager.Instance?.ShowRecipePanel();
     }
 
     /// <summary>
