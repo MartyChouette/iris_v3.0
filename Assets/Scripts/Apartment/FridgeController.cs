@@ -27,6 +27,10 @@ public class FridgeController : MonoBehaviour
     [Tooltip("Main camera used for raycasting.")]
     [SerializeField] private Camera _mainCamera;
 
+    [Header("Light")]
+    [Tooltip("Point light inside the fridge — on when open, off when closed.")]
+    [SerializeField] private Light _interiorLight;
+
     [Header("Audio")]
     [Tooltip("Played when the door opens.")]
     [SerializeField] private AudioClip _openSFX;
@@ -62,6 +66,9 @@ public class FridgeController : MonoBehaviour
             _closedRotation = _doorPivot.localRotation;
             _openRotation = _closedRotation * Quaternion.Euler(0f, _openAngle, 0f);
         }
+
+        if (_interiorLight != null)
+            _interiorLight.enabled = false;
     }
 
     private void OnEnable()
@@ -83,7 +90,7 @@ public class FridgeController : MonoBehaviour
 
     private void Update()
     {
-        if (_state != DoorState.Closed) return;
+        if (_state != DoorState.Closed && _state != DoorState.Open) return;
         if (!_clickAction.WasPressedThisFrame()) return;
 
         // Only respond during Browsing apartment state
@@ -98,8 +105,16 @@ public class FridgeController : MonoBehaviour
 
         if (Physics.Raycast(ray, out var hit, 20f, _fridgeLayer))
         {
-            Debug.Log("[FridgeController] Fridge clicked — opening door.");
-            StartCoroutine(OpenDoorSequence());
+            if (_state == DoorState.Closed)
+            {
+                Debug.Log("[FridgeController] Fridge clicked — opening door.");
+                StartCoroutine(OpenDoorSequence());
+            }
+            else if (_state == DoorState.Open)
+            {
+                Debug.Log("[FridgeController] Fridge clicked — closing door.");
+                StartCoroutine(CloseDoorSequence());
+            }
         }
     }
 
@@ -112,6 +127,9 @@ public class FridgeController : MonoBehaviour
 
         yield return TweenDoor(_closedRotation, _openRotation);
         _state = DoorState.Open;
+
+        if (_interiorLight != null)
+            _interiorLight.enabled = true;
 
         SimpleDrinkManager.Instance?.ShowRecipePanel();
     }
@@ -134,6 +152,11 @@ public class FridgeController : MonoBehaviour
 
         yield return TweenDoor(_openRotation, _closedRotation);
         _state = DoorState.Closed;
+
+        if (_interiorLight != null)
+            _interiorLight.enabled = false;
+
+        SimpleDrinkManager.Instance?.HideRecipePanel();
     }
 
     private IEnumerator TweenDoor(Quaternion from, Quaternion to)

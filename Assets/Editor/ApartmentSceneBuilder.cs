@@ -2411,6 +2411,17 @@ public static class ApartmentSceneBuilder
         handle.isStatic = false;
         handle.layer = fridgeLayer;
 
+        // ── Fridge interior light ────────────────────────────────────
+        var fridgeLightGO = new GameObject("FridgeLight");
+        fridgeLightGO.transform.SetParent(groupGO.transform);
+        fridgeLightGO.transform.position = new Vector3(3.063f, 1.5f, -1.55f);
+        var fridgeLight = fridgeLightGO.AddComponent<Light>();
+        fridgeLight.type = LightType.Point;
+        fridgeLight.color = new Color(0.95f, 0.97f, 1f);
+        fridgeLight.intensity = 1.5f;
+        fridgeLight.range = 1.2f;
+        fridgeLight.enabled = false;
+
         // ── Glass on counter (on Glass layer for raycast) ─────────────
         var glassGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         glassGO.name = "Glass";
@@ -2567,6 +2578,7 @@ public static class ApartmentSceneBuilder
         fridgeCtrlSO.FindProperty("_doorPivot").objectReferenceValue = doorPivotGO.transform;
         fridgeCtrlSO.FindProperty("_fridgeLayer").intValue = 1 << fridgeLayer;
         fridgeCtrlSO.FindProperty("_mainCamera").objectReferenceValue = cam;
+        fridgeCtrlSO.FindProperty("_interiorLight").objectReferenceValue = fridgeLight;
         fridgeCtrlSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── ReactableTag on drink station (toggled when drink is delivered) ──

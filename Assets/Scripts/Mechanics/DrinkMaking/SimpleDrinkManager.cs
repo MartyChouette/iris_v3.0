@@ -319,8 +319,18 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         {
             _activeRecipe = null;
             CurrentState = State.ChoosingRecipe;
+            HideRecipePanel();
 
             Debug.Log("[SimpleDrinkManager] Returned to ChoosingRecipe.");
         }
+    }
+
+    /// <summary>
+    /// Hides the HUD canvas. Called after scoring completes.
+    /// </summary>
+    public void HideRecipePanel()
+    {
+        if (_hudCanvas != null && _hudCanvas.gameObject.activeSelf)
+            _hudCanvas.gameObject.SetActive(false);
     }
 }
