@@ -65,6 +65,8 @@ public class AutoSaveController : MonoBehaviour
         return new IrisSaveData
         {
             playerName = PlayerData.PlayerName,
+            gameModeName = MainMenuManager.ActiveConfig != null
+                ? MainMenuManager.ActiveConfig.modeName : "",
             currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1,
             currentHour = GameClock.Instance != null ? GameClock.Instance.CurrentHour : 8f,
             dayPhase = DayPhaseManager.Instance != null

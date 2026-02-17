@@ -91,6 +91,13 @@ public class GameClock : MonoBehaviour
         Instance = this;
 
         _currentHour = startHour;
+
+        // Apply game mode pacing if set from main menu
+        if (MainMenuManager.ActiveConfig != null)
+        {
+            totalDays = MainMenuManager.ActiveConfig.totalDays;
+            realSecondsPerGameHour = MainMenuManager.ActiveConfig.realSecondsPerGameHour;
+        }
     }
 
     private void OnDestroy()

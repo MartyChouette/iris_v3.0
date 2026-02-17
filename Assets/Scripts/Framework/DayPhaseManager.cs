@@ -128,6 +128,10 @@ public class DayPhaseManager : MonoBehaviour
             DateSessionManager.Instance.OnDateSessionStarted.AddListener(EnterDateInProgress);
             DateSessionManager.Instance.OnDateSessionEnded.AddListener(EnterEvening);
         }
+
+        // Apply game mode prep duration if set from main menu
+        if (MainMenuManager.ActiveConfig != null)
+            _prepDuration = MainMenuManager.ActiveConfig.prepDuration;
     }
 
     private void OnDestroy()
