@@ -297,6 +297,8 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .mermaid-wrapper pre.mermaid { display: flex; justify-content: center; padding: 1rem 0; }
 .mermaid-wrapper pre.mermaid svg { height: auto; overflow: visible; }
+.mermaid-wide pre.mermaid { justify-content: flex-start; }
+.mermaid-wide pre.mermaid svg { min-width: 1400px; }
 .mermaid-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center; font-weight: 600; }
 
 /* ═══════════════════════════════════════════════════
@@ -756,18 +758,15 @@ xychart-beta horizontal
 
   <p>Two sprints locked in. Sprint 1 is a <strong>2-day playtest validation</strong>. Sprint 2 is a <strong>5-day audio + art integration</strong> with parallel content writing.</p>
 
-  <div class="mermaid-wrapper">
+  <div class="mermaid-wrapper mermaid-wide">
     <div class="mermaid-label">Sprint Schedule &mdash; Feb to Mar 2026</div>
     <pre class="mermaid">
----
-config:
-    gantt:
-        useMaxWidth: false
----
+%%{init: {'theme': 'dark', 'gantt': {'useMaxWidth': false}} }%%
 gantt
     title Sprint Schedule — Feb to Mar 2026
     dateFormat YYYY-MM-DD
     axisFormat %b %d
+    tickInterval 1day
 
     section Week 0 — Validate
     Book advisor meetings           :done, appt, 2026-02-17, 3d
