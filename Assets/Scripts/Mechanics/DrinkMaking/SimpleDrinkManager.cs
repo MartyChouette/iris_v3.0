@@ -317,7 +317,11 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
             _activeRecipe = null;
             CurrentState = State.ChoosingRecipe;
 
-            Debug.Log("[SimpleDrinkManager] Returned to ChoosingRecipe.");
+            // Hide HUD and close fridge after drink is done
+            HideRecipePanel();
+            FridgeController.Instance?.CloseDoor();
+
+            Debug.Log("[SimpleDrinkManager] Drink complete — HUD hidden, fridge closing.");
         }
     }
 
