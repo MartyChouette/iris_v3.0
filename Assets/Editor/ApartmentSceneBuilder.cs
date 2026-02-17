@@ -2751,7 +2751,7 @@ public static class ApartmentSceneBuilder
         var summaryTMP = CreateHUDText("Summary", panelGO.transform,
             new Vector2(0f, -60f), 16f, "A decent evening together.");
 
-        // Continue button
+        // Continue button — dismisses end screen only (no scene load, no GoToBed)
         var btnGO = new GameObject("ContinueButton");
         btnGO.transform.SetParent(panelGO.transform);
         var btnRT = btnGO.AddComponent<RectTransform>();
@@ -2773,22 +2773,12 @@ public static class ApartmentSceneBuilder
         btnLabelRT.offsetMax = Vector2.zero;
         btnLabelRT.localScale = Vector3.one;
         var btnTMP = btnLabel.AddComponent<TextMeshProUGUI>();
-        btnTMP.text = "Go to Bed";
+        btnTMP.text = "Continue";
         btnTMP.fontSize = 20f;
         btnTMP.alignment = TextAlignmentOptions.Center;
         btnTMP.color = Color.white;
 
-        // Wire continue button → GameClock.GoToBed
-        if (gameClock != null)
-        {
-            var goToBedAction = System.Delegate.CreateDelegate(
-                typeof(UnityEngine.Events.UnityAction), gameClock,
-                typeof(GameClock).GetMethod(nameof(GameClock.GoToBed),
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                as UnityEngine.Events.UnityAction;
-            if (goToBedAction != null)
-                UnityEventTools.AddPersistentListener(btn.onClick, goToBedAction);
-        }
+        // OnContinue is wired via Awake listener in DateEndScreen — no persistent listener needed
 
         panelGO.SetActive(false);
 
@@ -2800,9 +2790,6 @@ public static class ApartmentSceneBuilder
         endSO.FindProperty("gradeText").objectReferenceValue = gradeTMP;
         endSO.FindProperty("summaryText").objectReferenceValue = summaryTMP;
         endSO.FindProperty("continueButton").objectReferenceValue = btn;
-        // Flower scene index: 2 = G_Flower_DEC14 in default build settings
-        // Set to -1 to stay in apartment (for testing without flower scene in build)
-        endSO.FindProperty("_flowerSceneIndex").intValue = 2;
         endSO.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -3305,6 +3292,60 @@ public static class ApartmentSceneBuilder
             dpmSO.FindProperty("_tossedNewspaperPosition").objectReferenceValue =
                 tossedPos.transform;
 
+        // ── Go to Bed panel (bottom-center, visible during Evening only) ──
+        var bedCanvas = new GameObject("GoToBedCanvas");
+        bedCanvas.transform.SetParent(go.transform);
+        var bedC = bedCanvas.AddComponent<Canvas>();
+        bedC.renderMode = RenderMode.ScreenSpaceOverlay;
+        bedC.sortingOrder = 16;
+        bedCanvas.AddComponent<UnityEngine.UI.CanvasScaler>();
+        bedCanvas.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        var bedPanel = new GameObject("GoToBedPanel");
+        bedPanel.transform.SetParent(bedCanvas.transform);
+        var bedRT = bedPanel.AddComponent<RectTransform>();
+        bedRT.anchorMin = new Vector2(0.5f, 0f);
+        bedRT.anchorMax = new Vector2(0.5f, 0f);
+        bedRT.pivot = new Vector2(0.5f, 0f);
+        bedRT.sizeDelta = new Vector2(220f, 60f);
+        bedRT.anchoredPosition = new Vector2(0f, 30f);
+        bedRT.localScale = Vector3.one;
+
+        var bedBg = bedPanel.AddComponent<UnityEngine.UI.Image>();
+        bedBg.color = new Color(0.1f, 0.05f, 0.2f, 0.85f);
+
+        var bedBtn = bedPanel.AddComponent<UnityEngine.UI.Button>();
+
+        var bedLabelGO = new GameObject("Label");
+        bedLabelGO.transform.SetParent(bedPanel.transform);
+        var bedLabelRT = bedLabelGO.AddComponent<RectTransform>();
+        bedLabelRT.anchorMin = Vector2.zero;
+        bedLabelRT.anchorMax = Vector2.one;
+        bedLabelRT.offsetMin = Vector2.zero;
+        bedLabelRT.offsetMax = Vector2.zero;
+        bedLabelRT.localScale = Vector3.one;
+        var bedLabelTMP = bedLabelGO.AddComponent<TextMeshProUGUI>();
+        bedLabelTMP.text = "Go to Bed";
+        bedLabelTMP.fontSize = 22f;
+        bedLabelTMP.alignment = TextAlignmentOptions.Center;
+        bedLabelTMP.color = Color.white;
+
+        // Wire button → GameClock.GoToBed
+        var gameClock = Object.FindAnyObjectByType<GameClock>();
+        if (gameClock != null)
+        {
+            var goToBedAction = System.Delegate.CreateDelegate(
+                typeof(UnityEngine.Events.UnityAction), gameClock,
+                typeof(GameClock).GetMethod(nameof(GameClock.GoToBed),
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                as UnityEngine.Events.UnityAction;
+            if (goToBedAction != null)
+                UnityEventTools.AddPersistentListener(bedBtn.onClick, goToBedAction);
+        }
+
+        bedPanel.SetActive(false); // DayPhaseManager shows it in Evening
+
+        dpmSO.FindProperty("_goToBedPanel").objectReferenceValue = bedPanel;
         dpmSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── Wire events via UnityEventTools ────────────────────────────
@@ -3376,7 +3417,34 @@ public static class ApartmentSceneBuilder
         // Easing curves use EaseInOut by default (set in ScreenFade field initializers)
         fadeSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log("[ApartmentSceneBuilder] ScreenFade overlay built.");
+        // ── Dream interstitial text (centered, large, italic, starts hidden) ──
+        var dreamGO = new GameObject("DreamText");
+        dreamGO.transform.SetParent(go.transform, false);
+        var dreamRT = dreamGO.AddComponent<RectTransform>();
+        dreamRT.anchorMin = new Vector2(0.5f, 0.5f);
+        dreamRT.anchorMax = new Vector2(0.5f, 0.5f);
+        dreamRT.pivot = new Vector2(0.5f, 0.5f);
+        dreamRT.sizeDelta = new Vector2(800f, 100f);
+        dreamRT.anchoredPosition = Vector2.zero;
+        dreamRT.localScale = Vector3.one;
+        var dreamTMP = dreamGO.AddComponent<TextMeshProUGUI>();
+        dreamTMP.text = "";
+        dreamTMP.fontSize = 32f;
+        dreamTMP.fontStyle = FontStyles.Italic;
+        dreamTMP.alignment = TextAlignmentOptions.Center;
+        dreamTMP.color = new Color(0.8f, 0.8f, 1f, 0.9f);
+        dreamGO.SetActive(false);
+
+        // Wire dream text to GameClock
+        var gameClock = Object.FindAnyObjectByType<GameClock>();
+        if (gameClock != null)
+        {
+            var gcSO = new SerializedObject(gameClock);
+            gcSO.FindProperty("_dreamText").objectReferenceValue = dreamTMP;
+            gcSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        Debug.Log("[ApartmentSceneBuilder] ScreenFade overlay built (with dream text).");
     }
 
     // ══════════════════════════════════════════════════════════════════

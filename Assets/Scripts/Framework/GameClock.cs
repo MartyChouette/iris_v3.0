@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using TMPro;
 
 /// <summary>
 /// Scene-scoped singleton that drives the in-game calendar and clock.
@@ -42,6 +43,9 @@ public class GameClock : MonoBehaviour
     [Header("References")]
     [Tooltip("DayManager for advancing days.")]
     [SerializeField] private DayManager dayManager;
+
+    [Tooltip("Dream interstitial text shown during sleep transition.")]
+    [SerializeField] private TMP_Text _dreamText;
 
     [Header("Events")]
     public UnityEvent<float> OnHourChanged;
@@ -133,12 +137,30 @@ public class GameClock : MonoBehaviour
         // End any active date session
         DateSessionManager.Instance?.EndDate();
 
-        // Brief pause for transition
-        yield return new WaitForSeconds(0.5f);
+        // 1. Fade to black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(1f);
 
+        // 2. Show dream interstitial text
+        if (_dreamText != null)
+        {
+            _dreamText.text = "Nema drifts to sleep...";
+            _dreamText.gameObject.SetActive(true);
+        }
+
+        // 3. Hold on black for dream
+        yield return new WaitForSeconds(3f);
+
+        // 4. Hide dream text
+        if (_dreamText != null)
+            _dreamText.gameObject.SetActive(false);
+
+        // 5. Advance day and reset clock
         _currentDay++;
         _currentHour = startHour;
 
+        // 6. AdvanceDay fires OnNewNewspaper → DayPhaseManager.EnterMorning
+        //    which already fades in from black
         dayManager?.AdvanceDay();
 
         _isSleeping = false;

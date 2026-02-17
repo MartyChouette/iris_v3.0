@@ -75,6 +75,10 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("Panel root for the prep timer UI.")]
     [SerializeField] private GameObject _prepTimerPanel;
 
+    [Header("Go to Bed")]
+    [Tooltip("Panel with Go to Bed button — shown only during Evening phase.")]
+    [SerializeField] private GameObject _goToBedPanel;
+
     [Header("Audio")]
     [Tooltip("SFX played at the start of a new day (morning transition).")]
     [SerializeField] private AudioClip nextDaySFX;
@@ -94,9 +98,10 @@ public class DayPhaseManager : MonoBehaviour
 
     public DayPhase CurrentPhase => _currentPhase;
 
-    /// <summary>True during Exploration or DateInProgress — stations can accept input.</summary>
+    /// <summary>True during Exploration, DateInProgress, or Evening — stations can accept input.</summary>
     public bool IsInteractionPhase => _currentPhase == DayPhase.Exploration
-                                   || _currentPhase == DayPhase.DateInProgress;
+                                   || _currentPhase == DayPhase.DateInProgress
+                                   || _currentPhase == DayPhase.Evening;
 
     /// <summary>True only during DateInProgress — drink making is allowed.</summary>
     public bool IsDrinkPhase => _currentPhase == DayPhase.DateInProgress;
@@ -230,6 +235,10 @@ public class DayPhaseManager : MonoBehaviour
 
         _currentPhase = phase;
         Debug.Log($"[DayPhaseManager] Phase → {phase}");
+
+        // Go to Bed panel is only visible during Evening
+        if (_goToBedPanel != null)
+            _goToBedPanel.SetActive(phase == DayPhase.Evening);
 
         switch (phase)
         {

@@ -1,12 +1,10 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
 /// Results screen shown after a date ends. Displays affection score, grade, and summary.
-/// On continue, fades to black and loads the flower trimming scene.
+/// Continue button dismisses the screen so the player can clean up in Evening phase.
 /// </summary>
 public class DateEndScreen : MonoBehaviour
 {
@@ -23,15 +21,6 @@ public class DateEndScreen : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioClip goodDateSFX;
     [SerializeField] private AudioClip badDateSFX;
-
-    [Header("Scene Transition")]
-    [Tooltip("Build index of the flower trimming scene. -1 = no scene load (stay in apartment).")]
-    [SerializeField] private int _flowerSceneIndex = -1;
-    [Tooltip("Fade duration before loading flower scene.")]
-    [SerializeField] private float _fadeDuration = 0.8f;
-
-    private bool _transitioning;
-    private bool _dateWasFailed;
 
     private void Awake()
     {
@@ -61,8 +50,6 @@ public class DateEndScreen : MonoBehaviour
         if (screenRoot == null) return;
 
         screenRoot.SetActive(true);
-        _transitioning = false;
-        _dateWasFailed = failed;
 
         string grade = failed ? "F" : ComputeGrade(affection);
 
@@ -121,32 +108,9 @@ public class DateEndScreen : MonoBehaviour
 
     private void OnContinue()
     {
-        if (_transitioning) return;
-
         if (screenRoot != null)
             screenRoot.SetActive(false);
 
-        // Only load flower scene on success
-        if (!_dateWasFailed && _flowerSceneIndex >= 0)
-        {
-            _transitioning = true;
-            if (ScreenFade.Instance != null && _fadeDuration > 0f)
-                StartCoroutine(FadeAndLoad(_flowerSceneIndex));
-            else
-                SceneManager.LoadScene(_flowerSceneIndex);
-        }
-        else
-        {
-            Debug.Log(_dateWasFailed
-                ? "[DateEndScreen] Date failed — no flower scene."
-                : "[DateEndScreen] No flower scene configured. Staying in apartment.");
-        }
-    }
-
-    private IEnumerator FadeAndLoad(int sceneIndex)
-    {
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
-        SceneManager.LoadScene(sceneIndex);
+        Debug.Log("[DateEndScreen] Dismissed — player can explore in Evening phase.");
     }
 }
