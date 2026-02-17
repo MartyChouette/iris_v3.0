@@ -317,7 +317,6 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         {
             _activeRecipe = null;
             CurrentState = State.ChoosingRecipe;
-            HideRecipePanel();
 
             Debug.Log("[SimpleDrinkManager] Returned to ChoosingRecipe.");
         }
