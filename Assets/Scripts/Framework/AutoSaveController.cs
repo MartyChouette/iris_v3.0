@@ -60,6 +60,7 @@ public class AutoSaveController : MonoBehaviour
         }
 
         PlayerData.PlayerName = data.playerName;
+        GameClock.Instance?.RestoreFromSave(data.currentDay, data.currentHour);
         DateHistory.LoadFrom(data.dateHistory);
         ItemStateRegistry.LoadFrom(data.itemDisplayStates);
 

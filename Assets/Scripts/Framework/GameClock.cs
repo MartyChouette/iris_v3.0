@@ -68,6 +68,14 @@ public class GameClock : MonoBehaviour
     public bool IsSleeping => _isSleeping;
     public float NormalizedTimeOfDay => Mathf.Repeat(_currentHour, 24f) / 24f;
 
+    /// <summary>Restore day and hour from save data.</summary>
+    public void RestoreFromSave(int day, float hour)
+    {
+        _currentDay = day;
+        _currentHour = hour;
+        Debug.Log($"[GameClock] Restored to Day {_currentDay} at {_currentHour:F1}");
+    }
+
     // ──────────────────────────────────────────────────────────────
     // Lifecycle
     // ──────────────────────────────────────────────────────────────
