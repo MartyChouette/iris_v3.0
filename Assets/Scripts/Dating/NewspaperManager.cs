@@ -352,11 +352,18 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         float nemaCY = contentTop - nemaH * 0.5f;
         BuildNemaSlot(new Vector2(nemaCX, nemaCY), new Vector2(nemaW, nemaH));
 
-        // ── Date #1 (top-right, shorter but wider) ──────────────
+        // ── Top-right row: Date #1 + Comm #2 side by side ────────
         int pCount = personals?.Count ?? 0;
+        int cCount = commercials?.Count ?? 0;
         float date1H = Date1H;
-        float date1W = rightAreaW;
-        float date1CX = leftX + LeftColW + Gap + date1W * 0.5f;
+        float rightStartX = leftX + LeftColW + Gap;
+
+        // Split top-right: Date1 gets ~65%, Comm2 gets ~35%
+        bool hasComm2 = cCount >= 2;
+        float comm2W = hasComm2 ? rightAreaW * 0.30f : 0f;
+        float date1W = hasComm2 ? rightAreaW - comm2W - Gap : rightAreaW;
+
+        float date1CX = rightStartX + date1W * 0.5f;
         float date1CY = contentTop - date1H * 0.5f;
 
         if (pCount > 0)
@@ -366,14 +373,23 @@ public class NewspaperManager : MonoBehaviour, IStationManager
             _personalSlotsList.Add(slot);
         }
 
-        // ── Bottom row: Date2, Date3 (below Date1, right side) ──
-        float bottomTopRight = contentTop - date1H - Gap; // where Date2/3 start
-        float bottomHRight = bottomTopRight - contentBot;  // remaining height on right
+        // Comm #2 — right of Date1, same height
+        if (hasComm2)
+        {
+            float c2CX = rightStartX + date1W + Gap + comm2W * 0.5f;
+            float c2CY = contentTop - date1H * 0.5f;
+            BuildCommercialFiller(1, commercials[1],
+                new Vector2(c2CX, c2CY), new Vector2(comm2W, date1H));
+        }
+
+        // ── Bottom row: Date2, Date3 (below Date1+Comm2, full right width) ──
+        float bottomTopRight = contentTop - date1H - Gap;
+        float bottomHRight = bottomTopRight - contentBot;
         float halfRightW = (rightAreaW - Gap) * 0.5f;
 
         if (pCount > 1)
         {
-            float d2CX = leftX + LeftColW + Gap + halfRightW * 0.5f;
+            float d2CX = rightStartX + halfRightW * 0.5f;
             float d2CY = bottomTopRight - bottomHRight * 0.5f;
             var slot = CreatePersonalSlotUI(1, personals[1],
                 new Vector2(d2CX, d2CY), new Vector2(halfRightW, bottomHRight));
@@ -382,29 +398,23 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
         if (pCount > 2)
         {
-            float d3CX = leftX + LeftColW + Gap + halfRightW + Gap + halfRightW * 0.5f;
+            float d3CX = rightStartX + halfRightW + Gap + halfRightW * 0.5f;
             float d3CY = bottomTopRight - bottomHRight * 0.5f;
             var slot = CreatePersonalSlotUI(2, personals[2],
                 new Vector2(d3CX, d3CY), new Vector2(halfRightW, bottomHRight));
             _personalSlotsList.Add(slot);
         }
 
-        // ── Commercial fillers (below Nema, left column, stacked) ─
+        // ── Comm #1 — below Nema, left column ────────────────────
         float commTop = contentTop - nemaH - Gap;
-        float commTotalH = commTop - contentBot;
-        int cCount = commercials?.Count ?? 0;
-        int commToPlace = Mathf.Min(cCount, 2);
+        float commH = commTop - contentBot;
 
-        if (commToPlace > 0 && commTotalH > 20f)
+        if (cCount > 0 && commH > 20f)
         {
-            float eachH = (commTotalH - Gap * (commToPlace - 1)) / commToPlace;
-            for (int ci = 0; ci < commToPlace; ci++)
-            {
-                float cCX = leftX + nemaW * 0.5f;
-                float cCY = commTop - ci * (eachH + Gap) - eachH * 0.5f;
-                BuildCommercialFiller(ci, commercials[ci],
-                    new Vector2(cCX, cCY), new Vector2(nemaW, eachH));
-            }
+            float commCX = leftX + nemaW * 0.5f;
+            float commCY = commTop - commH * 0.5f;
+            BuildCommercialFiller(0, commercials[0],
+                new Vector2(commCX, commCY), new Vector2(nemaW, commH));
         }
     }
 
