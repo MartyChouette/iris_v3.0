@@ -13,6 +13,9 @@ public class IrisSaveData
     // ── Player ────────────────────────────────────────────────────
     public string playerName;
 
+    // ── Game Mode ──────────────────────────────────────────────────
+    public string gameModeName;
+
     // ── Calendar ──────────────────────────────────────────────────
     public int currentDay;
     public float currentHour;
