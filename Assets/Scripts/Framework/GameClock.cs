@@ -15,8 +15,8 @@ public class GameClock : MonoBehaviour
     // Configuration
     // ──────────────────────────────────────────────────────────────
     [Header("Calendar")]
-    [Tooltip("Total days in the game calendar.")]
-    [SerializeField] private int totalDays = 7;
+    [Tooltip("Total days in the game calendar. 0 = infinite (no cap).")]
+    [SerializeField] private int totalDays = 0;
 
     [Tooltip("Hour the player wakes up each morning.")]
     [SerializeField] private float startHour = 8f;
@@ -175,7 +175,7 @@ public class GameClock : MonoBehaviour
         OnDayStarted?.Invoke();
         Debug.Log($"[GameClock] Day {_currentDay} started at {_currentHour:F0}:00");
 
-        if (_currentDay > totalDays)
+        if (totalDays > 0 && _currentDay > totalDays)
         {
             OnCalendarComplete?.Invoke();
             Debug.Log("[GameClock] Calendar complete!");
