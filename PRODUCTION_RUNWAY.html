@@ -291,13 +291,13 @@ tbody tr:last-child td { border-bottom: none; }
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
-  padding: 2rem; margin: 2rem 0;
+  padding: 2.5rem 3rem; margin: 2.5rem 0;
   overflow-x: auto;
   box-shadow: var(--shadow-card);
 }
-.mermaid-wrapper pre.mermaid { display: flex; justify-content: center; }
-.mermaid-wrapper pre.mermaid svg { max-width: 100%; height: auto; }
-.mermaid-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 1rem; text-align: center; }
+.mermaid-wrapper pre.mermaid { display: flex; justify-content: center; padding: 1rem 0; }
+.mermaid-wrapper pre.mermaid svg { max-width: 100%; height: auto; overflow: visible; }
+.mermaid-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center; font-weight: 600; }
 
 /* ═══════════════════════════════════════════════════
    BADGES
@@ -486,7 +486,7 @@ em { color: var(--text-secondary); }
     <div class="mermaid-label">Production Runway Overview</div>
     <pre class="mermaid">
 mindmap
-  root((PRODUCTION\nRUNWAY))
+  root((PRODUCTION RUNWAY))
     This Week
       2-Day Playtest Sprint
       Book 3 Advisor Meetings
@@ -805,20 +805,20 @@ gantt
     <div class="mermaid-label">Audio &amp; Art Pipeline</div>
     <pre class="mermaid">
 flowchart TB
-    subgraph AUDIO["Audio Pipeline"]
-        A1["Import audio assets\n Assets/Audio/"]
-        A2["Wire SFX → AudioManager\n cuts, clicks, ring, doorbell"]
-        A3["Wire ambient → MoodMachine\n rain, wind, room tone"]
-        A4["Wire music → RecordPlayer\n per RecordDefinition"]
-        A5["Mix balance pass\n all stations"]
+    subgraph AUDIO["🔊 Audio Pipeline"]
+        A1["Import audio assets<br/><i>Assets/Audio/</i>"]
+        A2["Wire SFX to AudioManager<br/><i>cuts, clicks, ring, doorbell</i>"]
+        A3["Wire ambient to MoodMachine<br/><i>rain, wind, room tone</i>"]
+        A4["Wire music to RecordPlayer<br/><i>per RecordDefinition</i>"]
+        A5["Mix balance pass<br/><i>all stations</i>"]
         A1 --> A2 --> A3 --> A4 --> A5
     end
-    subgraph ART["Art Pipeline"]
-        B1["Import apartment model updates\n replace procedural boxes"]
-        B2["Import Nema placeholder\n humanoid + idle anim"]
-        B3["Import date characters\n Livii, Sterling, Sage, Clover"]
-        B4["UI art pass\n newspaper, HUD, buttons"]
-        B5["Book cover textures\n 15 unique covers"]
+    subgraph ART["🎨 Art Pipeline"]
+        B1["Import apartment model<br/><i>replace procedural boxes</i>"]
+        B2["Import Nema placeholder<br/><i>humanoid + idle anim</i>"]
+        B3["Import date characters<br/><i>Livii, Sterling, Sage, Clover</i>"]
+        B4["UI art pass<br/><i>newspaper, HUD, buttons</i>"]
+        B5["Book cover textures<br/><i>15 unique covers</i>"]
         B1 --> B2 --> B3 --> B4 --> B5
     end
     style AUDIO fill:#1a2a3a,stroke:#3498db,color:#eee
@@ -841,19 +841,19 @@ flowchart TB
     <div class="mermaid-label">Content &rarr; System Dependencies</div>
     <pre class="mermaid">
 flowchart LR
-    subgraph NEMA["Nema Bible"]
-        N1["Identity\n name, age, occupation"]
-        N2["Psychology\n awareness, compulsion, tone"]
-        N3["Relationships\n dates, remorse, dramatic irony"]
-        N4["Voice\n monologue style, keywords"]
+    subgraph NEMA["📖 Nema Bible"]
+        N1["Identity<br/><i>name, age, occupation</i>"]
+        N2["Psychology<br/><i>awareness, compulsion, tone</i>"]
+        N3["Relationships<br/><i>dates, remorse, irony</i>"]
+        N4["Voice<br/><i>monologue style, keywords</i>"]
     end
-    subgraph MESS["Mess Narratives"]
-        M1["Day 1 Heavy\n pre-authored, implied violence"]
-        M2["Date Went Poorly\n knocked drink, crumpled napkin"]
-        M3["Date Went Well\n two glasses, unfamiliar belonging"]
-        M4["Date Was Neutral\n general clutter, dishes"]
+    subgraph MESS["🧹 Mess Narratives"]
+        M1["Day 1 Heavy<br/><i>pre-authored, implied violence</i>"]
+        M2["Date Went Poorly<br/><i>knocked drink, napkin</i>"]
+        M3["Date Went Well<br/><i>two glasses, belonging</i>"]
+        M4["Date Neutral<br/><i>clutter, dishes</i>"]
     end
-    subgraph OUTPUT["Downstream Systems"]
+    subgraph OUTPUT["⚙️ Downstream Systems"]
         O1["NemaThoughtBubble"]
         O2["ApartmentStainSpawner"]
         O3["DateReactionUI"]
@@ -960,31 +960,31 @@ flowchart LR
     <div class="mermaid-label">GDC Action Flow</div>
     <pre class="mermaid">
 flowchart TB
-    subgraph NOW["NOW — Feb 17-20"]
-        R["Register for GDC\n Early rate ends Feb 20"]
-        M["Start booking meetings\n MeetToMatch + Game Connection"]
+    subgraph NOW["🚨 NOW — Feb 17-20"]
+        R["Register for GDC<br/><i>Early rate ends Feb 20</i>"]
+        M["Start booking meetings<br/><i>MeetToMatch + Game Connection</i>"]
     end
-    subgraph PREP["PREPARE — Feb 24 - Mar 7"]
-        P1["Write elevator pitch\n 30 seconds"]
-        P2["Write 2-min pitch\n gameplay + horror + audience"]
-        P3["Build pitch deck\n 10-15 slides"]
-        P4["Polish demo build\n 7-min convention slice"]
-        P5["Press kit live\n presskit.html or itch.io"]
-        P6["Order business cards\n QR → press kit"]
+    subgraph PREP["📋 PREPARE — Feb 24 to Mar 7"]
+        P1["Write elevator pitch<br/><i>30 seconds</i>"]
+        P2["Write 2-min pitch<br/><i>gameplay + horror + audience</i>"]
+        P3["Build pitch deck<br/><i>10-15 slides</i>"]
+        P4["Polish demo build<br/><i>7-min convention slice</i>"]
+        P5["Press kit live<br/><i>presskit.html or itch.io</i>"]
+        P6["Order business cards<br/><i>QR to press kit</i>"]
         P1 --> P2 --> P3
         P4 --> P5
     end
-    subgraph GDC["GDC — Mar 9-13"]
-        G1["Publisher meetings\n 8 targets"]
-        G2["Platform holder meetings\n 4 targets"]
+    subgraph GDC["🎮 GDC — Mar 9-13"]
+        G1["Publisher meetings<br/><i>8 targets</i>"]
+        G2["Platform holders<br/><i>4 targets</i>"]
         G3["Indie Summit sessions"]
-        G4["Networking mixers\n gdcparties.com"]
-        G5["Collect business cards\n follow-up list"]
+        G4["Networking mixers<br/><i>gdcparties.com</i>"]
+        G5["Collect business cards<br/><i>follow-up list</i>"]
     end
-    subgraph AFTER["AFTER — Mar 17+"]
-        F1["Follow-up emails\n within 48 hours"]
-        F2["Send builds to\ninterested parties"]
-        F3["Post GDC recap\n social + devlog"]
+    subgraph AFTER["📧 AFTER — Mar 17+"]
+        F1["Follow-up emails<br/><i>within 48 hours</i>"]
+        F2["Send builds to<br/><i>interested parties</i>"]
+        F3["Post GDC recap<br/><i>social + devlog</i>"]
     end
     NOW --> PREP --> GDC --> AFTER
     style NOW fill:#3a1a1a,stroke:#e94560,color:#eee
@@ -1177,26 +1177,26 @@ timeline
     <div class="mermaid-label">Public Presence Pipeline</div>
     <pre class="mermaid">
 flowchart TB
-    subgraph PRESS["Press Kit (Live by Mar 5)"]
-        PK1["Studio logo\n Raspberry Rum"]
-        PK2["Game logo\n Iris or final title"]
-        PK3["Factsheet\n platform, engine, team, genre"]
-        PK4["Descriptions\n studio 1 para + game 2-3 para"]
-        PK5["Screenshots x5+\n 1920x1080, no debug UI"]
-        PK6["GIF / gameplay clip\n 15-30 sec"]
-        PK7["Team bios\n no private info"]
+    subgraph PRESS["📦 Press Kit — Live by Mar 5"]
+        PK1["Studio logo<br/><i>Raspberry Rum</i>"]
+        PK2["Game logo<br/><i>Iris or final title</i>"]
+        PK3["Factsheet<br/><i>platform, engine, team, genre</i>"]
+        PK4["Descriptions<br/><i>studio 1p + game 2-3p</i>"]
+        PK5["Screenshots x5+<br/><i>1920x1080, no debug UI</i>"]
+        PK6["GIF / clip<br/><i>15-30 sec</i>"]
+        PK7["Team bios"]
         PK8["Contact + socials"]
     end
-    subgraph SOCIAL["Social Channels"]
-        S1["Twitter/X\n 2-3x/week"]
-        S2["Instagram\n 1-2x/week"]
-        S3["TikTok\n 1-2x/week"]
-        S4["Bluesky\n 1-2x/week"]
-        S5["YouTube\n monthly devlog"]
+    subgraph SOCIAL["📱 Social Channels"]
+        S1["Twitter/X<br/><i>2-3x/week</i>"]
+        S2["Instagram<br/><i>1-2x/week</i>"]
+        S3["TikTok<br/><i>1-2x/week</i>"]
+        S4["Bluesky<br/><i>1-2x/week</i>"]
+        S5["YouTube<br/><i>monthly devlog</i>"]
     end
-    subgraph DEVLOG["Public Dev Journal"]
-        D1["itch.io devlog\n biweekly posts"]
-        D2["Cross-post highlights\n to all socials"]
+    subgraph DEVLOG["📓 Public Dev Journal"]
+        D1["itch.io devlog<br/><i>biweekly posts</i>"]
+        D2["Cross-post highlights<br/><i>to all socials</i>"]
     end
     PRESS --> SOCIAL
     SOCIAL --> DEVLOG
@@ -1357,27 +1357,31 @@ timeline
   <div class="mermaid-wrapper">
     <div class="mermaid-label">Feedback Flow</div>
     <pre class="mermaid">
-stateDiagram-v2
-    [*] --> InGame: Convention demo ends / playtest session ends
-    [*] --> External: itch.io page visitor / QR scan
-    [*] --> Direct: Scheduled playtest session
-
-    InGame --> FeedbackJSON: Local JSON save
-    External --> GoogleForm: Form submission
-    Direct --> Notes: Facilitator notes
-
-    FeedbackJSON --> Analysis
-    GoogleForm --> Analysis
-    Notes --> Analysis
-    Analysis --> ActionItems
-
-    note right of InGame
-        Rating (1-5)
-        "What did you enjoy?"
-        "What confused you?"
-        "Would you play more?"
-        Optional contact
-    end note
+flowchart TB
+    subgraph SOURCES["📥 Feedback Sources"]
+        IG["In-Game Overlay<br/><i>demo end / session quit</i>"]
+        EX["External Form<br/><i>itch.io / QR code scan</i>"]
+        DI["Direct Playtest<br/><i>scheduled session</i>"]
+    end
+    subgraph COLLECT["💾 Collection"]
+        JSON["feedback.json<br/><i>local save</i>"]
+        FORM["Google Form<br/><i>cloud submission</i>"]
+        NOTE["Facilitator Notes<br/><i>in-person observations</i>"]
+    end
+    subgraph PROCESS["📊 Processing"]
+        AN["Analysis &amp; Synthesis"]
+        ACT["Action Items<br/><i>prioritized bug/UX fixes</i>"]
+        AN --> ACT
+    end
+    IG --> JSON
+    EX --> FORM
+    DI --> NOTE
+    JSON --> AN
+    FORM --> AN
+    NOTE --> AN
+    style SOURCES fill:#1a2a3a,stroke:#3498db,color:#eee
+    style COLLECT fill:#2a1a3a,stroke:#9b59b6,color:#eee
+    style PROCESS fill:#1a3a1a,stroke:#7ec850,color:#eee
     </pre>
   </div>
 
@@ -1444,18 +1448,18 @@ quadrantChart
     title Risk Assessment Matrix
     x-axis "Low Impact" --> "High Impact"
     y-axis "Low Likelihood" --> "High Likelihood"
-    quadrant-1 "Manage Closely"
-    quadrant-2 "Monitor"
-    quadrant-3 "Accept"
-    quadrant-4 "Mitigate Early"
-    GDC No Meetings: [0.7, 0.4]
-    Art Pipeline Delay: [0.6, 0.7]
-    Scope Creep: [0.8, 0.8]
-    Grant Rejection: [0.5, 0.6]
-    Demo Build Crash: [0.9, 0.3]
-    Audio Not Ready: [0.4, 0.5]
-    Steam Page Delay: [0.3, 0.4]
-    Team Burnout: [0.85, 0.55]
+    quadrant-1 "MANAGE CLOSELY"
+    quadrant-2 "MONITOR"
+    quadrant-3 "ACCEPT"
+    quadrant-4 "MITIGATE EARLY"
+    Scope Creep: [0.82, 0.85]
+    Burnout: [0.88, 0.52]
+    Art Delay: [0.55, 0.72]
+    Grants: [0.45, 0.58]
+    Audio: [0.32, 0.48]
+    No GDC Mtgs: [0.68, 0.35]
+    Demo Crash: [0.92, 0.22]
+    Steam Delay: [0.25, 0.35]
     </pre>
   </div>
 
@@ -1698,11 +1702,37 @@ const obs = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
 // Mermaid init
-mermaid.initialize({ startOnLoad: true, theme: 'dark',
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
   themeVariables: {
     primaryColor: '#2a2a40', primaryTextColor: '#eae8e2',
     primaryBorderColor: '#f5a623', lineColor: '#5b8def',
-    secondaryColor: '#1e1e2c', tertiaryColor: '#181824'
+    secondaryColor: '#1e1e2c', tertiaryColor: '#181824',
+    fontSize: '14px'
+  },
+  flowchart: {
+    padding: 24,
+    nodeSpacing: 30,
+    rankSpacing: 40,
+    htmlLabels: true,
+    curve: 'basis'
+  },
+  quadrantChart: {
+    chartWidth: 600,
+    chartHeight: 500,
+    pointRadius: 6,
+    pointLabelFontSize: 13,
+    xAxisLabelFontSize: 13,
+    yAxisLabelFontSize: 13,
+    quadrantLabelFontSize: 14
+  },
+  gantt: {
+    fontSize: 13,
+    barHeight: 24,
+    barGap: 6,
+    topPadding: 60,
+    sidePadding: 100
   }
 });
 </script>
