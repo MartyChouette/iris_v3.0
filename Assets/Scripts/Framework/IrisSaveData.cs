@@ -26,6 +26,9 @@ public class IrisSaveData
 
     // ── Item Display States ──────────────────────────────────────
     public List<ItemDisplayRecord> itemDisplayStates = new List<ItemDisplayRecord>();
+
+    // ── Object Positions ──────────────────────────────────────────
+    public List<PlaceablePositionRecord> objectPositions = new List<PlaceablePositionRecord>();
 }
 
 /// <summary>Serializable record of an item's display state.</summary>
@@ -34,4 +37,13 @@ public class ItemDisplayRecord
 {
     public string itemId;
     public int displayState; // maps to ItemStateRegistry.ItemDisplayState
+}
+
+/// <summary>Serializable record of a placeable object's world position and rotation.</summary>
+[Serializable]
+public class PlaceablePositionRecord
+{
+    public string objectName;
+    public float px, py, pz;
+    public float rx, ry, rz, rw;
 }

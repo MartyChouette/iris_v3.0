@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -73,8 +74,40 @@ public class AutoSaveController : MonoBehaviour
                 ? (int)DayPhaseManager.Instance.CurrentPhase
                 : 0,
             dateHistory = DateHistory.GetAllForSave(),
-            itemDisplayStates = ItemStateRegistry.GetAllForSave()
+            itemDisplayStates = ItemStateRegistry.GetAllForSave(),
+            objectPositions = GatherObjectPositions()
         };
+    }
+
+    private List<PlaceablePositionRecord> GatherObjectPositions()
+    {
+        var records = new List<PlaceablePositionRecord>();
+        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        foreach (var p in placeables)
+        {
+            var t = p.transform;
+            records.Add(new PlaceablePositionRecord
+            {
+                objectName = p.gameObject.name,
+                px = t.position.x, py = t.position.y, pz = t.position.z,
+                rx = t.rotation.x, ry = t.rotation.y, rz = t.rotation.z, rw = t.rotation.w
+            });
+        }
+
+        // Fridge door state
+        var fridge = FindFirstObjectByType<FridgeController>();
+        if (fridge != null)
+        {
+            var ft = fridge.transform;
+            records.Add(new PlaceablePositionRecord
+            {
+                objectName = "__FridgeController__",
+                px = ft.position.x, py = ft.position.y, pz = ft.position.z,
+                rx = ft.rotation.x, ry = ft.rotation.y, rz = ft.rotation.z, rw = ft.rotation.w
+            });
+        }
+
+        return records;
     }
 
     /// <summary>Load saved game data and restore all registries.</summary>
@@ -92,13 +125,47 @@ public class AutoSaveController : MonoBehaviour
         GameClock.Instance?.RestoreFromSave(data.currentDay, data.currentHour);
         DateHistory.LoadFrom(data.dateHistory);
         ItemStateRegistry.LoadFrom(data.itemDisplayStates);
+        RestoreObjectPositions(data.objectPositions);
 
         RestoredDayPhase = data.dayPhase;
         RestoredDay = data.currentDay;
 
         Debug.Log($"[AutoSaveController] Restored slot {SaveManager.ActiveSlot} — " +
                   $"Day {data.currentDay}, phase {(DayPhaseManager.DayPhase)data.dayPhase}, " +
-                  $"{data.dateHistory?.Count ?? 0} date records.");
+                  $"{data.dateHistory?.Count ?? 0} date records, " +
+                  $"{data.objectPositions?.Count ?? 0} object positions.");
+    }
+
+    private void RestoreObjectPositions(List<PlaceablePositionRecord> records)
+    {
+        if (records == null || records.Count == 0) return;
+
+        // Build name→PlaceableObject lookup
+        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        var lookup = new Dictionary<string, Transform>();
+        foreach (var p in placeables)
+        {
+            if (!lookup.ContainsKey(p.gameObject.name))
+                lookup[p.gameObject.name] = p.transform;
+        }
+
+        // Fridge
+        var fridge = FindFirstObjectByType<FridgeController>();
+        if (fridge != null)
+            lookup["__FridgeController__"] = fridge.transform;
+
+        int restored = 0;
+        foreach (var r in records)
+        {
+            if (lookup.TryGetValue(r.objectName, out var target))
+            {
+                target.position = new Vector3(r.px, r.py, r.pz);
+                target.rotation = new Quaternion(r.rx, r.ry, r.rz, r.rw);
+                restored++;
+            }
+        }
+
+        Debug.Log($"[AutoSaveController] Restored {restored}/{records.Count} object positions.");
     }
 
     // ── Save Indicator ──────────────────────────────────────────────
