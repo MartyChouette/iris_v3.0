@@ -180,6 +180,9 @@ public static class ApartmentSceneBuilder
         // ── 15b. Name entry screen (shown before newspaper) ──
         BuildNameEntryScreen();
 
+        // ── 15c. Kitchen wall calendar ──
+        BuildKitchenCalendar();
+
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
@@ -3356,6 +3359,35 @@ public static class ApartmentSceneBuilder
         screenSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log("[ApartmentSceneBuilder] Name entry screen built (Earthbound-style grid).");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Kitchen Wall Calendar
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildKitchenCalendar()
+    {
+        // Small wall-mounted box on the kitchen wall (near the phone/fridge area)
+        var calGO = CreateBox("WallCalendar", null,
+            new Vector3(3.2f, 1.6f, -2.5f), new Vector3(0.02f, 0.35f, 0.25f),
+            new Color(0.95f, 0.92f, 0.85f));
+        // Face into the room (east wall)
+        calGO.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
+        calGO.isStatic = false;
+
+        // Needs its own layer for raycast — use Default (0) and the calendar does
+        // self-check via transform identity, so we just need the collider present.
+        // The BoxCollider is already added by CreateBox (primitive).
+
+        calGO.AddComponent<InteractableHighlight>();
+        var cal = calGO.AddComponent<ApartmentCalendar>();
+        var calSO = new SerializedObject(cal);
+        // Calendar layer — use Default (everything). The calendar checks hit.transform == self.
+        calSO.FindProperty("_calendarLayer").intValue = ~0;
+        calSO.FindProperty("_maxRayDistance").floatValue = 8f;
+        calSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log("[ApartmentSceneBuilder] Kitchen wall calendar placed.");
     }
 
     // ══════════════════════════════════════════════════════════════════
