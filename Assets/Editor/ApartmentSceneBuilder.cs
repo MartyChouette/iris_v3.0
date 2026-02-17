@@ -137,6 +137,9 @@ public static class ApartmentSceneBuilder
         // ── 6. Placeable objects + ReactableTags ──
         BuildPlaceableObjects(placeableLayer);
 
+        // ── 6b. Dirty dishes + drop zone ──
+        BuildDirtyDishes(placeableLayer, surfacesLayer);
+
         // ── 7. Browse camera (direct pos/rot/FOV, no spline) ──
         var browseCam = BuildBrowseCamera();
 
@@ -614,6 +617,99 @@ public static class ApartmentSceneBuilder
         go.AddComponent<InteractableHighlight>();
 
         return go;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Dirty Dishes + Drop Zone
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildDirtyDishes(int placeableLayer, int surfacesLayer)
+    {
+        var parent = new GameObject("DirtyDishes");
+
+        var litShader = Shader.Find("Universal Render Pipeline/Lit")
+                        ?? Shader.Find("Standard");
+        var plateMat = new Material(litShader);
+        plateMat.color = new Color(0.92f, 0.90f, 0.85f); // off-white ceramic
+
+        // ── Plate positions (kitchen table, counter, coffee table, side areas) ──
+        Vector3[] positions =
+        {
+            new Vector3(-3.8f, 0.82f, -3.5f),   // kitchen table
+            new Vector3(-4.3f, 0.82f, -3.2f),   // kitchen table 2
+            new Vector3(-2.5f, 1.02f, -4.8f),   // kitchen counter
+            new Vector3(-0.6f, 0.46f, 1.8f),    // coffee table
+            new Vector3(-0.2f, 0.46f, 2.2f),    // coffee table 2
+            new Vector3(-5.0f, 0.82f, -3.8f),   // kitchen table 3
+        };
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            var plate = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            plate.name = $"DirtyPlate_{i:D2}";
+            plate.transform.SetParent(parent.transform);
+            plate.transform.position = positions[i];
+            plate.transform.localScale = new Vector3(0.18f, 0.015f, 0.18f);
+            plate.layer = placeableLayer;
+            plate.isStatic = false;
+
+            // Replace CapsuleCollider with BoxCollider (cylinder primitive adds CapsuleCollider)
+            var capsule = plate.GetComponent<CapsuleCollider>();
+            if (capsule != null) Object.DestroyImmediate(capsule);
+            plate.AddComponent<BoxCollider>();
+
+            var rend = plate.GetComponent<Renderer>();
+            if (rend != null)
+                rend.sharedMaterial = plateMat;
+
+            var rb = plate.AddComponent<Rigidbody>();
+            rb.mass = 0.3f;
+
+            plate.AddComponent<PlaceableObject>();
+            plate.AddComponent<InteractableHighlight>();
+
+            var stackable = plate.AddComponent<StackablePlate>();
+            var stackSO = new SerializedObject(stackable);
+            stackSO.FindProperty("_plateLayer").intValue = 1 << placeableLayer;
+            stackSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // ── Drop zone (near kitchen sink area) ──
+        var zoneGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        zoneGO.name = "DishDropZone";
+        zoneGO.transform.SetParent(parent.transform);
+        zoneGO.transform.position = new Vector3(-5.0f, 1.02f, -5.0f);
+        zoneGO.transform.localScale = new Vector3(0.5f, 0.05f, 0.4f);
+        zoneGO.layer = surfacesLayer;
+        zoneGO.isStatic = true;
+
+        // Transparent green emissive material
+        var zoneShader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                         ?? Shader.Find("Sprites/Default");
+        var zoneMat = new Material(zoneShader);
+        zoneMat.color = new Color(0.3f, 0.8f, 0.4f, 0.35f);
+        zoneMat.SetFloat("_Surface", 1f);
+        zoneMat.SetFloat("_Blend", 0f);
+        zoneMat.renderQueue = 3000;
+
+        var zoneRend = zoneGO.GetComponent<Renderer>();
+        if (zoneRend != null)
+            zoneRend.sharedMaterial = zoneMat;
+
+        // PlacementSurface so plates can be placed on it
+        var surface = zoneGO.AddComponent<PlacementSurface>();
+        var surfSO = new SerializedObject(surface);
+        var axisProp = surfSO.FindProperty("normalAxis");
+        if (axisProp != null) axisProp.enumValueIndex = 0; // Up
+        surfSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // DishDropZone component
+        var dropZone = zoneGO.AddComponent<DishDropZone>();
+        var dzSO = new SerializedObject(dropZone);
+        dzSO.FindProperty("_zoneRenderer").objectReferenceValue = zoneRend;
+        dzSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log($"[ApartmentSceneBuilder] Built {positions.Length} dirty dishes + drop zone.");
     }
 
     // ══════════════════════════════════════════════════════════════════
