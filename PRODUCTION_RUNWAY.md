@@ -138,11 +138,15 @@ xychart-beta horizontal
 Two sprints locked in. Sprint 1 is a **2-day playtest validation**. Sprint 2 is a **5-day audio + art integration** with parallel content writing.
 
 ```mermaid
+---
+config:
+    gantt:
+        useMaxWidth: false
+---
 gantt
     title Sprint Schedule — Feb to Mar 2026
     dateFormat YYYY-MM-DD
     axisFormat %b %d
-    tickInterval 1week
 
     section Week 0 — Validate
     Book advisor meetings           :done, appt, 2026-02-17, 3d
