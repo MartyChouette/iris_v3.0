@@ -128,6 +128,16 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         }
         Instance = this;
 
+        // Auto-discover layout references from existing canvas if not serialized
+        if (newspaperOverlay != null)
+        {
+            if (_contentParent == null)
+                _contentParent = newspaperOverlay.GetComponent<RectTransform>();
+
+            if (_backgroundImage == null)
+                _backgroundImage = newspaperOverlay.GetComponent<Image>();
+        }
+
         _clickAction = new InputAction("Click", InputActionType.Button, "<Mouse>/leftButton");
         _mousePositionAction = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
 
