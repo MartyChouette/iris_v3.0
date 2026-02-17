@@ -35,6 +35,17 @@ public class KeywordTooltip : MonoBehaviour
     private int _lastHoveredLinkIndex = -1;
 
     /// <summary>
+    /// Wire references at runtime (used by NewspaperManager dynamic layout).
+    /// </summary>
+    public void InitReferences(TMP_Text targetText, GameObject tooltipPanel, TMP_Text tooltipText, Camera mainCamera)
+    {
+        _targetText = targetText;
+        _tooltipPanel = tooltipPanel;
+        _tooltipText = tooltipText;
+        _mainCamera = mainCamera;
+    }
+
+    /// <summary>
     /// Register a keyword's link ID and its commentary text.
     /// Called by NewspaperAdSlot after wrapping keywords in links.
     /// </summary>

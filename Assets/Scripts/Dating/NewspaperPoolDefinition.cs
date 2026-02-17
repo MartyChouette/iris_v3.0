@@ -27,4 +27,8 @@ public class NewspaperPoolDefinition : ScriptableObject
     [Header("Newspaper")]
     [Tooltip("Title displayed at the top of the newspaper.")]
     public string newspaperTitle = "The Daily Bloom";
+
+    [Header("Visuals")]
+    [Tooltip("Optional background sprite for the newspaper page. Leave null for default beige.")]
+    public Sprite backgroundSprite;
 }

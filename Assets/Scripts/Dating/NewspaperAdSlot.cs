@@ -10,6 +10,10 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     [Tooltip("Positioned within the newspaper's world-space canvas.")]
     [SerializeField] private RectTransform slotRect;
 
+    [Tooltip("Relative height weight for flex layout. Assigned at runtime.")]
+    [SerializeField] private float _sizeWeight = 1f;
+    public float SizeWeight => _sizeWeight;
+
     [Tooltip("Label for character name (personal ads) or business name (commercial).")]
     [SerializeField] private TMP_Text nameLabel;
 
@@ -289,6 +293,22 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
             logoImage.gameObject.SetActive(false);
 
         _phoneNumberBoundsUV = Rect.zero;
+    }
+
+    /// <summary>
+    /// Wire internal UI references at runtime (used by NewspaperManager dynamic layout).
+    /// </summary>
+    public void InitReferences(RectTransform rect, TMP_Text name, TMP_Text ad, TMP_Text phone,
+                               Image portrait, Image logo, Image progress, float weight)
+    {
+        slotRect = rect;
+        nameLabel = name;
+        adLabel = ad;
+        phoneNumberLabel = phone;
+        portraitImage = portrait;
+        logoImage = logo;
+        progressFill = progress;
+        _sizeWeight = weight;
     }
 
     /// <summary>

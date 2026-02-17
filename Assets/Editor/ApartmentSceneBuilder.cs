@@ -38,7 +38,7 @@ public static class ApartmentSceneBuilder
     private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
     // Two-page newspaper spread dimensions
-    private const int NewspaperCanvasWidth = 1000;
+    private const int NewspaperCanvasWidth = 500;
     private const int NewspaperCanvasHeight = 700;
 
     // ─── Newspaper Position Config ──────────────────────────────
@@ -1240,8 +1240,8 @@ public static class ApartmentSceneBuilder
         {
             pool = ScriptableObject.CreateInstance<NewspaperPoolDefinition>();
             pool.newspaperTitle = "The Daily Bloom";
-            pool.personalAdsPerDay = 4;
-            pool.commercialAdsPerDay = 3;
+            pool.personalAdsPerDay = 3;
+            pool.commercialAdsPerDay = 2;
             pool.allowRepeats = false;
             AssetDatabase.CreateAsset(pool, poolPath);
         }
@@ -1263,8 +1263,6 @@ public static class ApartmentSceneBuilder
         }
         poolSO.ApplyModifiedPropertiesWithoutUndo();
         AssetDatabase.SaveAssets();
-
-        int adCount = Mathf.Clamp(pool.personalAdsPerDay, 1, 8);
 
         // ── Read camera (couch newspaper view) ──────────────────
         // Camera at couch looking +Z. Canvas at identity rotation faces -Z
@@ -1364,185 +1362,8 @@ public static class ApartmentSceneBuilder
         bgImg.color = new Color(0.92f, 0.90f, 0.85f);
         bgImg.raycastTarget = false;
 
-        // Center fold line
-        var foldGO = new GameObject("FoldLine");
-        foldGO.transform.SetParent(canvasGO.transform, false);
-        var foldRT = foldGO.AddComponent<RectTransform>();
-        foldRT.anchorMin = new Vector2(0.5f, 0.5f);
-        foldRT.anchorMax = new Vector2(0.5f, 0.5f);
-        foldRT.anchoredPosition = new Vector2(0f, 0f);
-        foldRT.sizeDelta = new Vector2(2f, NewspaperCanvasHeight);
-        foldRT.localScale = Vector3.one;
-        foldGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.3f, 0.3f, 0.3f, 0.4f);
-
-        // Left page (decorative articles)
-        BuildNewspaperLeftPage(canvasGO.transform);
-
-        // Right page header
-        CreateNewspaperText("PersonalsLabel", canvasGO.transform,
-            new Vector2(250f, 310f), new Vector2(440f, 35f),
-            "PERSONALS", 28f, FontStyles.Bold, TextAlignmentOptions.Center);
-
-        var pRuleGO = new GameObject("PersonalsRule");
-        pRuleGO.transform.SetParent(canvasGO.transform, false);
-        var pRuleRT = pRuleGO.AddComponent<RectTransform>();
-        pRuleRT.anchorMin = new Vector2(0.5f, 0.5f);
-        pRuleRT.anchorMax = new Vector2(0.5f, 0.5f);
-        pRuleRT.anchoredPosition = new Vector2(250f, 290f);
-        pRuleRT.sizeDelta = new Vector2(420f, 2f);
-        pRuleRT.localScale = Vector3.one;
-        pRuleGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.15f, 0.15f, 0.15f);
-
-        // ── Flex layout for personal ads (right page) ─────────────
-        // Total slots = 1 (Nema's ad) + adCount (date personals)
-        int totalSlots = 1 + adCount;
-        float contentLeft = 520f;
-        float contentRight = 980f;
-        float contentBottom = 30f;
-        float contentTop = 620f;
-        float contentWidth = contentRight - contentLeft;
-        float contentHeight = contentTop - contentBottom;
-        float spacing = 10f;
-        float slotHeight = (contentHeight - spacing * (totalSlots - 1)) / totalSlots;
-
-        NewspaperAdSlot nemaSlot = null;
-        var personalSlots = new NewspaperAdSlot[adCount];
-
-        for (int si = 0; si < totalSlots; si++)
-        {
-            bool isNemaSlot = (si == 0);
-            int personalIndex = si - 1; // -1 for Nema slot
-
-            float slotTopY = contentTop - si * (slotHeight + spacing);
-            float slotCenterY = slotTopY - slotHeight * 0.5f;
-            float anchoredX = (contentLeft + contentWidth * 0.5f) - NewspaperCanvasWidth * 0.5f;
-            float anchoredY = slotCenterY - NewspaperCanvasHeight * 0.5f;
-
-            float nameFontSize = Mathf.Clamp(slotHeight * 0.16f, 14f, 28f);
-            float bodyFontSize = Mathf.Clamp(slotHeight * 0.11f, 10f, 18f);
-            float phoneFontSize = Mathf.Clamp(slotHeight * 0.13f, 12f, 22f);
-            float portraitSize = Mathf.Clamp(slotHeight * 0.35f, 32f, 48f);
-
-            string prefix = isNemaSlot ? "NemaAd" : $"Personal_{personalIndex}";
-
-            // Slot background (Nema's ad has a distinct tint)
-            var slotBgGO = new GameObject($"{prefix}_BG");
-            slotBgGO.transform.SetParent(canvasGO.transform, false);
-            var slotBgRT = slotBgGO.AddComponent<RectTransform>();
-            slotBgRT.anchorMin = new Vector2(0.5f, 0.5f);
-            slotBgRT.anchorMax = new Vector2(0.5f, 0.5f);
-            slotBgRT.anchoredPosition = new Vector2(anchoredX, anchoredY);
-            slotBgRT.sizeDelta = new Vector2(contentWidth, slotHeight);
-            slotBgRT.localScale = Vector3.one;
-            slotBgGO.AddComponent<UnityEngine.UI.Image>().color = isNemaSlot
-                ? new Color(0.20f, 0.15f, 0.10f, 0.12f) // warm tint for Nema
-                : new Color(0.1f, 0.1f, 0.1f, 0.06f);
-
-            // "YOUR AD" label for Nema's slot
-            if (isNemaSlot)
-            {
-                CreateNewspaperText($"{prefix}_YourAdLabel", canvasGO.transform,
-                    new Vector2(anchoredX + contentWidth * 0.5f - 40f, anchoredY + slotHeight * 0.35f),
-                    new Vector2(70f, nameFontSize + 4f),
-                    "YOUR AD", Mathf.Max(10f, nameFontSize * 0.6f), FontStyles.Bold | FontStyles.Italic,
-                    TextAlignmentOptions.Center);
-            }
-
-            // Name
-            float nameOffsetY = slotHeight * 0.35f;
-            var nameGO = CreateNewspaperText($"{prefix}_Name", canvasGO.transform,
-                new Vector2(anchoredX - 20f, anchoredY + nameOffsetY),
-                new Vector2(contentWidth - portraitSize - 20f, nameFontSize + 6f),
-                "Name", nameFontSize, FontStyles.Bold, TextAlignmentOptions.Left);
-
-            // Portrait
-            var portraitGO = CreateNewspaperImage($"{prefix}_Portrait", canvasGO.transform,
-                new Vector2(anchoredX + contentWidth * 0.5f - portraitSize * 0.5f - 5f,
-                            anchoredY + nameOffsetY),
-                new Vector2(portraitSize, portraitSize));
-
-            // Ad body
-            var adGO = CreateNewspaperText($"{prefix}_Ad", canvasGO.transform,
-                new Vector2(anchoredX, anchoredY),
-                new Vector2(contentWidth - 20f, slotHeight * 0.4f),
-                "Ad text...", bodyFontSize, FontStyles.Normal, TextAlignmentOptions.TopLeft);
-
-            // Phone number
-            float phoneOffsetY = -slotHeight * 0.35f;
-            var phoneGO = CreateNewspaperText($"{prefix}_Phone", canvasGO.transform,
-                new Vector2(anchoredX, anchoredY + phoneOffsetY),
-                new Vector2(contentWidth - 20f, phoneFontSize + 6f),
-                "555-0000", phoneFontSize, FontStyles.Italic, TextAlignmentOptions.Left);
-
-            // Ad slot component
-            var slot = CreateNewspaperAdSlot(isNemaSlot ? "NemaAdSlot" : $"PersonalSlot_{personalIndex}",
-                canvasGO.transform, newspaperLayer,
-                new Vector2(anchoredX, anchoredY),
-                new Vector2(contentWidth, slotHeight));
-
-            var slotSO = new SerializedObject(slot);
-            slotSO.FindProperty("nameLabel").objectReferenceValue = nameGO.GetComponent<TMP_Text>();
-            slotSO.FindProperty("adLabel").objectReferenceValue = adGO.GetComponent<TMP_Text>();
-            slotSO.FindProperty("phoneNumberLabel").objectReferenceValue = phoneGO.GetComponent<TMP_Text>();
-            slotSO.FindProperty("portraitImage").objectReferenceValue =
-                portraitGO.GetComponent<UnityEngine.UI.Image>();
-            if (isNemaSlot)
-                slotSO.FindProperty("_isPlayerAd").boolValue = true;
-            slotSO.ApplyModifiedPropertiesWithoutUndo();
-
-            if (isNemaSlot)
-                nemaSlot = slot;
-            else
-                personalSlots[personalIndex] = slot;
-        }
-
-        // ── Shared tooltip panel for keyword hover ────────────────
-        var tooltipGO = new GameObject("KeywordTooltip");
-        tooltipGO.transform.SetParent(canvasGO.transform, false);
-        var tooltipRT = tooltipGO.AddComponent<RectTransform>();
-        tooltipRT.anchorMin = new Vector2(0.5f, 0.5f);
-        tooltipRT.anchorMax = new Vector2(0.5f, 0.5f);
-        tooltipRT.sizeDelta = new Vector2(260f, 60f);
-        tooltipRT.anchoredPosition = Vector2.zero;
-        tooltipRT.localScale = Vector3.one;
-        var tooltipBgImg = tooltipGO.AddComponent<Image>();
-        tooltipBgImg.color = new Color(0.08f, 0.08f, 0.10f, 0.9f);
-        tooltipBgImg.raycastTarget = false;
-
-        var tooltipTextGO = new GameObject("TooltipText");
-        tooltipTextGO.transform.SetParent(tooltipGO.transform, false);
-        var tooltipTextRT = tooltipTextGO.AddComponent<RectTransform>();
-        tooltipTextRT.anchorMin = Vector2.zero;
-        tooltipTextRT.anchorMax = Vector2.one;
-        tooltipTextRT.offsetMin = new Vector2(8f, 4f);
-        tooltipTextRT.offsetMax = new Vector2(-8f, -4f);
-        tooltipTextRT.localScale = Vector3.one;
-        var tooltipTMP = tooltipTextGO.AddComponent<TextMeshProUGUI>();
-        tooltipTMP.text = "";
-        tooltipTMP.fontSize = 14f;
-        tooltipTMP.color = new Color(0.9f, 0.9f, 0.9f);
-        tooltipTMP.alignment = TextAlignmentOptions.TopLeft;
-        tooltipTMP.enableWordWrapping = true;
-
-        tooltipGO.SetActive(false);
-
-        // ── Attach KeywordTooltip to each personal ad slot's ad label ──
-        var mainCam = camGO.GetComponent<UnityEngine.Camera>();
-        for (int i = 0; i < personalSlots.Length; i++)
-        {
-            if (personalSlots[i] == null) continue;
-            var slotSO2 = new SerializedObject(personalSlots[i]);
-            var adLabelObj = slotSO2.FindProperty("adLabel").objectReferenceValue as TMP_Text;
-            if (adLabelObj == null) continue;
-
-            var kwTooltip = adLabelObj.gameObject.AddComponent<KeywordTooltip>();
-            var kwSO = new SerializedObject(kwTooltip);
-            kwSO.FindProperty("_targetText").objectReferenceValue = adLabelObj;
-            kwSO.FindProperty("_tooltipPanel").objectReferenceValue = tooltipGO;
-            kwSO.FindProperty("_tooltipText").objectReferenceValue = tooltipTMP;
-            kwSO.FindProperty("_mainCamera").objectReferenceValue = mainCam;
-            kwSO.ApplyModifiedPropertiesWithoutUndo();
-        }
+        // Ad slots, header, and tooltip are built at runtime by NewspaperManager.
+        // The canvas + background are the only build-time elements.
 
         // Start overlay hidden
         pivotGO.SetActive(false);
@@ -1556,7 +1377,7 @@ public static class ApartmentSceneBuilder
         dayMgrSO.FindProperty("pool").objectReferenceValue = pool;
         dayMgrSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // NewspaperManager (button-based ad selection, no scissors)
+        // NewspaperManager (self-constructing layout — builds ad slots at runtime)
         var cam = camGO.GetComponent<UnityEngine.Camera>();
         var newsMgr = managersGO.AddComponent<NewspaperManager>();
         var newsMgrSO = new SerializedObject(newsMgr);
@@ -1570,21 +1391,8 @@ public static class ApartmentSceneBuilder
             camGO.GetComponent<CinemachineBrain>();
         newsMgrSO.FindProperty("newspaperTransform").objectReferenceValue =
             surfaceGO.transform;
-
-        var personalSlotsProp = newsMgrSO.FindProperty("personalSlots");
-        personalSlotsProp.ClearArray();
-        for (int i = 0; i < personalSlots.Length; i++)
-        {
-            personalSlotsProp.InsertArrayElementAtIndex(i);
-            personalSlotsProp.GetArrayElementAtIndex(i).objectReferenceValue = personalSlots[i];
-        }
-
-        // Wire Nema's ad slot
-        newsMgrSO.FindProperty("nemaAdSlot").objectReferenceValue = nemaSlot;
-
-        var commercialSlotsProp = newsMgrSO.FindProperty("commercialSlots");
-        commercialSlotsProp.ClearArray();
-
+        newsMgrSO.FindProperty("_contentParent").objectReferenceValue = canvasRT;
+        newsMgrSO.FindProperty("_backgroundImage").objectReferenceValue = bgImg;
         newsMgrSO.ApplyModifiedPropertiesWithoutUndo();
 
         // NewspaperHUD
