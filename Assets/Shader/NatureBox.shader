@@ -23,6 +23,12 @@ Shader "Iris/NatureBox"
         [Header(Atmosphere)]
         _HorizonFog ("Horizon Fog", Range(0, 1)) = 0.35
         _StarDensity ("Star Density", Range(0.95, 1.0)) = 0.985
+
+        [Header(Retro)]
+        [Tooltip("Target vertical resolution. 0=native, 240=N64/PS1, 480=PS2/Dreamcast")]
+        _PixelDensity ("Pixel Density", Float) = 0
+        [Tooltip("Color bit depth. 0=off, 16=N64, 32=PS1, 256=PS2")]
+        _ColorDepth ("Color Depth (per channel)", Float) = 0
     }
 
     SubShader
@@ -62,6 +68,8 @@ Shader "Iris/NatureBox"
                 float _TreelineHeight;
                 float _HorizonFog;
                 float _StarDensity;
+                float _PixelDensity;
+                float _ColorDepth;
             CBUFFER_END
 
             // ── Structs ──────────────────────────────────────────────
@@ -204,8 +212,29 @@ Shader "Iris/NatureBox"
 
             half4 frag(Varyings IN) : SV_Target
             {
-                // Direction from camera to fragment — skybox-like projection
-                float3 viewDir = normalize(IN.positionWS - _WorldSpaceCameraPos);
+                // Direction from camera to fragment — skybox-like projection.
+                // When _PixelDensity > 0, snap screen position to a coarser grid
+                // and reconstruct the view direction from that snapped coordinate.
+                float3 viewDir;
+
+                if (_PixelDensity > 0)
+                {
+                    float2 screenUV = IN.positionCS.xy / _ScreenParams.xy;
+                    float aspect = _ScreenParams.x / _ScreenParams.y;
+                    float2 targetRes = float2(_PixelDensity * aspect, _PixelDensity);
+                    float2 snappedUV = (floor(screenUV * targetRes) + 0.5) / targetRes;
+
+                    // Reconstruct world ray from snapped screen coordinate
+                    float2 ndc = snappedUV * 2.0 - 1.0;
+                    float4 clipPos = float4(ndc, 0.0, 1.0);
+                    float4 wp = mul(UNITY_MATRIX_I_VP, clipPos);
+                    viewDir = normalize(wp.xyz / wp.w - _WorldSpaceCameraPos);
+                }
+                else
+                {
+                    viewDir = normalize(IN.positionWS - _WorldSpaceCameraPos);
+                }
+
                 float elevation = viewDir.y;
                 float2 horiz = viewDir.xz / max(length(viewDir.xz), 0.001);
 
@@ -315,7 +344,13 @@ Shader "Iris/NatureBox"
                 float3 fogCol = lerp(hCol, sCol, 0.25) * lerp(1.0, 0.3, nightFade);
                 col = lerp(col, fogCol, fogBand);
 
-                return half4(saturate(col), 1.0);
+                col = saturate(col);
+
+                // ── 9. Color quantization (retro color depth) ────────
+                if (_ColorDepth > 0)
+                    col = floor(col * _ColorDepth + 0.5) / _ColorDepth;
+
+                return half4(col, 1.0);
             }
 
             ENDHLSL
