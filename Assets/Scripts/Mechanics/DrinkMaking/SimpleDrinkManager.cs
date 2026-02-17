@@ -172,7 +172,6 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         if (availableRecipes == null || index < 0 || index >= availableRecipes.Length) return;
 
         _activeRecipe = availableRecipes[index];
-        HideRecipePanel();
         _fillLevel = 0f;
         _foamLevel = 0f;
         _overflowed = false;
