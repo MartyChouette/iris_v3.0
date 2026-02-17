@@ -1,8 +1,12 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Triggers auto-saves at end of day, end of date, and on application quit.
 /// Gathers state from all active registries into IrisSaveData and writes via SaveManager.
+/// Shows a brief "Saving..." indicator in the bottom-right corner.
 /// </summary>
 public class AutoSaveController : MonoBehaviour
 {
@@ -14,6 +18,15 @@ public class AutoSaveController : MonoBehaviour
     /// <summary>After RestoreFromSave, holds the saved day number.</summary>
     public int RestoredDay { get; private set; }
 
+    // ── Save indicator UI (self-constructed) ──────────────────────
+    private GameObject _indicatorCanvas;
+    private CanvasGroup _indicatorGroup;
+    private TMP_Text _indicatorText;
+    private Coroutine _fadeCoroutine;
+
+    private const float ShowDuration = 1.2f;
+    private const float FadeDuration = 0.6f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -23,11 +36,14 @@ public class AutoSaveController : MonoBehaviour
             return;
         }
         Instance = this;
+
+        BuildIndicatorUI();
     }
 
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        if (_indicatorCanvas != null) Destroy(_indicatorCanvas);
     }
 
     private void OnApplicationQuit()
@@ -40,6 +56,7 @@ public class AutoSaveController : MonoBehaviour
     {
         var data = GatherSaveData();
         SaveManager.SaveGame(data);
+        ShowIndicator();
         Debug.Log($"[AutoSaveController] Auto-saved slot {SaveManager.ActiveSlot} ({reason}).");
     }
 
@@ -80,5 +97,77 @@ public class AutoSaveController : MonoBehaviour
         Debug.Log($"[AutoSaveController] Restored slot {SaveManager.ActiveSlot} — " +
                   $"Day {data.currentDay}, phase {(DayPhaseManager.DayPhase)data.dayPhase}, " +
                   $"{data.dateHistory?.Count ?? 0} date records.");
+    }
+
+    // ── Save Indicator ──────────────────────────────────────────────
+
+    private void BuildIndicatorUI()
+    {
+        // Screen-space overlay canvas at high sort order
+        _indicatorCanvas = new GameObject("SaveIndicatorCanvas");
+        _indicatorCanvas.transform.SetParent(transform);
+
+        var canvas = _indicatorCanvas.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 200;
+
+        var scaler = _indicatorCanvas.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        // CanvasGroup for fade
+        _indicatorGroup = _indicatorCanvas.AddComponent<CanvasGroup>();
+        _indicatorGroup.alpha = 0f;
+        _indicatorGroup.blocksRaycasts = false;
+        _indicatorGroup.interactable = false;
+
+        // Text — bottom-right corner
+        var textGO = new GameObject("SaveText");
+        textGO.transform.SetParent(_indicatorCanvas.transform, false);
+
+        var rt = textGO.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1f, 0f);
+        rt.anchorMax = new Vector2(1f, 0f);
+        rt.pivot = new Vector2(1f, 0f);
+        rt.anchoredPosition = new Vector2(-30f, 20f);
+        rt.sizeDelta = new Vector2(200f, 40f);
+
+        _indicatorText = textGO.AddComponent<TextMeshProUGUI>();
+        _indicatorText.text = "Saving...";
+        _indicatorText.fontSize = 20f;
+        _indicatorText.alignment = TextAlignmentOptions.BottomRight;
+        _indicatorText.color = new Color(0.9f, 0.9f, 0.85f, 1f);
+        _indicatorText.fontStyle = FontStyles.Italic;
+    }
+
+    private void ShowIndicator()
+    {
+        if (_indicatorGroup == null) return;
+
+        if (_fadeCoroutine != null)
+            StopCoroutine(_fadeCoroutine);
+
+        _fadeCoroutine = StartCoroutine(IndicatorFadeSequence());
+    }
+
+    private IEnumerator IndicatorFadeSequence()
+    {
+        // Snap visible
+        _indicatorGroup.alpha = 1f;
+
+        // Hold
+        yield return new WaitForSecondsRealtime(ShowDuration);
+
+        // Fade out
+        float elapsed = 0f;
+        while (elapsed < FadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            _indicatorGroup.alpha = 1f - Mathf.Clamp01(elapsed / FadeDuration);
+            yield return null;
+        }
+
+        _indicatorGroup.alpha = 0f;
+        _fadeCoroutine = null;
     }
 }
