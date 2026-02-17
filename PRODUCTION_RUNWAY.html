@@ -1567,13 +1567,15 @@ quadrantChart
     <p class="section-subtitle">February 2026 through September 2026 &mdash; the full production runway</p>
   </div>
 
-  <div class="mermaid-wrapper">
+  <div class="mermaid-wrapper mermaid-wide">
     <div class="mermaid-label">Production Runway &mdash; Feb 2026 to Sep 2026</div>
     <pre class="mermaid">
+%%{init: {'theme': 'dark', 'gantt': {'useMaxWidth': false}} }%%
 gantt
     title Production Runway — Feb 2026 to Sep 2026
     dateFormat YYYY-MM-DD
     axisFormat %b '%y
+    tickInterval 1week
 
     section Immediate
     Advisor meetings            :done, 2026-02-17, 5d

@@ -594,10 +594,12 @@ quadrantChart
 ## 12. Master Timeline
 
 ```mermaid
+%%{init: {'theme': 'dark', 'gantt': {'useMaxWidth': false}} }%%
 gantt
     title Production Runway — Feb 2026 to Sep 2026
     dateFormat YYYY-MM-DD
     axisFormat %b '%y
+    tickInterval 1week
 
     section Immediate
     Advisor meetings            :done, 2026-02-17, 5d
