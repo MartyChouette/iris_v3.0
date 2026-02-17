@@ -38,8 +38,8 @@ public static class ApartmentSceneBuilder
     private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
     // Two-page newspaper spread dimensions
-    private const int NewspaperCanvasWidth = 500;
-    private const int NewspaperCanvasHeight = 700;
+    private const int NewspaperCanvasWidth = 900;
+    private const int NewspaperCanvasHeight = 400;
 
     // ─── Newspaper Position Config ──────────────────────────────
     private static readonly Vector3 NewspaperCamPos     = new Vector3(-5.5f, 1.3f, 3.0f);

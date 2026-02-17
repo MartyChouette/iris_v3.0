@@ -44,6 +44,9 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     [Tooltip("Background Image on the canvas (for swappable sprite from pool SO).")]
     [SerializeField] private Image _backgroundImage;
 
+    [Tooltip("Optional portrait sprite for Nema's ad.")]
+    [SerializeField] private Sprite nemaPortrait;
+
     // ─── Calling Phase ────────────────────────────────────────────
     [Header("Calling Phase")]
     [SerializeField] private float callingDuration = 2f;
@@ -79,20 +82,35 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
     // Dynamic slot tracking
     private readonly List<NewspaperAdSlot> _personalSlotsList = new List<NewspaperAdSlot>();
-    private readonly List<NewspaperAdSlot> _commercialSlotsList = new List<NewspaperAdSlot>();
 
     // Shared tooltip panel (created once, reused across rebuilds)
     private GameObject _tooltipPanel;
     private TMP_Text _tooltipText;
 
-    // Layout constants
-    private const float CanvasWidth = 500f;
-    private const float CanvasHeight = 700f;
-    private const float HeaderHeight = 70f;
-    private const float Padding = 15f;
-    private const float SlotSpacing = 8f;
-    private const float PersonalWeight = 2f;
-    private const float DefaultCommercialWeight = 1f;
+    // ─── Layout — top half of newspaper (landscape) ─────────────
+    // Proportions: wide and short, like a real folded broadsheet.
+    private const float CanvasW = 900f;
+    private const float CanvasH = 400f;
+    private const float HeaderH = 48f;
+    private const float Pad = 10f;
+    private const float Gap = 8f;
+
+    // Puzzle-piece grid coordinates (relative to canvas center).
+    // Content area: y from (CanvasH/2 - HeaderH) to (-CanvasH/2 + Pad)
+    //
+    //  ┌──────────────┬───────────────────────────────┐
+    //  │  NEMA (your  │         DATE #1               │
+    //  │   profile)   │      (wide, top-right)        │
+    //  │              ├──────────────┬────────────────┤
+    //  ├──────────────┤              │                │
+    //  │  [comm filler]│   DATE #2   │   DATE #3      │
+    //  └──────────────┴──────────────┴────────────────┘
+
+    // Left column width (Nema + commercial fillers)
+    private const float LeftColW = 250f;
+    // Top row heights — Nema extends lower than Date1 for puzzle stagger
+    private const float NemaH = 190f;
+    private const float Date1H = 145f; // smaller than Nema, same top edge
 
     // Cached coroutine waits
     private static readonly WaitForSeconds s_waitCutPause = new WaitForSeconds(0.3f);
@@ -147,7 +165,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     private void EnterReadingPaper()
     {
         CurrentState = State.ReadingPaper;
-        Debug.Log("[NewspaperManager] Reading paper. Click a personal ad to select!");
+        Debug.Log("[NewspaperManager] Reading paper. Hold a personal ad to select!");
 
         if (newspaperOverlay != null)
             newspaperOverlay.SetActive(true);
@@ -228,27 +246,22 @@ public class NewspaperManager : MonoBehaviour, IStationManager
 
         Debug.Log($"[NewspaperManager] Generating newspaper for day {dayManager.CurrentDay}.");
 
-        // Resize canvas to half-page on first call
+        // Resize canvas to landscape top-half proportions
         if (_contentParent != null)
-            _contentParent.sizeDelta = new Vector2(CanvasWidth, CanvasHeight);
+            _contentParent.sizeDelta = new Vector2(CanvasW, CanvasH);
 
-        // Destroy old dynamic slots
         ClearDynamicSlots();
 
-        // Apply background sprite if pool provides one
+        // Background sprite swap
         var pool = dayManager.Pool;
         if (_backgroundImage != null && pool != null && pool.backgroundSprite != null)
             _backgroundImage.sprite = pool.backgroundSprite;
 
-        // Build header (title + day number)
+        EnsureTooltipPanel();
+
         BuildHeader(pool?.newspaperTitle ?? "The Daily Bloom", dayManager.CurrentDay);
+        BuildPuzzleLayout(dayManager.TodayPersonals, dayManager.TodayCommercials);
 
-        // Build mixed ad column: Personal, Commercial, Personal, Commercial, Personal
-        var personals = dayManager.TodayPersonals;
-        var commercials = dayManager.TodayCommercials;
-        BuildMixedAdColumn(personals, commercials);
-
-        // Reset cut surface
         if (surface != null)
             surface.ResetSurface();
 
@@ -261,11 +274,9 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     private void ClearDynamicSlots()
     {
         _personalSlotsList.Clear();
-        _commercialSlotsList.Clear();
 
         if (_contentParent == null) return;
 
-        // Destroy all children except the background image
         for (int i = _contentParent.childCount - 1; i >= 0; i--)
         {
             var child = _contentParent.GetChild(i);
@@ -273,158 +284,238 @@ public class NewspaperManager : MonoBehaviour, IStationManager
                 continue;
             Destroy(child.gameObject);
         }
+
+        // Tooltip panel lives on the content parent — rebuild it next time
+        _tooltipPanel = null;
+        _tooltipText = null;
     }
+
+    // ─── Header ─────────────────────────────────────────────────
 
     private void BuildHeader(string title, int day)
     {
         if (_contentParent == null) return;
 
-        // Title text
-        var titleGO = CreateTMP("Header_Title", _contentParent,
-            new Vector2(0f, CanvasHeight * 0.5f - 25f),
-            new Vector2(CanvasWidth - Padding * 2f, 35f),
-            title, 26f, FontStyles.Bold, TextAlignmentOptions.Center);
+        float topY = CanvasH * 0.5f;
 
-        // Day label
+        // Title (left-aligned, large)
+        CreateTMP("Header_Title", _contentParent,
+            new Vector2(-80f, topY - 18f),
+            new Vector2(500f, 32f),
+            title, 28f, FontStyles.Bold, TextAlignmentOptions.Center);
+
+        // Day label (right-aligned)
         CreateTMP("Header_Day", _contentParent,
-            new Vector2(0f, CanvasHeight * 0.5f - 55f),
-            new Vector2(CanvasWidth - Padding * 2f, 22f),
-            $"Day {day}", 18f, FontStyles.Italic, TextAlignmentOptions.Center);
+            new Vector2(300f, topY - 18f),
+            new Vector2(200f, 26f),
+            $"Day {day}", 20f, FontStyles.Italic, TextAlignmentOptions.Center);
 
         // Rule line under header
         var ruleGO = new GameObject("Header_Rule");
         ruleGO.transform.SetParent(_contentParent, false);
         var ruleRT = ruleGO.AddComponent<RectTransform>();
-        ruleRT.anchorMin = new Vector2(0.5f, 0.5f);
-        ruleRT.anchorMax = new Vector2(0.5f, 0.5f);
-        ruleRT.anchoredPosition = new Vector2(0f, CanvasHeight * 0.5f - HeaderHeight);
-        ruleRT.sizeDelta = new Vector2(CanvasWidth - Padding * 2f, 2f);
+        ruleRT.anchorMin = ruleRT.anchorMax = new Vector2(0.5f, 0.5f);
+        ruleRT.anchoredPosition = new Vector2(0f, topY - HeaderH + 4f);
+        ruleRT.sizeDelta = new Vector2(CanvasW - Pad * 2f, 2f);
         ruleRT.localScale = Vector3.one;
         ruleGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f);
     }
 
-    private void BuildMixedAdColumn(List<DatePersonalDefinition> personals, List<CommercialAdDefinition> commercials)
+    // ─── Puzzle Layout ──────────────────────────────────────────
+    //
+    //  Content area starts at y = topY - HeaderH, ends at y = -CanvasH/2 + Pad
+    //  Left edge: -CanvasW/2 + Pad,  Right edge: +CanvasW/2 - Pad
+    //
+    //  The borders between rows are STAGGERED — Nema's box is taller than
+    //  Date1, so Date2/Date3 start at a different y than the commercial
+    //  filler under Nema. This creates the puzzle / classifieds look.
+
+    private void BuildPuzzleLayout(List<DatePersonalDefinition> personals,
+                                   List<CommercialAdDefinition> commercials)
     {
         if (_contentParent == null) return;
 
-        // Interleave: P, C, P, C, P (up to what's available)
-        var slotEntries = new List<SlotEntry>();
-        int pIdx = 0, cIdx = 0;
+        float contentTop = CanvasH * 0.5f - HeaderH;
+        float contentBot = -CanvasH * 0.5f + Pad;
+        float contentH = contentTop - contentBot;
+        float leftX = -CanvasW * 0.5f + Pad;
+        float rightX = CanvasW * 0.5f - Pad;
+        float totalW = rightX - leftX; // ~880
+
+        float rightAreaW = totalW - LeftColW - Gap;
+        float bottomRowH = contentH - Mathf.Max(NemaH, Date1H) - Gap;
+
+        // ── Nema's ad (top-left, taller) ────────────────────────
+        float nemaH = NemaH;
+        float nemaW = LeftColW;
+        float nemaCX = leftX + nemaW * 0.5f;
+        float nemaCY = contentTop - nemaH * 0.5f;
+        BuildNemaSlot(new Vector2(nemaCX, nemaCY), new Vector2(nemaW, nemaH));
+
+        // ── Date #1 (top-right, shorter but wider) ──────────────
         int pCount = personals?.Count ?? 0;
+        float date1H = Date1H;
+        float date1W = rightAreaW;
+        float date1CX = leftX + LeftColW + Gap + date1W * 0.5f;
+        float date1CY = contentTop - date1H * 0.5f;
+
+        if (pCount > 0)
+        {
+            var slot = CreatePersonalSlotUI(0, personals[0],
+                new Vector2(date1CX, date1CY), new Vector2(date1W, date1H));
+            _personalSlotsList.Add(slot);
+        }
+
+        // ── Bottom row: Date2, Date3 (below Date1, right side) ──
+        float bottomTopRight = contentTop - date1H - Gap; // where Date2/3 start
+        float bottomHRight = bottomTopRight - contentBot;  // remaining height on right
+        float halfRightW = (rightAreaW - Gap) * 0.5f;
+
+        if (pCount > 1)
+        {
+            float d2CX = leftX + LeftColW + Gap + halfRightW * 0.5f;
+            float d2CY = bottomTopRight - bottomHRight * 0.5f;
+            var slot = CreatePersonalSlotUI(1, personals[1],
+                new Vector2(d2CX, d2CY), new Vector2(halfRightW, bottomHRight));
+            _personalSlotsList.Add(slot);
+        }
+
+        if (pCount > 2)
+        {
+            float d3CX = leftX + LeftColW + Gap + halfRightW + Gap + halfRightW * 0.5f;
+            float d3CY = bottomTopRight - bottomHRight * 0.5f;
+            var slot = CreatePersonalSlotUI(2, personals[2],
+                new Vector2(d3CX, d3CY), new Vector2(halfRightW, bottomHRight));
+            _personalSlotsList.Add(slot);
+        }
+
+        // ── Commercial fillers (below Nema, left column, stacked) ─
+        float commTop = contentTop - nemaH - Gap;
+        float commTotalH = commTop - contentBot;
         int cCount = commercials?.Count ?? 0;
+        int commToPlace = Mathf.Min(cCount, 2);
 
-        while (pIdx < pCount || cIdx < cCount)
+        if (commToPlace > 0 && commTotalH > 20f)
         {
-            if (pIdx < pCount)
-                slotEntries.Add(new SlotEntry { isPersonal = true, personalIndex = pIdx++ });
-            if (cIdx < cCount)
-                slotEntries.Add(new SlotEntry { isPersonal = false, commercialIndex = cIdx++ });
-        }
-
-        if (slotEntries.Count == 0) return;
-
-        // Compute weights and total height
-        float totalWeight = 0f;
-        for (int i = 0; i < slotEntries.Count; i++)
-        {
-            float w;
-            if (slotEntries[i].isPersonal)
-                w = PersonalWeight;
-            else
-                w = commercials[slotEntries[i].commercialIndex].sizeWeight;
-            slotEntries[i] = new SlotEntry
+            float eachH = (commTotalH - Gap * (commToPlace - 1)) / commToPlace;
+            for (int ci = 0; ci < commToPlace; ci++)
             {
-                isPersonal = slotEntries[i].isPersonal,
-                personalIndex = slotEntries[i].personalIndex,
-                commercialIndex = slotEntries[i].commercialIndex,
-                weight = w
-            };
-            totalWeight += w;
-        }
-
-        float contentTop = CanvasHeight * 0.5f - HeaderHeight - 5f;
-        float contentBottom = -CanvasHeight * 0.5f + Padding;
-        float availableHeight = contentTop - contentBottom;
-        float totalSpacing = SlotSpacing * (slotEntries.Count - 1);
-        float usableHeight = availableHeight - totalSpacing;
-
-        // Ensure tooltip panel exists
-        EnsureTooltipPanel();
-
-        float currentY = contentTop;
-        for (int i = 0; i < slotEntries.Count; i++)
-        {
-            var entry = slotEntries[i];
-            float slotH = usableHeight * (entry.weight / totalWeight);
-            float slotCenterY = currentY - slotH * 0.5f;
-            float slotW = CanvasWidth - Padding * 2f;
-
-            if (entry.isPersonal && personals != null && entry.personalIndex < personals.Count)
-            {
-                var slot = CreatePersonalSlotUI(entry.personalIndex, personals[entry.personalIndex],
-                    new Vector2(0f, slotCenterY), new Vector2(slotW, slotH));
-                _personalSlotsList.Add(slot);
+                float cCX = leftX + nemaW * 0.5f;
+                float cCY = commTop - ci * (eachH + Gap) - eachH * 0.5f;
+                BuildCommercialFiller(ci, commercials[ci],
+                    new Vector2(cCX, cCY), new Vector2(nemaW, eachH));
             }
-            else if (!entry.isPersonal && commercials != null && entry.commercialIndex < commercials.Count)
-            {
-                var slot = CreateCommercialSlotUI(entry.commercialIndex, commercials[entry.commercialIndex],
-                    new Vector2(0f, slotCenterY), new Vector2(slotW, slotH));
-                _commercialSlotsList.Add(slot);
-            }
-
-            currentY -= slotH + SlotSpacing;
         }
     }
 
-    private struct SlotEntry
+    // ─── Nema's Ad (Decorative) ─────────────────────────────────
+
+    private void BuildNemaSlot(Vector2 center, Vector2 size)
     {
-        public bool isPersonal;
-        public int personalIndex;
-        public int commercialIndex;
-        public float weight;
+        var containerGO = new GameObject("NemaAd");
+        containerGO.transform.SetParent(_contentParent, false);
+        var rt = containerGO.AddComponent<RectTransform>();
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = center;
+        rt.sizeDelta = size;
+        rt.localScale = Vector3.one;
+
+        // Warm-tinted background
+        var bg = containerGO.AddComponent<Image>();
+        bg.color = new Color(0.20f, 0.15f, 0.10f, 0.12f);
+        bg.raycastTarget = false;
+
+        // "YOUR AD" badge
+        CreateTMP("Nema_Badge", rt,
+            new Vector2(0f, size.y * 0.38f),
+            new Vector2(size.x - 12f, 18f),
+            "YOUR AD", 11f, FontStyles.Bold | FontStyles.Italic,
+            TextAlignmentOptions.Left);
+
+        // Name
+        float nameFontSize = Mathf.Clamp(size.y * 0.10f, 14f, 22f);
+        CreateTMP("Nema_Name", rt,
+            new Vector2(0f, size.y * 0.22f),
+            new Vector2(size.x - 12f, nameFontSize + 4f),
+            PlayerData.PlayerName, nameFontSize, FontStyles.Bold,
+            TextAlignmentOptions.Left);
+
+        // Portrait
+        float portraitSize = Mathf.Clamp(size.x * 0.30f, 32f, 56f);
+        var portraitGO = new GameObject("Nema_Portrait");
+        portraitGO.transform.SetParent(rt, false);
+        var prt = portraitGO.AddComponent<RectTransform>();
+        prt.anchorMin = prt.anchorMax = new Vector2(0.5f, 0.5f);
+        prt.anchoredPosition = new Vector2(size.x * 0.5f - portraitSize * 0.5f - 6f, size.y * 0.26f);
+        prt.sizeDelta = new Vector2(portraitSize, portraitSize);
+        prt.localScale = Vector3.one;
+        var pImg = portraitGO.AddComponent<Image>();
+        pImg.raycastTarget = false;
+        if (nemaPortrait != null)
+        {
+            pImg.sprite = nemaPortrait;
+            pImg.color = Color.white;
+        }
+        else
+        {
+            pImg.color = new Color(0.7f, 0.7f, 0.7f, 0.4f);
+        }
+
+        // Body text
+        float bodyFontSize = Mathf.Clamp(size.y * 0.065f, 9f, 14f);
+        CreateTMP("Nema_Body", rt,
+            new Vector2(0f, -size.y * 0.05f),
+            new Vector2(size.x - 12f, size.y * 0.38f),
+            "Seeking beauty in the everyday.\nLoves flowers, quiet mornings,\nand sharp scissors.",
+            bodyFontSize, FontStyles.Normal, TextAlignmentOptions.TopLeft);
+
+        // Phone number
+        float phoneFontSize = Mathf.Clamp(size.y * 0.07f, 10f, 14f);
+        string phone = "555-" + PlayerData.PlayerName.GetHashCode().ToString("X4").Substring(0, 4);
+        CreateTMP("Nema_Phone", rt,
+            new Vector2(0f, -size.y * 0.38f),
+            new Vector2(size.x - 12f, phoneFontSize + 4f),
+            phone, phoneFontSize, FontStyles.Italic, TextAlignmentOptions.Left);
     }
 
-    // ─── Slot UI Builders ───────────────────────────────────────
+    // ─── Personal Ad Slot (Interactive) ─────────────────────────
 
     private NewspaperAdSlot CreatePersonalSlotUI(int index, DatePersonalDefinition def,
         Vector2 center, Vector2 size)
     {
         string prefix = $"Personal_{index}";
-        float nameFontSize = Mathf.Clamp(size.y * 0.14f, 14f, 26f);
-        float bodyFontSize = Mathf.Clamp(size.y * 0.10f, 10f, 16f);
-        float phoneFontSize = Mathf.Clamp(size.y * 0.11f, 12f, 20f);
-        float portraitSize = Mathf.Clamp(size.y * 0.32f, 28f, 48f);
+        float nameFontSize = Mathf.Clamp(size.y * 0.12f, 13f, 24f);
+        float bodyFontSize = Mathf.Clamp(size.y * 0.08f, 9f, 15f);
+        float phoneFontSize = Mathf.Clamp(size.y * 0.09f, 10f, 18f);
+        float portraitSize = Mathf.Clamp(Mathf.Min(size.y, size.x) * 0.25f, 28f, 52f);
 
-        // Slot container
+        // Container
         var containerGO = new GameObject(prefix);
         containerGO.transform.SetParent(_contentParent, false);
         var containerRT = containerGO.AddComponent<RectTransform>();
-        containerRT.anchorMin = new Vector2(0.5f, 0.5f);
-        containerRT.anchorMax = new Vector2(0.5f, 0.5f);
+        containerRT.anchorMin = containerRT.anchorMax = new Vector2(0.5f, 0.5f);
         containerRT.anchoredPosition = center;
         containerRT.sizeDelta = size;
         containerRT.localScale = Vector3.one;
 
-        // Background
         var bgImg = containerGO.AddComponent<Image>();
         bgImg.color = new Color(0.1f, 0.1f, 0.1f, 0.06f);
         bgImg.raycastTarget = true;
 
-        // Name
-        float nameOffsetY = size.y * 0.35f;
+        // Name (top-left, next to portrait)
+        float nameY = size.y * 0.35f;
         var nameGO = CreateTMP($"{prefix}_Name", containerRT,
-            new Vector2(-portraitSize * 0.3f, nameOffsetY),
-            new Vector2(size.x - portraitSize - 20f, nameFontSize + 6f),
+            new Vector2(-portraitSize * 0.25f, nameY),
+            new Vector2(size.x - portraitSize - 16f, nameFontSize + 6f),
             "Name", nameFontSize, FontStyles.Bold, TextAlignmentOptions.Left);
         var nameTMP = nameGO.GetComponent<TMP_Text>();
 
-        // Portrait
+        // Portrait (top-right corner)
         var portraitGO = new GameObject($"{prefix}_Portrait");
         portraitGO.transform.SetParent(containerRT, false);
         var portraitRT = portraitGO.AddComponent<RectTransform>();
-        portraitRT.anchorMin = new Vector2(0.5f, 0.5f);
-        portraitRT.anchorMax = new Vector2(0.5f, 0.5f);
-        portraitRT.anchoredPosition = new Vector2(size.x * 0.5f - portraitSize * 0.5f - 5f, nameOffsetY);
+        portraitRT.anchorMin = portraitRT.anchorMax = new Vector2(0.5f, 0.5f);
+        portraitRT.anchoredPosition = new Vector2(size.x * 0.5f - portraitSize * 0.5f - 6f, nameY);
         portraitRT.sizeDelta = new Vector2(portraitSize, portraitSize);
         portraitRT.localScale = Vector3.one;
         var portraitImg = portraitGO.AddComponent<Image>();
@@ -435,23 +526,23 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         // Ad body
         var adGO = CreateTMP($"{prefix}_Ad", containerRT,
             new Vector2(0f, 0f),
-            new Vector2(size.x - 20f, size.y * 0.4f),
+            new Vector2(size.x - 14f, size.y * 0.40f),
             "Ad text...", bodyFontSize, FontStyles.Normal, TextAlignmentOptions.TopLeft);
         var adTMP = adGO.GetComponent<TMP_Text>();
 
-        // Add KeywordTooltip to the ad text
+        // KeywordTooltip
         var kwTooltip = adGO.AddComponent<KeywordTooltip>();
         kwTooltip.InitReferences(adTMP, _tooltipPanel, _tooltipText, mainCamera);
 
-        // Phone number
-        float phoneOffsetY = -size.y * 0.35f;
+        // Phone number (bottom)
+        float phoneY = -size.y * 0.38f;
         var phoneGO = CreateTMP($"{prefix}_Phone", containerRT,
-            new Vector2(0f, phoneOffsetY),
-            new Vector2(size.x - 20f, phoneFontSize + 6f),
+            new Vector2(0f, phoneY),
+            new Vector2(size.x - 14f, phoneFontSize + 4f),
             "555-0000", phoneFontSize, FontStyles.Italic, TextAlignmentOptions.Left);
         var phoneTMP = phoneGO.GetComponent<TMP_Text>();
 
-        // Hold progress fill
+        // Hold-to-select progress bar
         var fillGO = new GameObject($"{prefix}_Fill");
         fillGO.transform.SetParent(containerRT, false);
         var fillRT = fillGO.AddComponent<RectTransform>();
@@ -471,74 +562,45 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         // NewspaperAdSlot component
         var slot = containerGO.AddComponent<NewspaperAdSlot>();
         slot.InitReferences(containerRT, nameTMP, adTMP, phoneTMP,
-            portraitImg, null, fillImg, PersonalWeight);
+            portraitImg, null, fillImg, 1f);
 
-        // Assign data
         slot.AssignPersonal(def);
-
         return slot;
     }
 
-    private NewspaperAdSlot CreateCommercialSlotUI(int index, CommercialAdDefinition def,
+    // ─── Commercial Filler (Decorative) ─────────────────────────
+
+    private void BuildCommercialFiller(int index, CommercialAdDefinition def,
         Vector2 center, Vector2 size)
     {
-        string prefix = $"Commercial_{index}";
-        float nameFontSize = Mathf.Clamp(size.y * 0.18f, 12f, 22f);
-        float bodyFontSize = Mathf.Clamp(size.y * 0.14f, 10f, 16f);
+        string prefix = $"CommFiller_{index}";
 
-        // Slot container
         var containerGO = new GameObject(prefix);
         containerGO.transform.SetParent(_contentParent, false);
         var containerRT = containerGO.AddComponent<RectTransform>();
-        containerRT.anchorMin = new Vector2(0.5f, 0.5f);
-        containerRT.anchorMax = new Vector2(0.5f, 0.5f);
+        containerRT.anchorMin = containerRT.anchorMax = new Vector2(0.5f, 0.5f);
         containerRT.anchoredPosition = center;
         containerRT.sizeDelta = size;
         containerRT.localScale = Vector3.one;
 
-        // Background (slightly different tint for commercials)
-        var bgImg = containerGO.AddComponent<Image>();
-        bgImg.color = new Color(0.12f, 0.10f, 0.08f, 0.08f);
-        bgImg.raycastTarget = false;
+        var bg = containerGO.AddComponent<Image>();
+        bg.color = new Color(0.12f, 0.10f, 0.08f, 0.08f);
+        bg.raycastTarget = false;
 
-        // Name
-        float nameOffsetY = size.y * 0.25f;
-        var nameGO = CreateTMP($"{prefix}_Name", containerRT,
-            new Vector2(0f, nameOffsetY),
-            new Vector2(size.x - 20f, nameFontSize + 4f),
-            "Business", nameFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
-        var nameTMP = nameGO.GetComponent<TMP_Text>();
+        float nameFontSize = Mathf.Clamp(size.y * 0.14f, 10f, 16f);
+        float bodyFontSize = Mathf.Clamp(size.y * 0.11f, 8f, 13f);
 
-        // Ad body
-        var adGO = CreateTMP($"{prefix}_Ad", containerRT,
-            new Vector2(0f, -5f),
-            new Vector2(size.x - 20f, size.y * 0.5f),
-            "Ad text...", bodyFontSize, FontStyles.Italic, TextAlignmentOptions.Center);
-        var adTMP = adGO.GetComponent<TMP_Text>();
+        // Business name
+        CreateTMP($"{prefix}_Name", containerRT,
+            new Vector2(0f, size.y * 0.28f),
+            new Vector2(size.x - 10f, nameFontSize + 4f),
+            def.businessName, nameFontSize, FontStyles.Bold, TextAlignmentOptions.Center);
 
-        // Logo placeholder (hidden by default)
-        var logoGO = new GameObject($"{prefix}_Logo");
-        logoGO.transform.SetParent(containerRT, false);
-        var logoRT = logoGO.AddComponent<RectTransform>();
-        logoRT.anchorMin = new Vector2(0.5f, 0.5f);
-        logoRT.anchorMax = new Vector2(0.5f, 0.5f);
-        logoRT.anchoredPosition = new Vector2(size.x * 0.35f, 0f);
-        logoRT.sizeDelta = new Vector2(size.y * 0.4f, size.y * 0.4f);
-        logoRT.localScale = Vector3.one;
-        var logoImg = logoGO.AddComponent<Image>();
-        logoImg.color = new Color(0.8f, 0.8f, 0.8f, 0.5f);
-        logoImg.raycastTarget = false;
-        logoGO.SetActive(false);
-
-        // NewspaperAdSlot component
-        var slot = containerGO.AddComponent<NewspaperAdSlot>();
-        slot.InitReferences(containerRT, nameTMP, adTMP, null,
-            null, logoImg, null, def.sizeWeight);
-
-        // Assign data
-        slot.AssignCommercial(def);
-
-        return slot;
+        // Ad text
+        CreateTMP($"{prefix}_Body", containerRT,
+            new Vector2(0f, -size.y * 0.05f),
+            new Vector2(size.x - 10f, size.y * 0.50f),
+            def.adText, bodyFontSize, FontStyles.Italic, TextAlignmentOptions.Center);
     }
 
     // ─── Tooltip Panel ──────────────────────────────────────────
@@ -551,8 +613,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         _tooltipPanel = new GameObject("KeywordTooltip");
         _tooltipPanel.transform.SetParent(_contentParent, false);
         var tooltipRT = _tooltipPanel.AddComponent<RectTransform>();
-        tooltipRT.anchorMin = new Vector2(0.5f, 0.5f);
-        tooltipRT.anchorMax = new Vector2(0.5f, 0.5f);
+        tooltipRT.anchorMin = tooltipRT.anchorMax = new Vector2(0.5f, 0.5f);
         tooltipRT.sizeDelta = new Vector2(220f, 60f);
         tooltipRT.anchoredPosition = Vector2.zero;
         tooltipRT.localScale = Vector3.one;
@@ -587,8 +648,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         var rt = go.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0.5f);
-        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = size;
         rt.localScale = Vector3.one;
