@@ -23,51 +23,67 @@ public class SimpleDrinkHUD : MonoBehaviour
     [Tooltip("Recipe selection panel — shown only in ChoosingRecipe.")]
     public GameObject recipePanel;
 
+    private SimpleDrinkManager.State _lastState = (SimpleDrinkManager.State)(-1);
+    private bool _lastPourStarted;
+
     void Update()
     {
         if (manager == null) return;
 
-        switch (manager.CurrentState)
+        var state = manager.CurrentState;
+        bool stateChanged = state != _lastState;
+        _lastState = state;
+
+        switch (state)
         {
             case SimpleDrinkManager.State.ChoosingRecipe:
-                UpdateChoosingRecipe();
+                if (stateChanged) ApplyChoosingRecipePanels();
                 break;
             case SimpleDrinkManager.State.Pouring:
+                if (stateChanged) ApplyPouringPanels();
                 UpdatePouring();
                 break;
             case SimpleDrinkManager.State.Scoring:
-                UpdateScoring();
+                if (stateChanged) ApplyScoringPanels();
                 break;
         }
     }
 
-    private void UpdateChoosingRecipe()
+    private void ApplyChoosingRecipePanels()
     {
         if (recipePanel != null) recipePanel.SetActive(true);
         if (hudPanel != null) hudPanel.SetActive(false);
         if (pourBar != null) pourBar.SetVisible(false);
     }
 
-    private void UpdatePouring()
+    private void ApplyPouringPanels()
     {
         if (recipePanel != null) recipePanel.SetActive(false);
         if (hudPanel != null) hudPanel.SetActive(true);
+        _lastPourStarted = false;
 
         var recipe = manager.ActiveRecipe;
-
         if (drinkNameLabel != null)
             drinkNameLabel.text = recipe != null ? recipe.drinkName : "";
+        if (pourBar != null) pourBar.SetVisible(false);
+        if (scoreLabel != null) scoreLabel.text = "Click the glass to pour";
+    }
 
-        if (!manager.PourStarted)
+    private void UpdatePouring()
+    {
+        bool pourStarted = manager.PourStarted;
+        if (pourStarted != _lastPourStarted)
         {
-            if (pourBar != null) pourBar.SetVisible(false);
-            if (scoreLabel != null) scoreLabel.text = "Click the glass to pour";
-            return;
+            _lastPourStarted = pourStarted;
+            if (pourBar != null) pourBar.SetVisible(pourStarted);
+            if (!pourStarted && scoreLabel != null) scoreLabel.text = "Click the glass to pour";
         }
 
+        if (!pourStarted) return;
+
+        var recipe = manager.ActiveRecipe;
         if (pourBar != null && recipe != null)
         {
-            pourBar.SetVisible(true);
             pourBar.SetLevels(manager.FillLevel, manager.FoamLevel, manager.OscillatingTarget, recipe.fillTolerance);
             pourBar.SetOverflowing(manager.Overflowed);
             pourBar.SetLiquidColor(recipe.liquidColor);
@@ -77,7 +93,7 @@ public class SimpleDrinkHUD : MonoBehaviour
             scoreLabel.text = "";
     }
 
-    private void UpdateScoring()
+    private void ApplyScoringPanels()
     {
         if (recipePanel != null) recipePanel.SetActive(false);
         if (hudPanel != null) hudPanel.SetActive(true);
@@ -94,8 +110,6 @@ public class SimpleDrinkHUD : MonoBehaviour
         }
 
         if (scoreLabel != null)
-        {
             scoreLabel.text = $"Fill: {(int)manager.lastFillScore}  Bonus: {(int)manager.lastBonusScore}  Overflow: {(int)manager.lastOverflowScore}";
-        }
     }
 }

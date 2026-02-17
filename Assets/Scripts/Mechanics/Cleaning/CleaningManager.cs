@@ -226,20 +226,33 @@ public class CleaningManager : MonoBehaviour
 
     // ── Helpers ──────────────────────────────────────────────────────
 
+    private bool _lastSpongeVisible;
+    private bool _lastSprayVisible;
+
     private void SetToolVisual(Vector3 position, bool visible)
     {
         bool isSponge = _currentTool == Tool.Sponge;
+        bool spongeTarget = visible && isSponge;
+        bool sprayTarget = visible && !isSponge;
 
         if (_spongeVisual != null)
         {
-            _spongeVisual.gameObject.SetActive(visible && isSponge);
-            if (visible && isSponge) _spongeVisual.position = position;
+            if (spongeTarget != _lastSpongeVisible)
+            {
+                _spongeVisual.gameObject.SetActive(spongeTarget);
+                _lastSpongeVisible = spongeTarget;
+            }
+            if (spongeTarget) _spongeVisual.position = position;
         }
 
         if (_sprayVisual != null)
         {
-            _sprayVisual.gameObject.SetActive(visible && !isSponge);
-            if (visible && !isSponge) _sprayVisual.position = position;
+            if (sprayTarget != _lastSprayVisible)
+            {
+                _sprayVisual.gameObject.SetActive(sprayTarget);
+                _lastSprayVisible = sprayTarget;
+            }
+            if (sprayTarget) _sprayVisual.position = position;
         }
     }
 

@@ -51,6 +51,9 @@ public class PourBarUI : MonoBehaviour
     private TMP_Text _scoreText;
 
     private bool _overflowing;
+    private bool _lastOverflowing;
+    private bool _lastVisible;
+    private bool _lastScoreVisible;
     private float _smoothFill;
     private float _smoothFoam;
 
@@ -109,8 +112,11 @@ public class PourBarUI : MonoBehaviour
         }
 
         // Hide score text while actively pouring
-        if (_scoreText != null)
+        if (_scoreText != null && _lastScoreVisible)
+        {
             _scoreText.gameObject.SetActive(false);
+            _lastScoreVisible = false;
+        }
     }
 
     /// <summary>
@@ -128,7 +134,11 @@ public class PourBarUI : MonoBehaviour
     {
         if (_scoreText != null)
         {
-            _scoreText.gameObject.SetActive(true);
+            if (!_lastScoreVisible)
+            {
+                _scoreText.gameObject.SetActive(true);
+                _lastScoreVisible = true;
+            }
             _scoreText.text = text;
         }
     }
@@ -148,8 +158,11 @@ public class PourBarUI : MonoBehaviour
     /// </summary>
     public void SetVisible(bool visible)
     {
-        if (_barRoot != null)
+        if (_barRoot != null && visible != _lastVisible)
+        {
             _barRoot.gameObject.SetActive(visible);
+            _lastVisible = visible;
+        }
     }
 
     // ── Lifecycle ────────────────────────────────────────────────────
@@ -161,15 +174,18 @@ public class PourBarUI : MonoBehaviour
 
     void Update()
     {
-        // Overflow flash — pulse background alpha
-        if (_backgroundImage != null && _overflowing)
+        if (_backgroundImage == null) return;
+
+        if (_overflowing)
         {
             float pulse = Mathf.PingPong(Time.time * 4f, 1f);
             _backgroundImage.color = Color.Lerp(backgroundColor, overflowColor, pulse);
+            _lastOverflowing = true;
         }
-        else if (_backgroundImage != null)
+        else if (_lastOverflowing)
         {
             _backgroundImage.color = backgroundColor;
+            _lastOverflowing = false;
         }
     }
 
