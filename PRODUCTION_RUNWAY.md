@@ -88,7 +88,7 @@ pie title "Responsibility Distribution"
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
-xychart-beta
+xychart-beta horizontal
     title "System Completion by Category"
     x-axis ["Apartment Hub", "Dating Loop", "Stations", "Mechanics", "UI/Flow", "Camera", "Framework"]
     y-axis "Completion %" 0 --> 100
@@ -117,6 +117,19 @@ xychart-beta
 | **Save System** (full persistence) | Partial | 30% | Layout JSON exists, needs full state |
 | **Nema Character** (visible in apt) | Not Started | 0% | VS-High |
 | **Feedback Overlay** | Not Started | 0% | Demo-Critical |
+
+### Apartment Stations (8)
+
+| # | Station | Interaction | Status |
+|:-:|---------|-------------|:------:|
+| 1 | **Trashcan** | Throw away trash/bottles | NEW |
+| 2 | **Dishwasher** | Load dirty dishes | NEW |
+| 3 | **Refrigerator** | Drink making (pour) | Working |
+| 4 | **Plants** | Watering (hold to pour) | Working |
+| 5 | **Record Player** | Browse/play vinyl | Working |
+| 6 | **Perfume** | Spray (mood/scent) | Working |
+| 7 | **Bookcase** | Browse/read/inspect | Working |
+| 8 | **Coffee Table** | Place book/deliver drink | Working |
 
 ---
 
