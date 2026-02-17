@@ -69,8 +69,8 @@ public class NameEntryScreen : MonoBehaviour
     private InputAction _mouseClick;
 
     // ── Runtime state ──────────────────────────────────────────────
-    private int _cursorRow;
-    private int _cursorCol;
+    private int _cursorRow = 6;  // Start on command row (OK)
+    private int _cursorCol = 6;  // OK button zone
     private char[] _nameChars;
     private int _nameLength;
 
