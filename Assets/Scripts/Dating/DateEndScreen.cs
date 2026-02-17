@@ -108,9 +108,16 @@ public class DateEndScreen : MonoBehaviour
 
     private void OnContinue()
     {
-        if (screenRoot != null)
-            screenRoot.SetActive(false);
+        Dismiss();
+    }
 
-        Debug.Log("[DateEndScreen] Dismissed — player can explore in Evening phase.");
+    /// <summary>Hide the end screen. Called by Continue button and sleep reset.</summary>
+    public void Dismiss()
+    {
+        if (screenRoot != null && screenRoot.activeSelf)
+        {
+            screenRoot.SetActive(false);
+            Debug.Log("[DateEndScreen] Dismissed.");
+        }
     }
 }

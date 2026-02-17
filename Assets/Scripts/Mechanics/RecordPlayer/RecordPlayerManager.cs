@@ -243,7 +243,7 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
         Debug.Log($"[RecordPlayerManager] Playing: {record.title} by {record.artist}");
     }
 
-    private void StopPlayback()
+    public void StopPlayback()
     {
         CurrentState = State.Browsing;
         audioSource.Stop();

@@ -143,6 +143,21 @@ public class FridgeController : MonoBehaviour
         StartCoroutine(CloseDoorSequence());
     }
 
+    /// <summary>
+    /// Immediately snap the fridge shut regardless of current state.
+    /// Used by sleep/reset sequences where we can't wait for tweens.
+    /// </summary>
+    public void ForceClose()
+    {
+        StopAllCoroutines();
+        _state = DoorState.Closed;
+        if (_doorPivot != null)
+            _doorPivot.localRotation = _closedRotation;
+        if (_interiorLight != null)
+            _interiorLight.enabled = false;
+        SimpleDrinkManager.Instance?.HideRecipePanel();
+    }
+
     private IEnumerator CloseDoorSequence()
     {
         _state = DoorState.Closing;
