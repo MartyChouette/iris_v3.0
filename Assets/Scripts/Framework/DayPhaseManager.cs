@@ -280,8 +280,7 @@ public class DayPhaseManager : MonoBehaviour
         }
 
         // Fade in immediately
-        if (ScreenFade.Instance != null)
-            StartCoroutine(ScreenFade.Instance.FadeIn(_fadeDuration));
+        ScreenFade.Instance?.FadeIn(_fadeDuration);
 
         Debug.Log($"[DayPhaseManager] Restored to phase {phase}.");
         OnPhaseChanged?.Invoke((int)phase);
