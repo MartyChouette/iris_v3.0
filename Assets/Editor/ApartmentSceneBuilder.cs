@@ -75,6 +75,9 @@ public static class ApartmentSceneBuilder
                 "Rebuild", "Cancel"))
             return;
 
+        // Capture positions from current scene before destroying it
+        SaveLayout();
+
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         int placeableLayer = EnsureLayer(PlaceableLayerName);
@@ -190,7 +193,10 @@ public static class ApartmentSceneBuilder
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
-        // ── 17. Save scene ──
+        // ── 17. Restore saved layout positions ──
+        RestoreLayout();
+
+        // ── 18. Save scene ──
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -478,6 +484,20 @@ public static class ApartmentSceneBuilder
         foreach (var plant in plants)
         {
             if (!list.Contains(plant.transform)) list.Add(plant.transform);
+        }
+
+        // 6. ApartmentCalendar
+        var calendars = Object.FindObjectsByType<ApartmentCalendar>(FindObjectsSortMode.None);
+        foreach (var cal in calendars)
+        {
+            if (!list.Contains(cal.transform)) list.Add(cal.transform);
+        }
+
+        // 7. FridgeController (fridge body/pivot)
+        var fridges = Object.FindObjectsByType<FridgeController>(FindObjectsSortMode.None);
+        foreach (var fridge in fridges)
+        {
+            if (!list.Contains(fridge.transform)) list.Add(fridge.transform);
         }
 
         return list;
