@@ -25,10 +25,8 @@ Shader "Iris/NatureBox"
         _StarDensity ("Star Density", Range(0.95, 1.0)) = 0.985
 
         [Header(Retro)]
-        [Tooltip("Target vertical resolution. 0=native, 240=N64/PS1, 480=PS2/Dreamcast")]
-        _PixelDensity ("Pixel Density", Float) = 0
-        [Tooltip("Color bit depth. 0=off, 16=N64, 32=PS1, 256=PS2")]
-        _ColorDepth ("Color Depth (per channel)", Float) = 0
+        _PixelDensity ("Pixel Density (0 off, 240 N64, 480 PS2)", Float) = 0
+        _ColorDepth ("Color Depth per channel (0 off, 16 N64, 32 PS1)", Float) = 0
     }
 
     SubShader
@@ -50,10 +48,9 @@ Shader "Iris/NatureBox"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
-            // ── Properties ───────────────────────────────────────────
 
             CBUFFER_START(UnityPerMaterial)
                 float _TimeOfDay;
@@ -72,8 +69,6 @@ Shader "Iris/NatureBox"
                 float _ColorDepth;
             CBUFFER_END
 
-            // ── Structs ──────────────────────────────────────────────
-
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -86,7 +81,6 @@ Shader "Iris/NatureBox"
             };
 
             // ── Noise ────────────────────────────────────────────────
-            // Hash & value noise matching ParallaxWindow.shader style
 
             float hash21(float2 p)
             {
@@ -99,100 +93,98 @@ Shader "Iris/NatureBox"
             {
                 float2 i = floor(p);
                 float2 f = frac(p);
-                f = f * f * (3.0 - 2.0 * f); // smoothstep interp
+                f = f * f * (3.0 - 2.0 * f);
 
                 float a = hash21(i);
-                float b = hash21(i + float2(1, 0));
-                float c = hash21(i + float2(0, 1));
-                float d = hash21(i + float2(1, 1));
+                float b = hash21(i + float2(1.0, 0.0));
+                float c = hash21(i + float2(0.0, 1.0));
+                float d = hash21(i + float2(1.0, 1.0));
 
                 return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
             }
 
-            // Fractional Brownian Motion — 4 octaves (terrain)
             float fbm4(float2 p)
             {
                 float v = 0.0;
-                v += 0.5000 * noise2D(p); p *= 2.01;
-                v += 0.2500 * noise2D(p); p *= 2.02;
-                v += 0.1250 * noise2D(p); p *= 2.01;
-                v += 0.0625 * noise2D(p);
+                float amp = 0.5;
+                float freq = 1.0;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.02;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
+                v += amp * noise2D(p * freq);
                 return v / 0.9375;
             }
 
-            // FBM — 5 octaves (clouds, finer detail)
             float fbm5(float2 p)
             {
                 float v = 0.0;
-                v += 0.5000 * noise2D(p); p *= 2.01;
-                v += 0.2500 * noise2D(p); p *= 2.02;
-                v += 0.1250 * noise2D(p); p *= 2.01;
-                v += 0.0625 * noise2D(p); p *= 2.03;
-                v += 0.03125 * noise2D(p);
+                float amp = 0.5;
+                float freq = 1.0;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.02;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
+                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.03;
+                v += amp * noise2D(p * freq);
                 return v / 0.96875;
             }
 
             // ── Color palette ────────────────────────────────────────
-            // t: 0 = midnight, 0.25 = 6am (dawn), 0.5 = noon, 0.75 = 6pm (dusk)
-            // Maps directly to GameClock.NormalizedTimeOfDay.
+            // Branchless 4-stop cyclic lerp.
+            // t: 0 = midnight, 0.25 = dawn, 0.5 = noon, 0.75 = dusk.
 
-            float3 lerpPalette(float t, float3 midnight, float3 dawn, float3 noon, float3 dusk)
+            float3 palette4(float t, float3 c0, float3 c1, float3 c2, float3 c3)
             {
-                t = frac(t);
-                if (t < 0.25) return lerp(midnight, dawn, t * 4.0);
-                if (t < 0.50) return lerp(dawn, noon, (t - 0.25) * 4.0);
-                if (t < 0.75) return lerp(noon, dusk, (t - 0.50) * 4.0);
-                return lerp(dusk, midnight, (t - 0.75) * 4.0);
+                t = frac(t) * 4.0;
+                float3 ab = lerp(c0, c1, saturate(t));
+                float3 bc = lerp(c1, c2, saturate(t - 1.0));
+                float3 cd = lerp(c2, c3, saturate(t - 2.0));
+                float3 da = lerp(c3, c0, saturate(t - 3.0));
+
+                float w0 = step(t, 1.0);
+                float w1 = step(1.0, t) * step(t, 2.0);
+                float w2 = step(2.0, t) * step(t, 3.0);
+                float w3 = step(3.0, t);
+
+                return ab * w0 + bc * w1 + cd * w2 + da * w3;
             }
 
             float3 zenithColor(float t)
             {
-                return lerpPalette(t,
-                    float3(0.01, 0.01, 0.06),   // midnight — near-black
-                    float3(0.25, 0.18, 0.45),   // dawn — lavender
-                    float3(0.35, 0.55, 0.85),   // noon — soft blue
-                    float3(0.22, 0.12, 0.38)    // dusk — purple
-                );
+                return palette4(t,
+                    float3(0.01, 0.01, 0.06),
+                    float3(0.25, 0.18, 0.45),
+                    float3(0.35, 0.55, 0.85),
+                    float3(0.22, 0.12, 0.38));
             }
 
             float3 horizColor(float t)
             {
-                return lerpPalette(t,
-                    float3(0.03, 0.03, 0.10),   // midnight — dark blue
-                    float3(0.85, 0.45, 0.25),   // dawn — warm orange
-                    float3(0.65, 0.75, 0.90),   // noon — pale blue
-                    float3(0.80, 0.30, 0.18)    // dusk — deep orange
-                );
+                return palette4(t,
+                    float3(0.03, 0.03, 0.10),
+                    float3(0.85, 0.45, 0.25),
+                    float3(0.65, 0.75, 0.90),
+                    float3(0.80, 0.30, 0.18));
             }
 
-            float3 sunCol(float t)
+            float3 sunColor(float t)
             {
-                return lerpPalette(t,
-                    float3(0.50, 0.55, 0.70),   // midnight — moonlight silver
-                    float3(1.00, 0.65, 0.25),   // dawn — gold
-                    float3(1.00, 0.95, 0.80),   // noon — bright white
-                    float3(1.00, 0.35, 0.12)    // dusk — deep orange
-                );
+                return palette4(t,
+                    float3(0.50, 0.55, 0.70),
+                    float3(1.00, 0.65, 0.25),
+                    float3(1.00, 0.95, 0.80),
+                    float3(1.00, 0.35, 0.12));
             }
-
-            // ── Sun / moon direction ─────────────────────────────────
-            // Full revolution: rises ~6am (t=0.25), peaks noon (t=0.5), sets ~6pm (t=0.75).
-            // Below horizon at night → becomes the moon conceptually.
 
             float3 sunDirection(float t)
             {
                 float a = t * 6.28318;
-                float y = -cos(a);           // peaks at t=0.5 (noon)
-                float x = sin(a);            // east at dawn, west at dusk
-                return normalize(float3(x, y * 0.75 + 0.05, 0.25));
+                return normalize(float3(sin(a), -cos(a) * 0.75 + 0.05, 0.25));
             }
-
-            // ── Star field ───────────────────────────────────────────
 
             float starField(float2 p, float density)
             {
-                float2 cell = floor(p * 150.0);
-                float h = hash21(cell);
+                float2 id = floor(p * 150.0);
+                float h = hash21(id);
                 float star = step(density, h);
                 star *= 0.5 + 0.5 * sin(_Time.y * (1.5 + h * 3.0) + h * 50.0);
                 return star;
@@ -200,37 +192,33 @@ Shader "Iris/NatureBox"
 
             // ── Vertex ───────────────────────────────────────────────
 
-            Varyings vert(Attributes IN)
+            Varyings vert(Attributes v)
             {
-                Varyings OUT;
-                OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
-                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
-                return OUT;
+                Varyings o;
+                o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
+                o.positionWS = TransformObjectToWorld(v.positionOS.xyz);
+                return o;
             }
 
             // ── Fragment ─────────────────────────────────────────────
 
-            half4 frag(Varyings IN) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                // Direction from camera to fragment — skybox-like projection.
-                // When _PixelDensity > 0, snap to a coarser pixel grid using
-                // screen-space derivatives to shift the view direction.
-                float3 viewDir = normalize(IN.positionWS - _WorldSpaceCameraPos);
+                float3 viewDir = normalize(input.positionWS - _WorldSpaceCameraPos);
 
-                if (_PixelDensity > 0)
+                // ── Pixelation: quantize view direction in spherical coords ──
+                if (_PixelDensity > 0.0)
                 {
-                    float aspect = _ScreenParams.x / _ScreenParams.y;
-                    float pxW = _ScreenParams.x / (_PixelDensity * aspect);
-                    float pxH = _ScreenParams.y / _PixelDensity;
+                    float res = _PixelDensity * 0.5;
+                    float theta = atan2(viewDir.z, viewDir.x);
+                    float yCoord = viewDir.y;
 
-                    // Center of the retro-pixel cell this fragment belongs to
-                    float2 cell = float2(pxW, pxH);
-                    float2 cellCenter = (floor(IN.positionCS.xy / cell) + 0.5) * cell;
-                    float2 offset = cellCenter - IN.positionCS.xy;
+                    theta = floor(theta * res + 0.5) / res;
+                    yCoord = floor(yCoord * res + 0.5) / res;
+                    yCoord = clamp(yCoord, -1.0, 1.0);
 
-                    // Shift viewDir to the cell center using per-pixel derivatives
-                    viewDir += ddx(viewDir) * offset.x + ddy(viewDir) * offset.y;
-                    viewDir = normalize(viewDir);
+                    float r = sqrt(max(1.0 - yCoord * yCoord, 0.0));
+                    viewDir = float3(r * cos(theta), yCoord, r * sin(theta));
                 }
 
                 float elevation = viewDir.y;
@@ -238,115 +226,93 @@ Shader "Iris/NatureBox"
 
                 float t = _TimeOfDay;
 
-                // Night factor (0 = day, 1 = deep night)
                 float nightFade = 1.0 - smoothstep(0.20, 0.30, t) + smoothstep(0.72, 0.82, t);
                 nightFade = saturate(nightFade);
 
                 float3 sunDir = sunDirection(t);
                 float sunDot = dot(viewDir, sunDir);
-                float3 sCol = sunCol(t);
+                float3 sCol = sunColor(t);
 
-                // ── 1. Sky gradient ──────────────────────────────────
+                // ── 1. Sky gradient ──
                 float skyBlend = saturate(elevation * 1.8 + 0.5);
-                skyBlend *= skyBlend; // ease-in toward zenith
+                skyBlend = skyBlend * skyBlend;
 
                 float3 zenith = zenithColor(t);
                 float3 hCol = horizColor(t);
                 float3 col = lerp(hCol, zenith, skyBlend);
 
-                // ── 2. Sun / moon disc + glow ────────────────────────
+                // ── 2. Sun / moon ──
                 float disc = smoothstep(_SunSize, _SunSize + 0.008, sunDot);
                 float glow = pow(saturate(sunDot), 6.0) * _SunGlow;
                 col += sCol * (disc * 1.5 + glow);
 
-                // ── 3. Stars (night only, above horizon) ─────────────
-                if (nightFade > 0.01 && elevation > 0.05)
+                // ── 3. Stars ──
+                float starMask = nightFade * step(0.05, elevation);
+                if (starMask > 0.01)
                 {
-                    float2 starUV = horiz * 3.0 + float2(0, elevation * 5.0);
-                    float s = starField(starUV, _StarDensity);
-                    col += s * nightFade * smoothstep(0.05, 0.20, elevation) * 0.7;
+                    float2 starUV = horiz * 3.0 + float2(0.0, elevation * 5.0);
+                    col += starField(starUV, _StarDensity) * starMask
+                         * smoothstep(0.05, 0.20, elevation) * 0.7;
                 }
 
-                // ── 4. Clouds ────────────────────────────────────────
-                if (elevation > -0.1)
+                // ── 4. Clouds ──
+                float cloudVisible = smoothstep(-0.10, 0.10, elevation);
+                if (cloudVisible > 0.01)
                 {
-                    // Dome projection: flatten xz by inverse of elevation
                     float2 cloudUV = viewDir.xz / (elevation + 0.35);
-                    cloudUV *= _CloudScale;
+                    cloudUV = cloudUV * _CloudScale;
                     cloudUV.x += _Time.y * _CloudSpeed;
                     cloudUV.y += _Time.y * _CloudSpeed * 0.3;
 
                     float cn = fbm5(cloudUV);
-                    float threshold = 0.50 - _CloudDensity * 0.35;
-                    float cloudMask = smoothstep(threshold, threshold + _CloudSharpness, cn);
-                    cloudMask *= smoothstep(-0.10, 0.10, elevation); // fade at horizon
+                    float thr = 0.50 - _CloudDensity * 0.35;
+                    float cloudMask = smoothstep(thr, thr + _CloudSharpness, cn) * cloudVisible;
 
-                    // Bright day clouds, dim night clouds
                     float3 cloudCol = lerp(float3(0.92, 0.90, 0.85),
                                            float3(0.06, 0.06, 0.10), nightFade);
-                    // Sun highlight on cloud edges
                     cloudCol += sCol * pow(saturate(sunDot), 3.0) * 0.15 * (1.0 - nightFade);
 
                     col = lerp(col, cloudCol, cloudMask * 0.88);
                 }
 
-                // ── 5. Far mountains (blue-hazed silhouette) ─────────
+                // ── 5. Far mountains ──
                 float mountainN = fbm4(horiz * _MountainScale);
                 float mountainLine = mountainN * _MountainHeight;
+                float mountainMask = smoothstep(mountainLine + 0.008,
+                                                mountainLine - 0.004, elevation);
+                float3 mountainCol = lerp(
+                    float3(0.12, 0.14, 0.22),
+                    float3(0.06, 0.08, 0.14),
+                    smoothstep(0.0, _MountainHeight, elevation));
+                mountainCol = mountainCol * lerp(1.0, 0.25, nightFade);
+                col = lerp(col, mountainCol, mountainMask);
 
-                if (elevation < mountainLine + 0.015)
-                {
-                    float mountainMask = smoothstep(mountainLine + 0.008,
-                                                    mountainLine - 0.004, elevation);
-
-                    float3 mountainCol = lerp(
-                        float3(0.12, 0.14, 0.22),   // lower: blue-gray
-                        float3(0.06, 0.08, 0.14),   // upper: darker
-                        smoothstep(0.0, _MountainHeight, elevation)
-                    );
-                    mountainCol *= lerp(1.0, 0.25, nightFade);
-
-                    col = lerp(col, mountainCol, mountainMask);
-                }
-
-                // ── 6. Near treeline ─────────────────────────────────
+                // ── 6. Near treeline ──
                 float treeN = fbm4(horiz * _MountainScale * 3.5 + float2(17.3, 42.1));
                 float treeLine = treeN * _TreelineHeight;
+                float treeMask = smoothstep(treeLine + 0.004, treeLine - 0.002, elevation);
+                float treeDetail = noise2D(horiz * _MountainScale * 20.0);
+                treeMask = treeMask * smoothstep(0.3, 0.5, treeDetail + 0.3);
+                float3 treeCol = float3(0.015, 0.035, 0.018) * lerp(1.0, 0.15, nightFade);
+                col = lerp(col, treeCol, treeMask);
 
-                if (elevation < treeLine + 0.008)
-                {
-                    float treeMask = smoothstep(treeLine + 0.004,
-                                                treeLine - 0.002, elevation);
+                // ── 7. Ground ──
+                float groundBlend = smoothstep(0.0, -0.12, elevation);
+                float3 groundCol = float3(0.025, 0.04, 0.025) * lerp(1.0, 0.15, nightFade);
+                col = lerp(col, groundCol, groundBlend);
 
-                    // High-freq noise for individual tree spikes
-                    float treeDetail = noise2D(horiz * _MountainScale * 20.0);
-                    treeMask *= smoothstep(0.3, 0.5, treeDetail + 0.3);
-
-                    float3 treeCol = float3(0.015, 0.035, 0.018);
-                    treeCol *= lerp(1.0, 0.15, nightFade);
-
-                    col = lerp(col, treeCol, treeMask);
-                }
-
-                // ── 7. Ground (below horizon) ────────────────────────
-                if (elevation < 0.0)
-                {
-                    float groundBlend = smoothstep(0.0, -0.12, elevation);
-                    float3 groundCol = float3(0.025, 0.04, 0.025);
-                    groundCol *= lerp(1.0, 0.15, nightFade);
-                    col = lerp(col, groundCol, groundBlend);
-                }
-
-                // ── 8. Horizon fog band ──────────────────────────────
+                // ── 8. Horizon fog ──
                 float fogBand = exp(-abs(elevation) * 12.0) * _HorizonFog;
                 float3 fogCol = lerp(hCol, sCol, 0.25) * lerp(1.0, 0.3, nightFade);
                 col = lerp(col, fogCol, fogBand);
 
                 col = saturate(col);
 
-                // ── 9. Color quantization (retro color depth) ────────
-                if (_ColorDepth > 0)
+                // ── 9. Color quantization ──
+                if (_ColorDepth > 0.0)
+                {
                     col = floor(col * _ColorDepth + 0.5) / _ColorDepth;
+                }
 
                 return half4(col, 1.0);
             }
