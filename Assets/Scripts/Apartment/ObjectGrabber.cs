@@ -173,6 +173,12 @@ public class ObjectGrabber : MonoBehaviour
             return;
 
         _held = placeable;
+
+        // Detach from plate stack before pickup
+        var stackable = placeable.GetComponent<StackablePlate>();
+        if (stackable != null)
+            stackable.PrepareForGrab();
+
         _heldRb = placeable.GetComponent<Rigidbody>();
         _heldRb.useGravity = false;
         _heldRb.isKinematic = false;
@@ -233,6 +239,18 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb.linearVelocity = Vector3.zero;
 
         _held.OnPlaced(_currentSurface, _gridSnap, pos, rot);
+
+        // Stack-aware plate hooks
+        var stackable = _held.GetComponent<StackablePlate>();
+        if (stackable != null)
+        {
+            stackable.TryJoinStack();
+            var dropZone = _currentSurface != null
+                ? _currentSurface.GetComponent<DishDropZone>() : null;
+            if (dropZone != null)
+                dropZone.RegisterDeposit(stackable);
+        }
+
         _held = null;
         _heldRb = null;
         _currentSurface = null;
@@ -456,6 +474,16 @@ public class ObjectGrabber : MonoBehaviour
 
                 _heldRb.linearVelocity = Vector3.zero;
                 _held.OnPlaced(nearest, false, pos, rot);
+
+                // Stack-aware plate hooks on force-drop
+                var stackable = _held.GetComponent<StackablePlate>();
+                if (stackable != null)
+                {
+                    stackable.TryJoinStack();
+                    var dropZone = nearest.GetComponent<DishDropZone>();
+                    if (dropZone != null)
+                        dropZone.RegisterDeposit(stackable);
+                }
             }
             else
             {
