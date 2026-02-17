@@ -64,7 +64,7 @@ Raspberry Rum is a **2-person team** with shared creative authority. Every decis
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
 pie title "Responsibility Distribution"
-    "Programming (Marty)" : 35
+    "Programming (Programmer)" : 35
     "2D/3D Art (Artist)" : 30
     "Shared Creative" : 35
 ```
@@ -132,13 +132,13 @@ gantt
 
     section Week 0 — Validate
     Book advisor meetings           :done, appt, 2026-02-17, 3d
-    Sprint 1: Playtest systems      :active, s1, 2026-02-17, 2d
+    Sprint 1 — Playtest systems     :active, s1, 2026-02-17, 2d
     GDC early registration deadline :milestone, gdc_reg, 2026-02-20, 0d
     Prototype sign-off              :crit, signoff, 2026-02-19, 2d
 
     section Week 1 — Integrate
-    Sprint 2: Audio integration     :s2a, 2026-02-24, 5d
-    Sprint 2: Art asset import      :s2b, 2026-02-24, 5d
+    Sprint 2 — Audio integration    :s2a, 2026-02-24, 5d
+    Sprint 2 — Art asset import     :s2b, 2026-02-24, 5d
     Nema backstory bible            :nema, 2026-02-24, 4d
     Mess narratives (x4)            :mess, 2026-02-26, 3d
     Social media accounts live      :social, 2026-02-24, 2d
