@@ -98,6 +98,11 @@ public class FridgeController : MonoBehaviour
         if (ApartmentManager.Instance.CurrentState != ApartmentManager.State.Browsing)
             return;
 
+        // Don't toggle fridge while actively pouring or scoring a drink
+        if (SimpleDrinkManager.Instance != null
+            && SimpleDrinkManager.Instance.CurrentState != SimpleDrinkManager.State.ChoosingRecipe)
+            return;
+
         if (_mainCamera == null) return;
 
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
