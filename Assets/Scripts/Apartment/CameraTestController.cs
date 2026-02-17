@@ -7,6 +7,8 @@ using Iris.Apartment;
 
 public class CameraTestController : MonoBehaviour
 {
+    public static CameraTestController Instance { get; private set; }
+
     [Header("Presets")]
     [Tooltip("Camera presets to compare (V1–V9).")]
     [SerializeField] private CameraPresetDefinition[] presets;
@@ -35,6 +37,7 @@ public class CameraTestController : MonoBehaviour
     public int ActivePresetIndex => _activePresetIndex;
 
     private int _activePresetIndex = -1;
+    private int _suspendedPresetIndex = -1;
     private Vector3 _targetPos;
     private Quaternion _targetRot;
     private LensSettings _targetLens;
@@ -57,6 +60,14 @@ public class CameraTestController : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[CameraTestController] Duplicate instance destroyed.");
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         // Create actions for keys 1-9
         _presetActions = new InputAction[9];
         for (int i = 0; i < 9; i++)
@@ -105,6 +116,36 @@ public class CameraTestController : MonoBehaviour
         if (presetVolume != null)
             _baseVolumeProfile = presetVolume.profile;
     }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    /// <summary>
+    /// Temporarily clear the active preset so Cinemachine can blend to a perspective camera.
+    /// The preset index is remembered — call RestorePreset() to re-apply it.
+    /// </summary>
+    public void SuspendPreset()
+    {
+        if (_activePresetIndex < 0) return;
+        _suspendedPresetIndex = _activePresetIndex;
+        ClearPreset();
+        Debug.Log($"[CameraTestController] Preset suspended (was {_suspendedPresetIndex}).");
+    }
+
+    /// <summary>
+    /// Re-apply the preset that was active before SuspendPreset() was called.
+    /// </summary>
+    public void RestorePreset()
+    {
+        if (_suspendedPresetIndex < 0) return;
+        ApplyPreset(_suspendedPresetIndex);
+        _suspendedPresetIndex = -1;
+        Debug.Log($"[CameraTestController] Preset restored.");
+    }
+
+    public bool HasSuspendedPreset => _suspendedPresetIndex >= 0;
 
     public void ApplyPreset(int index)
     {

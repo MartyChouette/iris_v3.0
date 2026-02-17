@@ -245,6 +245,8 @@ public class DayPhaseManager : MonoBehaviour
         switch (phase)
         {
             case DayPhase.Morning:
+                // Suspend ortho preset so read camera displays correctly
+                CameraTestController.Instance?.SuspendPreset();
                 // Newspaper is showing — raise read camera, suppress browse
                 if (ApartmentManager.Instance != null)
                     ApartmentManager.Instance.SetBrowseCameraActive(false);
@@ -328,6 +330,9 @@ public class DayPhaseManager : MonoBehaviour
         if (nextDaySFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(nextDaySFX);
 
+        // 0. Suspend ortho preset so Cinemachine can blend to perspective read camera
+        CameraTestController.Instance?.SuspendPreset();
+
         // 1. Suppress browse camera so it doesn't compete with read camera
         if (ApartmentManager.Instance != null)
             ApartmentManager.Instance.SetBrowseCameraActive(false);
@@ -395,7 +400,10 @@ public class DayPhaseManager : MonoBehaviour
         // 7. Wait for Cinemachine blend to finish (default 0.8s EaseInOut)
         yield return new WaitForSeconds(0.9f);
 
-        // 8. Start preparation countdown
+        // 8. Restore suspended camera preset (if player had one active before morning)
+        CameraTestController.Instance?.RestorePreset();
+
+        // 9. Start preparation countdown
         StartPrepTimer();
     }
 }
