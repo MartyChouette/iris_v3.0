@@ -65,8 +65,8 @@ Raspberry Rum is a **2-person team** with shared creative authority. Every decis
 %%{init: {'theme': 'dark'}}%%
 pie title "Responsibility Distribution"
     "Programming (Programmer)" : 35
-    "2D/3D Art (Artist)" : 30
-    "Shared Creative" : 35
+    "2D/3D Art (Artist)" : 35
+    "Shared Creative" : 30
 ```
 
 | Domain | Owner | Scope |
