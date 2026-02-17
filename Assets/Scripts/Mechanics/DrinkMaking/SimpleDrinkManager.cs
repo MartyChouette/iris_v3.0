@@ -171,10 +171,8 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         if (CurrentState != State.ChoosingRecipe) return;
         if (availableRecipes == null || index < 0 || index >= availableRecipes.Length) return;
 
-        if (_hudCanvas != null && !_hudCanvas.gameObject.activeSelf)
-            _hudCanvas.gameObject.SetActive(true);
-
         _activeRecipe = availableRecipes[index];
+        HideRecipePanel();
         _fillLevel = 0f;
         _foamLevel = 0f;
         _overflowed = false;
