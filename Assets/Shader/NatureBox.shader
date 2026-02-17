@@ -213,26 +213,24 @@ Shader "Iris/NatureBox"
             half4 frag(Varyings IN) : SV_Target
             {
                 // Direction from camera to fragment — skybox-like projection.
-                // When _PixelDensity > 0, snap screen position to a coarser grid
-                // and reconstruct the view direction from that snapped coordinate.
-                float3 viewDir;
+                // When _PixelDensity > 0, snap to a coarser pixel grid using
+                // screen-space derivatives to shift the view direction.
+                float3 viewDir = normalize(IN.positionWS - _WorldSpaceCameraPos);
 
                 if (_PixelDensity > 0)
                 {
-                    float2 screenUV = IN.positionCS.xy / _ScreenParams.xy;
                     float aspect = _ScreenParams.x / _ScreenParams.y;
-                    float2 targetRes = float2(_PixelDensity * aspect, _PixelDensity);
-                    float2 snappedUV = (floor(screenUV * targetRes) + 0.5) / targetRes;
+                    float pxW = _ScreenParams.x / (_PixelDensity * aspect);
+                    float pxH = _ScreenParams.y / _PixelDensity;
 
-                    // Reconstruct world ray from snapped screen coordinate
-                    float2 ndc = snappedUV * 2.0 - 1.0;
-                    float4 clipPos = float4(ndc, 0.0, 1.0);
-                    float4 wp = mul(UNITY_MATRIX_I_VP, clipPos);
-                    viewDir = normalize(wp.xyz / wp.w - _WorldSpaceCameraPos);
-                }
-                else
-                {
-                    viewDir = normalize(IN.positionWS - _WorldSpaceCameraPos);
+                    // Center of the retro-pixel cell this fragment belongs to
+                    float2 cell = float2(pxW, pxH);
+                    float2 cellCenter = (floor(IN.positionCS.xy / cell) + 0.5) * cell;
+                    float2 offset = cellCenter - IN.positionCS.xy;
+
+                    // Shift viewDir to the cell center using per-pixel derivatives
+                    viewDir += ddx(viewDir) * offset.x + ddy(viewDir) * offset.y;
+                    viewDir = normalize(viewDir);
                 }
 
                 float elevation = viewDir.y;
