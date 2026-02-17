@@ -148,6 +148,18 @@ public class NameEntryScreen : MonoBehaviour
 
     private void Start()
     {
+        // If save exists for active slot, skip name entry — restore and begin
+        if (SaveManager.HasSave(SaveManager.ActiveSlot))
+        {
+            AutoSaveController.Instance?.RestoreFromSave();
+
+            if (_canvas != null)
+                _canvas.gameObject.SetActive(false);
+
+            DayManager.Instance?.BeginDay1();
+            return;
+        }
+
         RefreshDisplay();
     }
 
@@ -426,6 +438,9 @@ public class NameEntryScreen : MonoBehaviour
             name = "Nema";
 
         PlayerData.PlayerName = name;
+
+        // First save for this slot
+        AutoSaveController.Instance?.PerformSave("new_game");
 
         if (confirmSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(confirmSFX);

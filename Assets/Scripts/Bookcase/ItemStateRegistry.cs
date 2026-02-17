@@ -37,4 +37,28 @@ public static class ItemStateRegistry
     {
         s_states.Clear();
     }
+
+    /// <summary>Return all states as serializable records for save.</summary>
+    public static List<ItemDisplayRecord> GetAllForSave()
+    {
+        var list = new List<ItemDisplayRecord>();
+        foreach (var kvp in s_states)
+        {
+            list.Add(new ItemDisplayRecord
+            {
+                itemId = kvp.Key,
+                displayState = (int)kvp.Value
+            });
+        }
+        return list;
+    }
+
+    /// <summary>Restore all states from loaded save data.</summary>
+    public static void LoadFrom(List<ItemDisplayRecord> records)
+    {
+        s_states.Clear();
+        if (records == null) return;
+        foreach (var r in records)
+            s_states[r.itemId] = (ItemDisplayState)r.displayState;
+    }
 }

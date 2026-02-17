@@ -165,6 +165,10 @@ public static class ApartmentSceneBuilder
         // ── 12. Dating infrastructure (GameClock, DateSessionManager, PhoneController, etc.) ──
         BuildDatingInfrastructure(camGO, furnitureRefs, newspaperData, phoneLayer);
 
+        // ── 12b. Auto-save controller ──
+        var autoSaveGO = new GameObject("AutoSaveController");
+        autoSaveGO.AddComponent<AutoSaveController>();
+
         // ── 13. Ambient cleaning (not a station) ──
         var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer);
 

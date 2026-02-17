@@ -27,4 +27,18 @@ public static class DateHistory
         s_entries.Add(entry);
         Debug.Log($"[DateHistory] Recorded: {entry.name} day {entry.day} → {entry.grade} ({entry.affection:F0}%)");
     }
+
+    /// <summary>Return a copy of all entries for serialization.</summary>
+    public static List<DateHistoryEntry> GetAllForSave()
+    {
+        return new List<DateHistoryEntry>(s_entries);
+    }
+
+    /// <summary>Replace all entries from loaded save data.</summary>
+    public static void LoadFrom(List<DateHistoryEntry> entries)
+    {
+        s_entries.Clear();
+        if (entries != null)
+            s_entries.AddRange(entries);
+    }
 }

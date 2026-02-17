@@ -382,6 +382,7 @@ public class DateSessionManager : MonoBehaviour
         DismissCharacter();
         OnDateSessionEnded?.Invoke(_currentDate, _affection);
         DateEndScreen.Instance?.Show(_currentDate, _affection, failed: true);
+        AutoSaveController.Instance?.PerformSave("date_failed");
         _state = SessionState.Idle;
     }
 
@@ -408,6 +409,7 @@ public class DateSessionManager : MonoBehaviour
         DismissCharacter();
         OnDateSessionEnded?.Invoke(_currentDate, _affection);
         DateEndScreen.Instance?.Show(_currentDate, _affection, failed: false);
+        AutoSaveController.Instance?.PerformSave("date_succeeded");
         _state = SessionState.Idle;
     }
 

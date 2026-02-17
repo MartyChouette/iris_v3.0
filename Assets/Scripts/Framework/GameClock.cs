@@ -163,7 +163,10 @@ public class GameClock : MonoBehaviour
         if (_dreamText != null)
             _dreamText.gameObject.SetActive(false);
 
-        // 5. Advance day and reset clock
+        // 5. Auto-save before advancing
+        AutoSaveController.Instance?.PerformSave("end_of_day");
+
+        // 6. Advance day and reset clock
         _currentDay++;
         _currentHour = startHour;
 
