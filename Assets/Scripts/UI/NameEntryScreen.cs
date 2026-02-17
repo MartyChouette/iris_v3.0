@@ -148,7 +148,7 @@ public class NameEntryScreen : MonoBehaviour
 
     private void Start()
     {
-        // If save exists for active slot, skip name entry — restore and begin
+        // If save exists for active slot, skip name entry — restore and resume mid-day
         if (SaveManager.HasSave(SaveManager.ActiveSlot))
         {
             AutoSaveController.Instance?.RestoreFromSave();
@@ -156,7 +156,29 @@ public class NameEntryScreen : MonoBehaviour
             if (_canvas != null)
                 _canvas.gameObject.SetActive(false);
 
-            DayManager.Instance?.BeginDay1();
+            // Restore to the saved phase instead of replaying morning
+            var ctrl = AutoSaveController.Instance;
+            if (ctrl != null && ctrl.RestoredDayPhase >= 0)
+            {
+                var phase = (DayPhaseManager.DayPhase)ctrl.RestoredDayPhase;
+
+                // If saved during Morning, regenerate the newspaper for this day
+                if (phase == DayPhaseManager.DayPhase.Morning)
+                {
+                    DayManager.Instance?.BeginDay1();
+                }
+                else
+                {
+                    // Generate today's ads (so DayManager state is valid) but don't show newspaper
+                    DayManager.Instance?.GenerateTodayAdsQuiet();
+                    DayPhaseManager.Instance?.RestoreToPhase(phase);
+                }
+            }
+            else
+            {
+                // Fallback — no phase info, start fresh
+                DayManager.Instance?.BeginDay1();
+            }
             return;
         }
 

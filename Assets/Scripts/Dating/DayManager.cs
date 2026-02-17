@@ -62,6 +62,18 @@ public class DayManager : MonoBehaviour
         OnNewNewspaper?.Invoke();
     }
 
+    /// <summary>
+    /// Generate today's ads without firing the newspaper event.
+    /// Used when restoring mid-day from a save (newspaper already read).
+    /// </summary>
+    public void GenerateTodayAdsQuiet()
+    {
+        // Sync day with GameClock (restored from save)
+        if (GameClock.Instance != null)
+            CurrentDay = GameClock.Instance.CurrentDay;
+        GenerateTodayAds();
+    }
+
     public void AdvanceDay()
     {
         CurrentDay++;

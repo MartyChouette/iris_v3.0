@@ -227,6 +227,66 @@ public class DayPhaseManager : MonoBehaviour
         SetPhase(DayPhase.Evening);
     }
 
+    // ─── Save/Load ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Instantly restore to a saved phase without transition coroutines.
+    /// Sets cameras, UI, and manager states to match the target phase.
+    /// </summary>
+    public void RestoreToPhase(DayPhase phase)
+    {
+        _currentPhase = phase;
+        StopPrepTimer();
+
+        // Go to Bed panel
+        if (_goToBedPanel != null)
+            _goToBedPanel.SetActive(phase == DayPhase.Evening);
+
+        switch (phase)
+        {
+            case DayPhase.Morning:
+                // Newspaper is showing — raise read camera, suppress browse
+                if (ApartmentManager.Instance != null)
+                    ApartmentManager.Instance.SetBrowseCameraActive(false);
+                if (_readCamera != null)
+                    _readCamera.Priority = PriorityActive;
+                if (_newspaperManager != null)
+                    _newspaperManager.enabled = true;
+                if (_apartmentUI != null) _apartmentUI.SetActive(false);
+                if (_newspaperHUD != null) _newspaperHUD.SetActive(true);
+                break;
+
+            case DayPhase.Exploration:
+            case DayPhase.DateInProgress:
+            case DayPhase.Evening:
+                // Free-roam — browse camera active, newspaper off
+                if (_readCamera != null)
+                    _readCamera.Priority = PriorityInactive;
+                if (ApartmentManager.Instance != null)
+                    ApartmentManager.Instance.SetBrowseCameraActive(true);
+                if (_newspaperManager != null)
+                    _newspaperManager.enabled = false;
+                if (_apartmentUI != null) _apartmentUI.SetActive(true);
+                if (_newspaperHUD != null) _newspaperHUD.SetActive(false);
+
+                // Toss newspaper to coffee table
+                if (_tossedNewspaperPosition != null && _newspaperManager != null
+                    && _newspaperManager.NewspaperTransform != null)
+                {
+                    _newspaperManager.NewspaperTransform.position = _tossedNewspaperPosition.position;
+                    _newspaperManager.NewspaperTransform.rotation = _tossedNewspaperPosition.rotation;
+                }
+                break;
+        }
+
+        // Fade in immediately
+        if (ScreenFade.Instance != null)
+            StartCoroutine(ScreenFade.Instance.FadeIn(_fadeDuration));
+
+        Debug.Log($"[DayPhaseManager] Restored to phase {phase}.");
+        OnPhaseChanged?.Invoke((int)phase);
+    }
+
     // ─── Phase dispatch ─────────────────────────────────────────────
 
     public void SetPhase(DayPhase phase)

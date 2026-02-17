@@ -16,6 +16,7 @@ public class IrisSaveData
     // ── Calendar ──────────────────────────────────────────────────
     public int currentDay;
     public float currentHour;
+    public int dayPhase; // maps to DayPhaseManager.DayPhase
 
     // ── Date History ──────────────────────────────────────────────
     public List<DateHistory.DateHistoryEntry> dateHistory = new List<DateHistory.DateHistoryEntry>();

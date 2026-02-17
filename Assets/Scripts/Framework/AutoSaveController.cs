@@ -8,6 +8,12 @@ public class AutoSaveController : MonoBehaviour
 {
     public static AutoSaveController Instance { get; private set; }
 
+    /// <summary>After RestoreFromSave, holds the day phase to restore to.</summary>
+    public int RestoredDayPhase { get; private set; } = -1;
+
+    /// <summary>After RestoreFromSave, holds the saved day number.</summary>
+    public int RestoredDay { get; private set; }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -44,6 +50,9 @@ public class AutoSaveController : MonoBehaviour
             playerName = PlayerData.PlayerName,
             currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1,
             currentHour = GameClock.Instance != null ? GameClock.Instance.CurrentHour : 8f,
+            dayPhase = DayPhaseManager.Instance != null
+                ? (int)DayPhaseManager.Instance.CurrentPhase
+                : 0,
             dateHistory = DateHistory.GetAllForSave(),
             itemDisplayStates = ItemStateRegistry.GetAllForSave()
         };
@@ -56,6 +65,7 @@ public class AutoSaveController : MonoBehaviour
         if (data == null)
         {
             Debug.Log("[AutoSaveController] No save data found.");
+            RestoredDayPhase = -1;
             return;
         }
 
@@ -64,7 +74,11 @@ public class AutoSaveController : MonoBehaviour
         DateHistory.LoadFrom(data.dateHistory);
         ItemStateRegistry.LoadFrom(data.itemDisplayStates);
 
+        RestoredDayPhase = data.dayPhase;
+        RestoredDay = data.currentDay;
+
         Debug.Log($"[AutoSaveController] Restored slot {SaveManager.ActiveSlot} — " +
-                  $"Day {data.currentDay}, {data.dateHistory?.Count ?? 0} date records.");
+                  $"Day {data.currentDay}, phase {(DayPhaseManager.DayPhase)data.dayPhase}, " +
+                  $"{data.dateHistory?.Count ?? 0} date records.");
     }
 }
