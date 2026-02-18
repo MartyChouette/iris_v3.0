@@ -12943,8 +12943,56 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 330585545}
     - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: spring
+      value: 220
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: criteria
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: breakForce
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: enableFluid
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: maxDistance
+      value: 0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: driveMaxForce
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: usePluckDwell
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: softZoneFraction
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: useAdaptiveDrive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: enforceXYConstraints
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: releasePopThresholdFraction
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: breakOnReleaseFromHighStretch
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3172925682164621813, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: preferDeterministicSapDirection
@@ -12958,6 +13006,10 @@ PrefabInstance:
       propertyPath: cam
       value: 
       objectReference: {fileID: 330585545}
+    - target: {fileID: 3788888606224495789, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: passiveMode
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3876268901124033009, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: cam
       value: 
@@ -13031,16 +13083,40 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: spring
+      value: 220
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: criteria
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: breakForce
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: enableFluid
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: maxDistance
+      value: 0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: usePluckDwell
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: softZoneFraction
-      value: 0.135
+      value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: releasePopThresholdFraction
-      value: 0.902
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: breakOnReleaseFromHighStretch
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6864497909756372314, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: preferDeterministicSapDirection
@@ -13050,6 +13126,22 @@ PrefabInstance:
       propertyPath: cam
       value: 
       objectReference: {fileID: 330585545}
+    - target: {fileID: 7080191327859114051, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7080191327859114051, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: passiveMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7080191327859114051, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: moveThreshold
+      value: 0.556
+      objectReference: {fileID: 0}
+    - target: {fileID: 7080191327859114051, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: driveRigidbodyFromDrag
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7227548945513149707, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: sapController
       value: 

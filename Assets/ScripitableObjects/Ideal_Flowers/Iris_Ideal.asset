@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 312fa8266af38654e8741206d0bbbfbd, type: 3}
+  m_Name: Iris_Ideal
+  m_EditorClassIdentifier: Assembly-CSharp::IdealFlowerDefinition
+  idealStemLength: 1
+  stemHardFailDelta: 0.5
+  stemPerfectDelta: 0.05
+  stemScoreWeight: 0.3
+  stemCanCauseGameOver: 1
+  stemContributesToScore: 1
+  idealCutAngleDeg: 45
+  cutAngleHardFailDelta: 20
+  cutAnglePerfectDelta: 3
+  cutAngleScoreWeight: 0.2
+  cutAngleCanCauseGameOver: 1
+  cutAngleContributesToScore: 1
+  partRules:
+  - partId: Iris_Leaf_R
+    kind: 0
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.034
+  - partId: Iris_Leaf_L
+    kind: 0
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.051
+  - partId: Iris_Petal_1
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054
+  - partId: Iris_Petal_1
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054
+  - partId: Iris_Petal_3
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054
+  - partId: Iris_Petal_4
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054
+  - partId: Iris_Petal_1
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054
+  - partId: Iris_Petal_6
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054
+  - partId: Iris_Petal_7
+    kind: 1
+    idealCondition: 0
+    canCauseGameOver: 0
+    isSpecial: 0
+    contributesToScore: 1
+    allowedWithered: 0
+    allowedMissing: 0
+    scoreWeight: 0.054

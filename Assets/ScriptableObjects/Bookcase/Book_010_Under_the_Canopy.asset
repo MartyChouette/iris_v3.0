@@ -21,6 +21,6 @@ MonoBehaviour:
     do with scraps.
   - She sat under the oak for an hour. When she stood, she understood something she
     could not put into words.
-  spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
-  heightScale: 0.8982064
-  thicknessScale: 0.029978886
+  spineColor: {r: 0.35, g: 0.38, b: 0.18, a: 1}
+  heightScale: 0.8780309
+  thicknessScale: 0.054840486

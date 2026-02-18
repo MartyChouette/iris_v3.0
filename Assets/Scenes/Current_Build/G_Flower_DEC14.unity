@@ -697,8 +697,6 @@ MonoBehaviour:
   allowedWithered: 0
   allowedMissing: 1
   scoreWeight: 0.1
-  idealLocalPosition: {x: 0, y: 0, z: 0}
-  idealLocalEuler: {x: 0, y: 0, z: 0}
   session: {fileID: 6656573071170535816}
   brain: {fileID: 8426878410151901396}
   xyJoint: {fileID: 252842258}
@@ -733,6 +731,7 @@ MonoBehaviour:
   driveRigidbodyFromDrag: 1
   dragAcceleration: 40
   hardMaxSpeed: 15
+  passiveMode: 0
   coupledStem: {fileID: 1847974104}
   stemAttachPoint: {fileID: 456363685}
   stemTugRadius: 0.25
@@ -8082,8 +8081,6 @@ MonoBehaviour:
   allowedWithered: 0
   allowedMissing: 1
   scoreWeight: 0.1
-  idealLocalPosition: {x: 0, y: 0, z: 0}
-  idealLocalEuler: {x: 0, y: 0, z: 0}
   session: {fileID: 6656573071170535816}
   brain: {fileID: 8426878410151901396}
   xyJoint: {fileID: 774411319}
@@ -8118,6 +8115,7 @@ MonoBehaviour:
   driveRigidbodyFromDrag: 1
   dragAcceleration: 40
   hardMaxSpeed: 15
+  passiveMode: 0
   coupledStem: {fileID: 1847974104}
   stemAttachPoint: {fileID: 456363685}
   stemTugRadius: 0.25
@@ -12412,6 +12410,7 @@ MonoBehaviour:
   driveRigidbodyFromDrag: 1
   dragAcceleration: 40
   hardMaxSpeed: 15
+  passiveMode: 0
   coupledStem: {fileID: 1847974104}
   stemAttachPoint: {fileID: 1380600916}
   stemTugRadius: 0.25
@@ -12424,16 +12423,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132149482961930}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d19a921f89f71064b89a0e60462aaaa9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XYTetherJoint
   connectedBody: {fileID: 1380600920}
   maxDistance: 0.86
-  spring: 400
+  spring: 200
   damper: 30
-  criteria: 3
+  criteria: 0
   testSpace: 0
   armDelay: 0.05
   breakForce: 15
@@ -14171,8 +14170,6 @@ MonoBehaviour:
   allowedWithered: 0
   allowedMissing: 1
   scoreWeight: 0.1
-  idealLocalPosition: {x: 0, y: 0, z: 0}
-  idealLocalEuler: {x: 0, y: 0, z: 0}
   session: {fileID: 6656573071170535816}
   brain: {fileID: 8426878410151901396}
   xyJoint: {fileID: 1765484911}
