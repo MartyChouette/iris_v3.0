@@ -40,6 +40,10 @@ public class SquishMove : MonoBehaviour
     [Tooltip("Absolute cap on Rigidbody speed to prevent 'jettison'.")]
     public float hardMaxSpeed = 15f;
 
+    [Header("Passive Mode")]
+    [Tooltip("When true, SquishMove only does visual jelly deformation — no mouse input, no rigidbody driving, no constraint setting. Use this when another system (e.g. GrabPull) owns the physics.")]
+    public bool passiveMode = false;
+
     [Header("Stem Coupling (optional)")]
     [Tooltip("If set, this jelly will also tug on another jelly (e.g. stem) when dragged.")]
     public SquishMove coupledStem;
@@ -98,7 +102,7 @@ public class SquishMove : MonoBehaviour
 
         _engagement = GetComponent<InteractionEngagement>();
 
-        if (rb != null)
+        if (rb != null && !passiveMode)
         {
             rb.isKinematic = false;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -155,6 +159,8 @@ public class SquishMove : MonoBehaviour
 
     void Update()
     {
+        if (passiveMode) return;
+
         dragMoveStep = Vector3.zero;
 
         // ───── Begin drag ─────
@@ -268,7 +274,8 @@ public class SquishMove : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (rb != null && !rb.isKinematic && driveRigidbodyFromDrag)
+        // In passive mode, skip rigidbody driving — only do jelly vertex deformation below
+        if (!passiveMode && rb != null && !rb.isKinematic && driveRigidbodyFromDrag)
         {
             float fdt = Time.fixedDeltaTime;
             if (dragMoveStep.sqrMagnitude > 0f)
