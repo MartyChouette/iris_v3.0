@@ -110,10 +110,12 @@ public class SquishMove : MonoBehaviour
 
             if (enforceXYConstraints)
             {
-                rb.constraints = RigidbodyConstraints.FreezePositionZ
-                                 | RigidbodyConstraints.FreezeRotationX
-                                 | RigidbodyConstraints.FreezeRotationY
-                                 | RigidbodyConstraints.FreezeRotationZ;
+                // NOTE: Do NOT freeze world-Z position — the ConfigurableJoint
+                // (from XYTetherJoint) already locks Z in joint-local space.
+                // Freezing world-Z on top conflicts on rotated parts.
+                rb.constraints |= RigidbodyConstraints.FreezeRotationX
+                                | RigidbodyConstraints.FreezeRotationY
+                                | RigidbodyConstraints.FreezeRotationZ;
             }
         }
     }
