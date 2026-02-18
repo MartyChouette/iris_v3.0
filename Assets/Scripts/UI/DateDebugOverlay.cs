@@ -99,6 +99,14 @@ public class DateDebugOverlay : MonoBehaviour
         {
             sb.AppendLine($"  Phase: {dpm.CurrentPhase}");
             sb.AppendLine($"  Interaction: {dpm.IsInteractionPhase}  Drink: {dpm.IsDrinkPhase}");
+            if (dpm.PrepTimerActive)
+            {
+                int m = Mathf.FloorToInt(dpm.PrepTimer / 60f);
+                int s = Mathf.FloorToInt(dpm.PrepTimer % 60f);
+                sb.AppendLine($"  Prep Timer: <color=yellow>{m}:{s:D2}</color>");
+            }
+            sb.AppendLine($"  Door: {(DoorGreetingController.Instance != null ? "OK" : "<color=red>MISSING</color>")}");
+            sb.AppendLine($"  ScreenFade: {(ScreenFade.Instance != null ? "OK" : "<color=red>MISSING</color>")}");
         }
         else
         {

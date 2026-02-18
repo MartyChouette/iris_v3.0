@@ -97,6 +97,8 @@ public class DayPhaseManager : MonoBehaviour
     private bool _timerWarningPlayed;
 
     public DayPhase CurrentPhase => _currentPhase;
+    public float PrepTimer => _prepTimer;
+    public bool PrepTimerActive => _prepTimerActive;
 
     /// <summary>True during Exploration, DateInProgress, or Evening — stations can accept input.</summary>
     public bool IsInteractionPhase => _currentPhase == DayPhase.Exploration
