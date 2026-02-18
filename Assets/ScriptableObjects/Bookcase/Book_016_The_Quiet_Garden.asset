@@ -20,6 +20,6 @@ MonoBehaviour:
   - She planted marigolds along the fence not for their color, but because they reminded
     her of someone she'd rather not forget.
   - By September the garden had its own ideas. She learned to stop arguing with it.
-  spineColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
-  heightScale: 0.77502763
-  thicknessScale: 0.021620402
+  spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
+  heightScale: 0.7684714
+  thicknessScale: 0.029326241

@@ -37,6 +37,8 @@ MonoBehaviour:
   - keyword: a letter
     commentary: Warm, attentive, and weirdly good at making people feel seen. May
       offer... substances.
+  flowerPrefab: {fileID: 0}
+  forceAvailable: 0
   preferences:
     likedTags:
     - perfume

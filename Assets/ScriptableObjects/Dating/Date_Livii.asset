@@ -36,6 +36,8 @@ MonoBehaviour:
       for the real.
   - keyword: coastal-cliff elopement
     commentary: Tonic water or champagne. She likes things a certain way.
+  flowerPrefab: {fileID: 0}
+  forceAvailable: 0
   preferences:
     likedTags:
     - vinyl

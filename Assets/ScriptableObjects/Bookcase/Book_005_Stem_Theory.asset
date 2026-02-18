@@ -21,6 +21,6 @@ MonoBehaviour:
     to hold a wish."
   - 'All architecture aspires to the condition of the stem: vertical, purposeful,
     alive.'
-  spineColor: {r: 0.1, g: 0.1, b: 0.25, a: 1}
-  heightScale: 0.70908886
-  thicknessScale: 0.035652123
+  spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+  heightScale: 0.842037
+  thicknessScale: 0.02307939

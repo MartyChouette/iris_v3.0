@@ -20,6 +20,6 @@ MonoBehaviour:
   - The compost heap is a love letter written in eggshells and coffee grounds. Decomposition
     as devotion.
   - Perhaps we are all just soil, waiting patiently for something to take root.
-  spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
-  heightScale: 0.8353644
-  thicknessScale: 0.022804808
+  spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
+  heightScale: 0.89733994
+  thicknessScale: 0.030394841

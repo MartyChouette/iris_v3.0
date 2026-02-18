@@ -35,6 +35,8 @@ MonoBehaviour:
       yours.
   - keyword: catlike
     commentary: Soft and gentle, but on her own terms. Don't push.
+  flowerPrefab: {fileID: 0}
+  forceAvailable: 0
   preferences:
     likedTags:
     - plant

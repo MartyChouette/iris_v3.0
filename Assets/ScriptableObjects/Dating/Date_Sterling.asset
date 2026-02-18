@@ -35,6 +35,8 @@ MonoBehaviour:
     commentary: He'll bring you a gift - that was gifted to him by someone else.
   - keyword: watches, gym, and whiskey
     commentary: Wearing a suit. Just got off work. Will complain about work.
+  flowerPrefab: {fileID: 0}
+  forceAvailable: 0
   preferences:
     likedTags:
     - vinyl
