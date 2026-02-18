@@ -108,26 +108,9 @@ public class DoorGreetingController : MonoBehaviour
         if (_doorOpenSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(_doorOpenSFX);
 
-        // Fade to black
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeOut(0.5f);
-
-        // Show phase title
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Phase 1");
-
-        yield return new WaitForSeconds(1.5f);
-
-        // Hide phase title
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.HidePhaseTitle();
-
-        // Trigger date character arrival
+        // Delegate to DateSessionManager — it owns the Phase 1 fade transition
         DateSessionManager.Instance?.OnDateCharacterArrived();
-
-        // Fade in
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(0.5f);
+        yield break;
     }
 
     private bool CheckDoorRaycast()

@@ -220,7 +220,8 @@ public class DateSessionManager : MonoBehaviour
             OnDateCharacterArrived();
     }
 
-    /// <summary>Called when the date character has arrived (phone answered or doorbell).</summary>
+    /// <summary>Called when the date character has arrived (phone answered or doorbell).
+    /// Handles its own Phase 1 fade transition so it works regardless of how arrival was triggered.</summary>
     public void OnDateCharacterArrived()
     {
         if (_currentDate == null)
@@ -229,13 +230,32 @@ public class DateSessionManager : MonoBehaviour
             return;
         }
 
+        StartCoroutine(ArrivalTransition());
+    }
+
+    private IEnumerator ArrivalTransition()
+    {
+        // Fade to white
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(0.5f);
+
+        // Show Phase 1 title on the white screen
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Phase 1");
+
+        yield return new WaitForSeconds(1.5f);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        // Now set up the date session while screen is white
         _state = SessionState.DateInProgress;
         _datePhase = DatePhase.Arrival;
         _affection = startingAffection;
         _moodCheckTimer = 0f;
         _accumulatedReactions.Clear();
 
-        // Spawn character
+        // Spawn character behind the fade
         SpawnDateCharacter();
 
         if (dateArrivedSFX != null && AudioManager.Instance != null)
@@ -244,6 +264,10 @@ public class DateSessionManager : MonoBehaviour
         OnDateSessionStarted?.Invoke(_currentDate);
         OnAffectionChanged?.Invoke(_affection);
         Debug.Log($"[DateSessionManager] Phase 1: Arrival — {_currentDate.characterName} walking in.");
+
+        // Fade in to reveal the date character
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(0.5f);
     }
 
     /// <summary>Apply a reaction to affection (called by DateCharacterController or drink delivery).</summary>

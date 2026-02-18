@@ -110,9 +110,14 @@ public class PhoneController : MonoBehaviour, IStationManager
                     Debug.Log("[PhoneController] Phone clicked during prep — ending prep early.");
                     DayPhaseManager.Instance.EndPrepEarly();
                     if (DoorGreetingController.Instance != null)
+                    {
                         DoorGreetingController.Instance.TriggerKnock();
+                    }
                     else
+                    {
+                        Debug.LogWarning("[PhoneController] DoorGreetingController missing — arriving directly.");
                         DateSessionManager.Instance?.OnDateCharacterArrived();
+                    }
                     _pendingDate = null;
                     return;
                 }
@@ -200,9 +205,14 @@ public class PhoneController : MonoBehaviour, IStationManager
             ringVisual.SetActive(false);
 
         if (DoorGreetingController.Instance != null)
+        {
             DoorGreetingController.Instance.TriggerKnock();
+        }
         else
+        {
+            Debug.LogWarning("[PhoneController] DoorGreetingController missing — skipping door knock, arriving directly.");
             DateSessionManager.Instance?.OnDateCharacterArrived();
+        }
     }
 
     private bool CheckPhoneRaycast()
@@ -226,9 +236,14 @@ public class PhoneController : MonoBehaviour, IStationManager
         yield return s_waitCallSequence;
 
         if (DoorGreetingController.Instance != null)
+        {
             DoorGreetingController.Instance.TriggerKnock();
+        }
         else
+        {
+            Debug.LogWarning("[PhoneController] DoorGreetingController missing — arriving directly.");
             DateSessionManager.Instance?.OnDateCharacterArrived();
+        }
 
         _state = PhoneState.Idle;
     }
