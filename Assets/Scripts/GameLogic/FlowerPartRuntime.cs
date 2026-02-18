@@ -241,10 +241,6 @@ public class FlowerPartRuntime : MonoBehaviour
     [Tooltip("Score importance of this part relative to other parts.")]
     public float scoreWeight = 1f;
 
-    [Header("Debug / Ideal Pose (optional)")]
-    public Vector3 idealLocalPosition;
-    public Vector3 idealLocalEuler;
-
     [Header("Runtime refs")]
     public FlowerSessionController session;
     public FlowerGameBrain brain;

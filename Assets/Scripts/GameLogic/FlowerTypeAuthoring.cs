@@ -163,11 +163,7 @@ public class FlowerTypeAuthoring : MonoBehaviour
                 contributesToScore = true,
                 allowedWithered = false,
                 allowedMissing = false,
-                scoreWeight = 0.1f,
-
-                // ---------- Pose ----------
-                idealLocalPosition = p.transform.localPosition,
-                idealLocalEuler = p.transform.localEulerAngles
+                scoreWeight = 0.1f
             };
 
             idealAsset.partRules.Add(rule);

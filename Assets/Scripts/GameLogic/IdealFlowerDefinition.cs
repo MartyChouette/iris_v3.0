@@ -131,10 +131,6 @@ public class IdealFlowerDefinition : ScriptableObject
         [Tooltip("Score importance of this part relative to other parts.")]
         public float scoreWeight = 1f;
 
-        [Header("Ideal spatial reference (optional)")]
-        [Tooltip("Ideal local position relative to the flower root for this part.")]
-        public Vector3 idealLocalPosition;
-        public Vector3 idealLocalEuler;
     }
 
     public List<PartRule> partRules = new List<PartRule>();
