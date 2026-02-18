@@ -20,6 +20,10 @@ public class NewspaperPoolDefinition : ScriptableObject
     [Range(0, 6)]
     public int commercialAdsPerDay = 3;
 
+    [Header("Tutorial")]
+    [Tooltip("If set, this character is forced as the only selectable ad on Day 1.")]
+    public DatePersonalDefinition tutorialDate;
+
     [Header("Repeat Rules")]
     [Tooltip("Can the same ad appear on consecutive days?")]
     public bool allowRepeats;
