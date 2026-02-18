@@ -3401,11 +3401,11 @@ public static class ApartmentSceneBuilder
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
         var img = blackPanel.AddComponent<UnityEngine.UI.Image>();
-        img.color = Color.black;
+        img.color = Color.white;
         img.raycastTarget = true;
 
         var cg = go.AddComponent<CanvasGroup>();
-        cg.alpha = 1f; // Start fully black — MorningTransition fades in
+        cg.alpha = 1f; // Start fully opaque — MorningTransition fades in
         cg.blocksRaycasts = true;
 
         var fade = go.AddComponent<ScreenFade>();
@@ -3423,14 +3423,14 @@ public static class ApartmentSceneBuilder
         phaseRT.anchorMin = new Vector2(0.5f, 0.5f);
         phaseRT.anchorMax = new Vector2(0.5f, 0.5f);
         phaseRT.pivot = new Vector2(0.5f, 0.5f);
-        phaseRT.sizeDelta = new Vector2(800f, 100f);
+        phaseRT.sizeDelta = new Vector2(800f, 200f);
         phaseRT.anchoredPosition = Vector2.zero;
         phaseRT.localScale = Vector3.one;
         var phaseTMP = phaseGO.AddComponent<TextMeshProUGUI>();
         phaseTMP.text = "";
-        phaseTMP.fontSize = 40f;
+        phaseTMP.fontSize = 90f;
         phaseTMP.alignment = TextAlignmentOptions.Center;
-        phaseTMP.color = new Color(0.9f, 0.9f, 0.9f, 0.95f);
+        phaseTMP.color = new Color(0.8f, 0.1f, 0.1f, 1f);
         phaseGO.SetActive(false);
 
         // Wire phase text to ScreenFade
