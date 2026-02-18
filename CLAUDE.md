@@ -285,7 +285,9 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Date Phase 1 rework | Entrance judgments: outfit, perfume, welcome |
 | Date Phase 2 rework | Kitchen counter, recipe selection, bottle pick, perfect pour |
 | Couch win scene | Cuddling + scissors behind back |
-| Flower trimming transition | Hard cut from apartment to flower scene, load flower |
+| Flower trimming transition | Hard cut from apartment to flower scene, load flower from DatePersonalDefinition |
+| Flower → apartment integration | Score = days alive as apartment plant, score → mess intensity, score on calendar |
+| Living plant decoration | Trimmed flower persists in apartment for N days, wilts, feeds MoodMachine |
 | Pre-spawned mess | Day 1 starting state with stains, bottles, trash |
 | Profanity filter | Block bad words in name entry |
 

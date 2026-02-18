@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 14, 2026
+**Last Updated:** February 18, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -115,6 +115,12 @@
 - [x] Added `Phone`, `DrinkMaking` to `StationType` enum
 - [x] Added `MoodMachine` + `MoodMachineProfile` for scene-wide mood system (light, ambient, fog, rain)
 
+### Phase 11.5: Flower Physics Fixes (Done)
+- [x] **SquishMove passiveMode** — Added `passiveMode` flag that skips mouse input, rigidbody driving, and constraint setting. Leaves/petals use passive mode so GrabPull owns physics.
+- [x] **FreezePositionZ conflict fix** — Removed world-Z position freeze from both `XYTetherJoint` and `SquishMove`. ConfigurableJoint already locks Z in joint-local space; world-Z freeze created conflicting constraints on rotated parts, pinning them to a 1D line.
+- [x] **FlowerBreathing snap-back fix** — FlowerBreathing was writing `transform.localPosition` every frame, overriding GrabPull physics. Now rebinds `_initialLocalPos` on grab→release transition so leaves stay where physics left them.
+- [x] **Removed unused idealLocalPosition/idealLocalEuler** — Cleaned out from `IdealFlowerDefinition`, `FlowerPartRuntime`, and `FlowerTypeAuthoring`.
+
 ### Phase 11: Apartment Polish & Camera Preset System (Done)
 - [x] **Perfume one-click puff** — Single click spray replaces multi-step pick-up/hold/spray flow. Bottle stays on shelf.
 - [x] **Picture position drift fix** — Skip `ApplyCrookedOffset()` when `PlaceableLayout.json` exists (only apply crook on first build)
@@ -149,6 +155,18 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 - [ ] **Half-folded newspaper visual** — Rework newspaper mesh/canvas to cliche folded-in-half look. 3 personal ads + 2 commercial slots per day.
 - [ ] **Couch win scene** — Date succeeds → couch cuddling scene, Nema holding scissors behind her back. Separate camera angle.
 - [ ] **Flower trimming transition** — Hard cut from apartment to flower trimming scene. Load flower, get score. End of day.
+
+### VS-1b: Flower ↔ Apartment Integration (Not Yet Built)
+
+Each date character brings a specific flower. The flower trimming score determines how long the plant lives in the apartment and affects next-day mess.
+
+- [ ] **Flower scene transition** — After date success + couch scene, hard cut to flower trimming scene. Load flower type from `DatePersonalDefinition.flowerPrefab`. Score and dismiss. Fade back to apartment Evening phase.
+- [ ] **DayPhaseManager flower phase** — New phase between DateInProgress and Evening: `FlowerTrimming`. Triggers scene load, waits for `FlowerSessionController.OnResult`, records score.
+- [ ] **Flower results → save data** — Pipe `OnResult(eval, score, days)` into `RichDateHistoryEntry` (flower score, days alive). Record in `IrisSaveData` for calendar display.
+- [ ] **Living plant in apartment** — Trimmed flower spawns as decoration in apartment. Persists for N days (from flower score). Wilts progressively, then dies/disappears. Feeds MoodMachine while alive ("LivingPlant" source, value decays as days pass).
+- [ ] **Flower score → mess intensity** — `AftermathMessGenerator` reads last flower score. Bad trim = heavy mess next morning, good trim = light mess. Threshold-based (e.g. score < 40 = extra stains, score > 80 = minimal mess).
+- [ ] **Flower score on calendar** — `ApartmentCalendar` shows flower grade alongside date grade per day. Visual indicator of plant health remaining.
+- [ ] **Per-character flower types** — Wire `DatePersonalDefinition.flowerPrefab` field on all 4 date characters (Livii, Sterling, Sage, Clover). Each brings a different species.
 
 ### VS-2: Preparation Phase (Partially Built)
 
