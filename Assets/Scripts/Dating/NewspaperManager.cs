@@ -380,6 +380,8 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         {
             var slot = CreatePersonalSlotUI(0, personals[0],
                 new Vector2(date1CX, date1CY), new Vector2(date1W, date1H));
+            if (DayManager.Instance != null && DayManager.Instance.IsLocked(personals[0]))
+                slot.SetLocked(true);
             _personalSlotsList.Add(slot);
         }
 
@@ -403,6 +405,8 @@ public class NewspaperManager : MonoBehaviour, IStationManager
             float d2CY = bottomTopRight - bottomHRight * 0.5f;
             var slot = CreatePersonalSlotUI(1, personals[1],
                 new Vector2(d2CX, d2CY), new Vector2(halfRightW, bottomHRight));
+            if (DayManager.Instance != null && DayManager.Instance.IsLocked(personals[1]))
+                slot.SetLocked(true);
             _personalSlotsList.Add(slot);
         }
 
@@ -412,6 +416,8 @@ public class NewspaperManager : MonoBehaviour, IStationManager
             float d3CY = bottomTopRight - bottomHRight * 0.5f;
             var slot = CreatePersonalSlotUI(2, personals[2],
                 new Vector2(d3CX, d3CY), new Vector2(halfRightW, bottomHRight));
+            if (DayManager.Instance != null && DayManager.Instance.IsLocked(personals[2]))
+                slot.SetLocked(true);
             _personalSlotsList.Add(slot);
         }
 
