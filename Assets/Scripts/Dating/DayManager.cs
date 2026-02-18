@@ -130,6 +130,14 @@ public class DayManager : MonoBehaviour
             if (!pool.allowRepeats)
                 availablePersonals.RemoveAll(p => _prevPersonals.Contains(p));
 
+            // Remove succeeded characters unless forceAvailable
+            availablePersonals.RemoveAll(p =>
+                DateHistory.HasSucceeded(p.characterName) && !p.forceAvailable);
+
+            // Safety: if pool is empty after filtering, restore all characters
+            if (availablePersonals.Count == 0)
+                availablePersonals = new List<DatePersonalDefinition>(pool.personalAds);
+
             Shuffle(availablePersonals);
             int personalCount = Mathf.Min(pool.personalAdsPerDay, availablePersonals.Count);
             for (int i = 0; i < personalCount; i++)

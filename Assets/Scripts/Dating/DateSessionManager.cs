@@ -390,13 +390,16 @@ public class DateSessionManager : MonoBehaviour
         _datePhase = DatePhase.None;
         Debug.Log($"[DateSessionManager] Date FAILED with {_currentDate?.characterName}. Affection: {_affection:F1}");
 
-        DateHistory.Record(new DateHistory.DateHistoryEntry
+        var failEntry = new DateHistory.DateHistoryEntry
         {
             name = _currentDate?.characterName ?? "Unknown",
             day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 0,
             affection = _affection,
-            grade = "F"
-        });
+            grade = "F",
+            succeeded = false
+        };
+        PopulateLearnedPreferences(failEntry);
+        DateHistory.Record(failEntry);
 
         DismissCharacter();
         OnDateSessionEnded?.Invoke(_currentDate, _affection);
@@ -413,13 +416,16 @@ public class DateSessionManager : MonoBehaviour
         _datePhase = DatePhase.None;
         Debug.Log($"[DateSessionManager] Date SUCCEEDED with {_currentDate?.characterName}. Affection: {_affection:F1}");
 
-        DateHistory.Record(new DateHistory.DateHistoryEntry
+        var successEntry = new DateHistory.DateHistoryEntry
         {
             name = _currentDate?.characterName ?? "Unknown",
             day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 0,
             affection = _affection,
-            grade = DateEndScreen.ComputeGrade(_affection)
-        });
+            grade = DateEndScreen.ComputeGrade(_affection),
+            succeeded = true
+        };
+        PopulateLearnedPreferences(successEntry);
+        DateHistory.Record(successEntry);
 
         // Stash flower prefab for the flower trimming scene
         if (_currentDate != null && _currentDate.flowerPrefab != null)
@@ -563,5 +569,16 @@ public class DateSessionManager : MonoBehaviour
             return moodMatchMultiplier;
 
         return moodMismatchMultiplier;
+    }
+
+    private void PopulateLearnedPreferences(DateHistory.DateHistoryEntry entry)
+    {
+        foreach (var reaction in _accumulatedReactions)
+        {
+            if (reaction.type == ReactionType.Like)
+                entry.learnedLikes.Add(reaction.itemName);
+            else if (reaction.type == ReactionType.Dislike)
+                entry.learnedDislikes.Add(reaction.itemName);
+        }
     }
 }

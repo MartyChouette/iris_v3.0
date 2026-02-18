@@ -78,6 +78,13 @@ public class DatePersonalDefinition : ScriptableObject
     public GameObject flowerPrefab;
 
     // ──────────────────────────────────────────────────────────────
+    // Availability
+    // ──────────────────────────────────────────────────────────────
+    [Header("Availability")]
+    [Tooltip("Override to bring back succeeded characters in the newspaper pool.")]
+    public bool forceAvailable = false;
+
+    // ──────────────────────────────────────────────────────────────
     // Preferences
     // ──────────────────────────────────────────────────────────────
     [Header("Preferences")]

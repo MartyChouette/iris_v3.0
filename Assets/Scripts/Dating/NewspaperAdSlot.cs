@@ -255,6 +255,11 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
             logoImage.gameObject.SetActive(false);
 
         ComputePhoneNumberUV();
+
+        // Show learned preference badge if this character has been dated before
+        var historyEntry = DateHistory.GetLatestEntry(def.characterName);
+        if (historyEntry != null)
+            ShowLearnedPreferenceBadge(historyEntry);
     }
 
     /// <summary>
@@ -423,5 +428,46 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
             pnr.width * normalizedBounds.width,
             pnr.height * normalizedBounds.height
         );
+    }
+
+    private void ShowLearnedPreferenceBadge(DateHistory.DateHistoryEntry entry)
+    {
+        if (slotRect == null) return;
+
+        var badgeGO = new GameObject("LearnedPreferenceBadge");
+        badgeGO.transform.SetParent(slotRect, false);
+        var badgeRT = badgeGO.AddComponent<RectTransform>();
+        badgeRT.anchorMin = new Vector2(0f, 0f);
+        badgeRT.anchorMax = new Vector2(1f, 0.25f);
+        badgeRT.offsetMin = new Vector2(4f, 2f);
+        badgeRT.offsetMax = new Vector2(-4f, 0f);
+        badgeRT.localScale = Vector3.one;
+
+        var badgeTMP = badgeGO.AddComponent<TextMeshProUGUI>();
+        badgeTMP.fontSize = 10f;
+        badgeTMP.alignment = TextAlignmentOptions.BottomLeft;
+        badgeTMP.color = new Color(0.6f, 0.55f, 0.5f, 0.9f);
+        badgeTMP.raycastTarget = false;
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<i>(Dated Day {entry.day} — {entry.grade})</i>");
+
+        if (entry.learnedLikes.Count > 0)
+        {
+            sb.Append("\n<color=#4CAF50>");
+            foreach (var like in entry.learnedLikes)
+                sb.Append($"+ {like} ");
+            sb.Append("</color>");
+        }
+
+        if (entry.learnedDislikes.Count > 0)
+        {
+            sb.Append("\n<color=#E57373>");
+            foreach (var dislike in entry.learnedDislikes)
+                sb.Append($"- {dislike} ");
+            sb.Append("</color>");
+        }
+
+        badgeTMP.text = sb.ToString();
     }
 }

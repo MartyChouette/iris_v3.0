@@ -13,6 +13,9 @@ public static class DateHistory
         public int day;
         public float affection;
         public string grade;
+        public bool succeeded;
+        public List<string> learnedLikes = new List<string>();
+        public List<string> learnedDislikes = new List<string>();
     }
 
     private static readonly List<DateHistoryEntry> s_entries = new List<DateHistoryEntry>();
@@ -22,10 +25,28 @@ public static class DateHistory
 
     public static IReadOnlyList<DateHistoryEntry> Entries => s_entries;
 
+    /// <summary>True if the named character has a succeeded entry in history.</summary>
+    public static bool HasSucceeded(string characterName)
+    {
+        for (int i = 0; i < s_entries.Count; i++)
+            if (s_entries[i].name == characterName && s_entries[i].succeeded)
+                return true;
+        return false;
+    }
+
+    /// <summary>Get the most recent entry for a character, or null.</summary>
+    public static DateHistoryEntry GetLatestEntry(string characterName)
+    {
+        for (int i = s_entries.Count - 1; i >= 0; i--)
+            if (s_entries[i].name == characterName)
+                return s_entries[i];
+        return null;
+    }
+
     public static void Record(DateHistoryEntry entry)
     {
         s_entries.Add(entry);
-        Debug.Log($"[DateHistory] Recorded: {entry.name} day {entry.day} → {entry.grade} ({entry.affection:F0}%)");
+        Debug.Log($"[DateHistory] Recorded: {entry.name} day {entry.day} → {entry.grade} ({entry.affection:F0}%) succeeded={entry.succeeded}");
     }
 
     /// <summary>Return a copy of all entries for serialization.</summary>
