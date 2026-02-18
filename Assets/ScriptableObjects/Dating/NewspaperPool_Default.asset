@@ -12,16 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d23cb7ce01e2f143bc2b731491c4667, type: 3}
   m_Name: NewspaperPool_Default
   m_EditorClassIdentifier: Assembly-CSharp::NewspaperPoolDefinition
+  tutorialDate: {fileID: 11400000, guid: b4a9393858553fc47be0dc33161ffd65, type: 2}
   personalAds:
+  - {fileID: 11400000, guid: b4a9393858553fc47be0dc33161ffd65, type: 2}
   - {fileID: 11400000, guid: 759b6176caad4994580ad514a66a7db9, type: 2}
   - {fileID: 11400000, guid: 3a6683e4f2911b74f82c0ebac45f358a, type: 2}
-  - {fileID: 11400000, guid: c901ebbf2774c184b93c89ed768fea90, type: 2}
-  - {fileID: 11400000, guid: 88a72d4a38cbc3b479c7219163717b9c, type: 2}
   commercialAds:
   - {fileID: 11400000, guid: 36af1ccfec8febe49af411a6195fbcdd, type: 2}
   - {fileID: 11400000, guid: 2d33d7191e7d39e4b82c297ce6e89509, type: 2}
   - {fileID: 11400000, guid: 728c54f68918d724c97ba1e58a06305a, type: 2}
-  personalAdsPerDay: 4
+  personalAdsPerDay: 3
   commercialAdsPerDay: 3
   allowRepeats: 0
   newspaperTitle: The Daily Bloom
+  backgroundSprite: {fileID: 0}
