@@ -514,6 +514,10 @@ public class DateSessionManager : MonoBehaviour
                 type = type
             });
         }
+
+        // Debug overlay logging
+        string itemName = tag != null ? tag.gameObject.name : "unknown";
+        DateDebugOverlay.Instance?.LogReaction($"{itemName} → {type}");
     }
 
     private IEnumerator RunRevealSequence()

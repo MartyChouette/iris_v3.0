@@ -196,6 +196,9 @@ public static class ApartmentSceneBuilder
         // ── 15c. Kitchen wall calendar ──
         BuildKitchenCalendar();
 
+        // ── 15d. F1 debug overlay ──
+        BuildDateDebugOverlay();
+
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
@@ -3461,6 +3464,63 @@ public static class ApartmentSceneBuilder
         }
 
         Debug.Log("[ApartmentSceneBuilder] ScreenFade overlay built (with dream text).");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // F1 Debug Overlay
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildDateDebugOverlay()
+    {
+        var go = new GameObject("DateDebugOverlay");
+
+        var canvas = go.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 200;
+        go.AddComponent<CanvasScaler>();
+        go.AddComponent<GraphicRaycaster>();
+
+        // Semi-transparent background panel (left-aligned)
+        var panelGO = new GameObject("DebugPanel");
+        panelGO.transform.SetParent(go.transform, false);
+        var panelRT = panelGO.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0f, 0f);
+        panelRT.anchorMax = new Vector2(0.35f, 1f);
+        panelRT.offsetMin = Vector2.zero;
+        panelRT.offsetMax = Vector2.zero;
+        panelRT.localScale = Vector3.one;
+        var panelImg = panelGO.AddComponent<Image>();
+        panelImg.color = new Color(0f, 0f, 0f, 0.7f);
+        panelImg.raycastTarget = false;
+
+        // Debug text (monospace, left-aligned)
+        var textGO = new GameObject("DebugText");
+        textGO.transform.SetParent(panelGO.transform, false);
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = new Vector2(8f, 8f);
+        textRT.offsetMax = new Vector2(-8f, -8f);
+        textRT.localScale = Vector3.one;
+        var debugTMP = textGO.AddComponent<TextMeshProUGUI>();
+        debugTMP.fontSize = 12f;
+        debugTMP.alignment = TextAlignmentOptions.TopLeft;
+        debugTMP.color = new Color(0.8f, 1f, 0.8f, 1f);
+        debugTMP.enableWordWrapping = true;
+        debugTMP.overflowMode = TextOverflowModes.Truncate;
+        debugTMP.raycastTarget = false;
+
+        // DateDebugOverlay component
+        var overlay = go.AddComponent<DateDebugOverlay>();
+        var overlaySO = new SerializedObject(overlay);
+        overlaySO.FindProperty("_overlayRoot").objectReferenceValue = panelGO;
+        overlaySO.FindProperty("_debugText").objectReferenceValue = debugTMP;
+        overlaySO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Start hidden
+        panelGO.SetActive(false);
+
+        Debug.Log("[ApartmentSceneBuilder] F1 debug overlay built.");
     }
 
     // ══════════════════════════════════════════════════════════════════

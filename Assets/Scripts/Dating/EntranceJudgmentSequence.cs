@@ -45,6 +45,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         DateSessionManager.Instance?.ApplyReaction(musicReaction);
         if (musicReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Music: {musicReaction}");
+        DateDebugOverlay.Instance?.LogReaction($"[Entrance] Music → {musicReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
 
         // --- Judgment 2: Perfume / Mood + Smell ---
@@ -66,6 +67,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         DateSessionManager.Instance?.ApplyReaction(moodReaction);
         if (moodReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Perfume/Mood: {moodReaction}");
+        DateDebugOverlay.Instance?.LogReaction($"[Entrance] Perfume → {moodReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
 
         // --- Judgment 3: Outfit ---
@@ -76,6 +78,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         DateSessionManager.Instance?.ApplyReaction(outfitReaction);
         if (outfitReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Outfit: {outfitReaction}");
+        DateDebugOverlay.Instance?.LogReaction($"[Entrance] Outfit → {outfitReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
     }
 
