@@ -1,27 +1,31 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// Editor utility that builds the main menu scene with three panels:
+/// Editor utility that builds the main menu scene matching L_Main_Menu visual structure:
+/// Nema parallax head (6 sprite layers + separate background with BacklightPulse),
+/// MusicPlayer, Bloom Volume, title with TMP_FocusBlur, TextDissolveButton hover effects.
+///
+/// Adds our game-specific panels on top:
 /// ModeSelect (Demo/Showcase/Full) → GamePanel (New/Continue/Load/Back/Quit) → SaveSlots (3 slots).
-/// Includes Nema parallax head, title with TMP_FocusBlur, TutorialCard overlay, ScreenFade.
 /// Menu: Window > Iris > Build Main Menu Scene
 /// </summary>
 public static class MainMenuSceneBuilder
 {
     private const string SoDir = "Assets/ScriptableObjects/GameModes";
 
-    // ── Layout constants ────────────────────────────────────────
+    // ── Layout constants (matching L_Main_Menu) ──────────────────
     private static readonly Vector2 ButtonSize = new Vector2(400f, 100f);
     private static readonly float ButtonX = 800f;
 
-    // Mode select buttons (right side, stacked)
-    private static readonly float ModeBtn0Y = -80f;
-    private static readonly float ModeBtn1Y = -180f;
-    private static readonly float ModeBtn2Y = -280f;
+    // Mode select buttons (right side, stacked — matching L_Main_Menu Y spacing)
+    private static readonly float ModeBtn0Y = -140f;
+    private static readonly float ModeBtn1Y = -240f;
+    private static readonly float ModeBtn2Y = -340f;
 
     // Game panel buttons
     private static readonly float GameBtn0Y = -80f;   // New Game
@@ -37,7 +41,7 @@ public static class MainMenuSceneBuilder
     private static readonly float SlotBtn2Y = -100f;
     private static readonly float SlotBackY = -220f;
 
-    // Title layout (left side)
+    // Title layout (left side — matching L_Main_Menu)
     private static readonly Vector2 TitlePos = new Vector2(-600f, 340f);
     private static readonly Vector2 TitleSize = new Vector2(500f, 300f);
 
@@ -45,33 +49,45 @@ public static class MainMenuSceneBuilder
     private static readonly Vector2 ModeNamePos = new Vector2(800f, 120f);
     private static readonly Vector2 ModeDescPos = new Vector2(800f, 50f);
 
+    // Nema head (matching L_Main_Menu)
+    private static readonly Vector3 NemaHeadPos = new Vector3(-1.02f, 1.28f, 0f);
+    private static readonly Vector3 NemaHeadScale = new Vector3(0.75f, 0.75f, 0.75f);
+
+    // Background (separate root GO, matching L_Main_Menu)
+    private static readonly Vector3 BackgroundPos = new Vector3(0f, 1.28f, 0f);
+    private static readonly Vector3 BackgroundScale = new Vector3(2f, 2f, 2f);
+
     [MenuItem("Window/Iris/Build Main Menu Scene")]
     public static void Build()
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        // ── 1. Camera ──────────────────────────────────────────────
+        // ── 1. Camera (matching L_Main_Menu position) ────────────────
         var camGO = new GameObject("Main Camera");
         camGO.tag = "MainCamera";
         var cam = camGO.AddComponent<UnityEngine.Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.192f, 0.302f, 0.475f, 0f);
+        cam.nearClipPlane = 0.3f;
+        cam.farClipPlane = 1000f;
+        camGO.transform.position = new Vector3(0f, 1f, -10f);
         camGO.AddComponent<AudioListener>();
 
-        // ── 2. Directional Light ───────────────────────────────────
+        // ── 2. Directional Light (warm white, matching L_Main_Menu) ──
         var lightGO = new GameObject("Directional Light");
         var light = lightGO.AddComponent<Light>();
         light.type = LightType.Directional;
-        light.color = Color.white;
+        light.color = new Color(1f, 0.957f, 0.839f);
         light.intensity = 1f;
+        lightGO.transform.position = new Vector3(0f, 3f, 0f);
         lightGO.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
-        // ── 3. EventSystem ─────────────────────────────────────────
+        // ── 3. EventSystem ───────────────────────────────────────────
         var eventSysGO = new GameObject("EventSystem");
         eventSysGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
         eventSysGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 
-        // ── 4. Game Mode SOs ───────────────────────────────────────
+        // ── 4. Game Mode SOs ─────────────────────────────────────────
         var demoConfig = EnsureGameModeConfig("Mode_7Minutes", "7 Minutes",
             "Real-time 7-minute countdown. A quick taste of Iris.",
             totalDays: 1, demoTimeLimitSeconds: 420f, realSecondsPerGameHour: 60f, prepDuration: 60f);
@@ -84,10 +100,10 @@ public static class MainMenuSceneBuilder
             "No day limit. The complete Iris experience.",
             totalDays: 0, demoTimeLimitSeconds: 0f, realSecondsPerGameHour: 60f, prepDuration: 120f);
 
-        // ── 5. Nema Head placeholder ───────────────────────────────
+        // ── 5. Nema Head (6 sprite layers, matching L_Main_Menu) ─────
         var nemaHead = new GameObject("Nema_Head");
-        nemaHead.transform.position = new Vector3(-1.02f, 1.28f, 0f);
-        nemaHead.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
+        nemaHead.transform.position = NemaHeadPos;
+        nemaHead.transform.localScale = NemaHeadScale;
         var jitter = nemaHead.AddComponent<MotionJitter>();
         jitter.inputMode = MotionJitter.InputMode.MousePosition;
         jitter.noiseFrequency = 2f;
@@ -95,8 +111,9 @@ public static class MainMenuSceneBuilder
         jitter.rotationStrength = 0.05f;
         jitter.scaleStrength = 0.01f;
 
-        string[] layerNames = { "1", "2_bangs", "3_face", "4_neck", "5_hair", "6_background" };
-        int[] sortOrders = { 3, 2, 1, 0, -1, -1 };
+        // Sprite children (empty SpriteRenderers — assign real sprites by hand)
+        string[] layerNames = { "1", "2_bangs", "2_face", "3_face", "4_neck", "5_hair" };
+        int[] sortOrders = { 3, 2, 1, 0, -1, -2 };
         var layerTransforms = new Transform[layerNames.Length];
         for (int i = 0; i < layerNames.Length; i++)
         {
@@ -107,12 +124,25 @@ public static class MainMenuSceneBuilder
             layerTransforms[i] = layerGO.transform;
         }
 
-        // ── 6. ParallaxManager ─────────────────────────────────────
+        // ── 6. Background (separate root GO with BacklightPulse) ─────
+        var bgGO = new GameObject("6_background");
+        bgGO.transform.position = BackgroundPos;
+        bgGO.transform.localScale = BackgroundScale;
+        var bgSR = bgGO.AddComponent<SpriteRenderer>();
+        bgSR.sortingOrder = -3;
+        var pulse = bgGO.AddComponent<BacklightPulse>();
+        pulse.dimColor = new Color(1.149f, 2.742f, 3.291f, 1f);
+        pulse.brightColor = new Color(2.920f, 6.716f, 8.041f, 1f);
+        pulse.pulseSpeed = 0.4f;
+
+        // ── 7. ParallaxManager (8 layers matching L_Main_Menu) ───────
         var parallaxGO = new GameObject("ParallaxManager");
         var parallax = parallaxGO.AddComponent<MouseParallax>();
         parallax.smoothing = 5f;
         parallax.maxOffset = 20f;
-        float[] moveSpeeds = { -200f, -0.1f, -0.15f, -0.2f, -0.3f, -0.35f };
+
+        // Nema sprite layers
+        float[] moveSpeeds = { -0.1f, -0.15f, -0.2f, -0.3f, -0.35f, -0.6f };
         for (int i = 0; i < layerTransforms.Length; i++)
         {
             parallax.layers.Add(new MouseParallax.ParallaxLayer
@@ -122,7 +152,33 @@ public static class MainMenuSceneBuilder
             });
         }
 
-        // ── 7. Canvas ──────────────────────────────────────────────
+        // Background layer (stationary)
+        parallax.layers.Add(new MouseParallax.ParallaxLayer
+        {
+            layerObject = bgGO.transform,
+            moveSpeed = 0f
+        });
+
+        // ── 8. MusicPlayer (AudioManager + AudioSource) ─────────────
+        var musicGO = new GameObject("MusicPlayer");
+        musicGO.AddComponent<AudioManager>();
+
+        var musicSourceGO = new GameObject("Music_Sound_Source");
+        musicSourceGO.transform.SetParent(musicGO.transform, false);
+        var audioSource = musicSourceGO.AddComponent<AudioSource>();
+        audioSource.loop = true;
+        audioSource.playOnAwake = true;
+        audioSource.volume = 0.5f;
+
+        // ── 9. Bloom Volume (URP) ────────────────────────────────────
+        var bloomGO = new GameObject("Bloom");
+        bloomGO.transform.position = new Vector3(1.08f, -0.99f, -0.05f);
+        var volume = bloomGO.AddComponent<Volume>();
+        volume.isGlobal = true;
+        volume.priority = 1f;
+        // VolumeProfile must be assigned by hand or loaded from existing asset
+
+        // ── 10. Canvas ───────────────────────────────────────────────
         var canvasGO = new GameObject("Canvas");
         canvasGO.layer = LayerMask.NameToLayer("UI");
         var canvas = canvasGO.AddComponent<Canvas>();
@@ -134,7 +190,7 @@ public static class MainMenuSceneBuilder
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // Title — "Iris" on left with TMP_FocusBlur
+        // Title — "Iris" on left with TMP_FocusBlur (matching L_Main_Menu)
         var titleGO = CreateLabel("Title_Text (TMP)", canvasGO.transform,
             TitlePos, TitleSize,
             "Iris", 300f, FontStyles.Normal, TextAlignmentOptions.Center,
@@ -145,18 +201,18 @@ public static class MainMenuSceneBuilder
         focusBlur.noiseScale = 10f;
         focusBlur.preserveCharacterShape = false;
 
-        // Add title to parallax
+        // Add title to parallax (extreme movement, matching L_Main_Menu layer 0)
         parallax.layers.Insert(0, new MouseParallax.ParallaxLayer
         {
             layerObject = titleGO.transform,
             moveSpeed = -200f
         });
 
-        // ── 8. ModeSelectPanel ─────────────────────────────────────
+        // ── 11. ModeSelectPanel ──────────────────────────────────────
         var modePanel = CreatePanel("ModeSelectPanel", canvasGO.transform);
 
         var demoBtn = CreateMenuButton("Demo_Button", modePanel.transform,
-            new Vector2(ButtonX, ModeBtn0Y), ButtonSize, "7 Minutes", 2f);
+            new Vector2(ButtonX, ModeBtn0Y), ButtonSize, "7 Minutes", 2f, addFocusBlur: true);
 
         var showcaseBtn = CreateMenuButton("Showcase_Button", modePanel.transform,
             new Vector2(ButtonX, ModeBtn1Y), ButtonSize, "7 Days", 2f);
@@ -164,7 +220,7 @@ public static class MainMenuSceneBuilder
         var fullBtn = CreateMenuButton("Full_Button", modePanel.transform,
             new Vector2(ButtonX, ModeBtn2Y), ButtonSize, "Infinite", 2f);
 
-        // ── 9. GamePanel (starts hidden) ───────────────────────────
+        // ── 12. GamePanel (starts hidden) ────────────────────────────
         var gamePanel = CreatePanel("GamePanel", canvasGO.transform);
         gamePanel.SetActive(false);
 
@@ -179,7 +235,7 @@ public static class MainMenuSceneBuilder
             new Color(0.8f, 0.8f, 0.8f));
 
         var newGameBtn = CreateMenuButton("NewGame_Button", gamePanel.transform,
-            new Vector2(ButtonX, GameBtn0Y), ButtonSize, "New Game", 2f);
+            new Vector2(ButtonX, GameBtn0Y), ButtonSize, "New Game", 2f, addFocusBlur: true);
 
         var continueBtn = CreateMenuButton("Continue_Button", gamePanel.transform,
             new Vector2(ButtonX, GameBtn1Y), ButtonSize, "Continue", 2f);
@@ -193,7 +249,7 @@ public static class MainMenuSceneBuilder
         var quitBtn = CreateMenuButton("Quit_Button", gamePanel.transform,
             new Vector2(ButtonX, GameBtn4Y), ButtonSize, "Quit", 5f);
 
-        // ── 10. SaveSlotPanel (starts hidden) ──────────────────────
+        // ── 13. SaveSlotPanel (starts hidden) ────────────────────────
         var saveSlotPanel = CreatePanel("SaveSlotPanel", canvasGO.transform);
         saveSlotPanel.SetActive(false);
 
@@ -209,14 +265,14 @@ public static class MainMenuSceneBuilder
         var slotBackBtn = CreateMenuButton("SlotBack_Button", saveSlotPanel.transform,
             new Vector2(SlotBtnX, SlotBackY), new Vector2(300f, 80f), "Back", 5f);
 
-        // ── 11. Tutorial Card ──────────────────────────────────────
+        // ── 14. Tutorial Card ────────────────────────────────────────
         var tutorialCard = BuildTutorialCard();
 
-        // ── 12. ScreenFade overlay ─────────────────────────────────
+        // ── 15. ScreenFade overlay ───────────────────────────────────
         BuildScreenFade();
 
-        // ── 13. MainMenuManager ────────────────────────────────────
-        var menuMgrGO = new GameObject("MainMenuManager");
+        // ── 16. MainMenuManager ──────────────────────────────────────
+        var menuMgrGO = new GameObject("GameMainMenuManager");
         var menuMgr = menuMgrGO.AddComponent<MainMenuManager>();
         var mgrSO = new SerializedObject(menuMgr);
 
@@ -258,7 +314,7 @@ public static class MainMenuSceneBuilder
 
         mgrSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 14. Save scene ─────────────────────────────────────────
+        // ── 17. Save scene ───────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -315,8 +371,14 @@ public static class MainMenuSceneBuilder
         return go;
     }
 
+    /// <summary>
+    /// Creates a text-only menu button matching L_Main_Menu style:
+    /// disabled Image (transparent), white TMP text at 70pt Bold,
+    /// TextDissolveButton hover effect, optional TMP_FocusBlur on text.
+    /// </summary>
     private static Button CreateMenuButton(string name, Transform parent,
-        Vector2 anchoredPos, Vector2 size, string label, float dissolveSpeed)
+        Vector2 anchoredPos, Vector2 size, string label, float dissolveSpeed,
+        bool addFocusBlur = false)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -342,7 +404,7 @@ public static class MainMenuSceneBuilder
         colors.fadeDuration = 0.1f;
         btn.colors = colors;
 
-        // TextDissolveButton effect
+        // TextDissolveButton effect (matching L_Main_Menu values)
         var dissolve = go.AddComponent<TextDissolveButton>();
         dissolve.animationSpeed = dissolveSpeed;
         dissolve.normalSoftness = 0f;
@@ -354,7 +416,7 @@ public static class MainMenuSceneBuilder
         dissolve.normalAlpha = 1f;
         dissolve.blurredAlpha = 0.4f;
 
-        // Child TMP text
+        // Child TMP text (70pt Bold matching L_Main_Menu)
         var textGO = new GameObject($"{name}_Text (TMP)");
         textGO.transform.SetParent(go.transform, false);
         textGO.layer = LayerMask.NameToLayer("UI");
@@ -367,11 +429,21 @@ public static class MainMenuSceneBuilder
 
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.text = label;
-        tmp.fontSize = 48f;
-        tmp.fontStyle = FontStyles.Normal;
+        tmp.fontSize = 70f;
+        tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.raycastTarget = false;
+
+        // Optional TMP_FocusBlur on text (for primary action buttons)
+        if (addFocusBlur)
+        {
+            var fb = textGO.AddComponent<TMP_FocusBlur>();
+            fb.morphSpeed = 3f;
+            fb.jitterIntensity = 4f;
+            fb.noiseScale = 10f;
+            fb.preserveCharacterShape = false;
+        }
 
         return btn;
     }
