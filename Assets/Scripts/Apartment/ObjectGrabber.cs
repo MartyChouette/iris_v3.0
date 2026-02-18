@@ -48,6 +48,11 @@ public class ObjectGrabber : MonoBehaviour
     private bool _isEnabled;
     private bool _gridSnap;
 
+    private static ObjectGrabber s_instance;
+
+    /// <summary>True when any ObjectGrabber is holding an object. Check this to block other interactions.</summary>
+    public static bool IsHoldingObject => s_instance != null && s_instance._held != null;
+
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;
@@ -69,6 +74,8 @@ public class ObjectGrabber : MonoBehaviour
 
     private void Awake()
     {
+        s_instance = this;
+
         if (cam == null)
             cam = Camera.main;
 
@@ -98,6 +105,7 @@ public class ObjectGrabber : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (s_instance == this) s_instance = null;
         if (_shadowMat != null) Destroy(_shadowMat);
     }
 

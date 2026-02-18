@@ -191,6 +191,13 @@ public class CleaningManager : MonoBehaviour
             return;
         }
 
+        if (ObjectGrabber.IsHoldingObject)
+        {
+            SetToolVisual(Vector3.zero, false);
+            _hoveredSurface = null;
+            return;
+        }
+
         _sfxCooldown -= Time.deltaTime;
 
         Vector2 pointer = _mousePosition.ReadValue<Vector2>();

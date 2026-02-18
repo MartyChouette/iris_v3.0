@@ -132,6 +132,8 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
             return;
         }
 
+        if (ObjectGrabber.IsHoldingObject) return;
+
         switch (CurrentState)
         {
             case State.Browsing:

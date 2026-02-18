@@ -115,6 +115,8 @@ public class WateringManager : MonoBehaviour
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
             return;
 
+        if (ObjectGrabber.IsHoldingObject) return;
+
         if (_mainCamera == null) return;
 
         switch (CurrentState)
@@ -272,5 +274,12 @@ public class WateringManager : MonoBehaviour
 
             Debug.Log("[WateringManager] Returned to Idle.");
         }
+    }
+
+    /// <summary>Force back to idle. Called on phase transitions to close HUD.</summary>
+    public void ForceIdle()
+    {
+        _activePlant = null;
+        CurrentState = State.Idle;
     }
 }

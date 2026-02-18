@@ -103,6 +103,8 @@ public class FridgeController : MonoBehaviour
             && SimpleDrinkManager.Instance.CurrentState != SimpleDrinkManager.State.ChoosingRecipe)
             return;
 
+        if (ObjectGrabber.IsHoldingObject) return;
+
         if (_mainCamera == null) return;
 
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();

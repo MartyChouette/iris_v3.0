@@ -163,6 +163,8 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         if (DayPhaseManager.Instance == null || !DayPhaseManager.Instance.IsInteractionPhase)
             return;
 
+        if (ObjectGrabber.IsHoldingObject) return;
+
         switch (CurrentState)
         {
             case State.Browsing:

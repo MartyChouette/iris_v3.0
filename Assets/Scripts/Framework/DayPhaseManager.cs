@@ -303,6 +303,9 @@ public class DayPhaseManager : MonoBehaviour
         _currentPhase = phase;
         Debug.Log($"[DayPhaseManager] Phase → {phase}");
 
+        // Close all station UIs/HUDs on any phase change
+        DismissAllStationUI();
+
         // Go to Bed panel is only visible during Evening
         if (_goToBedPanel != null)
             _goToBedPanel.SetActive(phase == DayPhase.Evening);
@@ -411,5 +414,25 @@ public class DayPhaseManager : MonoBehaviour
 
         // 9. Start preparation countdown
         StartPrepTimer();
+    }
+
+    // ─── UI Cleanup ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Force-close all station UIs and HUDs. Called on every phase transition
+    /// so no stale UI persists across phases or into the next day.
+    /// </summary>
+    private void DismissAllStationUI()
+    {
+        WateringManager.Instance?.ForceIdle();
+        RecordPlayerManager.Instance?.StopPlayback();
+        SimpleDrinkManager.Instance?.ForceIdle();
+        FridgeController.Instance?.CloseDoor();
+
+        var calendar = Object.FindAnyObjectByType<ApartmentCalendar>();
+        if (calendar != null) calendar.CloseCalendar();
+
+        var pause = Object.FindAnyObjectByType<PauseMenuController>();
+        if (pause != null) pause.ClosePauseMenu();
     }
 }

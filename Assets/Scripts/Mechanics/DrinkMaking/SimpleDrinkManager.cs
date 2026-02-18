@@ -333,4 +333,12 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         if (_hudCanvas != null && _hudCanvas.gameObject.activeSelf)
             _hudCanvas.gameObject.SetActive(false);
     }
+
+    /// <summary>Force back to idle. Called on phase transitions to close HUD.</summary>
+    public void ForceIdle()
+    {
+        _activeRecipe = null;
+        CurrentState = State.ChoosingRecipe;
+        HideRecipePanel();
+    }
 }

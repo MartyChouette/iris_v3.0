@@ -96,6 +96,8 @@ public class PhoneController : MonoBehaviour, IStationManager
 
     private void Update()
     {
+        if (ObjectGrabber.IsHoldingObject) return;
+
         // During Exploration (Idle state), clicking phone ends prep early and triggers arrival
         if (_state == PhoneState.Idle && _pendingDate != null)
         {
