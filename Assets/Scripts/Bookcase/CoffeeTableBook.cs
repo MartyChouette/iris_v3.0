@@ -113,6 +113,15 @@ public class CoffeeTableBook : MonoBehaviour
         transform.rotation = targetRot;
         CurrentState = endState;
 
+        // Toggle ReactableTag visibility based on placement
+        var tag = GetComponent<ReactableTag>();
+        if (tag != null)
+        {
+            bool onTable = endState == State.OnCoffeeTable;
+            tag.IsActive = onTable;
+            tag.IsPrivate = !onTable;
+        }
+
         // Update item state registry
         if (definition != null && !string.IsNullOrEmpty(definition.itemID))
         {

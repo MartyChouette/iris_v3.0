@@ -69,10 +69,17 @@ public class DishDropZone : MonoBehaviour
 
         DepositCount++;
 
-        // Disable interaction
+        // Mark as at home and clear smell
         var placeable = plate.GetComponent<PlaceableObject>();
         if (placeable != null)
+        {
+            placeable.IsAtHome = true;
             placeable.enabled = false;
+        }
+
+        var tag = plate.GetComponent<ReactableTag>();
+        if (tag != null)
+            tag.SmellAmount = 0f;
 
         var col = plate.GetComponent<Collider>();
         if (col != null)
