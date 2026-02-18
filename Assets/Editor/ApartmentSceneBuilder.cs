@@ -30,6 +30,7 @@ public static class ApartmentSceneBuilder
     private const string SurfacesLayerName = "Surfaces";
     private const string VinylStackLayerName = "VinylStack";
     private const string TurntableLayerName = "Turntable";
+    private const string DoorLayerName = "Door";
 
     // ─── Station Group Positions ─────────────────────────────────
     private static readonly Vector3 BookcaseStationPos  = new Vector3(2.933f, 0.421f, 2.095f);
@@ -95,6 +96,7 @@ public static class ApartmentSceneBuilder
         int surfacesLayer = EnsureLayer(SurfacesLayerName);
         int vinylStackLayer = EnsureLayer(VinylStackLayerName);
         int turntableLayer = EnsureLayer(TurntableLayerName);
+        int doorLayer = EnsureLayer(DoorLayerName);
 
         // ── 1. Lighting ──
         var lightGO = new GameObject("Directional Light");
@@ -172,7 +174,7 @@ public static class ApartmentSceneBuilder
         BuildDatingInfrastructure(camGO, furnitureRefs, newspaperData, phoneLayer);
 
         // ── 12a. Door greeting controller ──
-        BuildDoor(camGO);
+        BuildDoor(camGO, doorLayer);
 
         // ── 12b. Auto-save controller ──
         var autoSaveGO = new GameObject("AutoSaveController");
@@ -2666,11 +2668,8 @@ public static class ApartmentSceneBuilder
     // Door Greeting Controller
     // ══════════════════════════════════════════════════════════════════
 
-    private static void BuildDoor(GameObject camGO)
+    private static void BuildDoor(GameObject camGO, int doorLayer)
     {
-        int doorLayer = LayerMask.NameToLayer("Door");
-        if (doorLayer < 0) doorLayer = 31; // fallback to unused layer
-
         var doorGO = CreateBox("Door", null,
             new Vector3(-3f, 1.1f, -5.5f), new Vector3(0.8f, 2.2f, 0.1f),
             new Color(0.4f, 0.25f, 0.15f));
@@ -2683,9 +2682,9 @@ public static class ApartmentSceneBuilder
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         var canvasRT = canvasGO.GetComponent<RectTransform>();
-        canvasRT.sizeDelta = new Vector2(200f, 50f);
+        canvasRT.sizeDelta = new Vector2(400f, 80f);
         canvasRT.localPosition = new Vector3(0f, 1.4f, -0.1f);
-        canvasRT.localScale = Vector3.one * 0.005f;
+        canvasRT.localScale = Vector3.one * 0.008f;
 
         var knockGO = new GameObject("KnockText");
         knockGO.transform.SetParent(canvasGO.transform, false);
@@ -2697,9 +2696,11 @@ public static class ApartmentSceneBuilder
         knockRT.localScale = Vector3.one;
         var knockTMP = knockGO.AddComponent<TextMeshProUGUI>();
         knockTMP.text = "knock knock";
-        knockTMP.fontSize = 28f;
+        knockTMP.fontSize = 42f;
         knockTMP.alignment = TextAlignmentOptions.Center;
-        knockTMP.color = Color.white;
+        knockTMP.color = new Color(1f, 0.9f, 0.3f);
+        knockTMP.outlineWidth = 0.2f;
+        knockTMP.outlineColor = Color.black;
         knockGO.SetActive(false);
 
         // DoorGreetingController component
