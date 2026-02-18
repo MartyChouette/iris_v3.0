@@ -3,9 +3,9 @@ using UnityEngine;
 
 /// <summary>
 /// Runs the 3 entrance judgments when a date arrives:
-///   1. Cleanliness — based on remaining uncleaned stains
-///   2. Perfume/Mood — evaluated against date's preferred mood range
-///   3. Outfit       — evaluated against date's style preferences (null = skip)
+///   1. Music    — is there music playing? (active vinyl/music ReactableTag)
+///   2. Perfume  — evaluated against date's preferred mood range + smell check
+///   3. Outfit   — evaluated against date's style preferences (null = skip)
 /// Each judgment: pause → thought bubble → emote → affection change → brief wait.
 /// </summary>
 public class EntranceJudgmentSequence : MonoBehaviour
@@ -16,6 +16,10 @@ public class EntranceJudgmentSequence : MonoBehaviour
 
     [Tooltip("Seconds between judgments.")]
     [SerializeField] private float _interJudgmentPause = 1.5f;
+
+    [Header("Behavior")]
+    [Tooltip("When true, all reactions are forced to Like (tutorial/early game).")]
+    [SerializeField] private bool _alwaysPositive = true;
 
     [Header("Audio")]
     [Tooltip("SFX played before each judgment evaluation.")]
@@ -33,18 +37,31 @@ public class EntranceJudgmentSequence : MonoBehaviour
 
         yield return new WaitForSeconds(_preJudgmentPause);
 
-        // --- Judgment 1: Cleanliness ---
+        // --- Judgment 1: Music ---
         PlayJudgingSFX();
-        var cleanReaction = EvaluateCleanliness();
-        reactionUI?.ShowReaction(cleanReaction);
-        DateSessionManager.Instance?.ApplyReaction(cleanReaction);
-        if (cleanReaction == ReactionType.Dislike) PlaySneezeSFX();
-        Debug.Log($"[EntranceJudgmentSequence] Cleanliness: {cleanReaction}");
+        var musicReaction = EvaluateMusic(date);
+        if (_alwaysPositive) musicReaction = ReactionType.Like;
+        reactionUI?.ShowReaction(musicReaction);
+        DateSessionManager.Instance?.ApplyReaction(musicReaction);
+        if (musicReaction == ReactionType.Dislike) PlaySneezeSFX();
+        Debug.Log($"[EntranceJudgmentSequence] Music: {musicReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
 
-        // --- Judgment 2: Perfume / Mood ---
+        // --- Judgment 2: Perfume / Mood + Smell ---
         PlayJudgingSFX();
         var moodReaction = EvaluatePerfumeMood(date);
+
+        // Smell downgrade (only when not always-positive)
+        if (!_alwaysPositive)
+        {
+            float totalSmell = SmellTracker.TotalSmell;
+            if (totalSmell > SmellTracker.SmellThreshold * 2f)
+                moodReaction = ReactionType.Dislike;
+            else if (totalSmell > SmellTracker.SmellThreshold && moodReaction == ReactionType.Like)
+                moodReaction = ReactionType.Neutral;
+        }
+
+        if (_alwaysPositive) moodReaction = ReactionType.Like;
         reactionUI?.ShowReaction(moodReaction);
         DateSessionManager.Instance?.ApplyReaction(moodReaction);
         if (moodReaction == ReactionType.Dislike) PlaySneezeSFX();
@@ -54,6 +71,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         // --- Judgment 3: Outfit ---
         PlayJudgingSFX();
         var outfitReaction = EvaluateOutfit(date);
+        if (_alwaysPositive) outfitReaction = ReactionType.Like;
         reactionUI?.ShowReaction(outfitReaction);
         DateSessionManager.Instance?.ApplyReaction(outfitReaction);
         if (outfitReaction == ReactionType.Dislike) PlaySneezeSFX();
@@ -73,6 +91,22 @@ public class EntranceJudgmentSequence : MonoBehaviour
             AudioManager.Instance.PlaySFX(sneezeSFX);
     }
 
+    private ReactionType EvaluateMusic(DatePersonalDefinition date)
+    {
+        // Scan ReactableTag.All for active tags containing "vinyl" or "music"
+        foreach (var tag in ReactableTag.All)
+        {
+            if (!tag.IsActive) continue;
+            foreach (var t in tag.Tags)
+            {
+                if (t.Contains("vinyl") || t.Contains("music"))
+                    return ReactionEvaluator.EvaluateReactable(tag, date.preferences);
+            }
+        }
+        // No music playing — neutral
+        return ReactionType.Neutral;
+    }
+
     private ReactionType EvaluateOutfit(DatePersonalDefinition date)
     {
         var outfit = OutfitSelector.Instance?.SelectedOutfit;
@@ -83,20 +117,5 @@ public class EntranceJudgmentSequence : MonoBehaviour
     {
         float mood = MoodMachine.Instance?.Mood ?? 0f;
         return ReactionEvaluator.EvaluateMood(mood, date.preferences);
-    }
-
-    private ReactionType EvaluateCleanliness()
-    {
-        int dirtyCount = 0;
-        var surfaces = FindObjectsByType<CleanableSurface>(FindObjectsSortMode.None);
-        foreach (var s in surfaces)
-        {
-            if (s.gameObject.activeInHierarchy && !s.IsFullyClean)
-                dirtyCount++;
-        }
-
-        if (dirtyCount == 0) return ReactionType.Like;
-        if (dirtyCount <= 2) return ReactionType.Neutral;
-        return ReactionType.Dislike;
     }
 }

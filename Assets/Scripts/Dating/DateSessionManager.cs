@@ -311,16 +311,35 @@ public class DateSessionManager : MonoBehaviour
         // Fail check after entrance judgments
         if (CheckPhaseFailAndExit(_arrivalFailThreshold)) return;
 
+        StartCoroutine(TransitionToPhase2());
+    }
+
+    private IEnumerator TransitionToPhase2()
+    {
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(0.5f);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Phase 2");
+
+        yield return new WaitForSeconds(1.5f);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
         _datePhase = DatePhase.BackgroundJudging;
         _moodCheckTimer = 0f;
         _accumulatedReactions.Clear();
 
-        // Enable excursions immediately — NPC wanders while player makes drink
+        // Enable excursions — NPC wanders while player makes drink
         if (_dateCharacter != null)
             _dateCharacter.EnableExcursions();
 
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(0.5f);
 
         Debug.Log("[DateSessionManager] Phase 2: BackgroundJudging — NPC exploring while player makes drink.");
     }
