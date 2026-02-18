@@ -471,8 +471,11 @@ public class XYTetherJoint : MonoBehaviour
 
         if (enforceXYConstraints)
         {
-            rb.constraints |= RigidbodyConstraints.FreezePositionZ
-                            | RigidbodyConstraints.FreezeRotationX
+            // NOTE: Do NOT freeze world-Z position here. The ConfigurableJoint's
+            // zMotion=Locked already handles Z-locking in joint-local space.
+            // Adding world-Z freeze on top conflicts on rotated parts (e.g. leaves)
+            // because world-Z != joint-local-Z, pinning the part to a 1D line.
+            rb.constraints |= RigidbodyConstraints.FreezeRotationX
                             | RigidbodyConstraints.FreezeRotationY
                             | RigidbodyConstraints.FreezeRotationZ;
         }
