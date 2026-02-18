@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Scene-scoped singleton that fades the screen to/from black via a full-screen CanvasGroup overlay.
@@ -12,6 +13,10 @@ public class ScreenFade : MonoBehaviour
     public static ScreenFade Instance { get; private set; }
 
     [SerializeField] private CanvasGroup _canvasGroup;
+
+    [Header("Phase Title")]
+    [Tooltip("Text shown during phase transitions (separate from DreamText used by GameClock).")]
+    [SerializeField] private TMP_Text _phaseText;
 
     [Header("Default Durations")]
     [Tooltip("Default fade-out duration in seconds. Set to 0 for a hard cut.")]
@@ -78,6 +83,26 @@ public class ScreenFade : MonoBehaviour
     public Coroutine FadeIn(float duration)
     {
         return StartCoroutine(FadeCoroutine(1f, 0f, duration, false, fadeInCurve));
+    }
+
+    /// <summary>Show phase title text on the black screen.</summary>
+    public void ShowPhaseTitle(string text)
+    {
+        if (_phaseText != null)
+        {
+            _phaseText.text = text;
+            _phaseText.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>Hide phase title text.</summary>
+    public void HidePhaseTitle()
+    {
+        if (_phaseText != null)
+        {
+            _phaseText.text = "";
+            _phaseText.gameObject.SetActive(false);
+        }
     }
 
     /// <summary>

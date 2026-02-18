@@ -171,6 +171,9 @@ public static class ApartmentSceneBuilder
         // ── 12. Dating infrastructure (GameClock, DateSessionManager, PhoneController, etc.) ──
         BuildDatingInfrastructure(camGO, furnitureRefs, newspaperData, phoneLayer);
 
+        // ── 12a. Door greeting controller ──
+        BuildDoor(camGO);
+
         // ── 12b. Auto-save controller ──
         var autoSaveGO = new GameObject("AutoSaveController");
         autoSaveGO.AddComponent<AutoSaveController>();
@@ -2650,6 +2653,59 @@ public static class ApartmentSceneBuilder
         Debug.Log("[ApartmentSceneBuilder] Dating infrastructure built.");
     }
 
+    // ══════════════════════════════════════════════════════════════════
+    // Door Greeting Controller
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildDoor(GameObject camGO)
+    {
+        int doorLayer = LayerMask.NameToLayer("Door");
+        if (doorLayer < 0) doorLayer = 31; // fallback to unused layer
+
+        var doorGO = CreateBox("Door", null,
+            new Vector3(-3f, 1.1f, -5.5f), new Vector3(0.8f, 2.2f, 0.1f),
+            new Color(0.4f, 0.25f, 0.15f));
+        doorGO.layer = doorLayer;
+        doorGO.isStatic = false;
+
+        // World-space canvas for "knock knock" text
+        var canvasGO = new GameObject("KnockCanvas");
+        canvasGO.transform.SetParent(doorGO.transform, false);
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        var canvasRT = canvasGO.GetComponent<RectTransform>();
+        canvasRT.sizeDelta = new Vector2(200f, 50f);
+        canvasRT.localPosition = new Vector3(0f, 1.4f, -0.1f);
+        canvasRT.localScale = Vector3.one * 0.005f;
+
+        var knockGO = new GameObject("KnockText");
+        knockGO.transform.SetParent(canvasGO.transform, false);
+        var knockRT = knockGO.AddComponent<RectTransform>();
+        knockRT.anchorMin = Vector2.zero;
+        knockRT.anchorMax = Vector2.one;
+        knockRT.offsetMin = Vector2.zero;
+        knockRT.offsetMax = Vector2.zero;
+        knockRT.localScale = Vector3.one;
+        var knockTMP = knockGO.AddComponent<TextMeshProUGUI>();
+        knockTMP.text = "knock knock";
+        knockTMP.fontSize = 28f;
+        knockTMP.alignment = TextAlignmentOptions.Center;
+        knockTMP.color = Color.white;
+        knockGO.SetActive(false);
+
+        // DoorGreetingController component
+        var doorCtrl = doorGO.AddComponent<DoorGreetingController>();
+        var doorSO = new SerializedObject(doorCtrl);
+        doorSO.FindProperty("_doorLayer").intValue = 1 << doorLayer;
+        var cam = camGO.GetComponent<Camera>();
+        if (cam != null)
+            doorSO.FindProperty("_mainCamera").objectReferenceValue = cam;
+        doorSO.FindProperty("_knockText").objectReferenceValue = knockTMP;
+        doorSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log("[ApartmentSceneBuilder] Door greeting controller built.");
+    }
+
     private static void BuildDateEndScreenUI(GameObject parent,
         DateEndScreen dateEndScreen, GameClock gameClock)
     {
@@ -3348,6 +3404,27 @@ public static class ApartmentSceneBuilder
         fadeSO.FindProperty("defaultFadeOutDuration").floatValue = 0.5f;
         fadeSO.FindProperty("defaultFadeInDuration").floatValue = 0.5f;
         // Easing curves use EaseInOut by default (set in ScreenFade field initializers)
+        fadeSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── Phase title text (centered, shown during phase transitions, starts hidden) ──
+        var phaseGO = new GameObject("PhaseText");
+        phaseGO.transform.SetParent(go.transform, false);
+        var phaseRT = phaseGO.AddComponent<RectTransform>();
+        phaseRT.anchorMin = new Vector2(0.5f, 0.5f);
+        phaseRT.anchorMax = new Vector2(0.5f, 0.5f);
+        phaseRT.pivot = new Vector2(0.5f, 0.5f);
+        phaseRT.sizeDelta = new Vector2(800f, 100f);
+        phaseRT.anchoredPosition = Vector2.zero;
+        phaseRT.localScale = Vector3.one;
+        var phaseTMP = phaseGO.AddComponent<TextMeshProUGUI>();
+        phaseTMP.text = "";
+        phaseTMP.fontSize = 40f;
+        phaseTMP.alignment = TextAlignmentOptions.Center;
+        phaseTMP.color = new Color(0.9f, 0.9f, 0.9f, 0.95f);
+        phaseGO.SetActive(false);
+
+        // Wire phase text to ScreenFade
+        fadeSO.FindProperty("_phaseText").objectReferenceValue = phaseTMP;
         fadeSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── Dream interstitial text (centered, large, italic, starts hidden) ──

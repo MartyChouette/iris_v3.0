@@ -109,7 +109,10 @@ public class PhoneController : MonoBehaviour, IStationManager
                         AudioManager.Instance.PlaySFX(callOutgoingSFX);
                     Debug.Log("[PhoneController] Phone clicked during prep — ending prep early.");
                     DayPhaseManager.Instance.EndPrepEarly();
-                    DateSessionManager.Instance?.OnDateCharacterArrived();
+                    if (DoorGreetingController.Instance != null)
+                        DoorGreetingController.Instance.TriggerKnock();
+                    else
+                        DateSessionManager.Instance?.OnDateCharacterArrived();
                     _pendingDate = null;
                     return;
                 }
@@ -196,7 +199,10 @@ public class PhoneController : MonoBehaviour, IStationManager
         if (ringVisual != null)
             ringVisual.SetActive(false);
 
-        DateSessionManager.Instance?.OnDateCharacterArrived();
+        if (DoorGreetingController.Instance != null)
+            DoorGreetingController.Instance.TriggerKnock();
+        else
+            DateSessionManager.Instance?.OnDateCharacterArrived();
     }
 
     private bool CheckPhoneRaycast()
@@ -219,7 +225,10 @@ public class PhoneController : MonoBehaviour, IStationManager
     {
         yield return s_waitCallSequence;
 
-        DateSessionManager.Instance?.OnDateCharacterArrived();
+        if (DoorGreetingController.Instance != null)
+            DoorGreetingController.Instance.TriggerKnock();
+        else
+            DateSessionManager.Instance?.OnDateCharacterArrived();
 
         _state = PhoneState.Idle;
     }
