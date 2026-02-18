@@ -8,7 +8,8 @@ using System.Collections.Generic;
 [Serializable]
 public class IrisSaveData
 {
-    public int saveVersion = 1;
+    // Version 2: DateHistoryEntry gains succeeded, learnedLikes, learnedDislikes
+    public int saveVersion = 2;
 
     // ── Player ────────────────────────────────────────────────────
     public string playerName;
