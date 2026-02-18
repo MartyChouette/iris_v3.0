@@ -50,6 +50,10 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     private bool _isPersonalAd;
     private Rect _phoneNumberBoundsUV;
 
+    private bool _isLocked;
+    private Image _lockOverlay;
+    private TMP_Text _lockLabel;
+
     private bool _isHolding;
     private float _holdTimer;
     private bool _completed;
@@ -82,6 +86,7 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (_isLocked) return;
         if (_isPlayerAd) return; // Player's own ad is decorative
         if (!_isPersonalAd || _personalDef == null) return;
         if (NewspaperManager.Instance == null) return;
@@ -135,6 +140,59 @@ public class NewspaperAdSlot : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     public Rect PhoneNumberBoundsUV => _phoneNumberBoundsUV;
 
     // ─── Public API ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Lock this slot so the player can read it but not select it.
+    /// Shows a semi-transparent overlay with reason text.
+    /// </summary>
+    public void SetLocked(bool locked, string reason = "Tutorial Date")
+    {
+        _isLocked = locked;
+
+        if (locked)
+        {
+            // Create overlay if needed
+            if (_lockOverlay == null && slotRect != null)
+            {
+                var overlayGO = new GameObject("LockOverlay");
+                overlayGO.transform.SetParent(slotRect, false);
+                var overlayRT = overlayGO.AddComponent<RectTransform>();
+                overlayRT.anchorMin = Vector2.zero;
+                overlayRT.anchorMax = Vector2.one;
+                overlayRT.offsetMin = Vector2.zero;
+                overlayRT.offsetMax = Vector2.zero;
+                overlayRT.localScale = Vector3.one;
+                _lockOverlay = overlayGO.AddComponent<Image>();
+                _lockOverlay.color = new Color(0.05f, 0.05f, 0.05f, 0.45f);
+                _lockOverlay.raycastTarget = false;
+
+                var labelGO = new GameObject("LockLabel");
+                labelGO.transform.SetParent(overlayRT, false);
+                var labelRT = labelGO.AddComponent<RectTransform>();
+                labelRT.anchorMin = Vector2.zero;
+                labelRT.anchorMax = Vector2.one;
+                labelRT.offsetMin = Vector2.zero;
+                labelRT.offsetMax = Vector2.zero;
+                labelRT.localScale = Vector3.one;
+                _lockLabel = labelGO.AddComponent<TextMeshProUGUI>();
+                _lockLabel.alignment = TextAlignmentOptions.Center;
+                _lockLabel.fontSize = 14f;
+                _lockLabel.fontStyle = FontStyles.Italic;
+                _lockLabel.color = new Color(0.85f, 0.75f, 0.65f, 0.9f);
+                _lockLabel.raycastTarget = false;
+            }
+
+            if (_lockOverlay != null)
+                _lockOverlay.gameObject.SetActive(true);
+            if (_lockLabel != null)
+                _lockLabel.text = reason;
+        }
+        else
+        {
+            if (_lockOverlay != null)
+                _lockOverlay.gameObject.SetActive(false);
+        }
+    }
 
     /// <summary>
     /// Populate this slot with a personal ad.
