@@ -98,6 +98,14 @@ public static class ReactionEvaluator
         return ReactionType.Neutral;
     }
 
+    /// <summary>Evaluate apartment cleanliness/tidiness. 0 = filthy, 1 = spotless.</summary>
+    public static ReactionType EvaluateCleanliness(float tidiness)
+    {
+        if (tidiness >= 0.8f) return ReactionType.Like;
+        if (tidiness >= 0.5f) return ReactionType.Neutral;
+        return ReactionType.Dislike;
+    }
+
     /// <summary>Evaluate how the current mood matches the date's preferences.</summary>
     public static ReactionType EvaluateMood(float currentMood, DatePreferences prefs)
     {

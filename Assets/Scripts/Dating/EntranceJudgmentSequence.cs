@@ -80,6 +80,17 @@ public class EntranceJudgmentSequence : MonoBehaviour
         Debug.Log($"[EntranceJudgmentSequence] Outfit: {outfitReaction}");
         DateDebugOverlay.Instance?.LogReaction($"[Entrance] Outfit → {outfitReaction}");
         yield return new WaitForSeconds(_interJudgmentPause);
+
+        // --- Judgment 4: Cleanliness ---
+        PlayJudgingSFX();
+        var cleanReaction = EvaluateCleanliness();
+        if (_alwaysPositive) cleanReaction = ReactionType.Like;
+        reactionUI?.ShowReaction(cleanReaction);
+        DateSessionManager.Instance?.ApplyReaction(cleanReaction);
+        if (cleanReaction == ReactionType.Dislike) PlaySneezeSFX();
+        Debug.Log($"[EntranceJudgmentSequence] Cleanliness: {cleanReaction}");
+        DateDebugOverlay.Instance?.LogReaction($"[Entrance] Cleanliness → {cleanReaction}");
+        yield return new WaitForSeconds(_interJudgmentPause);
     }
 
     private void PlayJudgingSFX()
@@ -120,5 +131,11 @@ public class EntranceJudgmentSequence : MonoBehaviour
     {
         float mood = MoodMachine.Instance?.Mood ?? 0f;
         return ReactionEvaluator.EvaluateMood(mood, date.preferences);
+    }
+
+    private ReactionType EvaluateCleanliness()
+    {
+        float tidiness = TidyScorer.Instance != null ? TidyScorer.Instance.OverallTidiness : 1f;
+        return ReactionEvaluator.EvaluateCleanliness(tidiness);
     }
 }
