@@ -14,11 +14,29 @@ public class ReactableTag : MonoBehaviour
     [Tooltip("Is this currently active? (e.g. record only active when playing)")]
     [SerializeField] private bool isActive = true;
 
+    [Tooltip("Private items are hidden from the date NPC (e.g. items in drawers).")]
+    [SerializeField] private bool isPrivate = false;
+
+    [Tooltip("Smell contribution of this item. Smell travels through drawers.")]
+    [SerializeField] private float smellAmount = 0f;
+
     public string[] Tags => tags;
     public bool IsActive
     {
         get => isActive;
         set => isActive = value;
+    }
+
+    public bool IsPrivate
+    {
+        get => isPrivate;
+        set => isPrivate = value;
+    }
+
+    public float SmellAmount
+    {
+        get => smellAmount;
+        set => smellAmount = value;
     }
 
     // ──────────────────────────────────────────────────────────────

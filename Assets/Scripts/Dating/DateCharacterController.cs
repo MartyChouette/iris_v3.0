@@ -294,11 +294,12 @@ public class DateCharacterController : MonoBehaviour
     {
         if (UnityEngine.Random.value > excursionChance) return;
 
-        // Find a random active ReactableTag within radius
+        // Find a random active, non-private ReactableTag within radius
         var candidates = new List<ReactableTag>();
         foreach (var tag in ReactableTag.All)
         {
             if (!tag.IsActive) continue;
+            if (tag.IsPrivate) continue;
             float dist = Vector3.Distance(transform.position, tag.transform.position);
             if (dist <= investigateRadius)
                 candidates.Add(tag);
