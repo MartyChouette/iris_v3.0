@@ -22,6 +22,7 @@ public class FlowerBreathing : MonoBehaviour
     private Vector3 _initialScale;
     private Vector3 _initialLocalPos;
     private float _currentIntensity = 1f;
+    private bool _wasHeld;
 
     // --- Cached Components ---
     private GrabPull _grabPull;
@@ -58,6 +59,12 @@ public class FlowerBreathing : MonoBehaviour
         // 2. INPUT CHECK
         bool isHeld = (_grabPull != null && _grabPull.grabbing);
 
+        // On grab release: rebind base position to wherever physics left the leaf
+        // so breathing doesn't snap it back to its original position.
+        if (_wasHeld && !isHeld)
+            _initialLocalPos = transform.localPosition;
+        _wasHeld = isHeld;
+
         // --- FIX 1: SMOOTH TRANSITION ---
         // Instead of snapping to 0, we Lerp very quickly (speed 10). 
         // This removes the visual "pop" in scale.
@@ -68,9 +75,6 @@ public class FlowerBreathing : MonoBehaviour
         if (_currentIntensity <= 0.001f)
         {
             transform.localScale = _initialScale;
-
-            // Only force position reset if we are NOT holding it
-            if (!isHeld) transform.localPosition = _initialLocalPos;
 
             // --- FIX 2: SAFE TETHER RESET ---
             // We only reset the tether limit when the intensity is fully zero.
