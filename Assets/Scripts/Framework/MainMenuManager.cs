@@ -155,6 +155,14 @@ public class MainMenuManager : MonoBehaviour
         if (slot < 0) slot = 0; // overwrite slot 0 if all full
         SaveManager.ActiveSlot = slot;
 
+        // Delete any existing save in this slot so NameEntryScreen starts fresh
+        SaveManager.DeleteSlot(slot);
+
+        // Clear all static registries to prevent stale state from previous games
+        DateHistory.LoadFrom(null);
+        ItemStateRegistry.Clear();
+        PlayerData.PlayerName = "Nema";
+
         if (_tutorialCard != null)
         {
             _tutorialCard.Show(() => LoadApartment());
