@@ -26,6 +26,13 @@ MonoBehaviour:
     height: 0.15
   characterModelPrefab: {fileID: 0}
   fontSizeOverride: 0
+  keywords:
+  - keyword: Art school dropout
+    commentary: She traded brushes for bouquets. Probably still has paint under her nails.
+  - keyword: waters their plants
+    commentary: A simple test of care. Do you keep things alive?
+  - keyword: Vinyl snobs welcome
+    commentary: She wants someone who owns real records — not just a Spotify playlist.
   preferences:
     likedTags:
     - vinyl
