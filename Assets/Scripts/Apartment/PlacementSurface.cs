@@ -81,8 +81,10 @@ public class PlacementSurface : MonoBehaviour
 
     // ── Projection / Snapping ────────────────────────────────────────
 
+    private const float EdgeMargin = 0.03f;
+
     /// <summary>
-    /// Project a world point onto this surface, clamped within bounds.
+    /// Project a world point onto this surface, clamped within bounds (with edge margin).
     /// Returns the clamped world position at the surface face.
     /// </summary>
     public SurfaceHitResult ProjectOntoSurface(Vector3 worldPoint)
@@ -93,9 +95,11 @@ public class PlacementSurface : MonoBehaviour
         Vector3 min = localBounds.min;
         Vector3 max = localBounds.max;
 
-        // Clamp tangent axes within bounds
-        local[a] = Mathf.Clamp(local[a], min[a], max[a]);
-        local[b] = Mathf.Clamp(local[b], min[b], max[b]);
+        // Clamp tangent axes within bounds with edge margin
+        float marginA = (max[a] - min[a] > EdgeMargin * 4f) ? EdgeMargin : 0f;
+        float marginB = (max[b] - min[b] > EdgeMargin * 4f) ? EdgeMargin : 0f;
+        local[a] = Mathf.Clamp(local[a], min[a] + marginA, max[a] - marginA);
+        local[b] = Mathf.Clamp(local[b], min[b] + marginB, max[b] - marginB);
 
         // Set normal axis to surface face (top of bounds for Up, front for Forward)
         local[n] = localBounds.center[n] + localBounds.extents[n];
@@ -110,7 +114,7 @@ public class PlacementSurface : MonoBehaviour
     }
 
     /// <summary>
-    /// Snap a world point to a grid on this surface's tangent plane, clamped within bounds.
+    /// Snap a world point to a grid on this surface's tangent plane, clamped within bounds (with edge margin).
     /// </summary>
     public Vector3 SnapToGrid(Vector3 worldPoint, float gridSize)
     {
@@ -120,8 +124,10 @@ public class PlacementSurface : MonoBehaviour
         Vector3 min = localBounds.min;
         Vector3 max = localBounds.max;
 
-        local[a] = Mathf.Clamp(Mathf.Round(local[a] / gridSize) * gridSize, min[a], max[a]);
-        local[b] = Mathf.Clamp(Mathf.Round(local[b] / gridSize) * gridSize, min[b], max[b]);
+        float marginA = (max[a] - min[a] > EdgeMargin * 4f) ? EdgeMargin : 0f;
+        float marginB = (max[b] - min[b] > EdgeMargin * 4f) ? EdgeMargin : 0f;
+        local[a] = Mathf.Clamp(Mathf.Round(local[a] / gridSize) * gridSize, min[a] + marginA, max[a] - marginA);
+        local[b] = Mathf.Clamp(Mathf.Round(local[b] / gridSize) * gridSize, min[b] + marginB, max[b] - marginB);
         local[n] = localBounds.center[n] + localBounds.extents[n];
 
         return transform.TransformPoint(local);
@@ -142,7 +148,7 @@ public class PlacementSurface : MonoBehaviour
     }
 
     /// <summary>
-    /// Clamp a world-space point to the nearest valid position on this surface.
+    /// Clamp a world-space point to the nearest valid position on this surface (with edge margin).
     /// </summary>
     public Vector3 ClampToSurface(Vector3 worldPoint)
     {
@@ -152,8 +158,10 @@ public class PlacementSurface : MonoBehaviour
         Vector3 min = localBounds.min;
         Vector3 max = localBounds.max;
 
-        local[a] = Mathf.Clamp(local[a], min[a], max[a]);
-        local[b] = Mathf.Clamp(local[b], min[b], max[b]);
+        float marginA = (max[a] - min[a] > EdgeMargin * 4f) ? EdgeMargin : 0f;
+        float marginB = (max[b] - min[b] > EdgeMargin * 4f) ? EdgeMargin : 0f;
+        local[a] = Mathf.Clamp(local[a], min[a] + marginA, max[a] - marginA);
+        local[b] = Mathf.Clamp(local[b], min[b] + marginB, max[b] - marginB);
         local[n] = localBounds.center[n] + localBounds.extents[n];
 
         return transform.TransformPoint(local);

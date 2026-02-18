@@ -334,13 +334,15 @@ public class ObjectGrabber : MonoBehaviour
 
     // ── Helper: half-extent along a normal ────────────────────────────
 
+    private const float PlacementSafetyMargin = 0.02f;
+
     private float GetHeldHalfExtentAlongNormal(Vector3 normal)
     {
         var col = _held.GetComponent<Collider>();
         if (col == null) return 0f;
 
         Vector3 extents = col.bounds.extents;
-        return Mathf.Abs(Vector3.Dot(extents, normal.normalized));
+        return Mathf.Abs(Vector3.Dot(extents, normal.normalized)) + PlacementSafetyMargin;
     }
 
     // ── Shadow preview ──────────────────────────────────────────────
