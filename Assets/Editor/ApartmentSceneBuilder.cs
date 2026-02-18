@@ -38,6 +38,12 @@ public static class ApartmentSceneBuilder
     private static readonly Vector3 RecordPlayerStationPos = new Vector3(-2f, 0f, 5f);
     private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
+    // ─── Entrance Area Config ────────────────────────────────────
+    private static readonly Vector3 EntranceAreaPos     = new Vector3(-1f, 0f, 6.5f);
+    private static readonly Vector3 TrashCanPos         = new Vector3(-4.5f, 0f, -4.0f);
+    private static readonly Vector3 ShoeRackPos         = new Vector3(-0.5f, 0f, 7.0f);
+    private static readonly Vector3 CoatRackPos         = new Vector3(0.5f, 0f, 7.0f);
+
     // Two-page newspaper spread dimensions
     private const int NewspaperCanvasWidth = 900;
     private const int NewspaperCanvasHeight = 400;
@@ -142,6 +148,12 @@ public static class ApartmentSceneBuilder
         // ── 6b. Dirty dishes + drop zone ──
         BuildDirtyDishes(placeableLayer, surfacesLayer);
 
+        // ── 6c. Entrance area (shoe rack, coat rack, entrance furniture) ──
+        BuildEntranceArea(placeableLayer, surfacesLayer);
+
+        // ── 6d. Trash can (kitchen) ──
+        BuildTrashCan(surfacesLayer);
+
         // ── 7. Browse camera (direct pos/rot/FOV, no spline) ──
         var browseCam = BuildBrowseCamera();
 
@@ -185,6 +197,12 @@ public static class ApartmentSceneBuilder
 
         // ── 13b. Ambient watering (not a station) ──
         BuildAmbientWatering(camGO, plantsLayer);
+
+        // ── 13c. TidyScorer (apartment tidiness aggregation) ──
+        BuildTidyScorer();
+
+        // ── 13d. DailyMessSpawner (trash + misplaced items each morning) ──
+        BuildDailyMessSpawner(placeableLayer);
 
         // ── 14. DayPhaseManager (orchestrates daily loop) ──
         BuildDayPhaseManager(newspaperData, cleaningData, apartmentUI);
@@ -673,7 +691,12 @@ public static class ApartmentSceneBuilder
             var rb = plate.AddComponent<Rigidbody>();
             rb.mass = 0.3f;
 
-            plate.AddComponent<PlaceableObject>();
+            var placeable = plate.AddComponent<PlaceableObject>();
+            var placeableSO = new SerializedObject(placeable);
+            placeableSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Dish;
+            placeableSO.FindProperty("_homeZoneName").stringValue = "DishDropZone";
+            placeableSO.ApplyModifiedPropertiesWithoutUndo();
+
             plate.AddComponent<InteractableHighlight>();
 
             var stackable = plate.AddComponent<StackablePlate>();
@@ -714,11 +737,19 @@ public static class ApartmentSceneBuilder
         if (axisProp != null) axisProp.enumValueIndex = 0; // Up
         surfSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // DishDropZone component
+        // DishDropZone component (plate stacking)
         var dropZone = zoneGO.AddComponent<DishDropZone>();
         var dzSO = new SerializedObject(dropZone);
         dzSO.FindProperty("_zoneRenderer").objectReferenceValue = zoneRend;
         dzSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // DropZone component (generic home zone for PlaceableObject routing)
+        var genericZone = zoneGO.AddComponent<DropZone>();
+        var gzSO = new SerializedObject(genericZone);
+        gzSO.FindProperty("_zoneName").stringValue = "DishDropZone";
+        gzSO.FindProperty("_destroyOnDeposit").boolValue = false;
+        gzSO.FindProperty("_zoneRenderer").objectReferenceValue = zoneRend;
+        gzSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log($"[ApartmentSceneBuilder] Built {positions.Length} dirty dishes + drop zone.");
     }
@@ -907,7 +938,12 @@ public static class ApartmentSceneBuilder
             StationType.Bookcase,
             new Vector3(0.5f, 3.5f, 2.0f), new Vector3(30f, 60f, 0f), 48f);
 
-        return new[] { kitchen, livingRoom };
+        var entrance = CreateAreaDef("Entrance", soDir,
+            "Entrance", "Shoe rack, coat rack, front door.",
+            StationType.None,
+            new Vector3(-0.5f, 3.0f, 7.0f), new Vector3(25f, 180f, 0f), 48f);
+
+        return new[] { kitchen, livingRoom, entrance };
     }
 
     private static ApartmentAreaDefinition CreateAreaDef(
@@ -3241,6 +3277,11 @@ public static class ApartmentSceneBuilder
         dpmSO.FindProperty("_readCamera").objectReferenceValue = newspaperData.stationCamera;
         dpmSO.FindProperty("_stainSpawner").objectReferenceValue = cleaningData.stainSpawner;
         dpmSO.FindProperty("_apartmentUI").objectReferenceValue = apartmentUI;
+
+        // Wire DailyMessSpawner
+        var messSpawner = Object.FindAnyObjectByType<DailyMessSpawner>();
+        if (messSpawner != null)
+            dpmSO.FindProperty("_messSpawner").objectReferenceValue = messSpawner;
         dpmSO.FindProperty("_newspaperHUD").objectReferenceValue = newspaperData.hudRoot;
 
         // ── Prep Timer UI (top-right corner) ──
@@ -3655,6 +3696,317 @@ public static class ApartmentSceneBuilder
         calSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log("[ApartmentSceneBuilder] Kitchen wall calendar placed.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Entrance Area
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildEntranceArea(int placeableLayer, int surfacesLayer)
+    {
+        var parent = new GameObject("EntranceArea");
+        parent.transform.position = EntranceAreaPos;
+
+        var litShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+
+        // ── Shoe Rack (PlacementSurface + DropZone) ──
+        var shoeRack = CreateBox("ShoeRack", parent.transform,
+            ShoeRackPos, new Vector3(0.6f, 0.3f, 0.3f),
+            new Color(0.45f, 0.3f, 0.2f));
+        shoeRack.isStatic = false;
+        shoeRack.layer = surfacesLayer;
+
+        var shoeRackSurf = shoeRack.AddComponent<PlacementSurface>();
+        var srSurfSO = new SerializedObject(shoeRackSurf);
+        var srAxisProp = srSurfSO.FindProperty("normalAxis");
+        if (srAxisProp != null) srAxisProp.enumValueIndex = 0; // Up
+        srSurfSO.ApplyModifiedPropertiesWithoutUndo();
+
+        var shoeRackZone = shoeRack.AddComponent<DropZone>();
+        var srZoneSO = new SerializedObject(shoeRackZone);
+        srZoneSO.FindProperty("_zoneName").stringValue = "ShoeRack";
+        srZoneSO.FindProperty("_destroyOnDeposit").boolValue = false;
+        srZoneSO.FindProperty("_zoneRenderer").objectReferenceValue = shoeRack.GetComponent<Renderer>();
+        srZoneSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── Coat Rack (vertical PlacementSurface + DropZone) ──
+        var coatRackPole = CreateBox("CoatRack_Pole", parent.transform,
+            CoatRackPos, new Vector3(0.08f, 1.5f, 0.08f),
+            new Color(0.35f, 0.25f, 0.15f));
+        coatRackPole.isStatic = true;
+
+        // Flat surface on top for placing coat/hat
+        var coatRackTop = CreateBox("CoatRack_Surface", parent.transform,
+            CoatRackPos + new Vector3(0f, 1.5f, 0f),
+            new Vector3(0.4f, 0.05f, 0.4f),
+            new Color(0.35f, 0.25f, 0.15f));
+        coatRackTop.isStatic = false;
+        coatRackTop.layer = surfacesLayer;
+
+        var coatRackSurf = coatRackTop.AddComponent<PlacementSurface>();
+        var crSurfSO = new SerializedObject(coatRackSurf);
+        var crAxisProp = crSurfSO.FindProperty("normalAxis");
+        if (crAxisProp != null) crAxisProp.enumValueIndex = 0; // Up
+        crSurfSO.ApplyModifiedPropertiesWithoutUndo();
+
+        var coatRackZone = coatRackTop.AddComponent<DropZone>();
+        var crZoneSO = new SerializedObject(coatRackZone);
+        crZoneSO.FindProperty("_zoneName").stringValue = "CoatRack";
+        crZoneSO.FindProperty("_destroyOnDeposit").boolValue = false;
+        crZoneSO.FindProperty("_zoneRenderer").objectReferenceValue = coatRackTop.GetComponent<Renderer>();
+        crZoneSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ── Entrance items (shoes, coat, hat) — start at home, DailyMessSpawner misplaces them ──
+
+        // Shoes
+        var shoes = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        shoes.name = "Shoes";
+        shoes.transform.SetParent(parent.transform);
+        shoes.transform.position = ShoeRackPos + new Vector3(0f, 0.2f, 0f);
+        shoes.transform.localScale = new Vector3(0.2f, 0.1f, 0.12f);
+        shoes.layer = placeableLayer;
+        shoes.isStatic = false;
+        SetMaterial(shoes, new Color(0.2f, 0.15f, 0.1f));
+
+        var shoesRB = shoes.AddComponent<Rigidbody>();
+        shoesRB.mass = 0.5f;
+        var shoesPO = shoes.AddComponent<PlaceableObject>();
+        var shoesPOSO = new SerializedObject(shoesPO);
+        shoesPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Shoe;
+        shoesPOSO.FindProperty("_homeZoneName").stringValue = "ShoeRack";
+        shoesPOSO.ApplyModifiedPropertiesWithoutUndo();
+        shoes.AddComponent<InteractableHighlight>();
+        AddReactableTag(shoes, new[] { "shoes", "mess" }, true);
+
+        // Coat
+        var coat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        coat.name = "Coat";
+        coat.transform.SetParent(parent.transform);
+        coat.transform.position = CoatRackPos + new Vector3(0f, 1.6f, 0f);
+        coat.transform.localScale = new Vector3(0.3f, 0.4f, 0.08f);
+        coat.layer = placeableLayer;
+        coat.isStatic = false;
+        SetMaterial(coat, new Color(0.15f, 0.2f, 0.3f));
+
+        var coatRB = coat.AddComponent<Rigidbody>();
+        coatRB.mass = 0.4f;
+        var coatPO = coat.AddComponent<PlaceableObject>();
+        var coatPOSO = new SerializedObject(coatPO);
+        coatPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Coat;
+        coatPOSO.FindProperty("_homeZoneName").stringValue = "CoatRack";
+        coatPOSO.ApplyModifiedPropertiesWithoutUndo();
+        coat.AddComponent<InteractableHighlight>();
+        AddReactableTag(coat, new[] { "coat", "mess" }, true);
+
+        // Hat
+        var hat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        hat.name = "Hat";
+        hat.transform.SetParent(parent.transform);
+        hat.transform.position = CoatRackPos + new Vector3(0.15f, 1.6f, 0f);
+        hat.transform.localScale = new Vector3(0.2f, 0.05f, 0.2f);
+        hat.layer = placeableLayer;
+        hat.isStatic = false;
+        SetMaterial(hat, new Color(0.6f, 0.5f, 0.35f));
+
+        // Replace CapsuleCollider with BoxCollider
+        var hatCapsule = hat.GetComponent<CapsuleCollider>();
+        if (hatCapsule != null) Object.DestroyImmediate(hatCapsule);
+        hat.AddComponent<BoxCollider>();
+
+        var hatRB = hat.AddComponent<Rigidbody>();
+        hatRB.mass = 0.15f;
+        var hatPO = hat.AddComponent<PlaceableObject>();
+        var hatPOSO = new SerializedObject(hatPO);
+        hatPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Hat;
+        hatPOSO.FindProperty("_homeZoneName").stringValue = "CoatRack";
+        hatPOSO.ApplyModifiedPropertiesWithoutUndo();
+        hat.AddComponent<InteractableHighlight>();
+        AddReactableTag(hat, new[] { "hat", "mess" }, true);
+
+        // ── Entrance bench / mat for decoration ──
+        CreateBox("EntranceMat", parent.transform,
+            EntranceAreaPos + new Vector3(0f, 0.01f, 0f),
+            new Vector3(1.0f, 0.02f, 0.5f),
+            new Color(0.4f, 0.35f, 0.3f));
+
+        Debug.Log("[ApartmentSceneBuilder] Entrance area built (shoe rack, coat rack, shoes, coat, hat).");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Trash Can
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildTrashCan(int surfacesLayer)
+    {
+        var parent = new GameObject("TrashCan");
+        parent.transform.position = TrashCanPos;
+
+        // Can body
+        var body = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        body.name = "TrashCan_Body";
+        body.transform.SetParent(parent.transform);
+        body.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+        body.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
+        body.isStatic = true;
+        SetMaterial(body, new Color(0.35f, 0.35f, 0.38f));
+
+        // Top surface (PlacementSurface + DropZone with destroyOnDeposit)
+        var top = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        top.name = "TrashCan_Top";
+        top.transform.SetParent(parent.transform);
+        top.transform.localPosition = new Vector3(0f, 0.52f, 0f);
+        top.transform.localScale = new Vector3(0.28f, 0.02f, 0.28f);
+        top.layer = surfacesLayer;
+        top.isStatic = false;
+
+        // Transparent green-ish material for zone indicator
+        var zoneShader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                         ?? Shader.Find("Sprites/Default");
+        var zoneMat = new Material(zoneShader);
+        zoneMat.color = new Color(0.3f, 0.8f, 0.4f, 0.35f);
+        zoneMat.SetFloat("_Surface", 1f);
+        zoneMat.SetFloat("_Blend", 0f);
+        zoneMat.renderQueue = 3000;
+        var topRend = top.GetComponent<Renderer>();
+        if (topRend != null) topRend.sharedMaterial = zoneMat;
+
+        // Replace CapsuleCollider with BoxCollider
+        var capsule = top.GetComponent<CapsuleCollider>();
+        if (capsule != null) Object.DestroyImmediate(capsule);
+        top.AddComponent<BoxCollider>();
+
+        var surface = top.AddComponent<PlacementSurface>();
+        var surfSO = new SerializedObject(surface);
+        var axisProp = surfSO.FindProperty("normalAxis");
+        if (axisProp != null) axisProp.enumValueIndex = 0; // Up
+        surfSO.ApplyModifiedPropertiesWithoutUndo();
+
+        var dropZone = top.AddComponent<DropZone>();
+        var dzSO = new SerializedObject(dropZone);
+        dzSO.FindProperty("_zoneName").stringValue = "TrashCan";
+        dzSO.FindProperty("_destroyOnDeposit").boolValue = true;
+        dzSO.FindProperty("_zoneRenderer").objectReferenceValue = topRend;
+        dzSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log("[ApartmentSceneBuilder] Trash can built in kitchen.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // TidyScorer
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildTidyScorer()
+    {
+        var go = new GameObject("TidyScorer");
+        go.AddComponent<TidyScorer>();
+        Debug.Log("[ApartmentSceneBuilder] TidyScorer built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // DailyMessSpawner
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildDailyMessSpawner(int placeableLayer)
+    {
+        var go = new GameObject("DailyMessSpawner");
+        var spawner = go.AddComponent<DailyMessSpawner>();
+
+        // ── Trash spawn slots (disabled by default, spawner activates subset each day) ──
+        var trashParent = new GameObject("TrashSlots");
+        trashParent.transform.SetParent(go.transform);
+
+        Vector3[] trashPositions =
+        {
+            new Vector3(-3.0f, 0.5f, -3.0f),   // kitchen floor
+            new Vector3(-4.5f, 0.82f, -3.5f),   // kitchen table
+            new Vector3(-1.0f, 0.46f, 1.5f),    // near coffee table
+            new Vector3(-0.5f, 0.1f, 3.0f),     // living room floor
+            new Vector3(0.5f, 0.1f, 2.0f),      // living room floor 2
+            new Vector3(-2.0f, 0.1f, -4.0f),    // kitchen floor 2
+        };
+
+        var trashSlots = new GameObject[trashPositions.Length];
+
+        for (int i = 0; i < trashPositions.Length; i++)
+        {
+            var trash = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            trash.name = $"TrashItem_{i:D2}";
+            trash.transform.SetParent(trashParent.transform);
+            trash.transform.position = trashPositions[i];
+            trash.transform.localScale = new Vector3(0.1f, 0.08f, 0.08f);
+            trash.layer = placeableLayer;
+            trash.isStatic = false;
+            SetMaterial(trash, new Color(0.6f, 0.55f, 0.45f)); // crumpled paper look
+
+            var rb = trash.AddComponent<Rigidbody>();
+            rb.mass = 0.05f;
+
+            var trashPO = trash.AddComponent<PlaceableObject>();
+            var trashSO = new SerializedObject(trashPO);
+            trashSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Trash;
+            trashSO.FindProperty("_homeZoneName").stringValue = "TrashCan";
+            trashSO.ApplyModifiedPropertiesWithoutUndo();
+
+            trash.AddComponent<InteractableHighlight>();
+            AddReactableTag(trash, new[] { "trash", "mess" }, true, smellAmount: 0.2f);
+
+            trash.SetActive(false); // spawner activates subset
+            trashSlots[i] = trash;
+        }
+
+        // ── Wrong-position markers (for misplacing entrance items) ──
+        var wrongParent = new GameObject("WrongPositions");
+        wrongParent.transform.SetParent(go.transform);
+
+        Vector3[] wrongPositions =
+        {
+            new Vector3(-3.5f, 0.82f, -3.2f),   // kitchen table
+            new Vector3(-0.4f, 0.46f, 2.0f),    // coffee table
+            new Vector3(-1.5f, 0.1f, 0.5f),     // hallway floor
+            new Vector3(1.0f, 0.1f, 3.0f),      // living room floor
+            new Vector3(-5.0f, 0.1f, -4.0f),    // kitchen floor
+            new Vector3(-2.0f, 0.1f, 5.0f),     // near entrance
+        };
+
+        var wrongTransforms = new Transform[wrongPositions.Length];
+        for (int i = 0; i < wrongPositions.Length; i++)
+        {
+            var marker = new GameObject($"WrongPos_{i:D2}");
+            marker.transform.SetParent(wrongParent.transform);
+            marker.transform.position = wrongPositions[i];
+            wrongTransforms[i] = marker.transform;
+        }
+
+        // ── Wire spawner fields ──
+        var spawnerSO = new SerializedObject(spawner);
+
+        // Trash slots array
+        var trashSlotsProp = spawnerSO.FindProperty("_trashSlots");
+        trashSlotsProp.arraySize = trashSlots.Length;
+        for (int i = 0; i < trashSlots.Length; i++)
+            trashSlotsProp.GetArrayElementAtIndex(i).objectReferenceValue = trashSlots[i];
+
+        // Wrong positions array
+        var wrongPosProp = spawnerSO.FindProperty("_wrongPositions");
+        wrongPosProp.arraySize = wrongTransforms.Length;
+        for (int i = 0; i < wrongTransforms.Length; i++)
+            wrongPosProp.GetArrayElementAtIndex(i).objectReferenceValue = wrongTransforms[i];
+
+        // Find entrance items (created by BuildEntranceArea)
+        var shoesGO = GameObject.Find("Shoes");
+        var coatGO = GameObject.Find("Coat");
+        var hatGO = GameObject.Find("Hat");
+
+        if (shoesGO != null)
+            spawnerSO.FindProperty("_shoes").objectReferenceValue = shoesGO.GetComponent<PlaceableObject>();
+        if (coatGO != null)
+            spawnerSO.FindProperty("_coat").objectReferenceValue = coatGO.GetComponent<PlaceableObject>();
+        if (hatGO != null)
+            spawnerSO.FindProperty("_hat").objectReferenceValue = hatGO.GetComponent<PlaceableObject>();
+
+        spawnerSO.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log($"[ApartmentSceneBuilder] DailyMessSpawner built ({trashSlots.Length} trash slots, {wrongPositions.Length} wrong positions).");
     }
 
     // ══════════════════════════════════════════════════════════════════

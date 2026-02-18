@@ -943,6 +943,17 @@ public static class BookcaseSceneBuilder
             var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
             bookGO.AddComponent<InteractableHighlight>();
 
+            // ReactableTag — starts inactive/private on bookcase, toggled by CoffeeTableBook.MoveRoutine
+            var tag = bookGO.AddComponent<ReactableTag>();
+            var tagSO = new SerializedObject(tag);
+            var tagsProp = tagSO.FindProperty("tags");
+            tagsProp.arraySize = 2;
+            tagsProp.GetArrayElementAtIndex(0).stringValue = "coffee_book";
+            tagsProp.GetArrayElementAtIndex(1).stringValue = def.title.ToLower().Replace(" ", "_");
+            tagSO.FindProperty("isActive").boolValue = false;
+            tagSO.FindProperty("isPrivate").boolValue = true;
+            tagSO.ApplyModifiedPropertiesWithoutUndo();
+
             var cbSO = new SerializedObject(coffeeBook);
             cbSO.FindProperty("definition").objectReferenceValue = def;
             cbSO.ApplyModifiedPropertiesWithoutUndo();
