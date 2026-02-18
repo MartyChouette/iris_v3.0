@@ -118,6 +118,14 @@ public class TrinketVolume : MonoBehaviour
 
         CurrentState = endState;
 
+        // Sync ReactableTag visibility with placement state
+        var reactable = GetComponent<ReactableTag>();
+        if (reactable != null)
+        {
+            reactable.IsPrivate = (endState == State.InDrawer);
+            reactable.IsActive = (endState == State.OnDisplay);
+        }
+
         // Update item state registry
         if (definition != null && !string.IsNullOrEmpty(definition.itemID))
         {

@@ -675,6 +675,9 @@ public static class ApartmentSceneBuilder
             var stackSO = new SerializedObject(stackable);
             stackSO.FindProperty("_plateLayer").intValue = 1 << placeableLayer;
             stackSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // ReactableTag for date reactions (dirty dishes have smell)
+            AddReactableTag(plate, new[] { "dirty_dish", "mess" }, true, smellAmount: 0.3f);
         }
 
         // ── Drop zone (near kitchen sink area) ──
@@ -1152,7 +1155,8 @@ public static class ApartmentSceneBuilder
     // ReactableTag Helper
     // ══════════════════════════════════════════════════════════════════
 
-    private static void AddReactableTag(GameObject go, string[] tags, bool isActive)
+    private static void AddReactableTag(GameObject go, string[] tags, bool isActive,
+        bool isPrivate = false, float smellAmount = 0f)
     {
         var tag = go.AddComponent<ReactableTag>();
         var so = new SerializedObject(tag);
@@ -1161,6 +1165,8 @@ public static class ApartmentSceneBuilder
         for (int i = 0; i < tags.Length; i++)
             tagsProp.GetArrayElementAtIndex(i).stringValue = tags[i];
         so.FindProperty("isActive").boolValue = isActive;
+        so.FindProperty("isPrivate").boolValue = isPrivate;
+        so.FindProperty("smellAmount").floatValue = smellAmount;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
