@@ -346,14 +346,34 @@ public class DateSessionManager : MonoBehaviour
 
     private void EnterReveal()
     {
-        _datePhase = DatePhase.Reveal;
-
         // Disable excursions — NPC sits on couch for reveal
         if (_dateCharacter != null)
             _dateCharacter.DisableExcursions();
 
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
+        Debug.Log("[DateSessionManager] Transitioning to Phase 3: Reveal.");
+        StartCoroutine(TransitionToPhase3());
+    }
+
+    private IEnumerator TransitionToPhase3()
+    {
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(0.5f);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Phase 3");
+
+        yield return new WaitForSeconds(1.5f);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        _datePhase = DatePhase.Reveal;
+
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(0.5f);
 
         Debug.Log("[DateSessionManager] Phase 3: Reveal — replaying accumulated reactions.");
         StartCoroutine(RunRevealSequence());
@@ -526,6 +546,7 @@ public class DateSessionManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
+        // Replay accumulated reactions
         foreach (var reaction in _accumulatedReactions)
         {
             reactionUI?.ShowReaction(reaction.type);
@@ -536,11 +557,31 @@ public class DateSessionManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
-        // Final fail check
-        if (CheckPhaseFailAndExit(_revealFailThreshold))
-            yield break;
-
-        SucceedDate();
+        // Dialogue outcome based on affection
+        if (_affection >= _revealFailThreshold)
+        {
+            // Success dialogue
+            if (reactionUI != null)
+            {
+                reactionUI.ShowText("I had a wonderful time...", 3f);
+                yield return new WaitForSeconds(3.5f);
+                reactionUI.ShowText("Here... I brought you something.", 3f);
+                yield return new WaitForSeconds(3.5f);
+            }
+            SucceedDate();
+        }
+        else
+        {
+            // Fail dialogue
+            if (reactionUI != null)
+            {
+                reactionUI.ShowText("I think I should go...", 3f);
+                yield return new WaitForSeconds(3.5f);
+                reactionUI.ShowText("Goodnight.", 2.5f);
+                yield return new WaitForSeconds(3f);
+            }
+            FailDate();
+        }
     }
 
     private void EvaluateAmbientMood()

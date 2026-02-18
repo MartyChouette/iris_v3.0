@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using TMPro;
 
 /// <summary>
 /// World-space reaction bubble above the date character. Shows a question mark
@@ -30,6 +31,7 @@ public class DateReactionUI : MonoBehaviour
 
     private SpriteRenderer _iconRenderer;
     private GameObject _bubbleGO;
+    private TextMeshPro _bubbleText;
     private Coroutine _activeReaction;
     private Camera _cachedCamera;
     private WaitForSeconds _waitNotice;
@@ -125,6 +127,61 @@ public class DateReactionUI : MonoBehaviour
             yield return null;
         }
 
+        _bubbleGO.SetActive(false);
+        _activeReaction = null;
+    }
+
+    /// <summary>Show a text message above the character for the given duration.</summary>
+    public void ShowText(string message, float duration)
+    {
+        if (_activeReaction != null)
+            StopCoroutine(_activeReaction);
+
+        _activeReaction = StartCoroutine(TextSequence(message, duration));
+    }
+
+    private IEnumerator TextSequence(string message, float duration)
+    {
+        _bubbleGO.SetActive(true);
+        _iconRenderer.enabled = false;
+
+        // Create or reuse TextMeshPro child
+        if (_bubbleText == null)
+        {
+            var textGO = new GameObject("BubbleText");
+            textGO.transform.SetParent(_bubbleGO.transform, false);
+            textGO.transform.localPosition = Vector3.zero;
+            _bubbleText = textGO.AddComponent<TextMeshPro>();
+            _bubbleText.fontSize = 5f;
+            _bubbleText.alignment = TextAlignmentOptions.Center;
+            _bubbleText.color = Color.white;
+            _bubbleText.outlineWidth = 0.2f;
+            _bubbleText.outlineColor = new Color32(0, 0, 0, 200);
+            _bubbleText.rectTransform.sizeDelta = new Vector2(4f, 2f);
+            _bubbleText.enableWordWrapping = true;
+        }
+
+        _bubbleText.text = message;
+        _bubbleText.gameObject.SetActive(true);
+        _bubbleGO.transform.localScale = Vector3.one * 0.5f;
+
+        yield return new WaitForSeconds(duration);
+
+        // Fade out
+        float fadeTime = 0.3f;
+        float elapsed = 0f;
+        Color startColor = _bubbleText.color;
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / fadeTime;
+            _bubbleText.color = new Color(startColor.r, startColor.g, startColor.b, 1f - t);
+            yield return null;
+        }
+
+        _bubbleText.gameObject.SetActive(false);
+        _bubbleText.color = startColor;
+        _iconRenderer.enabled = true;
         _bubbleGO.SetActive(false);
         _activeReaction = null;
     }
