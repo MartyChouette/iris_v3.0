@@ -28,8 +28,14 @@ public class DayManager : MonoBehaviour
     private HashSet<DatePersonalDefinition> _prevPersonals = new HashSet<DatePersonalDefinition>();
     private HashSet<CommercialAdDefinition> _prevCommercials = new HashSet<CommercialAdDefinition>();
 
+    // Tutorial day-gating: locked personals cannot be selected
+    private HashSet<DatePersonalDefinition> _lockedPersonals = new HashSet<DatePersonalDefinition>();
+
     public List<DatePersonalDefinition> TodayPersonals => _todayPersonals;
     public List<CommercialAdDefinition> TodayCommercials => _todayCommercials;
+
+    /// <summary>True if this personal ad is visible but not selectable (Day 1 tutorial gating).</summary>
+    public bool IsLocked(DatePersonalDefinition def) => _lockedPersonals.Contains(def);
 
     private void Awake()
     {
@@ -92,28 +98,50 @@ public class DayManager : MonoBehaviour
             return;
         }
 
-        // Pick personals
         _todayPersonals.Clear();
-        var availablePersonals = new List<DatePersonalDefinition>(pool.personalAds);
+        _lockedPersonals.Clear();
 
-        if (!pool.allowRepeats)
+        // ── Day 1 tutorial: force tutorialDate first, lock the rest ──
+        bool isTutorialDay = CurrentDay == 1 && pool.tutorialDate != null;
+
+        if (isTutorialDay)
         {
-            availablePersonals.RemoveAll(p => _prevPersonals.Contains(p));
+            _todayPersonals.Add(pool.tutorialDate);
+
+            // Fill remaining slots with other pool members (locked)
+            var others = new List<DatePersonalDefinition>(pool.personalAds);
+            others.Remove(pool.tutorialDate);
+            Shuffle(others);
+
+            int remaining = Mathf.Min(pool.personalAdsPerDay - 1, others.Count);
+            for (int i = 0; i < remaining; i++)
+            {
+                _todayPersonals.Add(others[i]);
+                _lockedPersonals.Add(others[i]);
+            }
+
+            Debug.Log($"[DayManager] Tutorial day — {pool.tutorialDate.characterName} is the only selectable ad.");
+        }
+        else
+        {
+            // Normal day: shuffle and pick
+            var availablePersonals = new List<DatePersonalDefinition>(pool.personalAds);
+
+            if (!pool.allowRepeats)
+                availablePersonals.RemoveAll(p => _prevPersonals.Contains(p));
+
+            Shuffle(availablePersonals);
+            int personalCount = Mathf.Min(pool.personalAdsPerDay, availablePersonals.Count);
+            for (int i = 0; i < personalCount; i++)
+                _todayPersonals.Add(availablePersonals[i]);
         }
 
-        Shuffle(availablePersonals);
-        int personalCount = Mathf.Min(pool.personalAdsPerDay, availablePersonals.Count);
-        for (int i = 0; i < personalCount; i++)
-            _todayPersonals.Add(availablePersonals[i]);
-
-        // Pick commercials
+        // Pick commercials (same for all days)
         _todayCommercials.Clear();
         var availableCommercials = new List<CommercialAdDefinition>(pool.commercialAds);
 
         if (!pool.allowRepeats)
-        {
             availableCommercials.RemoveAll(c => _prevCommercials.Contains(c));
-        }
 
         Shuffle(availableCommercials);
         int commercialCount = Mathf.Min(pool.commercialAdsPerDay, availableCommercials.Count);
