@@ -15,6 +15,13 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Seconds after leaving world bounds before recovery (prevents flicker).")]
     [SerializeField] private float respawnDelay = 0.5f;
 
+    [Header("Item Classification")]
+    [Tooltip("What kind of apartment item this is (for tidiness scoring).")]
+    [SerializeField] private ItemCategory _itemCategory = ItemCategory.General;
+
+    [Tooltip("Name of the DropZone this item belongs to (empty = no home zone).")]
+    [SerializeField] private string _homeZoneName = "";
+
     [Header("Surface Restrictions")]
     [Tooltip("If true, this object can be placed on vertical (wall) surfaces.")]
     [SerializeField] private bool canWallMount;
@@ -33,6 +40,9 @@ public class PlaceableObject : MonoBehaviour
     public static void SetWorldBounds(Bounds bounds) { s_worldBounds = bounds; s_boundsSet = true; }
 
     public State CurrentState { get; private set; } = State.Resting;
+    public ItemCategory Category => _itemCategory;
+    public string HomeZoneName => _homeZoneName;
+    public bool IsAtHome { get; set; }
     public bool CanWallMount => canWallMount;
     public bool WallOnly => wallOnly;
     public PlacementSurface LastPlacedSurface => _lastPlacedSurface;
@@ -143,6 +153,12 @@ public class PlaceableObject : MonoBehaviour
         CurrentState = State.Held;
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
+        IsAtHome = false;
+
+        // If we were stored in a drawer, notify the drawer
+        var drawer = GetComponentInParent<DrawerController>();
+        if (drawer != null)
+            drawer.RemoveStoredItem(this);
 
         if (_rb != null)
             _rb.isKinematic = false;
@@ -172,6 +188,14 @@ public class PlaceableObject : MonoBehaviour
         _lastValidPosition = position;
         _lastValidRotation = rotation;
         _lastPlacedSurface = surface;
+
+        // Check if placed on a matching DropZone
+        if (surface != null && !string.IsNullOrEmpty(_homeZoneName))
+        {
+            var zone = surface.GetComponent<DropZone>();
+            if (zone != null && zone.ZoneName == _homeZoneName)
+                IsAtHome = true;
+        }
 
         transform.position = position;
         transform.rotation = rotation;

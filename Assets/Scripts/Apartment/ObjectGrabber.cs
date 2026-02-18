@@ -219,6 +219,40 @@ public class ObjectGrabber : MonoBehaviour
         // Must be over a surface to place
         if (_currentSurface == null) return;
 
+        // ── Drawer storage check ──
+        // If surface is child of an open drawer with capacity, store the item
+        var drawer = _currentSurface.GetComponentInParent<DrawerController>();
+        if (drawer != null && drawer.CurrentState == DrawerController.State.Open && drawer.HasCapacity)
+        {
+            _heldRb.constraints = _originalConstraints;
+            _heldRb.linearVelocity = Vector3.zero;
+            drawer.StoreItem(_held);
+            ClearHeld();
+            return;
+        }
+
+        // ── DropZone check ──
+        // If surface has a DropZone matching the held item's home zone, route through it
+        if (!string.IsNullOrEmpty(_held.HomeZoneName))
+        {
+            var zone = _currentSurface.GetComponent<DropZone>();
+            if (zone != null && zone.ZoneName == _held.HomeZoneName)
+            {
+                _heldRb.constraints = _originalConstraints;
+                _heldRb.linearVelocity = Vector3.zero;
+
+                if (zone.DestroyOnDeposit)
+                {
+                    // Trash can — shrink and destroy
+                    zone.RegisterDeposit(_held);
+                    ClearHeld();
+                    return;
+                }
+                // Normal drop zone — place normally, zone registers deposit
+                // Fall through to standard placement, OnPlaced will set IsAtHome
+            }
+        }
+
         // Wall items only on walls, table items only on tables
         if (_currentSurface.IsVertical && !_held.CanWallMount) return;
         if (!_currentSurface.IsVertical && _held.WallOnly) return;
@@ -248,17 +282,30 @@ public class ObjectGrabber : MonoBehaviour
 
         _held.OnPlaced(_currentSurface, _gridSnap, pos, rot);
 
+        // DropZone deposit (non-destroy — item stays placed on surface)
+        if (!string.IsNullOrEmpty(_held.HomeZoneName))
+        {
+            var zone = _currentSurface.GetComponent<DropZone>();
+            if (zone != null && zone.ZoneName == _held.HomeZoneName)
+                zone.RegisterDeposit(_held);
+        }
+
         // Stack-aware plate hooks
         var stackable = _held.GetComponent<StackablePlate>();
         if (stackable != null)
         {
             stackable.TryJoinStack();
-            var dropZone = _currentSurface != null
+            var dishZone = _currentSurface != null
                 ? _currentSurface.GetComponent<DishDropZone>() : null;
-            if (dropZone != null)
-                dropZone.RegisterDeposit(stackable);
+            if (dishZone != null)
+                dishZone.RegisterDeposit(stackable);
         }
 
+        ClearHeld();
+    }
+
+    private void ClearHeld()
+    {
         _held = null;
         _heldRb = null;
         _currentSurface = null;
@@ -495,12 +542,7 @@ public class ObjectGrabber : MonoBehaviour
                 _held.OnDropped();
             }
 
-            _held = null;
-            _heldRb = null;
-            _currentSurface = null;
-            _lastValidSurface = null;
-            _isOnWall = false;
-            ShowShadow(false);
+            ClearHeld();
         }
     }
 
