@@ -27,6 +27,7 @@ public class MoodMachine : MonoBehaviour
     // Public read-only
     // ──────────────────────────────────────────────────────────────
     public float Mood => _currentMood;
+    public IReadOnlyDictionary<string, float> Sources => _sources;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state

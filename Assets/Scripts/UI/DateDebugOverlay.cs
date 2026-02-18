@@ -4,9 +4,9 @@ using UnityEngine.InputSystem;
 using TMPro;
 
 /// <summary>
-/// Scene-scoped singleton toggled by F1. Shows live debug state:
-/// date phase, affection, NPC state, public/private items, cleanliness,
-/// smell, and a scrolling reaction log.
+/// Scene-scoped singleton toggled by F1. Shows extensive live debug state:
+/// game clock, day phase, date session, preferences, mood, NPC state,
+/// cleanliness, smell, items, accumulated reactions, and a scrolling reaction log.
 /// </summary>
 public class DateDebugOverlay : MonoBehaviour
 {
@@ -18,6 +18,7 @@ public class DateDebugOverlay : MonoBehaviour
     private InputAction _toggleAction;
     private readonly List<string> _reactionLog = new List<string>();
     private const int MaxLogEntries = 20;
+    private int _frameCounter;
 
     private void Awake()
     {
@@ -57,6 +58,10 @@ public class DateDebugOverlay : MonoBehaviour
 
         if (_overlayRoot == null || !_overlayRoot.activeSelf || _debugText == null) return;
 
+        // Throttle rebuild to every 10 frames for performance
+        _frameCounter++;
+        if (_frameCounter % 10 != 0) return;
+
         RebuildText();
     }
 
@@ -70,57 +75,198 @@ public class DateDebugOverlay : MonoBehaviour
 
     private void RebuildText()
     {
-        var sb = new System.Text.StringBuilder(512);
+        var sb = new System.Text.StringBuilder(2048);
 
-        // Phase + Affection
-        var dsm = DateSessionManager.Instance;
-        string phase = dsm != null ? dsm.CurrentDatePhase.ToString() : "N/A";
-        float affection = dsm != null ? dsm.Affection : 0f;
-        sb.AppendLine($"Phase: {phase}  |  Affection: {affection:F1}");
-
-        // NPC State
-        var npc = Object.FindAnyObjectByType<DateCharacterController>();
-        string npcState = npc != null ? npc.CurrentState.ToString() : "N/A";
-        sb.AppendLine($"NPC State: {npcState}");
-
+        // ── GAME CLOCK ──
+        var gc = GameClock.Instance;
+        sb.AppendLine("<b>GAME CLOCK</b>");
+        if (gc != null)
+        {
+            int hour = Mathf.FloorToInt(gc.CurrentHour);
+            int minute = Mathf.FloorToInt((gc.CurrentHour - hour) * 60f);
+            sb.AppendLine($"  Day {gc.CurrentDay}  {hour:D2}:{minute:D2}  Sleeping: {gc.IsSleeping}");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
         sb.AppendLine();
 
-        // Public items
-        sb.AppendLine("PUBLIC ITEMS:");
+        // ── DAY PHASE ──
+        var dpm = DayPhaseManager.Instance;
+        sb.AppendLine("<b>DAY PHASE</b>");
+        if (dpm != null)
+        {
+            sb.AppendLine($"  Phase: {dpm.CurrentPhase}");
+            sb.AppendLine($"  Interaction: {dpm.IsInteractionPhase}  Drink: {dpm.IsDrinkPhase}");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
+        sb.AppendLine();
+
+        // ── DATE SESSION ──
+        var dsm = DateSessionManager.Instance;
+        sb.AppendLine("<b>DATE SESSION</b>");
+        if (dsm != null)
+        {
+            sb.AppendLine($"  State: {dsm.CurrentState}  Phase: {dsm.CurrentDatePhase}");
+            string dateName = dsm.CurrentDate != null ? dsm.CurrentDate.characterName : "None";
+            sb.AppendLine($"  Date: {dateName}");
+
+            float delta = dsm.Affection - dsm.StartingAffection;
+            string deltaStr = delta >= 0 ? $"<color=green>+{delta:F1}</color>" : $"<color=red>{delta:F1}</color>";
+            sb.AppendLine($"  Affection: {dsm.Affection:F1} (start {dsm.StartingAffection:F0}, delta {deltaStr})");
+
+            // Mood multiplier
+            float mood = MoodMachine.Instance?.Mood ?? 0f;
+            if (dsm.CurrentDate != null)
+            {
+                var prefs = dsm.CurrentDate.preferences;
+                bool inRange = mood >= prefs.preferredMoodMin && mood <= prefs.preferredMoodMax;
+                string moodTag = inRange
+                    ? $"<color=green>MATCH x{dsm.MoodMatchMultiplier:F1}</color> (mood {mood:F2} in [{prefs.preferredMoodMin:F1}-{prefs.preferredMoodMax:F1}])"
+                    : $"<color=red>MISMATCH x{dsm.MoodMismatchMultiplier:F1}</color> (mood {mood:F2} out [{prefs.preferredMoodMin:F1}-{prefs.preferredMoodMax:F1}])";
+                sb.AppendLine($"  Mood Mult: {moodTag}");
+            }
+
+            // Fail thresholds
+            sb.AppendLine($"  Arrival Threshold: {dsm.ArrivalFailThreshold:F0} {PassFail(dsm.Affection, dsm.ArrivalFailThreshold)}");
+            sb.AppendLine($"  BgJudge Threshold: {dsm.BgJudgingFailThreshold:F0} {PassFail(dsm.Affection, dsm.BgJudgingFailThreshold)}");
+            sb.AppendLine($"  Reveal Threshold:  {dsm.RevealFailThreshold:F0} {PassFail(dsm.Affection, dsm.RevealFailThreshold)}");
+
+            if (dsm.ArrivalTimerActive)
+                sb.AppendLine($"  Arrival Timer: {dsm.ArrivalTimer:F1}s");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
+        sb.AppendLine();
+
+        // ── DATE PREFERENCES ──
+        if (dsm != null && dsm.CurrentDate != null)
+        {
+            var prefs = dsm.CurrentDate.preferences;
+            sb.AppendLine("<b>DATE PREFERENCES</b>");
+            sb.AppendLine($"  Liked: {JoinOrNone(prefs.likedTags)}");
+            sb.AppendLine($"  Disliked: {JoinOrNone(prefs.dislikedTags)}");
+            sb.AppendLine($"  Mood: [{prefs.preferredMoodMin:F1} - {prefs.preferredMoodMax:F1}]");
+            sb.AppendLine($"  Outfit Liked: {JoinOrNone(prefs.likedOutfitTags)}");
+            sb.AppendLine($"  Outfit Disliked: {JoinOrNone(prefs.dislikedOutfitTags)}");
+            sb.AppendLine($"  Reaction Strength: {prefs.reactionStrength:F2}");
+            sb.AppendLine();
+        }
+
+        // ── MOOD MACHINE ──
+        var mm = MoodMachine.Instance;
+        sb.AppendLine("<b>MOOD MACHINE</b>");
+        if (mm != null)
+        {
+            sb.AppendLine($"  Mood: {mm.Mood:F3}");
+            foreach (var kv in mm.Sources)
+                sb.AppendLine($"  [{kv.Key}] = {kv.Value:F3}");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
+        sb.AppendLine();
+
+        // ── NPC STATE ──
+        var npc = Object.FindAnyObjectByType<DateCharacterController>();
+        sb.AppendLine("<b>NPC STATE</b>");
+        sb.AppendLine(npc != null ? $"  {npc.CurrentState}" : "  <color=#888>N/A</color>");
+        sb.AppendLine();
+
+        // ── CLEANLINESS ──
+        var cm = CleaningManager.Instance;
+        sb.AppendLine("<b>CLEANLINESS</b>");
+        if (cm != null)
+        {
+            sb.AppendLine($"  Kitchen: {cm.GetAreaCleanPercent(ApartmentArea.Kitchen):P0}");
+            sb.AppendLine($"  Living Room: {cm.GetAreaCleanPercent(ApartmentArea.LivingRoom):P0}");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
+        sb.AppendLine();
+
+        // ── SMELL ──
+        sb.AppendLine("<b>SMELL</b>");
+        float totalSmell = SmellTracker.TotalSmell;
+        string smellColor = totalSmell > SmellTracker.SmellThreshold ? "red" : "green";
+        sb.AppendLine($"  Total: <color={smellColor}>{totalSmell:F2}</color> (threshold: {SmellTracker.SmellThreshold:F1})");
+        sb.AppendLine();
+
+        // ── PUBLIC ITEMS ──
+        sb.AppendLine("<b>PUBLIC ITEMS</b>");
+        int pubCount = 0;
         foreach (var tag in ReactableTag.All)
         {
             if (!tag.IsPrivate && tag.IsActive)
+            {
                 sb.AppendLine($"  {tag.gameObject.name} [{string.Join(",", tag.Tags)}]");
+                pubCount++;
+            }
         }
+        if (pubCount == 0) sb.AppendLine("  <color=#888>none</color>");
+        sb.AppendLine();
 
-        // Private items
-        sb.AppendLine("PRIVATE ITEMS:");
+        // ── PRIVATE ITEMS ──
+        sb.AppendLine("<b>PRIVATE ITEMS</b>");
+        int privCount = 0;
         foreach (var tag in ReactableTag.All)
         {
             if (tag.IsPrivate)
+            {
                 sb.AppendLine($"  {tag.gameObject.name} [{string.Join(",", tag.Tags)}]");
+                privCount++;
+            }
         }
-
+        if (privCount == 0) sb.AppendLine("  <color=#888>none</color>");
         sb.AppendLine();
 
-        // Per-area cleanliness
-        var cm = CleaningManager.Instance;
-        if (cm != null)
+        // ── ACCUMULATED REACTIONS ──
+        if (dsm != null && dsm.AccumulatedReactions.Count > 0)
         {
-            sb.AppendLine($"Kitchen Clean: {cm.GetAreaCleanPercent(ApartmentArea.Kitchen):P0}");
-            sb.AppendLine($"Living Room Clean: {cm.GetAreaCleanPercent(ApartmentArea.LivingRoom):P0}");
+            sb.AppendLine("<b>ACCUMULATED REACTIONS</b>");
+            foreach (var r in dsm.AccumulatedReactions)
+            {
+                string rColor = r.type == ReactionType.Like ? "green"
+                    : r.type == ReactionType.Dislike ? "red" : "white";
+                sb.AppendLine($"  {r.itemName} → <color={rColor}>{r.type}</color>");
+            }
+            sb.AppendLine();
         }
 
-        // Smell
-        sb.AppendLine($"Smell: {SmellTracker.TotalSmell:F2} (threshold: {SmellTracker.SmellThreshold:F1})");
-
-        sb.AppendLine();
-
-        // Reaction log
-        sb.AppendLine("REACTION LOG:");
-        for (int i = 0; i < _reactionLog.Count; i++)
-            sb.AppendLine($"  {_reactionLog[i]}");
+        // ── REACTION LOG ──
+        sb.AppendLine("<b>REACTION LOG</b>");
+        if (_reactionLog.Count == 0)
+        {
+            sb.AppendLine("  <color=#888>empty</color>");
+        }
+        else
+        {
+            for (int i = 0; i < _reactionLog.Count; i++)
+                sb.AppendLine($"  {_reactionLog[i]}");
+        }
 
         _debugText.text = sb.ToString();
+    }
+
+    private static string PassFail(float affection, float threshold)
+    {
+        return affection >= threshold
+            ? "<color=green>OK</color>"
+            : "<color=red>FAIL</color>";
+    }
+
+    private static string JoinOrNone(string[] arr)
+    {
+        if (arr == null || arr.Length == 0) return "<color=#888>none</color>";
+        return string.Join(", ", arr);
     }
 }

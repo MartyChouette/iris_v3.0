@@ -133,6 +133,17 @@ public class DateSessionManager : MonoBehaviour
     public float Affection => _affection;
     public bool IsDateActive => _state == SessionState.DateInProgress;
 
+    // Debug read-only accessors
+    public float StartingAffection => startingAffection;
+    public float MoodMatchMultiplier => moodMatchMultiplier;
+    public float MoodMismatchMultiplier => moodMismatchMultiplier;
+    public float ArrivalFailThreshold => _arrivalFailThreshold;
+    public float BgJudgingFailThreshold => _bgJudgingFailThreshold;
+    public float RevealFailThreshold => _revealFailThreshold;
+    public IReadOnlyList<AccumulatedReaction> AccumulatedReactions => _accumulatedReactions;
+    public float ArrivalTimer => _arrivalTimer;
+    public bool ArrivalTimerActive => _arrivalTimerActive;
+
     // ──────────────────────────────────────────────────────────────
     // Lifecycle
     // ──────────────────────────────────────────────────────────────
