@@ -77,6 +77,23 @@ public class CleaningManager : MonoBehaviour
     /// <summary>Replace the surfaces array (used by ApartmentStainSpawner).</summary>
     public void SetSurfaces(CleanableSurface[] surfaces) => _surfaces = surfaces;
 
+    /// <summary>Average clean percent for surfaces in a specific area.</summary>
+    public float GetAreaCleanPercent(ApartmentArea area)
+    {
+        if (_surfaces == null || _surfaces.Length == 0) return 1f;
+        float sum = 0f;
+        int count = 0;
+        for (int i = 0; i < _surfaces.Length; i++)
+        {
+            if (_surfaces[i].Area == area)
+            {
+                sum += _surfaces[i].CleanPercent;
+                count++;
+            }
+        }
+        return count == 0 ? 1f : sum / count;
+    }
+
     /// <summary>Average clean percent across all surfaces.</summary>
     public float OverallCleanPercent
     {

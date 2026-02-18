@@ -2903,6 +2903,8 @@ public static class ApartmentSceneBuilder
                 dirtQuad.GetComponent<Renderer>();
             surfSO.FindProperty("_wetRenderer").objectReferenceValue =
                 wetQuad.GetComponent<Renderer>();
+            // Assign area based on Z position: Z < 0 = Kitchen, Z >= 0 = LivingRoom
+            surfSO.FindProperty("_area").enumValueIndex = slotPositions[i].z < 0f ? 0 : 1;
             surfSO.ApplyModifiedPropertiesWithoutUndo();
 
             stainSlots[i] = surface;

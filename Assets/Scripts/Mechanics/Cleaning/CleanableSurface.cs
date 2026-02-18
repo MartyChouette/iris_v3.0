@@ -8,6 +8,10 @@ using UnityEngine.Events;
 /// </summary>
 public class CleanableSurface : MonoBehaviour
 {
+    [Header("Area")]
+    [Tooltip("Which apartment area this surface belongs to.")]
+    [SerializeField] private ApartmentArea _area;
+
     [Header("Definition")]
     [Tooltip("Spill definition controlling appearance and stubbornness.")]
     [SerializeField] private SpillDefinition _definition;
@@ -48,6 +52,12 @@ public class CleanableSurface : MonoBehaviour
     private bool _fullyCleanFired;
 
     // ── Public API ──────────────────────────────────────────────────
+
+    /// <summary>Which apartment area this surface belongs to.</summary>
+    public ApartmentArea Area => _area;
+
+    /// <summary>Set the apartment area (used by scene builder).</summary>
+    public void SetArea(ApartmentArea area) => _area = area;
 
     /// <summary>The spill definition driving this surface.</summary>
     public SpillDefinition Definition => _definition;
