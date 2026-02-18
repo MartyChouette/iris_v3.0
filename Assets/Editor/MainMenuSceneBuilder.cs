@@ -391,9 +391,9 @@ public static class MainMenuSceneBuilder
         rt.sizeDelta = size;
         rt.localScale = Vector3.one;
 
-        // Image disabled (transparent button, text-only)
+        // Fully transparent Image — keeps raycast target for Button click detection
         var img = go.AddComponent<Image>();
-        img.enabled = false;
+        img.color = Color.clear;
 
         var btn = go.AddComponent<Button>();
         var colors = btn.colors;
