@@ -12,12 +12,17 @@ public class DateDebugOverlay : MonoBehaviour
 {
     public static DateDebugOverlay Instance { get; private set; }
 
+    /// <summary>When true, game timers (GameClock, prep timer, arrival timer) stop ticking
+    /// but gameplay continues normally (movement, interaction, physics all work).</summary>
+    public static bool IsTimePaused { get; private set; }
+
     [SerializeField] private GameObject _overlayRoot;
     [SerializeField] private TMP_Text _debugText;
 
     private InputAction _toggleAction;
     private InputAction _scrollUpAction;
     private InputAction _scrollDownAction;
+    private InputAction _timePauseAction;
     private readonly List<string> _reactionLog = new List<string>();
     private const int MaxLogEntries = 20;
     private int _frameCounter;
@@ -37,6 +42,7 @@ public class DateDebugOverlay : MonoBehaviour
         _toggleAction = new InputAction("DebugToggle", InputActionType.Button, "<Keyboard>/f1");
         _scrollUpAction = new InputAction("DebugScrollUp", InputActionType.Button, "<Keyboard>/pageUp");
         _scrollDownAction = new InputAction("DebugScrollDown", InputActionType.Button, "<Keyboard>/pageDown");
+        _timePauseAction = new InputAction("DebugTimePause", InputActionType.Button, "<Keyboard>/p");
 
         if (_overlayRoot != null)
             _overlayRoot.SetActive(false);
@@ -47,6 +53,7 @@ public class DateDebugOverlay : MonoBehaviour
         _toggleAction.Enable();
         _scrollUpAction.Enable();
         _scrollDownAction.Enable();
+        _timePauseAction.Enable();
     }
 
     private void OnDisable()
@@ -54,11 +61,16 @@ public class DateDebugOverlay : MonoBehaviour
         _toggleAction.Disable();
         _scrollUpAction.Disable();
         _scrollDownAction.Disable();
+        _timePauseAction.Disable();
     }
 
     private void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this)
+        {
+            Instance = null;
+            IsTimePaused = false;
+        }
     }
 
     private void Update()
@@ -73,6 +85,10 @@ public class DateDebugOverlay : MonoBehaviour
             _scrollOffset = Mathf.Max(0, _scrollOffset - ScrollStep);
         if (_scrollDownAction.WasPressedThisFrame())
             _scrollOffset += ScrollStep;
+
+        // Debug time pause (P key) — freezes game timers only, not gameplay
+        if (_timePauseAction.WasPressedThisFrame())
+            IsTimePaused = !IsTimePaused;
 
         // Throttle rebuild to every 10 frames for performance
         _frameCounter++;
@@ -92,6 +108,9 @@ public class DateDebugOverlay : MonoBehaviour
     private void RebuildText()
     {
         var sb = new System.Text.StringBuilder(2048);
+
+        if (IsTimePaused)
+            sb.AppendLine("<color=red><b>[TIMERS PAUSED \u2014 P to resume]</b></color>");
 
         // ── GAME CLOCK ──
         var gc = GameClock.Instance;

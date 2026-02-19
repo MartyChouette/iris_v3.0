@@ -185,7 +185,7 @@ public class DateSessionManager : MonoBehaviour
     private void Update()
     {
         // Arrival timer — ticks during WaitingForArrival
-        if (_state == SessionState.WaitingForArrival && _arrivalTimerActive)
+        if (_state == SessionState.WaitingForArrival && _arrivalTimerActive && !DateDebugOverlay.IsTimePaused)
         {
             _arrivalTimer -= Time.deltaTime;
             if (_arrivalTimer <= 0f)

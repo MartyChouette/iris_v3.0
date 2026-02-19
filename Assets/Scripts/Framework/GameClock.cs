@@ -108,6 +108,7 @@ public class GameClock : MonoBehaviour
     private void Update()
     {
         if (_isSleeping) return;
+        if (DateDebugOverlay.IsTimePaused) return;
 
         _currentHour += Time.deltaTime / realSecondsPerGameHour;
 

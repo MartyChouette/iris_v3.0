@@ -152,6 +152,7 @@ public class DayPhaseManager : MonoBehaviour
     private void Update()
     {
         if (!_prepTimerActive) return;
+        if (DateDebugOverlay.IsTimePaused) return;
 
         _prepTimer -= Time.deltaTime;
 
