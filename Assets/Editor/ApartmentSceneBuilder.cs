@@ -2836,6 +2836,9 @@ public static class ApartmentSceneBuilder
         var dateEndScreen = managersGO.AddComponent<DateEndScreen>();
         BuildDateEndScreenUI(managersGO, dateEndScreen, gameClock);
 
+        // ── FlowerGiftPresenter ─────────────────────────────────────
+        BuildFlowerGiftPresenter(managersGO);
+
         // ── DateSessionHUD ────────────────────────────────────────────
         BuildDateSessionHUD(managersGO);
 
@@ -2966,6 +2969,66 @@ public static class ApartmentSceneBuilder
         endSO.FindProperty("summaryText").objectReferenceValue = summaryTMP;
         endSO.FindProperty("continueButton").objectReferenceValue = btn;
         endSO.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void BuildFlowerGiftPresenter(GameObject parent)
+    {
+        var presenterGO = new GameObject("FlowerGiftPresenter");
+        presenterGO.transform.SetParent(parent.transform);
+        var presenter = presenterGO.AddComponent<FlowerGiftPresenter>();
+
+        // Overlay canvas (ScreenSpaceOverlay, above DateEndScreen)
+        var canvasGO = new GameObject("FlowerGift_Canvas");
+        canvasGO.transform.SetParent(presenterGO.transform);
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 25;
+        canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
+        canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        // CanvasGroup for fade
+        var canvasGroup = canvasGO.AddComponent<CanvasGroup>();
+        canvasGroup.alpha = 0f;
+
+        // Full-screen dark panel
+        var panelGO = new GameObject("DarkOverlay");
+        panelGO.transform.SetParent(canvasGO.transform);
+        var panelRT = panelGO.AddComponent<RectTransform>();
+        panelRT.anchorMin = Vector2.zero;
+        panelRT.anchorMax = Vector2.one;
+        panelRT.offsetMin = Vector2.zero;
+        panelRT.offsetMax = Vector2.zero;
+        panelRT.localScale = Vector3.one;
+        panelGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.02f, 0.02f, 0.05f, 0.85f);
+
+        // Announcement text (center-bottom)
+        var textGO = new GameObject("ItemNameText");
+        textGO.transform.SetParent(canvasGO.transform);
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = new Vector2(0.5f, 0.2f);
+        textRT.anchorMax = new Vector2(0.5f, 0.2f);
+        textRT.pivot = new Vector2(0.5f, 0.5f);
+        textRT.sizeDelta = new Vector2(600f, 60f);
+        textRT.anchoredPosition = Vector2.zero;
+        textRT.localScale = Vector3.one;
+        var itemTMP = textGO.AddComponent<TextMeshProUGUI>();
+        itemTMP.text = "";
+        itemTMP.fontSize = 32f;
+        itemTMP.fontStyle = FontStyles.Bold;
+        itemTMP.alignment = TextAlignmentOptions.Center;
+        itemTMP.color = Color.white;
+
+        // Start hidden
+        canvasGO.SetActive(false);
+
+        // Wire fields
+        var so = new SerializedObject(presenter);
+        so.FindProperty("_overlayRoot").objectReferenceValue = canvasGO;
+        so.FindProperty("_canvasGroup").objectReferenceValue = canvasGroup;
+        so.FindProperty("_itemNameText").objectReferenceValue = itemTMP;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log("[ApartmentSceneBuilder] FlowerGiftPresenter built.");
     }
 
     private static void BuildDateSessionHUD(GameObject parent)

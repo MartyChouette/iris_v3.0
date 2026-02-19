@@ -529,6 +529,11 @@ public class DateSessionManager : MonoBehaviour
 
         _state = SessionState.DateEnding;
         _datePhase = DatePhase.None;
+        StartCoroutine(SucceedDateSequence());
+    }
+
+    private IEnumerator SucceedDateSequence()
+    {
         Debug.Log($"[DateSessionManager] Date SUCCEEDED with {_currentDate?.characterName}. Affection: {_affection:F1}");
 
         DateOutcomeCapture.Capture(_currentDate, _affection, true, _accumulatedReactions);
@@ -547,6 +552,14 @@ public class DateSessionManager : MonoBehaviour
         // Signal flower trimming if this date has a flower scene configured
         if (_currentDate != null && !string.IsNullOrEmpty(_currentDate.flowerSceneName))
             PendingFlowerTrim = true;
+
+        // Zelda-style flower gift presentation (before dismissing character)
+        if (_currentDate != null && _currentDate.flowerPrefab != null
+            && FlowerGiftPresenter.Instance != null)
+        {
+            yield return FlowerGiftPresenter.Instance.Present(
+                _currentDate.flowerPrefab, _currentDate.characterName);
+        }
 
         DismissCharacter();
         OnDateSessionEnded?.Invoke(_currentDate, _affection);
