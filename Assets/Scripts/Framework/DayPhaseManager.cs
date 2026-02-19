@@ -92,6 +92,12 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("SFX played when prep timer hits 10 seconds remaining.")]
     [SerializeField] private AudioClip timerWarningSFX;
 
+    [Tooltip("Optional ambience loop for the morning newspaper phase. If null, MoodMachine ambient runs.")]
+    [SerializeField] private AudioClip _morningAmbienceClip;
+
+    [Tooltip("Optional ambience loop for exploration/prep phase. If null, MoodMachine ambient runs.")]
+    [SerializeField] private AudioClip _explorationAmbienceClip;
+
     [Header("Events")]
     public UnityEvent<int> OnPhaseChanged;
 
@@ -357,6 +363,10 @@ public class DayPhaseManager : MonoBehaviour
         if (nextDaySFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(nextDaySFX);
 
+        // Phase ambience override (gentle newspaper-reading tone)
+        if (_morningAmbienceClip != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayAmbience(_morningAmbienceClip, 0.5f);
+
         // 0. Suspend ortho preset so Cinemachine can blend to perspective read camera
         CameraTestController.Instance?.SuspendPreset();
 
@@ -432,7 +442,11 @@ public class DayPhaseManager : MonoBehaviour
         // 8. Restore suspended camera preset (if player had one active before morning)
         CameraTestController.Instance?.RestorePreset();
 
-        // 9. Start preparation countdown
+        // 9. Swap to exploration ambience (or let MoodMachine take over if null)
+        if (_explorationAmbienceClip != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayAmbience(_explorationAmbienceClip, 0.5f);
+
+        // 10. Start preparation countdown
         StartPrepTimer();
     }
 
