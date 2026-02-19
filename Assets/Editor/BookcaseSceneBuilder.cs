@@ -5,7 +5,7 @@ using TMPro;
 
 /// <summary>
 /// Editor utility that programmatically builds the bookcase_browsing scene with
-/// a room, bookcase full of books, drawers with trinkets, perfume bottles,
+/// a room, bookcase full of books, drawers, perfume bottles,
 /// coffee table books, item inspector, and first-person browse camera.
 /// Menu: Window > Iris > Build Bookcase Browsing Scene
 /// </summary>
@@ -14,7 +14,6 @@ public static class BookcaseSceneBuilder
     private const string BooksLayerName = "Books";
     private const string DrawersLayerName = "Drawers";
     private const string PerfumesLayerName = "Perfumes";
-    private const string TrinketsLayerName = "Trinkets";
     private const string CoffeeTableBooksLayerName = "CoffeeTableBooks";
 
     // Bookcase dimensions
@@ -199,26 +198,6 @@ public static class BookcaseSceneBuilder
     };
     private static readonly float[] PerfumeLightIntensities = { 0.8f, 1.2f, 0.9f };
 
-    // Trinket data
-    private static readonly string[] TrinketNames =
-    {
-        "Ceramic Cat", "Brass Key", "Glass Marble", "Tiny Cactus"
-    };
-    private static readonly string[] TrinketDescriptions =
-    {
-        "A small painted cat, one ear chipped. It looks smug.",
-        "An old brass key that doesn't fit any lock you own.",
-        "Swirls of blue and green trapped in a perfect sphere.",
-        "A fake cactus, barely an inch tall. Perpetually cheerful."
-    };
-    private static readonly Color[] TrinketColors =
-    {
-        new Color(0.9f, 0.85f, 0.75f),
-        new Color(0.75f, 0.65f, 0.3f),
-        new Color(0.3f, 0.5f, 0.8f),
-        new Color(0.4f, 0.7f, 0.3f),
-    };
-
     // Coffee table book data
     private static readonly string[] CoffeeBookTitles = { "Arrangements", "Petal Studies" };
     private static readonly string[] CoffeeBookDescriptions =
@@ -241,7 +220,6 @@ public static class BookcaseSceneBuilder
         int booksLayer = EnsureLayer(BooksLayerName);
         int drawersLayer = EnsureLayer(DrawersLayerName);
         int perfumesLayer = EnsureLayer(PerfumesLayerName);
-        int trinketsLayer = EnsureLayer(TrinketsLayerName);
         int coffeeTableBooksLayer = EnsureLayer(CoffeeTableBooksLayerName);
 
         // ── 1. Directional light ───────────────────────────────────────
@@ -258,9 +236,9 @@ public static class BookcaseSceneBuilder
         // ── 3. Room geometry ───────────────────────────────────────────
         BuildRoom();
 
-        // ── 4. Bookcase unit (frame, books, perfumes, trinkets, drawers, coffee books)
+        // ── 4. Bookcase unit (frame, books, perfumes, drawers, coffee books)
         var bookcaseRoot = BuildBookcaseUnit(booksLayer, drawersLayer,
-            perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+            perfumesLayer, coffeeTableBooksLayer);
         bookcaseRoot.transform.position = new Vector3(0f, 0f, 1.8f);
 
         // ── 5. Coffee table (scene-specific room furniture) ──────────
@@ -288,7 +266,7 @@ public static class BookcaseSceneBuilder
 
         // ── 9. BookInteractionManager + UI ───────────────────────────
         BuildInteractionManager(camGO, inspector, booksLayer, drawersLayer,
-            perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+            perfumesLayer, coffeeTableBooksLayer);
 
         // ── 10. Save scene ───────────────────────────────────────────
         string dir = "Assets/Scenes";
@@ -306,20 +284,19 @@ public static class BookcaseSceneBuilder
 
     /// <summary>
     /// Builds a self-contained bookcase unit at local origin (0,0,0) with all items:
-    /// frame, books, perfume bottles, trinket display slots, drawers with trinkets,
-    /// and coffee table books. Caller positions/rotates the returned root and wires
+    /// frame, books, perfume bottles, drawers, and coffee table books.
+    /// Caller positions/rotates the returned root and wires
     /// coffee table book targets to scene-specific furniture.
     /// </summary>
     public static GameObject BuildBookcaseUnit(int booksLayer, int drawersLayer,
-        int perfumesLayer, int trinketsLayer, int coffeeTableBooksLayer)
+        int perfumesLayer, int coffeeTableBooksLayer)
     {
         var bookcaseRoot = new GameObject("Bookcase");
 
         BuildBookcaseFrame(bookcaseRoot);
         BuildBooks(bookcaseRoot, booksLayer);
         BuildPerfumeShelf(bookcaseRoot, perfumesLayer);
-        BuildTrinketDisplaySlots(bookcaseRoot, trinketsLayer);
-        BuildDrawers(bookcaseRoot, drawersLayer, trinketsLayer);
+        BuildDrawers(bookcaseRoot, drawersLayer);
         BuildCoffeeTableBooks(bookcaseRoot, coffeeTableBooksLayer);
 
         return bookcaseRoot;
@@ -454,7 +431,7 @@ public static class BookcaseSceneBuilder
             float availableHeight = rowHeight - ShelfThickness;
 
             // Reserve right-side space on specific rows for new items:
-            //   Row 0: reserve right third for trinket display slots
+            //   Row 0: reserve right side for coffee table book stack
             //   Row 1: reserve right third for perfume bottles
             //   Row 2: reserve right quarter for coffee table books (flat)
             //   Row 3: full width for books
@@ -723,53 +700,17 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Trinket Display Slots (row 0, right side — next to books)
-    // ════════════════════════════════════════════════════════════════════
-
-    private static void BuildTrinketDisplaySlots(GameObject bookcaseRoot, int trinketsLayer)
-    {
-        var parent = new GameObject("TrinketDisplaySlots");
-        parent.transform.SetParent(bookcaseRoot.transform);
-
-        float innerWidth = CaseWidth - SidePanelThickness * 2f;
-        float rowHeight = CaseHeight / ShelfCount;
-        float row0ShelfTopY = 0f * rowHeight + ShelfThickness / 2f;
-
-        // 4 display positions in the right third of row 0
-        float rightZoneStart = innerWidth / 2f - innerWidth / 3f + 0.02f;
-        float spacing = (innerWidth / 3f - 0.04f) / 4f;
-
-        for (int i = 0; i < 4; i++)
-        {
-            float slotX = rightZoneStart + i * spacing + spacing / 2f;
-            float slotY = row0ShelfTopY + 0.01f;
-
-            var slotGO = CreateBox($"DisplaySlot_{i}", parent.transform,
-                new Vector3(slotX, slotY, CaseCenterZ),
-                new Vector3(0.06f, 0.005f, 0.06f),
-                new Color(0.35f, 0.25f, 0.15f, 0.5f));
-            slotGO.isStatic = true;
-        }
-
-        Debug.Log("[BookcaseSceneBuilder] Created 4 trinket display slots on row 0 (right side).");
-    }
-
-    // ════════════════════════════════════════════════════════════════════
     // Drawers (separate unit below bookcase, from Y=-DrawerHeight to Y=0)
     // ════════════════════════════════════════════════════════════════════
 
-    private static void BuildDrawers(GameObject bookcaseRoot, int drawersLayer, int trinketsLayer)
+    private static void BuildDrawers(GameObject bookcaseRoot, int drawersLayer)
     {
-        string defDir = "Assets/ScriptableObjects/Bookcase";
-        if (!AssetDatabase.IsValidFolder(defDir))
-            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Bookcase");
-
         var parent = new GameObject("Drawers");
         parent.transform.SetParent(bookcaseRoot.transform);
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float drawerWidth = innerWidth / 2f - 0.02f;
-        float drawerY = -DrawerHeight / 2f;  // centered in the drawer section
+        float drawerY = -DrawerHeight / 2f;
         float drawerDepth = CaseDepth - 0.04f;
 
         Color drawerColor = new Color(0.30f, 0.20f, 0.12f);
@@ -797,15 +738,6 @@ public static class BookcaseSceneBuilder
             new Vector3(SidePanelThickness, DrawerHeight - 0.02f, CaseDepth - 0.02f),
             frameBrown);
 
-        // Row 0 display slot positions for trinket targets (right third)
-        float rowHeight = CaseHeight / ShelfCount;
-        float displayY = 0f * rowHeight + ShelfThickness / 2f + 0.04f;
-        float displayRightStart = innerWidth / 2f - innerWidth / 3f + 0.02f;
-        float displaySpacing = (innerWidth / 3f - 0.04f) / 4f;
-        float displayStartX = displayRightStart + displaySpacing / 2f;
-
-        int trinketIndex = 0;
-
         for (int d = 0; d < 2; d++)
         {
             float drawerX = (d == 0) ? -innerWidth / 4f : innerWidth / 4f;
@@ -820,49 +752,9 @@ public static class BookcaseSceneBuilder
             var drawer = drawerGO.AddComponent<DrawerController>();
             drawerGO.AddComponent<InteractableHighlight>();
 
-            // Trinket contents inside this drawer
             var contentsRoot = new GameObject($"DrawerContents_{d}");
             contentsRoot.transform.SetParent(drawerGO.transform);
             contentsRoot.transform.localPosition = Vector3.zero;
-
-            // 2 trinkets per drawer
-            int trinketsInDrawer = 2;
-            for (int t = 0; t < trinketsInDrawer && trinketIndex < TrinketNames.Length; t++)
-            {
-                var trinketDef = ScriptableObject.CreateInstance<TrinketDefinition>();
-                trinketDef.trinketName = TrinketNames[trinketIndex];
-                trinketDef.description = TrinketDescriptions[trinketIndex];
-                trinketDef.color = TrinketColors[trinketIndex];
-                trinketDef.itemID = $"trinket_{trinketIndex}";
-                trinketDef.startsInDrawer = true;
-
-                string trinketDefPath = $"{defDir}/Trinket_{trinketIndex:D2}_{TrinketNames[trinketIndex].Replace(" ", "_")}.asset";
-                AssetDatabase.CreateAsset(trinketDef, trinketDefPath);
-
-                float localX = (t == 0) ? -0.08f : 0.08f;
-                var trinketGO = CreateBox($"Trinket_{trinketIndex}", contentsRoot.transform,
-                    new Vector3(drawerX + localX, drawerY + 0.04f, CaseCenterZ),
-                    new Vector3(0.06f, 0.06f, 0.06f),
-                    TrinketColors[trinketIndex]);
-                trinketGO.isStatic = false;
-                trinketGO.layer = trinketsLayer;
-
-                var trinketVol = trinketGO.AddComponent<TrinketVolume>();
-                trinketGO.AddComponent<InteractableHighlight>();
-
-                // Display slot position for this trinket
-                float displayX = displayStartX + trinketIndex * displaySpacing;
-
-                var trinketSO = new SerializedObject(trinketVol);
-                trinketSO.FindProperty("definition").objectReferenceValue = trinketDef;
-                trinketSO.FindProperty("displayPosition").vector3Value =
-                    new Vector3(displayX, displayY, CaseCenterZ);
-                trinketSO.FindProperty("displayRotation").quaternionValue = Quaternion.identity;
-                trinketSO.ApplyModifiedPropertiesWithoutUndo();
-
-                trinketIndex++;
-            }
-
             contentsRoot.SetActive(false);
 
             var drawerSO = new SerializedObject(drawer);
@@ -871,7 +763,7 @@ public static class BookcaseSceneBuilder
             drawerSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created 2 drawers with {trinketIndex} trinkets.");
+        Debug.Log("[BookcaseSceneBuilder] Created 2 drawers.");
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -1064,7 +956,7 @@ public static class BookcaseSceneBuilder
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildInteractionManager(GameObject camGO, ItemInspector inspector,
-        int booksLayer, int drawersLayer, int perfumesLayer, int trinketsLayer, int coffeeTableBooksLayer)
+        int booksLayer, int drawersLayer, int perfumesLayer, int coffeeTableBooksLayer)
     {
         var managerGO = new GameObject("BookInteractionManager");
         var manager = managerGO.AddComponent<BookInteractionManager>();
@@ -1128,7 +1020,6 @@ public static class BookcaseSceneBuilder
         so.FindProperty("booksLayerMask").intValue = 1 << booksLayer;
         so.FindProperty("drawersLayerMask").intValue = 1 << drawersLayer;
         so.FindProperty("perfumesLayerMask").intValue = 1 << perfumesLayer;
-        so.FindProperty("trinketsLayerMask").intValue = 1 << trinketsLayer;
         so.FindProperty("coffeeTableBooksLayerMask").intValue = 1 << coffeeTableBooksLayer;
         so.FindProperty("maxRayDistance").floatValue = 10f;
         so.ApplyModifiedPropertiesWithoutUndo();

@@ -55,9 +55,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
     [Tooltip("Layer mask for the Perfumes layer.")]
     [SerializeField] private LayerMask perfumesLayerMask;
 
-    [Tooltip("Layer mask for the Trinkets layer.")]
-    [SerializeField] private LayerMask trinketsLayerMask;
-
     [Tooltip("Layer mask for the CoffeeTableBooks layer.")]
     [SerializeField] private LayerMask coffeeTableBooksLayerMask;
 
@@ -93,9 +90,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
 
     // Perfume state
     private PerfumeBottle _hoveredPerfume;
-
-    // Trinket state
-    private TrinketVolume _hoveredTrinket;
 
     // Coffee table book state
     private CoffeeTableBook _hoveredCoffeeBook;
@@ -136,7 +130,7 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
     private void Start()
     {
         _combinedLayerMask = booksLayerMask | drawersLayerMask | perfumesLayerMask
-                           | trinketsLayerMask | coffeeTableBooksLayerMask;
+                           | coffeeTableBooksLayerMask;
     }
 
     private void OnDestroy()
@@ -220,8 +214,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
                 HandleDrawerHover(hit);
             else if (IsInLayerMask(hitLayer, perfumesLayerMask))
                 HandlePerfumeHover(hit);
-            else if (IsInLayerMask(hitLayer, trinketsLayerMask))
-                HandleTrinketHover(hit);
             else if (IsInLayerMask(hitLayer, coffeeTableBooksLayerMask))
                 HandleCoffeeBookHover(hit);
             else
@@ -293,24 +285,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             _hoveredPerfume = perfume;
             _hoveredPerfume.OnHoverEnter();
             ShowHint(_hoveredPerfume.Definition != null ? _hoveredPerfume.Definition.perfumeName : "Perfume");
-            if (hoverSFX != null && AudioManager.Instance != null)
-                AudioManager.Instance.PlaySFX(hoverSFX);
-        }
-    }
-
-    // ── Trinket hover ──
-
-    private void HandleTrinketHover(RaycastHit hit)
-    {
-        ClearNonTrinketHovers();
-
-        var trinket = hit.collider.GetComponent<TrinketVolume>();
-        if (trinket != null && trinket != _hoveredTrinket)
-        {
-            ClearTrinketHover();
-            _hoveredTrinket = trinket;
-            _hoveredTrinket.OnHoverEnter();
-            ShowHint(_hoveredTrinket.Definition != null ? _hoveredTrinket.Definition.trinketName : "Trinket");
             if (hoverSFX != null && AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX(hoverSFX);
         }
@@ -394,23 +368,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             return;
         }
 
-        // Trinket click
-        if (_hoveredTrinket != null)
-        {
-            if (isDoubleClick && itemInspector != null)
-            {
-                var def = _hoveredTrinket.Definition;
-                itemInspector.InspectItem(_hoveredTrinket.transform,
-                    def != null ? def.trinketName : "Trinket",
-                    def != null ? def.description : "");
-                ClearTrinketHover();
-                CurrentState = State.Inspecting;
-                return;
-            }
-            _hoveredTrinket.TogglePlacement();
-            return;
-        }
-
         // Coffee table book click
         if (_hoveredCoffeeBook != null)
         {
@@ -440,7 +397,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         ClearBookHover();
         ClearDrawerHover();
         ClearPerfumeHover();
-        ClearTrinketHover();
         ClearCoffeeBookHover();
         HideHint();
     }
@@ -449,7 +405,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
     {
         ClearDrawerHover();
         ClearPerfumeHover();
-        ClearTrinketHover();
         ClearCoffeeBookHover();
     }
 
@@ -457,7 +412,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
     {
         ClearBookHover();
         ClearPerfumeHover();
-        ClearTrinketHover();
         ClearCoffeeBookHover();
     }
 
@@ -465,15 +419,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
     {
         ClearBookHover();
         ClearDrawerHover();
-        ClearTrinketHover();
-        ClearCoffeeBookHover();
-    }
-
-    private void ClearNonTrinketHovers()
-    {
-        ClearBookHover();
-        ClearDrawerHover();
-        ClearPerfumeHover();
         ClearCoffeeBookHover();
     }
 
@@ -482,7 +427,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         ClearBookHover();
         ClearDrawerHover();
         ClearPerfumeHover();
-        ClearTrinketHover();
     }
 
     private void ClearBookHover()
@@ -509,15 +453,6 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
         {
             _hoveredPerfume.OnHoverExit();
             _hoveredPerfume = null;
-        }
-    }
-
-    private void ClearTrinketHover()
-    {
-        if (_hoveredTrinket != null)
-        {
-            _hoveredTrinket.OnHoverExit();
-            _hoveredTrinket = null;
         }
     }
 
@@ -625,55 +560,29 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
             return;
         }
 
-        // Raycast for trinkets inside drawer or on display
+        // Raycast for drawer re-click to close
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
         Ray ray = mainCamera.ScreenPointToRay(mousePos);
-        LayerMask drawerBrowseMask = trinketsLayerMask | drawersLayerMask;
 
-        if (Physics.Raycast(ray, out RaycastHit hit, maxRayDistance, drawerBrowseMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, maxRayDistance, drawersLayerMask))
         {
-            int hitLayer = hit.collider.gameObject.layer;
-
-            if (IsInLayerMask(hitLayer, trinketsLayerMask))
+            var drawer = hit.collider.GetComponent<DrawerController>();
+            if (drawer != null && drawer != _hoveredDrawer)
             {
-                HandleTrinketHover(hit);
-            }
-            else if (IsInLayerMask(hitLayer, drawersLayerMask))
-            {
-                ClearTrinketHover();
-
-                // Re-click on the active drawer closes it
-                var drawer = hit.collider.GetComponent<DrawerController>();
-                if (drawer != null && drawer != _hoveredDrawer)
-                {
-                    ClearDrawerHover();
-                    _hoveredDrawer = drawer;
-                    _hoveredDrawer.OnHoverEnter();
-                    ShowHint("Drawer");
-                }
-            }
-            else
-            {
-                ClearTrinketHover();
                 ClearDrawerHover();
-                HideHint();
+                _hoveredDrawer = drawer;
+                _hoveredDrawer.OnHoverEnter();
+                ShowHint("Drawer");
             }
         }
         else
         {
-            ClearTrinketHover();
             ClearDrawerHover();
             HideHint();
         }
 
         if (_clickAction.WasPressedThisFrame())
         {
-            if (_hoveredTrinket != null)
-            {
-                _hoveredTrinket.TogglePlacement();
-                return;
-            }
-
             // Click on the same active drawer to close it
             if (_hoveredDrawer != null && _hoveredDrawer == _activeDrawer)
             {

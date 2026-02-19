@@ -19,7 +19,6 @@ public static class ApartmentSceneBuilder
     private const string BooksLayerName = "Books";
     private const string DrawersLayerName = "Drawers";
     private const string PerfumesLayerName = "Perfumes";
-    private const string TrinketsLayerName = "Trinkets";
     private const string CoffeeTableBooksLayerName = "CoffeeTableBooks";
     private const string NewspaperLayerName = "Newspaper";
     private const string CleanableLayerName = "Cleanable";
@@ -91,7 +90,6 @@ public static class ApartmentSceneBuilder
         int booksLayer = EnsureLayer(BooksLayerName);
         int drawersLayer = EnsureLayer(DrawersLayerName);
         int perfumesLayer = EnsureLayer(PerfumesLayerName);
-        int trinketsLayer = EnsureLayer(TrinketsLayerName);
         int coffeeTableBooksLayer = EnsureLayer(CoffeeTableBooksLayerName);
         int newspaperLayer = EnsureLayer(NewspaperLayerName);
         int cleanableLayer = EnsureLayer(CleanableLayerName);
@@ -132,7 +130,7 @@ public static class ApartmentSceneBuilder
 
         // ── 4. Modular station groups ──
         BuildBookcaseStationGroup(camGO, booksLayer, drawersLayer,
-            perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+            perfumesLayer, coffeeTableBooksLayer);
         BuildRecordPlayerStationGroup(vinylStackLayer, turntableLayer);
         BuildDrinkMakingStationGroup(camGO, fridgeLayer, glassLayer);
 
@@ -1011,20 +1009,20 @@ public static class ApartmentSceneBuilder
     /// </summary>
     private static void BuildBookcaseStationGroup(GameObject camGO,
         int booksLayer, int drawersLayer, int perfumesLayer,
-        int trinketsLayer, int coffeeTableBooksLayer)
+        int coffeeTableBooksLayer)
     {
         var groupGO = new GameObject("Station_Bookcase");
 
         // Bookcase unit (shared with standalone bookcase scene)
         var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
-            booksLayer, drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+            booksLayer, drawersLayer, perfumesLayer, coffeeTableBooksLayer);
         bookcaseRoot.transform.SetParent(groupGO.transform);
         bookcaseRoot.transform.localPosition = Vector3.zero;
         bookcaseRoot.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
 
         // BookInteractionManager
         var bookManager = BuildBookInteractionManager(camGO, booksLayer,
-            drawersLayer, perfumesLayer, trinketsLayer, coffeeTableBooksLayer);
+            drawersLayer, perfumesLayer, coffeeTableBooksLayer);
         bookManager.transform.SetParent(groupGO.transform);
 
         // ReactableTag on bookcase
@@ -2245,7 +2243,7 @@ public static class ApartmentSceneBuilder
 
     private static BookInteractionManager BuildBookInteractionManager(
         GameObject camGO, int booksLayer,
-        int drawersLayer, int perfumesLayer, int trinketsLayer, int coffeeTableBooksLayer)
+        int drawersLayer, int perfumesLayer, int coffeeTableBooksLayer)
     {
         var managerGO = new GameObject("BookInteractionManager");
         var manager = managerGO.AddComponent<BookInteractionManager>();
@@ -2307,7 +2305,6 @@ public static class ApartmentSceneBuilder
         so.FindProperty("booksLayerMask").intValue = 1 << booksLayer;
         so.FindProperty("drawersLayerMask").intValue = 1 << drawersLayer;
         so.FindProperty("perfumesLayerMask").intValue = 1 << perfumesLayer;
-        so.FindProperty("trinketsLayerMask").intValue = 1 << trinketsLayer;
         so.FindProperty("coffeeTableBooksLayerMask").intValue = 1 << coffeeTableBooksLayer;
         so.FindProperty("maxRayDistance").floatValue = 10f;
         so.ApplyModifiedPropertiesWithoutUndo();

@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// Controls a single drawer below the bookcase. Click to slide open,
-/// revealing trinkets inside. Re-click or ESC to close.
+/// revealing contents inside. Re-click or ESC to close.
 /// </summary>
 public class DrawerController : MonoBehaviour
 {
@@ -18,7 +18,7 @@ public class DrawerController : MonoBehaviour
     [SerializeField] private float slideDuration = 0.3f;
 
     [Header("Contents")]
-    [Tooltip("Root GameObject containing TrinketVolume children (activated on open).")]
+    [Tooltip("Root GameObject for drawer contents (activated on open).")]
     [SerializeField] private GameObject contentsRoot;
 
     [Header("Storage")]
