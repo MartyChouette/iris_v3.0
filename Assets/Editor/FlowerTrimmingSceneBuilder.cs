@@ -39,12 +39,11 @@ public static class FlowerTrimmingSceneBuilder
         var vcamGO = new GameObject("FlowerCinemachineCamera");
         var vcam = vcamGO.AddComponent<CinemachineCamera>();
         vcam.Priority = 40;
-        vcam.Lens = new LensSettings
-        {
-            FieldOfView = 50f,
-            NearClipPlane = 0.1f,
-            FarClipPlane = 100f
-        };
+        var lens = LensSettings.Default;
+        lens.FieldOfView = 50f;
+        lens.NearClipPlane = 0.1f;
+        lens.FarClipPlane = 100f;
+        vcam.Lens = lens;
         vcamGO.transform.position = new Vector3(0f, 1.2f, -0.8f);
         vcamGO.transform.rotation = Quaternion.Euler(15f, 0f, 0f);
 
@@ -110,12 +109,10 @@ public static class FlowerTrimmingSceneBuilder
         tiltGO.transform.localPosition = Vector3.zero;
         var tilt = tiltGO.AddComponent<PlaneAngleTiltController>();
 
-        // Wire CuttingPlaneController fields via SerializedObject
+        // Wire CuttingPlaneController.plane (public field)
         var cpcSO = new SerializedObject(cpc);
-        var planeProp = cpcSO.FindProperty("planeBehaviour");
+        var planeProp = cpcSO.FindProperty("plane");
         if (planeProp != null) planeProp.objectReferenceValue = planeBehaviour;
-        var tiltProp = cpcSO.FindProperty("planeAngleTilt");
-        if (tiltProp != null) tiltProp.objectReferenceValue = tilt;
         cpcSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── 7. EventSystem ──
