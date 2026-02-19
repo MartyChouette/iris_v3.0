@@ -290,7 +290,7 @@ public class AuthoredMessSpawner : MonoBehaviour
             var tagsField = typeof(ReactableTag).GetField("tags",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (tagsField != null) tagsField.SetValue(reactable, new[] { "trash", "mess" });
-            reactable.IsPrivate = true;
+            reactable.IsPrivate = false;
             reactable.SmellAmount = 0.2f;
         }
 
