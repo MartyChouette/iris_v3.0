@@ -762,6 +762,19 @@ public static class BookcaseSceneBuilder
             var contentsRoot = new GameObject($"DrawerContents_{d}");
             contentsRoot.transform.SetParent(drawerGO.transform);
             contentsRoot.transform.localPosition = Vector3.zero;
+
+            // Add PlacementSurface so ObjectGrabber can detect the open drawer as a
+            // valid drop target. PlacementSurface auto-creates its own trigger collider.
+            int surfacesLayer = EnsureLayer("Surfaces");
+            var surface = contentsRoot.AddComponent<PlacementSurface>();
+            var surfSO = new SerializedObject(surface);
+            surfSO.FindProperty("localBounds").boundsValue = new Bounds(
+                Vector3.zero,
+                new Vector3(drawerWidth - 0.02f, 0.05f, drawerDepth - 0.02f));
+            surfSO.FindProperty("normalAxis").enumValueIndex = (int)PlacementSurface.SurfaceAxis.Up;
+            surfSO.FindProperty("surfaceLayerIndex").intValue = surfacesLayer;
+            surfSO.ApplyModifiedPropertiesWithoutUndo();
+
             contentsRoot.SetActive(false);
 
             var drawerSO = new SerializedObject(drawer);
