@@ -30,12 +30,12 @@ public static class BookcaseSceneBuilder
     private const float DrawerSlideDistance = 0.3f;
 
     // Book generation
-    private const int MinBooksPerRow = 8;
-    private const int MaxBooksPerRow = 14;
     private const float MinBookThickness = 0.02f;
-    private const float MaxBookThickness = 0.06f;
-    private const float MinGap = 0.001f;
-    private const float MaxGap = 0.005f;
+    private const float MaxBookThickness = 0.04f;
+    private const float BookGap = 0.003f;
+
+    // Deterministic book distribution per row (rows 0–3)
+    private static readonly int[] BooksPerRow = { 5, 4, 3, 3 };
 
     // Spine colors — 10 muted library tones
     private static readonly Color[] SpineColors =
@@ -404,7 +404,9 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Books (all 4 rows, with reserved space for new items on some rows)
+    // Books (15 deterministic books across 4 rows: 5, 4, 3, 3)
+    // Row 0 left side only (right reserved for coffee table book stack)
+    // Row 4 (top shelf) reserved for perfumes
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildBooks(GameObject bookcaseRoot, int booksLayer)
@@ -422,46 +424,32 @@ public static class BookcaseSceneBuilder
         float rowHeight = CaseHeight / ShelfCount;
         float caseLeftX = -innerWidth / 2f;
 
+        // Deterministic seed for visual variety that's reproducible
+        Random.State savedState = Random.state;
+        Random.InitState(42);
+
         int bookIndex = 0;
 
-        // All 4 usable rows — some rows reserve right-side space for new items
-        for (int row = 0; row < ShelfCount - 1; row++)
+        for (int row = 0; row < BooksPerRow.Length; row++)
         {
             float shelfTopY = row * rowHeight + ShelfThickness / 2f;
             float availableHeight = rowHeight - ShelfThickness;
-
-            // Reserve right-side space on specific rows for new items:
-            //   Row 0: reserve right side for coffee table book stack
-            //   Row 1: reserve right third for perfume bottles
-            //   Row 2: reserve right quarter for coffee table books (flat)
-            //   Row 3: full width for books
-            float maxX;
-            if (row == 0 || row == 1)
-                maxX = innerWidth / 2f - innerWidth / 3f;
-            else if (row == 2)
-                maxX = innerWidth / 2f - innerWidth / 4f;
-            else
-                maxX = innerWidth / 2f - 0.01f;
-
-            int bookCount = Random.Range(MinBooksPerRow, MaxBooksPerRow + 1);
+            int bookCount = BooksPerRow[row];
             float xCursor = caseLeftX + 0.01f;
 
-            for (int b = 0; b < bookCount; b++)
+            for (int b = 0; b < bookCount && bookIndex < BookTitles.Length; b++)
             {
-                float thickness = Random.Range(MinBookThickness, MaxBookThickness);
+                float thickness = Mathf.Lerp(MinBookThickness, MaxBookThickness,
+                    Random.Range(0f, 1f));
                 float heightFrac = Random.Range(0.70f, 0.95f);
                 float bookHeight = availableHeight * heightFrac;
                 float depthFrac = Random.Range(0.70f, 0.95f);
                 float bookDepth = CaseDepth * depthFrac;
-                Color color = SpineColors[Random.Range(0, SpineColors.Length)];
+                Color color = SpineColors[bookIndex % SpineColors.Length];
 
-                if (xCursor + thickness > maxX)
-                    break;
-
-                int dataIndex = bookIndex % BookTitles.Length;
-                string title = BookTitles[dataIndex];
-                string author = BookAuthors[dataIndex];
-                string[] pages = BookPages[dataIndex];
+                string title = BookTitles[bookIndex];
+                string author = BookAuthors[bookIndex];
+                string[] pages = BookPages[bookIndex];
 
                 var def = ScriptableObject.CreateInstance<BookDefinition>();
                 def.title = title;
@@ -502,15 +490,15 @@ public static class BookcaseSceneBuilder
 
                 bookGO.AddComponent<InteractableHighlight>();
 
-                // Title text on the spine (front face, visible on shelf)
                 BuildBookSpineTitle(bookGO.transform, title, thickness, bookHeight, bookDepth);
 
-                xCursor += thickness + Random.Range(MinGap, MaxGap);
+                xCursor += thickness + BookGap;
                 bookIndex++;
             }
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {bookIndex} books across all 4 rows.");
+        Random.state = savedState;
+        Debug.Log($"[BookcaseSceneBuilder] Created {bookIndex} deterministic books across {BooksPerRow.Length} rows.");
     }
 
     private static GameObject BuildBookPages(Transform bookTransform, float thickness, float height, float depth)
@@ -615,7 +603,7 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Perfume Shelf (row 1, right side — next to books)
+    // Perfume Shelf (row 4, top shelf — dedicated perfume row)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildPerfumeShelf(GameObject bookcaseRoot, int perfumesLayer)
@@ -629,14 +617,15 @@ public static class BookcaseSceneBuilder
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float rowHeight = CaseHeight / ShelfCount;
-        float row1ShelfTopY = 1f * rowHeight + ShelfThickness / 2f;
+        float row4ShelfTopY = 4f * rowHeight + ShelfThickness / 2f;
         float bottleHeight = 0.15f;
         float bottleWidth = 0.05f;
         float bottleDepth = 0.05f;
 
-        // Place on the right third of row 1, next to where books end
-        float rightZoneStart = innerWidth / 2f - innerWidth / 3f + 0.04f;
-        float spacing = 0.2f;
+        // Center 3 perfumes on the top shelf
+        float totalPerfumeWidth = PerfumeNames.Length * bottleWidth + (PerfumeNames.Length - 1) * 0.15f;
+        float startX = -totalPerfumeWidth / 2f;
+        float spacing = bottleWidth + 0.15f;
 
         for (int i = 0; i < PerfumeNames.Length; i++)
         {
@@ -652,8 +641,8 @@ public static class BookcaseSceneBuilder
             string defPath = $"{defDir}/Perfume_{i:D2}_{PerfumeNames[i].Replace(" ", "_")}.asset";
             AssetDatabase.CreateAsset(def, defPath);
 
-            float bottleX = rightZoneStart + i * spacing;
-            float bottleY = row1ShelfTopY + bottleHeight / 2f;
+            float bottleX = startX + i * spacing;
+            float bottleY = row4ShelfTopY + bottleHeight / 2f;
 
             var bottleGO = CreateBox($"Perfume_{i}", parent.transform,
                 new Vector3(bottleX, bottleY, CaseCenterZ),
@@ -696,7 +685,7 @@ public static class BookcaseSceneBuilder
             bottleSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {PerfumeNames.Length} perfume bottles on row 1.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {PerfumeNames.Length} perfume bottles on row 4 (top shelf).");
     }
 
     // ════════════════════════════════════════════════════════════════════
