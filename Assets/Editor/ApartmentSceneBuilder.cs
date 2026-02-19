@@ -200,7 +200,7 @@ public static class ApartmentSceneBuilder
         BuildTidyScorer();
 
         // ── 13d. DailyMessSpawner (trash + misplaced items each morning) ──
-        BuildDailyMessSpawner(placeableLayer);
+        BuildDailyMessSpawner();
 
         // ── 14. DayPhaseManager (orchestrates daily loop) ──
         BuildDayPhaseManager(newspaperData, cleaningData, apartmentUI);
@@ -2941,7 +2941,7 @@ public static class ApartmentSceneBuilder
     private struct AmbientCleaningData
     {
         public CleaningManager cleaningManager;
-        public ApartmentStainSpawner stainSpawner;
+        public AuthoredMessSpawner authoredMessSpawner;
     }
 
     private static AmbientCleaningData BuildAmbientCleaning(GameObject camGO, int cleanableLayer)
@@ -3092,30 +3092,187 @@ public static class ApartmentSceneBuilder
 
         cleanSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── ApartmentStainSpawner ─────────────────────────────────────
-        var spawner = managersGO.AddComponent<ApartmentStainSpawner>();
+        // ── AuthoredMessSpawner ─────────────────────────────────────
+        var spawner = managersGO.AddComponent<AuthoredMessSpawner>();
         var spawnerSO = new SerializedObject(spawner);
 
+        // Wire stain slots
         var slotsProp = spawnerSO.FindProperty("_stainSlots");
         slotsProp.arraySize = stainSlots.Length;
         for (int i = 0; i < stainSlots.Length; i++)
             slotsProp.GetArrayElementAtIndex(i).objectReferenceValue = stainSlots[i];
 
-        var spillPoolProp = spawnerSO.FindProperty("_spillPool");
-        spillPoolProp.arraySize = spillDefs.Length;
-        for (int i = 0; i < spillDefs.Length; i++)
-            spillPoolProp.GetArrayElementAtIndex(i).objectReferenceValue = spillDefs[i];
+        // Object mess slots (positions where trash objects can appear)
+        Vector3[] objectSlotPositions =
+        {
+            new Vector3(-3.0f, 0.5f, -3.0f),   // kitchen floor
+            new Vector3(-4.5f, 0.82f, -3.5f),   // kitchen table
+            new Vector3(-1.0f, 0.46f, 1.5f),    // near coffee table
+            new Vector3(-0.5f, 0.1f, 3.0f),     // living room floor
+            new Vector3(0.5f, 0.1f, 2.0f),      // living room floor 2
+            new Vector3(-2.0f, 0.1f, -4.0f),    // kitchen floor 2
+        };
+
+        var objSlotsParent = new GameObject("ObjectMessSlots");
+        objSlotsParent.transform.SetParent(managersGO.transform);
+
+        var objSlotsProp = spawnerSO.FindProperty("_objectSlots");
+        objSlotsProp.arraySize = objectSlotPositions.Length;
+        for (int i = 0; i < objectSlotPositions.Length; i++)
+        {
+            var marker = new GameObject($"ObjSlot_{i:D2}");
+            marker.transform.SetParent(objSlotsParent.transform);
+            marker.transform.position = objectSlotPositions[i];
+            objSlotsProp.GetArrayElementAtIndex(i).objectReferenceValue = marker.transform;
+        }
+
+        // Ensure MessBlueprint SOs exist
+        string messDir = "Assets/ScriptableObjects/Messes";
+        EnsureMessBlueprints(messDir, spillDefs);
+
+        // Load MessBlueprint SOs
+        var messBlueprintPaths = AssetDatabase.FindAssets("t:MessBlueprint", new[] { messDir });
+        var blueprints = new MessBlueprint[messBlueprintPaths.Length];
+        for (int i = 0; i < messBlueprintPaths.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(messBlueprintPaths[i]);
+            blueprints[i] = AssetDatabase.LoadAssetAtPath<MessBlueprint>(path);
+        }
+
+        var bpProp = spawnerSO.FindProperty("_allBlueprints");
+        bpProp.arraySize = blueprints.Length;
+        for (int i = 0; i < blueprints.Length; i++)
+            bpProp.GetArrayElementAtIndex(i).objectReferenceValue = blueprints[i];
 
         spawnerSO.FindProperty("_cleaningManager").objectReferenceValue = cleanMgr;
         spawnerSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log("[ApartmentSceneBuilder] Ambient cleaning system built.");
+        Debug.Log($"[ApartmentSceneBuilder] Ambient cleaning + authored mess system built ({blueprints.Length} blueprints loaded).");
 
         return new AmbientCleaningData
         {
             cleaningManager = cleanMgr,
-            stainSpawner = spawner
+            authoredMessSpawner = spawner
         };
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // MessBlueprint SO Creation
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void EnsureMessBlueprints(string messDir, SpillDefinition[] spillDefs)
+    {
+        if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects/Messes"))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects"))
+                AssetDatabase.CreateFolder("Assets", "ScriptableObjects");
+            AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Messes");
+        }
+
+        // Pick spill defs by name for stain blueprints
+        SpillDefinition FindSpill(string partial)
+        {
+            if (spillDefs == null) return null;
+            foreach (var s in spillDefs)
+                if (s != null && s.displayName.Contains(partial, System.StringComparison.OrdinalIgnoreCase))
+                    return s;
+            return spillDefs.Length > 0 ? spillDefs[0] : null;
+        }
+
+        CreateMessBP(messDir, "Wine_Ring", "Wine Ring", "A dark ring stain — leftover from last night's date.",
+            MessBlueprint.MessCategory.DateAftermath, MessBlueprint.MessType.Stain,
+            spillDef: FindSpill("Juice"), requireTag: "drink", weight: 1.5f,
+            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Lipstick_Smear", "Lipstick Smear", "A smudge of deep red — things went well.",
+            MessBlueprint.MessCategory.DateAftermath, MessBlueprint.MessType.Stain,
+            spillDef: FindSpill("Grease"), requireSuccess: true, minAffection: 70f,
+            areas: new[] { ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Broken_Glass", "Broken Glass", "Shattered glass — the date didn't end well.",
+            MessBlueprint.MessCategory.DateAftermath, MessBlueprint.MessType.Object,
+            requireFailure: true, objColor: new Color(0.7f, 0.75f, 0.8f, 0.6f),
+            objScale: new Vector3(0.08f, 0.02f, 0.08f),
+            areas: new[] { ApartmentArea.Kitchen });
+
+        CreateMessBP(messDir, "Tear_Stained_Tissue", "Tear-stained Tissue", "A crumpled tissue — someone cried.",
+            MessBlueprint.MessCategory.DateAftermath, MessBlueprint.MessType.Object,
+            requireFailure: true, maxAffection: 30f,
+            objColor: new Color(0.9f, 0.88f, 0.85f), objScale: new Vector3(0.06f, 0.04f, 0.06f),
+            areas: new[] { ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Muddy_Footprints", "Muddy Footprints", "Tracks from Nema's morning run.",
+            MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Stain,
+            spillDef: FindSpill("Mud"), minDay: 1, weight: 1.2f,
+            areas: new[] { ApartmentArea.Entrance, ApartmentArea.Kitchen });
+
+        CreateMessBP(messDir, "Empty_Takeout_Box", "Empty Takeout Box", "Last night's dinner — eaten alone.",
+            MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Object,
+            minDay: 2, objColor: new Color(0.6f, 0.45f, 0.3f), objScale: new Vector3(0.12f, 0.04f, 0.12f),
+            areas: new[] { ApartmentArea.Kitchen });
+
+        CreateMessBP(messDir, "Spilled_Coffee", "Spilled Coffee", "Rushed morning — coffee everywhere.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Stain,
+            spillDef: FindSpill("Coffee"), weight: 2f,
+            areas: new[] { ApartmentArea.Kitchen });
+
+        CreateMessBP(messDir, "Crumpled_Note", "Crumpled Note", "A hastily written note, balled up and tossed.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
+            weight: 1.5f, objColor: new Color(0.9f, 0.88f, 0.82f), objScale: new Vector3(0.05f, 0.05f, 0.05f),
+            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Wilted_Petals", "Wilted Petals", "Dried petals from a dying bouquet.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
+            minDay: 3, objColor: new Color(0.55f, 0.35f, 0.4f), objScale: new Vector3(0.07f, 0.01f, 0.07f),
+            areas: new[] { ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Mystery_Stain", "Mystery Stain", "Best not to think about where this came from.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Stain,
+            spillDef: FindSpill("Dust"), weight: 1f,
+            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Cat_Hair_Clump", "Cat Hair Clump", "Nema doesn't own a cat. Or does she?",
+            MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Object,
+            minDay: 2, objColor: new Color(0.7f, 0.65f, 0.6f), objScale: new Vector3(0.04f, 0.02f, 0.04f),
+            areas: new[] { ApartmentArea.LivingRoom, ApartmentArea.Entrance });
+
+        CreateMessBP(messDir, "Nail_Polish_Drip", "Nail Polish Drip", "A bright drip of nail polish on the floor.",
+            MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Stain,
+            spillDef: FindSpill("Juice"), weight: 0.8f,
+            areas: new[] { ApartmentArea.LivingRoom });
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[ApartmentSceneBuilder] MessBlueprint SOs ensured.");
+    }
+
+    private static void CreateMessBP(string dir, string fileName, string messName, string desc,
+        MessBlueprint.MessCategory category, MessBlueprint.MessType messType,
+        SpillDefinition spillDef = null, bool requireSuccess = false, bool requireFailure = false,
+        float minAffection = 0f, float maxAffection = 100f, string requireTag = "",
+        int minDay = 1, float weight = 1f, Color? objColor = null, Vector3? objScale = null,
+        ApartmentArea[] areas = null)
+    {
+        string path = $"{dir}/Mess_{fileName}.asset";
+        if (AssetDatabase.LoadAssetAtPath<MessBlueprint>(path) != null) return;
+
+        var bp = ScriptableObject.CreateInstance<MessBlueprint>();
+        bp.messName = messName;
+        bp.description = desc;
+        bp.category = category;
+        bp.messType = messType;
+        bp.spillDefinition = spillDef;
+        bp.requireDateSuccess = requireSuccess;
+        bp.requireDateFailure = requireFailure;
+        bp.minAffection = minAffection;
+        bp.maxAffection = maxAffection;
+        bp.requireReactionTag = requireTag ?? "";
+        bp.minDay = minDay;
+        bp.weight = weight;
+        bp.objectColor = objColor ?? Color.gray;
+        bp.objectScale = objScale ?? Vector3.one * 0.1f;
+        bp.allowedAreas = areas ?? new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom };
+
+        AssetDatabase.CreateAsset(bp, path);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -3292,13 +3449,13 @@ public static class ApartmentSceneBuilder
         var dpmSO = new SerializedObject(dpm);
         dpmSO.FindProperty("_newspaperManager").objectReferenceValue = newspaperData.manager;
         dpmSO.FindProperty("_readCamera").objectReferenceValue = newspaperData.stationCamera;
-        dpmSO.FindProperty("_stainSpawner").objectReferenceValue = cleaningData.stainSpawner;
+        dpmSO.FindProperty("_authoredMessSpawner").objectReferenceValue = cleaningData.authoredMessSpawner;
         dpmSO.FindProperty("_apartmentUI").objectReferenceValue = apartmentUI;
 
-        // Wire DailyMessSpawner
-        var messSpawner = Object.FindAnyObjectByType<DailyMessSpawner>();
-        if (messSpawner != null)
-            dpmSO.FindProperty("_messSpawner").objectReferenceValue = messSpawner;
+        // Wire DailyMessSpawner (entrance items only)
+        var entranceMessSpawner = Object.FindAnyObjectByType<DailyMessSpawner>();
+        if (entranceMessSpawner != null)
+            dpmSO.FindProperty("_entranceMessSpawner").objectReferenceValue = entranceMessSpawner;
         dpmSO.FindProperty("_newspaperHUD").objectReferenceValue = newspaperData.hudRoot;
 
         // ── Prep Timer UI (top-right corner) ──
@@ -4116,53 +4273,10 @@ public static class ApartmentSceneBuilder
     // DailyMessSpawner
     // ══════════════════════════════════════════════════════════════════
 
-    private static void BuildDailyMessSpawner(int placeableLayer)
+    private static void BuildDailyMessSpawner()
     {
         var go = new GameObject("DailyMessSpawner");
         var spawner = go.AddComponent<DailyMessSpawner>();
-
-        // ── Trash spawn slots (disabled by default, spawner activates subset each day) ──
-        var trashParent = new GameObject("TrashSlots");
-        trashParent.transform.SetParent(go.transform);
-
-        Vector3[] trashPositions =
-        {
-            new Vector3(-3.0f, 0.5f, -3.0f),   // kitchen floor
-            new Vector3(-4.5f, 0.82f, -3.5f),   // kitchen table
-            new Vector3(-1.0f, 0.46f, 1.5f),    // near coffee table
-            new Vector3(-0.5f, 0.1f, 3.0f),     // living room floor
-            new Vector3(0.5f, 0.1f, 2.0f),      // living room floor 2
-            new Vector3(-2.0f, 0.1f, -4.0f),    // kitchen floor 2
-        };
-
-        var trashSlots = new GameObject[trashPositions.Length];
-
-        for (int i = 0; i < trashPositions.Length; i++)
-        {
-            var trash = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            trash.name = $"TrashItem_{i:D2}";
-            trash.transform.SetParent(trashParent.transform);
-            trash.transform.position = trashPositions[i];
-            trash.transform.localScale = new Vector3(0.1f, 0.08f, 0.08f);
-            trash.layer = placeableLayer;
-            trash.isStatic = false;
-            SetMaterial(trash, new Color(0.6f, 0.55f, 0.45f)); // crumpled paper look
-
-            var rb = trash.AddComponent<Rigidbody>();
-            rb.mass = 0.05f;
-
-            var trashPO = trash.AddComponent<PlaceableObject>();
-            var trashSO = new SerializedObject(trashPO);
-            trashSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Trash;
-            trashSO.FindProperty("_homeZoneName").stringValue = "TrashCan";
-            trashSO.ApplyModifiedPropertiesWithoutUndo();
-
-            trash.AddComponent<InteractableHighlight>();
-            AddReactableTag(trash, new[] { "trash", "mess" }, true, smellAmount: 0.2f);
-
-            trash.SetActive(false); // spawner activates subset
-            trashSlots[i] = trash;
-        }
 
         // ── Wrong-position markers (for misplacing entrance items) ──
         var wrongParent = new GameObject("WrongPositions");
@@ -4190,12 +4304,6 @@ public static class ApartmentSceneBuilder
         // ── Wire spawner fields ──
         var spawnerSO = new SerializedObject(spawner);
 
-        // Trash slots array
-        var trashSlotsProp = spawnerSO.FindProperty("_trashSlots");
-        trashSlotsProp.arraySize = trashSlots.Length;
-        for (int i = 0; i < trashSlots.Length; i++)
-            trashSlotsProp.GetArrayElementAtIndex(i).objectReferenceValue = trashSlots[i];
-
         // Wrong positions array
         var wrongPosProp = spawnerSO.FindProperty("_wrongPositions");
         wrongPosProp.arraySize = wrongTransforms.Length;
@@ -4216,7 +4324,7 @@ public static class ApartmentSceneBuilder
 
         spawnerSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log($"[ApartmentSceneBuilder] DailyMessSpawner built ({trashSlots.Length} trash slots, {wrongPositions.Length} wrong positions).");
+        Debug.Log($"[ApartmentSceneBuilder] DailyMessSpawner built (entrance items only, {wrongPositions.Length} wrong positions).");
     }
 
     // ══════════════════════════════════════════════════════════════════
