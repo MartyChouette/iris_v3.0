@@ -202,6 +202,12 @@ public static class ApartmentSceneBuilder
         // ── 13d. DailyMessSpawner (trash + misplaced items each morning) ──
         BuildDailyMessSpawner();
 
+        // ── 13e. FlowerTrimmingBridge (date → flower scene transition) ──
+        BuildFlowerTrimmingBridge();
+
+        // ── 13f. LivingFlowerPlantManager (flower trimming → apartment plants) ──
+        BuildLivingPlantSlots();
+
         // ── 14. DayPhaseManager (orchestrates daily loop) ──
         BuildDayPhaseManager(newspaperData, cleaningData, apartmentUI);
 
@@ -3462,6 +3468,69 @@ public static class ApartmentSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════════
+    // FlowerTrimmingBridge
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildFlowerTrimmingBridge()
+    {
+        var go = new GameObject("FlowerTrimmingBridge");
+        go.AddComponent<FlowerTrimmingBridge>();
+        Debug.Log("[ApartmentSceneBuilder] FlowerTrimmingBridge built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // LivingFlowerPlantManager + slots
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildLivingPlantSlots()
+    {
+        var go = new GameObject("LivingFlowerPlantManager");
+        var mgr = go.AddComponent<LivingFlowerPlantManager>();
+
+        // Create 4 plant slot transforms at designated positions
+        var positions = new[]
+        {
+            new Vector3(-5.5f, 0.75f, 3.5f),   // Living room windowsill
+            new Vector3(-3.8f, 0.75f, -3.0f),   // Kitchen counter
+            new Vector3(-6.0f, 0.75f, 1.0f),    // Living room shelf
+            new Vector3(-1.0f, 0.75f, 5.5f),    // Entrance shelf
+        };
+
+        var slots = new Transform[positions.Length];
+        for (int i = 0; i < positions.Length; i++)
+        {
+            var slotGO = new GameObject($"PlantSlot_{i}");
+            slotGO.transform.SetParent(go.transform);
+            slotGO.transform.position = positions[i];
+            slots[i] = slotGO.transform;
+        }
+
+        // Wire the plant slots via SerializedObject
+        var mgrSO = new SerializedObject(mgr);
+        var slotsProp = mgrSO.FindProperty("_plantSlots");
+        slotsProp.arraySize = slots.Length;
+        for (int i = 0; i < slots.Length; i++)
+            slotsProp.GetArrayElementAtIndex(i).objectReferenceValue = slots[i];
+        mgrSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Wire into GameClock.OnDayStarted event
+        var gameClock = Object.FindAnyObjectByType<GameClock>();
+        if (gameClock != null)
+        {
+            var advanceAction = System.Delegate.CreateDelegate(
+                typeof(UnityEngine.Events.UnityAction), mgr,
+                typeof(LivingFlowerPlantManager).GetMethod(
+                    nameof(LivingFlowerPlantManager.AdvanceAllPlants),
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                as UnityEngine.Events.UnityAction;
+            if (advanceAction != null)
+                UnityEventTools.AddPersistentListener(gameClock.OnDayStarted, advanceAction);
+        }
+
+        Debug.Log("[ApartmentSceneBuilder] LivingFlowerPlantManager built with 4 slots.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
     // DayPhaseManager
     // ══════════════════════════════════════════════════════════════════
 
@@ -3483,6 +3552,11 @@ public static class ApartmentSceneBuilder
         if (entranceMessSpawner != null)
             dpmSO.FindProperty("_entranceMessSpawner").objectReferenceValue = entranceMessSpawner;
         dpmSO.FindProperty("_newspaperHUD").objectReferenceValue = newspaperData.hudRoot;
+
+        // Wire FlowerTrimmingBridge
+        var bridge = Object.FindAnyObjectByType<FlowerTrimmingBridge>();
+        if (bridge != null)
+            dpmSO.FindProperty("_flowerTrimmingBridge").objectReferenceValue = bridge;
 
         // ── Prep Timer UI (top-right corner) ──
         var timerCanvas = new GameObject("PrepTimerCanvas");

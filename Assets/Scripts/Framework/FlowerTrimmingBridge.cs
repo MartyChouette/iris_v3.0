@@ -131,6 +131,13 @@ public class FlowerTrimmingBridge : MonoBehaviour
         string grade = DateOutcomeCapture.LastOutcome.flowerGrade;
         DateHistory.UpdateFlowerResult(resultScore, resultDays, grade);
 
+        // Spawn living plant in apartment (if score earned any days alive)
+        if (resultDays > 0 && LivingFlowerPlantManager.Instance != null)
+        {
+            string charName = DateOutcomeCapture.LastOutcome.characterName;
+            LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays);
+        }
+
         // Clean up
         DateSessionManager.PendingFlowerPrefab = null;
         _waitingForResult = false;
