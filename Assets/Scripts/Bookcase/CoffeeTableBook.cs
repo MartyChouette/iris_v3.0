@@ -30,6 +30,9 @@ public class CoffeeTableBook : MonoBehaviour
     [Tooltip("World rotation for flat books on the coffee table (set by scene builder).")]
     [SerializeField] private Quaternion coffeeTableRotation = Quaternion.identity;
 
+    /// <summary>Fired when a coffee table book is moved between bookcase and coffee table.</summary>
+    public static event System.Action OnBookMoved;
+
     public CoffeeTableBookDefinition Definition => definition;
     public State CurrentState { get; private set; } = State.OnBookcase;
     public bool IsMoving => CurrentState == State.Moving;
@@ -137,6 +140,7 @@ public class CoffeeTableBook : MonoBehaviour
             _instanceMaterial.color = _baseColor;
 
         IsOnCoffeeTable = !IsOnCoffeeTable;
+        OnBookMoved?.Invoke();
 
         if (IsOnCoffeeTable)
         {

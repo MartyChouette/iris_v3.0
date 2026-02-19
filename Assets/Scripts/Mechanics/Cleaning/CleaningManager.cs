@@ -42,10 +42,14 @@ public class CleaningManager : MonoBehaviour
     private InputAction _mousePosition;
     private InputAction _mouseClick;
 
+    /// <summary>Fired once on the rising edge of a wipe (mouse press on a stain).</summary>
+    public static event System.Action OnWipeStarted;
+
     // State
     private CleanableSurface _hoveredSurface;
     private float _sfxCooldown;
     private bool _allCleanFired;
+    private bool _wasPressingLastFrame;
 
     private const float SFX_COOLDOWN = 0.15f;
 
@@ -183,6 +187,9 @@ public class CleaningManager : MonoBehaviour
 
             if (_mouseClick.IsPressed() && _hoveredSurface != null)
             {
+                if (!_wasPressingLastFrame)
+                    OnWipeStarted?.Invoke();
+
                 Vector2 uv = hitInfo.textureCoord;
                 _hoveredSurface.Wipe(uv, _wipeRadius);
                 PlaySFX(wipeSFX);
@@ -193,6 +200,8 @@ public class CleaningManager : MonoBehaviour
             _hoveredSurface = null;
             SetSpongeVisual(Vector3.zero, false);
         }
+
+        _wasPressingLastFrame = _mouseClick.IsPressed();
 
         // Check all-clean
         if (!_allCleanFired && AllClean)

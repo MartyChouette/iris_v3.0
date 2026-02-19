@@ -17,6 +17,9 @@ public class PerfumeBottle : MonoBehaviour
     [Tooltip("Number of particles to emit in the one-shot burst.")]
     [SerializeField] private int burstCount = 30;
 
+    /// <summary>Fired when any perfume is sprayed.</summary>
+    public static event System.Action OnPerfumeSprayed;
+
     public PerfumeDefinition Definition => definition;
     public bool SprayComplete { get; private set; }
 
@@ -97,6 +100,7 @@ public class PerfumeBottle : MonoBehaviour
         if (reactable != null) reactable.IsActive = true;
 
         SprayComplete = true;
+        OnPerfumeSprayed?.Invoke();
     }
 
     /// <summary>Deactivate this perfume (called when a different perfume is sprayed).</summary>

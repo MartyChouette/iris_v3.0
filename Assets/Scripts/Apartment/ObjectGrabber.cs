@@ -48,6 +48,9 @@ public class ObjectGrabber : MonoBehaviour
     private bool _isEnabled;
     private bool _gridSnap;
 
+    /// <summary>Fired after an object is placed on a surface.</summary>
+    public static event System.Action OnObjectPlaced;
+
     private static ObjectGrabber s_instance;
 
     /// <summary>True when any ObjectGrabber is holding an object. Check this to block other interactions.</summary>
@@ -281,6 +284,7 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb.linearVelocity = Vector3.zero;
 
         _held.OnPlaced(_currentSurface, _gridSnap, pos, rot);
+        OnObjectPlaced?.Invoke();
 
         // DropZone deposit (non-destroy — item stays placed on surface)
         if (!string.IsNullOrEmpty(_held.HomeZoneName))

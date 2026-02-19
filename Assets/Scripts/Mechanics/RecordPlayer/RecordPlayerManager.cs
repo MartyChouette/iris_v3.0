@@ -5,6 +5,9 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
 {
     public enum State { Browsing, Playing }
 
+    /// <summary>Fired when a record starts playing (new or changed).</summary>
+    public static event System.Action OnRecordChanged;
+
     public static RecordPlayerManager Instance { get; private set; }
 
     // ──────────────────────────────────────────────────────────────
@@ -240,6 +243,8 @@ public class RecordPlayerManager : MonoBehaviour, IStationManager
 
         var reactable = GetComponent<ReactableTag>();
         if (reactable != null) reactable.IsActive = true;
+
+        OnRecordChanged?.Invoke();
 
         UpdateHUD();
         Debug.Log($"[RecordPlayerManager] Playing: {record.title} by {record.artist}");
