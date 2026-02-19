@@ -19,6 +19,10 @@ public class DishDropZone : MonoBehaviour
     [Tooltip("Pulse speed (oscillations per second).")]
     [SerializeField] private float _pulseSpeed = 2f;
 
+    [Header("Stacking")]
+    [Tooltip("Y offset per deposited plate.")]
+    [SerializeField] private float _stackOffset = 0.03f;
+
     public int DepositCount { get; private set; }
 
     private Material _instanceMat;
@@ -91,6 +95,11 @@ public class DishDropZone : MonoBehaviour
             rb.isKinematic = true;
             rb.linearVelocity = Vector3.zero;
         }
+
+        // Snap plate to stacked position on the zone
+        plate.transform.SetParent(transform);
+        plate.transform.localPosition = Vector3.up * ((DepositCount - 1) * _stackOffset + 0.03f);
+        plate.transform.localRotation = Quaternion.identity;
 
         // Play SFX
         if (AudioManager.Instance != null)
