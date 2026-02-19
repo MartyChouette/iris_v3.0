@@ -22,6 +22,6 @@ public class CoffeeTableBookDefinition : ScriptableObject
     public Vector2 size = new Vector2(0.25f, 0.20f);
 
     [Tooltip("Thickness of the book (spine width when upright).")]
-    [Range(0.02f, 0.08f)]
+    [Range(0.02f, 0.10f)]
     public float thickness = 0.04f;
 }

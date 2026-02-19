@@ -263,7 +263,7 @@ public static class BookcaseSceneBuilder
         // ── 5. Bookcase unit (frame, books, perfumes, drawers, coffee books)
         float coffeeTableTopY = 0.415f;
         Vector3 ctBase = new Vector3(0.8f, coffeeTableTopY, 0.8f);
-        Quaternion ctRot = Quaternion.Euler(0f, 5f, 0f);
+        Quaternion ctRot = Quaternion.Euler(0f, 5f, 90f);
 
         var bookcaseRoot = BuildBookcaseUnit(booksLayer, drawersLayer,
             perfumesLayer, coffeeTableBooksLayer, ctBase, ctRot);
@@ -804,10 +804,10 @@ public static class BookcaseSceneBuilder
 
     private const int CoffeeBookRow = 2; // row 2 (third shelf from bottom)
 
-    // Varying sizes — each coffee table book has unique dimensions
-    private static readonly float[] CoffeeBookThicknesses = { 0.04f, 0.055f, 0.035f, 0.06f, 0.045f };
-    private static readonly float[] CoffeeBookHeightFracs = { 0.90f, 0.85f, 0.80f, 0.92f, 0.88f };
-    private static readonly float[] CoffeeBookDepthFracs  = { 0.90f, 0.85f, 0.80f, 0.88f, 0.82f };
+    // Varying sizes — bigger spines, taller on shelf, varied rectangle proportions
+    private static readonly float[] CoffeeBookThicknesses = { 0.05f, 0.07f, 0.045f, 0.08f, 0.055f };
+    private static readonly float[] CoffeeBookHeightFracs = { 0.95f, 0.88f, 0.82f, 0.97f, 0.90f };
+    private static readonly float[] CoffeeBookDepthFracs  = { 0.95f, 0.70f, 0.92f, 0.65f, 0.85f };
 
     private static void BuildCoffeeTableBooks(GameObject bookcaseRoot, int coffeeTableBooksLayer,
         Vector3 coffeeTableBase, Quaternion coffeeTableRotation)

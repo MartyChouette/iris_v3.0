@@ -1029,7 +1029,7 @@ public static class ApartmentSceneBuilder
 
         // Coffee table target (world-space, baked into each CoffeeTableBook's serialized fields)
         Vector3 ctBase = new Vector3(-0.571f, 0.38f, 2.007f);
-        Quaternion ctRot = Quaternion.Euler(0f, 5f, 0f);
+        Quaternion ctRot = Quaternion.Euler(0f, 5f, 90f);
 
         // Bookcase unit (shared with standalone bookcase scene)
         var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
