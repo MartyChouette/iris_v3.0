@@ -1066,6 +1066,8 @@ public static class ApartmentSceneBuilder
     /// </summary>
     private static void BuildRecordPlayerStationGroup(int vinylStackLayer, int turntableLayer)
     {
+        int sleeveLayer = EnsureLayer("RecordSleeves");
+
         var groupGO = new GameObject("Station_RecordPlayer");
         groupGO.transform.position = RecordPlayerStationPos;
 
@@ -1107,40 +1109,66 @@ public static class ApartmentSceneBuilder
         toneArm.transform.localRotation = Quaternion.Euler(0f, -15f, 0f);
         toneArm.isStatic = false;
 
-        // Vinyl stack on the floor (10 thin cylinders leaning against the table)
+        // ── Load existing RecordDefinition SOs ───────────────────────
+        string soDir = "Assets/ScriptableObjects/RecordPlayer";
+        var recordPaths = AssetDatabase.FindAssets("t:RecordDefinition", new[] { soDir });
+        var records = new RecordDefinition[recordPaths.Length];
+        for (int i = 0; i < recordPaths.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(recordPaths[i]);
+            records[i] = AssetDatabase.LoadAssetAtPath<RecordDefinition>(path);
+        }
+
+        // ── Sleeve stack (one box per record, leaning against table) ──
         var stackParent = new GameObject("VinylStack");
         stackParent.transform.SetParent(groupGO.transform);
         stackParent.transform.position = RecordPlayerStationPos + new Vector3(-0.35f, 0f, 0f);
         stackParent.isStatic = true;
         stackParent.layer = vinylStackLayer;
 
-        for (int v = 0; v < 10; v++)
-        {
-            var vinylGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            vinylGO.name = $"Vinyl_{v}";
-            vinylGO.transform.SetParent(stackParent.transform);
-            vinylGO.layer = vinylStackLayer;
-            // Lean against table leg, each offset slightly in Z and stacked in X
-            float xOff = v * 0.012f;
-            float zJitter = (v % 3 - 1) * 0.01f;
-            vinylGO.transform.localPosition = new Vector3(xOff, 0.125f, zJitter);
-            vinylGO.transform.localRotation = Quaternion.Euler(0f, 0f, 85f + v * 0.5f);
-            vinylGO.transform.localScale = new Vector3(0.24f, 0.003f, 0.24f);
-            vinylGO.isStatic = true;
-
-            // Destroy individual thin colliders — too small to click
-            var col = vinylGO.GetComponent<Collider>();
-            if (col != null) Object.DestroyImmediate(col);
-
-            // Alternate dark vinyl colors for variety
-            float shade = 0.04f + (v % 3) * 0.02f;
-            SetMaterial(vinylGO, new Color(shade, shade, shade + 0.02f));
-        }
-
-        // Single box collider on parent for click detection
+        // Parent trigger collider for detecting hover over the general stack area
         var stackBox = stackParent.AddComponent<BoxCollider>();
-        stackBox.center = new Vector3(0.05f, 0.125f, 0f);
-        stackBox.size = new Vector3(0.20f, 0.26f, 0.26f);
+        stackBox.isTrigger = true;
+        float stackWidth = Mathf.Max(records.Length * 0.012f + 0.05f, 0.15f);
+        stackBox.center = new Vector3(stackWidth * 0.5f, 0.125f, 0f);
+        stackBox.size = new Vector3(stackWidth + 0.08f, 0.26f, 0.26f);
+
+        var sleeveTransforms = new Transform[records.Length];
+
+        // Default cover colors if not set on the SO
+        Color[] defaultCovers =
+        {
+            new Color(0.85f, 0.25f, 0.20f), // red
+            new Color(0.20f, 0.35f, 0.75f), // blue
+            new Color(0.90f, 0.78f, 0.20f), // yellow
+            new Color(0.25f, 0.65f, 0.35f), // green
+            new Color(0.55f, 0.25f, 0.70f), // purple
+        };
+
+        for (int v = 0; v < records.Length; v++)
+        {
+            // Sleeve = thin box (0.24 x 0.24 x 0.008)
+            var sleeveGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sleeveGO.name = $"Sleeve_{v:D2}_{records[v].title.Replace(" ", "_")}";
+            sleeveGO.transform.SetParent(stackParent.transform);
+            sleeveGO.layer = sleeveLayer;
+
+            // Stacked leaning against table: base position + index offset
+            float xOff = v * 0.012f;
+            float zJitter = (v % 3 - 1) * 0.005f;
+            sleeveGO.transform.localPosition = new Vector3(xOff, 0.125f, zJitter);
+            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, 85f + v * 0.3f);
+            sleeveGO.transform.localScale = new Vector3(0.24f, 0.24f, 0.008f);
+            sleeveGO.isStatic = false;
+
+            // Color from SO coverColor, fallback to defaults
+            Color cover = records[v].coverColor;
+            if (cover == Color.white && v < defaultCovers.Length)
+                cover = defaultCovers[v];
+            SetMaterial(sleeveGO, cover);
+
+            sleeveTransforms[v] = sleeveGO.transform;
+        }
 
         // ── Managers ─────────────────────────────────────────────────
         var managersGO = new GameObject("RecordPlayerManagers");
@@ -1155,16 +1183,6 @@ public static class ApartmentSceneBuilder
         // ReactableTag on managers GO (toggled by RecordPlayerManager during playback)
         AddReactableTag(managersGO, new[] { "vinyl", "music" }, false);
 
-        // ── Load existing RecordDefinition SOs ───────────────────────
-        string soDir = "Assets/ScriptableObjects/RecordPlayer";
-        var recordPaths = AssetDatabase.FindAssets("t:RecordDefinition", new[] { soDir });
-        var records = new RecordDefinition[recordPaths.Length];
-        for (int i = 0; i < recordPaths.Length; i++)
-        {
-            string path = AssetDatabase.GUIDToAssetPath(recordPaths[i]);
-            records[i] = AssetDatabase.LoadAssetAtPath<RecordDefinition>(path);
-        }
-
         // ── Wire RecordPlayerManager ─────────────────────────────────
         var mgrSO = new SerializedObject(mgr);
         var recordsProp = mgrSO.FindProperty("records");
@@ -1177,6 +1195,14 @@ public static class ApartmentSceneBuilder
         mgrSO.FindProperty("hud").objectReferenceValue = hud;
         mgrSO.FindProperty("_vinylStackLayer").intValue = 1 << vinylStackLayer;
         mgrSO.FindProperty("_turntableLayer").intValue = 1 << turntableLayer;
+        mgrSO.FindProperty("_sleeveLayer").intValue = 1 << sleeveLayer;
+
+        // Wire sleeve transforms
+        var sleeveProp = mgrSO.FindProperty("_sleeveTransforms");
+        sleeveProp.arraySize = sleeveTransforms.Length;
+        for (int i = 0; i < sleeveTransforms.Length; i++)
+            sleeveProp.GetArrayElementAtIndex(i).objectReferenceValue = sleeveTransforms[i];
+
         // _hudCanvas wired below after canvas GO is created
 
         // ── HUD Canvas ───────────────────────────────────────────────
@@ -1192,13 +1218,13 @@ public static class ApartmentSceneBuilder
         hudCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
         var titleText = CreateHUDText("TitleText", hudCanvasGO.transform,
-            new Vector2(0f, 200f), 24f, "Record Title");
+            new Vector2(0f, 200f), 24f, "");
         var artistText = CreateHUDText("ArtistText", hudCanvasGO.transform,
-            new Vector2(0f, 160f), 18f, "Artist");
+            new Vector2(0f, 160f), 18f, "");
         var stateText = CreateHUDText("StateText", hudCanvasGO.transform,
-            new Vector2(0f, 120f), 16f, "Stopped");
+            new Vector2(0f, 120f), 16f, "");
         var hintsText = CreateHUDText("HintsText", hudCanvasGO.transform,
-            new Vector2(0f, -200f), 16f, "Click Vinyl Stack  Browse    |    Click Turntable  Play / Stop");
+            new Vector2(0f, -200f), 16f, "Hover over vinyl stack to browse");
 
         // Wire _hudCanvas on manager and apply
         mgrSO.FindProperty("_hudCanvas").objectReferenceValue = hudCanvas;
@@ -1212,7 +1238,7 @@ public static class ApartmentSceneBuilder
         hudSO.FindProperty("hintsText").objectReferenceValue = hintsText;
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log($"[ApartmentSceneBuilder] Record Player station group built ({records.Length} records loaded).");
+        Debug.Log($"[ApartmentSceneBuilder] Record Player station group built ({records.Length} records, {sleeveTransforms.Length} sleeves).");
     }
 
     // ══════════════════════════════════════════════════════════════════

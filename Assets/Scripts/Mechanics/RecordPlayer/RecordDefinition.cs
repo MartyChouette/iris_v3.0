@@ -14,6 +14,9 @@ public class RecordDefinition : ScriptableObject
     [Tooltip("Color of the record label (center circle).")]
     public Color labelColor = new Color(0.8f, 0.2f, 0.2f);
 
+    [Tooltip("Color of the record sleeve/cover.")]
+    public Color coverColor = Color.white;
+
     [Header("Mood Machine")]
     [Tooltip("Mood value this record pushes toward (0 = sunny, 1 = stormy).")]
     [Range(0f, 1f)]
