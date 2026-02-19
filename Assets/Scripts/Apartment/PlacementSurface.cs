@@ -101,13 +101,25 @@ public class PlacementSurface : MonoBehaviour
         local[a] = Mathf.Clamp(local[a], min[a] + marginA, max[a] - marginA);
         local[b] = Mathf.Clamp(local[b], min[b] + marginB, max[b] - marginB);
 
-        // Set normal axis to surface face (top of bounds for Up, front for Forward)
-        local[n] = localBounds.center[n] + localBounds.extents[n];
+        // For walls, pick whichever face the point is nearest to so pictures
+        // stay on the side the player is interacting from.
+        // For tables/shelves, always use the top face.
+        bool frontFace = true;
+        if (IsVertical)
+        {
+            float front = localBounds.center[n] + localBounds.extents[n];
+            float back = localBounds.center[n] - localBounds.extents[n];
+            frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+        }
+
+        local[n] = frontFace
+            ? localBounds.center[n] + localBounds.extents[n]
+            : localBounds.center[n] - localBounds.extents[n];
 
         return new SurfaceHitResult
         {
             worldPosition = transform.TransformPoint(local),
-            surfaceNormal = SurfaceNormal,
+            surfaceNormal = frontFace ? SurfaceNormal : -SurfaceNormal,
             isVertical = IsVertical,
             surface = this
         };
@@ -128,7 +140,19 @@ public class PlacementSurface : MonoBehaviour
         float marginB = (max[b] - min[b] > EdgeMargin * 4f) ? EdgeMargin : 0f;
         local[a] = Mathf.Clamp(Mathf.Round(local[a] / gridSize) * gridSize, min[a] + marginA, max[a] - marginA);
         local[b] = Mathf.Clamp(Mathf.Round(local[b] / gridSize) * gridSize, min[b] + marginB, max[b] - marginB);
-        local[n] = localBounds.center[n] + localBounds.extents[n];
+
+        // Preserve the face the point is already on (for walls)
+        bool frontFace = true;
+        if (IsVertical)
+        {
+            float front = localBounds.center[n] + localBounds.extents[n];
+            float back = localBounds.center[n] - localBounds.extents[n];
+            frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+        }
+
+        local[n] = frontFace
+            ? localBounds.center[n] + localBounds.extents[n]
+            : localBounds.center[n] - localBounds.extents[n];
 
         return transform.TransformPoint(local);
     }
@@ -162,7 +186,19 @@ public class PlacementSurface : MonoBehaviour
         float marginB = (max[b] - min[b] > EdgeMargin * 4f) ? EdgeMargin : 0f;
         local[a] = Mathf.Clamp(local[a], min[a] + marginA, max[a] - marginA);
         local[b] = Mathf.Clamp(local[b], min[b] + marginB, max[b] - marginB);
-        local[n] = localBounds.center[n] + localBounds.extents[n];
+
+        // Preserve the face the point is nearest to (for walls)
+        bool frontFace = true;
+        if (IsVertical)
+        {
+            float front = localBounds.center[n] + localBounds.extents[n];
+            float back = localBounds.center[n] - localBounds.extents[n];
+            frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+        }
+
+        local[n] = frontFace
+            ? localBounds.center[n] + localBounds.extents[n]
+            : localBounds.center[n] - localBounds.extents[n];
 
         return transform.TransformPoint(local);
     }
