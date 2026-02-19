@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Manages amber gaze highlight on whatever ReactableTag the date NPC is
 /// currently investigating. Lives on the same GO as DateCharacterController.
-/// Highlight is active during WalkingToTarget and Investigating states.
+/// Highlight is active during the Investigating state.
 /// </summary>
 public class NPCGazeHighlight : MonoBehaviour
 {
@@ -20,8 +20,7 @@ public class NPCGazeHighlight : MonoBehaviour
         if (_controller == null) return;
 
         var state = _controller.CurrentState;
-        bool shouldHighlight = state == DateCharacterController.CharState.WalkingToTarget
-                            || state == DateCharacterController.CharState.Investigating;
+        bool shouldHighlight = state == DateCharacterController.CharState.Investigating;
 
         ReactableTag target = shouldHighlight ? _controller.CurrentTarget : null;
         InteractableHighlight desired = target != null

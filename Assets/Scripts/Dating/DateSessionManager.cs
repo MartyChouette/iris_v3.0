@@ -4,8 +4,11 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// Scene-scoped singleton orchestrating the date lifecycle: waiting for arrival,
-/// tracking affection during the date, handling reactions, and ending with a score.
+/// Scene-scoped singleton orchestrating the date lifecycle.
+/// Phases use fade-to-black + teleport (no NPC walking).
+///   Phase 1: NPC at entrance — entrance judgments
+///   Phase 2: NPC at kitchen — player makes drink, NPC judges
+///   Phase 3: NPC on couch — seated excursions evaluate apartment items
 /// </summary>
 public class DateSessionManager : MonoBehaviour
 {
@@ -15,9 +18,9 @@ public class DateSessionManager : MonoBehaviour
 
     /// <summary>
     /// Sub-phases within DateInProgress:
-    ///   Arrival           — NPC walks in, entrance judgments, sits on couch
-    ///   BackgroundJudging — NPC excursions run in parallel with drink making
-    ///   Reveal            — NPC sits, accumulated reactions replayed one-by-one
+    ///   Arrival           — NPC at entrance, entrance judgments
+    ///   BackgroundJudging — NPC at kitchen, player makes drink
+    ///   Reveal            — NPC on couch, seated excursions
     /// </summary>
     public enum DatePhase { None, Arrival, BackgroundJudging, Reveal }
 
@@ -51,7 +54,7 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Affection below this after drink delivery → NPC leaves.")]
     [SerializeField] private float _bgJudgingFailThreshold = 20f;
 
-    [Tooltip("Affection below this after Reveal → NPC leaves without flower.")]
+    [Tooltip("Affection below this after Phase 3 → NPC leaves without flower.")]
     [SerializeField] private float _revealFailThreshold = 30f;
 
     [Header("Ambient Check")]
@@ -60,6 +63,17 @@ public class DateSessionManager : MonoBehaviour
 
     [Tooltip("Affection drift per check when mood matches.")]
     [SerializeField] private float ambientMoodDrift = 0.5f;
+
+    [Header("Phase 3 Timing")]
+    [Tooltip("Duration of Phase 3 (couch judging) in seconds before the date ends.")]
+    [SerializeField] private float phase3Duration = 40f;
+
+    [Header("Fade Timing")]
+    [Tooltip("Fade duration for phase transitions (seconds).")]
+    [SerializeField] private float fadeDuration = 0.3f;
+
+    [Tooltip("Seconds to show phase title on black screen.")]
+    [SerializeField] private float phaseTitleHold = 1.0f;
 
     [Header("Audio")]
     [Tooltip("SFX played when the date character arrives.")]
@@ -84,10 +98,13 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Where drinks are delivered (coffee table).")]
     [SerializeField] private Transform coffeeTableDeliveryPoint;
 
-    [Tooltip("Where the NPC pauses for entrance judgments (between entrance and couch).")]
+    [Tooltip("Where the NPC stands for entrance judgments.")]
     [SerializeField] private Transform judgmentStopPoint;
 
-    [Tooltip("Runs the 3 entrance judgments (outfit, mood, cleanliness).")]
+    [Tooltip("Where the NPC stands during the kitchen/drink phase.")]
+    [SerializeField] private Transform kitchenStandPoint;
+
+    [Tooltip("Runs the entrance judgments (music, perfume, outfit, cleanliness).")]
     [SerializeField] private EntranceJudgmentSequence _entranceJudgments;
 
     [Header("Events")]
@@ -96,7 +113,7 @@ public class DateSessionManager : MonoBehaviour
     public UnityEvent<DatePersonalDefinition, float> OnDateSessionEnded;
 
     // ──────────────────────────────────────────────────────────────
-    // Accumulated reactions (replayed during Reveal)
+    // Accumulated reactions
     // ──────────────────────────────────────────────────────────────
     public struct AccumulatedReaction
     {
@@ -107,7 +124,7 @@ public class DateSessionManager : MonoBehaviour
     /// <summary>Flower prefab stashed after a successful date for the flower trimming scene.</summary>
     public static GameObject PendingFlowerPrefab { get; set; }
 
-    /// <summary>Fired for each reaction during the Reveal phase replay.</summary>
+    /// <summary>Fired for each reaction (HUD display).</summary>
     public event System.Action<AccumulatedReaction> OnRevealReaction;
 
     // ──────────────────────────────────────────────────────────────
@@ -181,8 +198,8 @@ public class DateSessionManager : MonoBehaviour
 
         if (_state != SessionState.DateInProgress) return;
 
-        // Periodic mood check during BackgroundJudging
-        if (_datePhase == DatePhase.BackgroundJudging)
+        // Periodic mood check during BackgroundJudging and Reveal
+        if (_datePhase == DatePhase.BackgroundJudging || _datePhase == DatePhase.Reveal)
         {
             _moodCheckTimer += Time.deltaTime;
             if (_moodCheckTimer >= moodCheckInterval)
@@ -206,7 +223,7 @@ public class DateSessionManager : MonoBehaviour
     {
         _currentDate = date;
         _state = SessionState.WaitingForArrival;
-        _arrivalTimerActive = false; // Arrival now controlled by prep timer, not internal timer
+        _arrivalTimerActive = false;
         Debug.Log($"[DateSessionManager] Scheduled date with {date.characterName}. Waiting for prep phase to end.");
     }
 
@@ -221,8 +238,7 @@ public class DateSessionManager : MonoBehaviour
             OnDateCharacterArrived();
     }
 
-    /// <summary>Called when the date character has arrived (phone answered or doorbell).
-    /// Handles its own Phase 1 fade transition so it works regardless of how arrival was triggered.</summary>
+    /// <summary>Called when the player answers the door. Starts the date.</summary>
     public void OnDateCharacterArrived()
     {
         if (_currentDate == null)
@@ -234,29 +250,32 @@ public class DateSessionManager : MonoBehaviour
         StartCoroutine(ArrivalTransition());
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // Phase Transitions (fade → teleport → fade)
+    // ──────────────────────────────────────────────────────────────
+
     private IEnumerator ArrivalTransition()
     {
-        // Fade to white
+        // Fade to black
         if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeOut(0.5f);
+            yield return ScreenFade.Instance.FadeOut(fadeDuration);
 
-        // Show Phase 1 title on the white screen
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.ShowPhaseTitle("Phase 1");
 
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(phaseTitleHold);
 
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.HidePhaseTitle();
 
-        // Now set up the date session while screen is white
+        // Set up session while screen is black
         _state = SessionState.DateInProgress;
         _datePhase = DatePhase.Arrival;
         _affection = startingAffection;
         _moodCheckTimer = 0f;
         _accumulatedReactions.Clear();
 
-        // Spawn character behind the fade
+        // Spawn NPC at judgment point (teleported, no walking)
         SpawnDateCharacter();
 
         if (dateArrivedSFX != null && AudioManager.Instance != null)
@@ -264,12 +283,115 @@ public class DateSessionManager : MonoBehaviour
 
         OnDateSessionStarted?.Invoke(_currentDate);
         OnAffectionChanged?.Invoke(_affection);
-        Debug.Log($"[DateSessionManager] Phase 1: Arrival — {_currentDate.characterName} walking in.");
 
-        // Fade in to reveal the date character
+        // Fade in to reveal NPC at entrance
         if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(0.5f);
+            yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        Debug.Log($"[DateSessionManager] Phase 1: Arrival — entrance judgments for {_currentDate.characterName}.");
+
+        // Run entrance judgments (NPC is already at judgment point)
+        if (_entranceJudgments != null && _currentDate != null)
+        {
+            var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
+            yield return _entranceJudgments.RunJudgments(reactionUI, _currentDate);
+        }
+
+        // Fail check after entrance
+        if (CheckPhaseFailAndExit(_arrivalFailThreshold)) yield break;
+
+        // Auto-transition to Phase 2
+        yield return TransitionToPhase2();
     }
+
+    private IEnumerator TransitionToPhase2()
+    {
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(fadeDuration);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Phase 2");
+
+        yield return new WaitForSeconds(phaseTitleHold);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        _datePhase = DatePhase.BackgroundJudging;
+        _moodCheckTimer = 0f;
+
+        // Teleport NPC to kitchen
+        Vector3 kitchenPos = kitchenStandPoint != null ? kitchenStandPoint.position
+            : (dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero);
+        if (_dateCharacter != null)
+        {
+            _dateCharacter.WarpTo(kitchenPos);
+            _dateCharacter.SetSitting();
+        }
+
+        if (phaseTransitionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        Debug.Log("[DateSessionManager] Phase 2: Kitchen — player makes drink, NPC watches.");
+    }
+
+    private IEnumerator TransitionToPhase3()
+    {
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(fadeDuration);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Phase 3");
+
+        yield return new WaitForSeconds(phaseTitleHold);
+
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        _datePhase = DatePhase.Reveal;
+
+        // Teleport NPC to couch
+        Vector3 couchPos = couchSeatTarget != null ? couchSeatTarget.position : Vector3.zero;
+        if (_dateCharacter != null)
+        {
+            _dateCharacter.WarpTo(couchPos);
+            _dateCharacter.SetSitting();
+            _dateCharacter.EnableExcursions();
+        }
+
+        if (phaseTransitionSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
+
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        Debug.Log("[DateSessionManager] Phase 3: Couch — NPC evaluating apartment items.");
+
+        // Start Phase 3 duration timer
+        StartCoroutine(Phase3Timer());
+    }
+
+    private IEnumerator Phase3Timer()
+    {
+        yield return new WaitForSeconds(phase3Duration);
+
+        if (_state != SessionState.DateInProgress || _datePhase != DatePhase.Reveal)
+            yield break;
+
+        Debug.Log("[DateSessionManager] Phase 3 complete — ending date.");
+
+        if (_dateCharacter != null)
+            _dateCharacter.DisableExcursions();
+
+        StartCoroutine(RunEndSequence());
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Reactions
+    // ──────────────────────────────────────────────────────────────
 
     /// <summary>Apply a reaction to affection (called by DateCharacterController or drink delivery).</summary>
     public void ApplyReaction(ReactionType type, float magnitude = 1f)
@@ -312,108 +434,13 @@ public class DateSessionManager : MonoBehaviour
         // Fail check after drink
         if (CheckPhaseFailAndExit(_bgJudgingFailThreshold)) return;
 
-        // Transition to Reveal phase
-        EnterReveal();
-    }
-
-    // ──────────────────────────────────────────────────────────────
-    // Date Phase Transitions
-    // ──────────────────────────────────────────────────────────────
-
-    private void OnCharacterReachedJudgmentPoint()
-    {
-        if (_datePhase != DatePhase.Arrival) return;
-        Debug.Log("[DateSessionManager] NPC reached judgment point — running entrance judgments.");
-        StartCoroutine(RunEntranceJudgmentsAndContinue());
-    }
-
-    private IEnumerator RunEntranceJudgmentsAndContinue()
-    {
-        if (_entranceJudgments != null && _currentDate != null)
-        {
-            var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
-            yield return _entranceJudgments.RunJudgments(reactionUI, _currentDate);
-        }
-
-        // Resume walking to couch
-        if (_dateCharacter != null)
-            _dateCharacter.ContinueToCouch();
-    }
-
-    private void OnCharacterSatDown()
-    {
-        if (_datePhase != DatePhase.Arrival) return;
-
-        // Fail check after entrance judgments
-        if (CheckPhaseFailAndExit(_arrivalFailThreshold)) return;
-
-        StartCoroutine(TransitionToPhase2());
-    }
-
-    private IEnumerator TransitionToPhase2()
-    {
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeOut(0.5f);
-
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Phase 2");
-
-        yield return new WaitForSeconds(1.5f);
-
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.HidePhaseTitle();
-
-        _datePhase = DatePhase.BackgroundJudging;
-        _moodCheckTimer = 0f;
-        _accumulatedReactions.Clear();
-
-        // Enable excursions — NPC wanders while player makes drink
-        if (_dateCharacter != null)
-            _dateCharacter.EnableExcursions();
-
-        if (phaseTransitionSFX != null && AudioManager.Instance != null)
-            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
-
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(0.5f);
-
-        Debug.Log("[DateSessionManager] Phase 2: BackgroundJudging — NPC exploring while player makes drink.");
-    }
-
-    private void EnterReveal()
-    {
-        // Disable excursions — NPC sits on couch for reveal
-        if (_dateCharacter != null)
-            _dateCharacter.DisableExcursions();
-
-        if (phaseTransitionSFX != null && AudioManager.Instance != null)
-            AudioManager.Instance.PlaySFX(phaseTransitionSFX);
-
-        Debug.Log("[DateSessionManager] Transitioning to Phase 3: Reveal.");
+        // Transition to Phase 3
         StartCoroutine(TransitionToPhase3());
     }
 
-    private IEnumerator TransitionToPhase3()
-    {
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeOut(0.5f);
-
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Phase 3");
-
-        yield return new WaitForSeconds(1.5f);
-
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.HidePhaseTitle();
-
-        _datePhase = DatePhase.Reveal;
-
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(0.5f);
-
-        Debug.Log("[DateSessionManager] Phase 3: Reveal — replaying accumulated reactions.");
-        StartCoroutine(RunRevealSequence());
-    }
+    // ──────────────────────────────────────────────────────────────
+    // End of Date
+    // ──────────────────────────────────────────────────────────────
 
     /// <summary>Public safety fallback (e.g. GameClock bed time). Routes to fail or succeed based on affection.</summary>
     public void EndDate()
@@ -436,6 +463,36 @@ public class DateSessionManager : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    private IEnumerator RunEndSequence()
+    {
+        var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
+
+        yield return new WaitForSeconds(1f);
+
+        if (_affection >= _revealFailThreshold)
+        {
+            if (reactionUI != null)
+            {
+                reactionUI.ShowText("I had a wonderful time...", 3f);
+                yield return new WaitForSeconds(3.5f);
+                reactionUI.ShowText("Here... I brought you something.", 3f);
+                yield return new WaitForSeconds(3.5f);
+            }
+            SucceedDate();
+        }
+        else
+        {
+            if (reactionUI != null)
+            {
+                reactionUI.ShowText("I think I should go...", 3f);
+                yield return new WaitForSeconds(3.5f);
+                reactionUI.ShowText("Goodnight.", 2.5f);
+                yield return new WaitForSeconds(3f);
+            }
+            FailDate();
+        }
     }
 
     private void FailDate()
@@ -496,16 +553,14 @@ public class DateSessionManager : MonoBehaviour
 
     private void DismissCharacter()
     {
-        if (_dateCharacter != null && dateSpawnPoint != null)
-        {
-            _dateCharacter.Dismiss(dateSpawnPoint, () =>
-            {
-                if (_dateCharacterGO != null)
-                    Destroy(_dateCharacterGO);
-                _dateCharacterGO = null;
-                _dateCharacter = null;
-            });
-        }
+        if (_dateCharacter != null)
+            _dateCharacter.Dismiss();
+
+        if (_dateCharacterGO != null)
+            Destroy(_dateCharacterGO);
+
+        _dateCharacterGO = null;
+        _dateCharacter = null;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -514,9 +569,12 @@ public class DateSessionManager : MonoBehaviour
 
     private void SpawnDateCharacter()
     {
+        // Spawn at judgment point (entrance area)
+        Vector3 spawnPos = judgmentStopPoint != null ? judgmentStopPoint.position
+            : (dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero);
+
         if (_currentDate.characterModelPrefab != null)
         {
-            Vector3 spawnPos = dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero;
             _dateCharacterGO = Instantiate(_currentDate.characterModelPrefab, spawnPos, Quaternion.identity);
         }
         else
@@ -524,7 +582,7 @@ public class DateSessionManager : MonoBehaviour
             // Fallback: create a capsule placeholder
             _dateCharacterGO = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             _dateCharacterGO.name = $"Date_{_currentDate.characterName}";
-            _dateCharacterGO.transform.position = dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero;
+            _dateCharacterGO.transform.position = spawnPos;
         }
 
         // Add character controller
@@ -546,15 +604,12 @@ public class DateSessionManager : MonoBehaviour
         if (agent == null)
             agent = _dateCharacterGO.AddComponent<UnityEngine.AI.NavMeshAgent>();
 
-        // Initialize
-        Vector3 spawnPosition = dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero;
-        Transform couch = couchSeatTarget != null ? couchSeatTarget : transform;
-        _dateCharacter.Initialize(couch, spawnPosition, judgmentStopPoint);
+        // Initialize at position and set to sitting (idle, no walking)
+        _dateCharacter.Initialize(spawnPos);
+        _dateCharacter.SetSitting();
 
-        // Subscribe to reactions and sat-down event
+        // Subscribe to reactions
         _dateCharacter.OnReaction += HandleCharacterReaction;
-        _dateCharacter.OnSatDown += OnCharacterSatDown;
-        _dateCharacter.OnReachedJudgmentPoint += OnCharacterReachedJudgmentPoint;
     }
 
     private void HandleCharacterReaction(ReactableTag tag, ReactionType type)
@@ -565,63 +620,21 @@ public class DateSessionManager : MonoBehaviour
         var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
         reactionUI?.ShowReaction(type);
 
-        // Accumulate during BackgroundJudging for Reveal replay
-        if (_datePhase == DatePhase.BackgroundJudging && tag != null)
+        // Accumulate during all date phases (reactions shown live)
+        if (tag != null)
         {
-            _accumulatedReactions.Add(new AccumulatedReaction
+            var reaction = new AccumulatedReaction
             {
                 itemName = tag.gameObject.name,
                 type = type
-            });
+            };
+            _accumulatedReactions.Add(reaction);
+            OnRevealReaction?.Invoke(reaction);
         }
 
         // Debug overlay logging
         string itemName = tag != null ? tag.gameObject.name : "unknown";
         DateDebugOverlay.Instance?.LogReaction($"{itemName} → {type}");
-    }
-
-    private IEnumerator RunRevealSequence()
-    {
-        var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
-
-        yield return new WaitForSeconds(1f);
-
-        // Replay accumulated reactions
-        foreach (var reaction in _accumulatedReactions)
-        {
-            reactionUI?.ShowReaction(reaction.type);
-            OnRevealReaction?.Invoke(reaction);
-            Debug.Log($"[DateSessionManager] Reveal: {reaction.itemName} → {reaction.type}");
-            yield return new WaitForSeconds(2f);
-        }
-
-        yield return new WaitForSeconds(1f);
-
-        // Dialogue outcome based on affection
-        if (_affection >= _revealFailThreshold)
-        {
-            // Success dialogue
-            if (reactionUI != null)
-            {
-                reactionUI.ShowText("I had a wonderful time...", 3f);
-                yield return new WaitForSeconds(3.5f);
-                reactionUI.ShowText("Here... I brought you something.", 3f);
-                yield return new WaitForSeconds(3.5f);
-            }
-            SucceedDate();
-        }
-        else
-        {
-            // Fail dialogue
-            if (reactionUI != null)
-            {
-                reactionUI.ShowText("I think I should go...", 3f);
-                yield return new WaitForSeconds(3.5f);
-                reactionUI.ShowText("Goodnight.", 2.5f);
-                yield return new WaitForSeconds(3f);
-            }
-            FailDate();
-        }
     }
 
     private void EvaluateAmbientMood()

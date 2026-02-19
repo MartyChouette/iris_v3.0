@@ -296,6 +296,7 @@ public static class ApartmentSceneBuilder
         public Transform coffeeTableDeliveryPoint;
         public Transform tossedNewspaperPosition;
         public Transform judgmentStopPoint;
+        public Transform kitchenStandPoint;
     }
 
     private static FurnitureRefs BuildFurniture()
@@ -315,6 +316,9 @@ public static class ApartmentSceneBuilder
 
         // ═══ Judgment Stop Point (between entrance and couch) ═══
         refs.judgmentStopPoint = BuildJudgmentStopPoint(parent.transform);
+
+        // ═══ Kitchen Stand Point (where NPC stands during drink phase) ═══
+        refs.kitchenStandPoint = BuildKitchenStandPoint(parent.transform);
 
         return refs;
     }
@@ -405,6 +409,16 @@ public static class ApartmentSceneBuilder
         go.transform.SetParent(parent);
         // Halfway between spawn (-3, 0, -5.5) and couch (-5.5, 0, 3) — near the entrance area
         go.transform.position = new Vector3(-4.2f, 0f, -1.5f);
+        return go.transform;
+    }
+
+    /// <summary>Build the kitchen stand point where NPC stands during drink phase.</summary>
+    private static Transform BuildKitchenStandPoint(Transform parent)
+    {
+        var go = new GameObject("KitchenStandPoint");
+        go.transform.SetParent(parent);
+        // Near the drink making station (-4, 0, -5.2), offset so NPC watches the player
+        go.transform.position = new Vector3(-3.5f, 0f, -4.8f);
         return go.transform;
     }
 
@@ -2655,6 +2669,8 @@ public static class ApartmentSceneBuilder
                 furnitureRefs.coffeeTableDeliveryPoint;
         if (furnitureRefs.judgmentStopPoint != null)
             dsmSO.FindProperty("judgmentStopPoint").objectReferenceValue = furnitureRefs.judgmentStopPoint;
+        if (furnitureRefs.kitchenStandPoint != null)
+            dsmSO.FindProperty("kitchenStandPoint").objectReferenceValue = furnitureRefs.kitchenStandPoint;
 
         // Add EntranceJudgmentSequence and wire it to DateSessionManager
         var entranceJudgments = managersGO.AddComponent<EntranceJudgmentSequence>();
