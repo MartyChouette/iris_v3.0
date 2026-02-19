@@ -16,9 +16,13 @@ public class DateDebugOverlay : MonoBehaviour
     [SerializeField] private TMP_Text _debugText;
 
     private InputAction _toggleAction;
+    private InputAction _scrollUpAction;
+    private InputAction _scrollDownAction;
     private readonly List<string> _reactionLog = new List<string>();
     private const int MaxLogEntries = 20;
     private int _frameCounter;
+    private int _scrollOffset;
+    private const int ScrollStep = 8;
 
     private void Awake()
     {
@@ -31,6 +35,8 @@ public class DateDebugOverlay : MonoBehaviour
         Instance = this;
 
         _toggleAction = new InputAction("DebugToggle", InputActionType.Button, "<Keyboard>/f1");
+        _scrollUpAction = new InputAction("DebugScrollUp", InputActionType.Button, "<Keyboard>/pageUp");
+        _scrollDownAction = new InputAction("DebugScrollDown", InputActionType.Button, "<Keyboard>/pageDown");
 
         if (_overlayRoot != null)
             _overlayRoot.SetActive(false);
@@ -39,11 +45,15 @@ public class DateDebugOverlay : MonoBehaviour
     private void OnEnable()
     {
         _toggleAction.Enable();
+        _scrollUpAction.Enable();
+        _scrollDownAction.Enable();
     }
 
     private void OnDisable()
     {
         _toggleAction.Disable();
+        _scrollUpAction.Disable();
+        _scrollDownAction.Disable();
     }
 
     private void OnDestroy()
@@ -57,6 +67,12 @@ public class DateDebugOverlay : MonoBehaviour
             _overlayRoot.SetActive(!_overlayRoot.activeSelf);
 
         if (_overlayRoot == null || !_overlayRoot.activeSelf || _debugText == null) return;
+
+        // Scroll input
+        if (_scrollUpAction.WasPressedThisFrame())
+            _scrollOffset = Mathf.Max(0, _scrollOffset - ScrollStep);
+        if (_scrollDownAction.WasPressedThisFrame())
+            _scrollOffset += ScrollStep;
 
         // Throttle rebuild to every 10 frames for performance
         _frameCounter++;
@@ -300,7 +316,24 @@ public class DateDebugOverlay : MonoBehaviour
                 sb.AppendLine($"  {_reactionLog[i]}");
         }
 
-        _debugText.text = sb.ToString();
+        // Apply scroll offset
+        string fullText = sb.ToString();
+        string[] lines = fullText.Split('\n');
+        if (_scrollOffset >= lines.Length)
+            _scrollOffset = Mathf.Max(0, lines.Length - 1);
+
+        var visibleSB = new System.Text.StringBuilder(2048);
+        if (_scrollOffset > 0)
+            visibleSB.AppendLine($"<color=yellow>\u25b2 PgUp ({_scrollOffset} lines above)</color>");
+
+        int visibleCount = 0;
+        for (int i = _scrollOffset; i < lines.Length; i++)
+        {
+            visibleSB.AppendLine(lines[i]);
+            visibleCount++;
+        }
+
+        _debugText.text = visibleSB.ToString();
     }
 
     private static string PassFail(float affection, float threshold)

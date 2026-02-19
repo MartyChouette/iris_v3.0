@@ -3559,12 +3559,12 @@ public static class ApartmentSceneBuilder
         textRT.offsetMax = new Vector2(-8f, -8f);
         textRT.localScale = Vector3.one;
         var debugTMP = textGO.AddComponent<TextMeshProUGUI>();
-        debugTMP.fontSize = 11f;
+        debugTMP.fontSize = 18f;
         debugTMP.alignment = TextAlignmentOptions.TopLeft;
         debugTMP.color = new Color(0.8f, 1f, 0.8f, 1f);
         debugTMP.richText = true;
         debugTMP.enableWordWrapping = true;
-        debugTMP.overflowMode = TextOverflowModes.Truncate;
+        debugTMP.overflowMode = TextOverflowModes.Overflow;
         debugTMP.raycastTarget = false;
 
         // DateDebugOverlay component
