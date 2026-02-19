@@ -1032,6 +1032,10 @@ public static class ApartmentSceneBuilder
         groupGO.transform.position = BookcaseStationPos;
         groupGO.transform.rotation = BookcaseStationRot;
 
+        // Wire coffee table stack base (coffee table top at Y=0.375, small offset)
+        CoffeeTableBook.CoffeeTableStackBase = new Vector3(-0.571f, 0.38f, 2.007f);
+        CoffeeTableBook.CoffeeTableStackRotation = Quaternion.Euler(0f, 5f, 0f);
+
         Debug.Log("[ApartmentSceneBuilder] Bookcase station group built.");
     }
 

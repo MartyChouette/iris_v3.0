@@ -198,17 +198,38 @@ public static class BookcaseSceneBuilder
     };
     private static readonly float[] PerfumeLightIntensities = { 0.8f, 1.2f, 0.9f };
 
-    // Coffee table book data
-    private static readonly string[] CoffeeBookTitles = { "Arrangements", "Petal Studies" };
+    // Coffee table book data (5 books)
+    private static readonly string[] CoffeeBookTitles =
+    {
+        "Arrangements",
+        "Petal Studies",
+        "Botanical Illustrations",
+        "Indoor Gardens",
+        "Pressed Flower Almanac",
+    };
+    private static readonly string[] CoffeeBookAuthors =
+    {
+        "Yuki Tanaka",
+        "Lena Bloom",
+        "Rosa Thornfield",
+        "Fern Whitley",
+        "Violet Stemworth",
+    };
     private static readonly string[] CoffeeBookDescriptions =
     {
         "A heavy book of ikebana arrangements, each page a meditation.",
-        "Macro photographs of petals — textures you've never noticed."
+        "Macro photographs of petals — textures you've never noticed.",
+        "Hand-drawn plates of roses, ferns, and orchids in exacting detail.",
+        "A guide to keeping green things alive in small, dark apartments.",
+        "Seasonal pressed flowers with notes on drying technique and meaning.",
     };
     private static readonly Color[] CoffeeBookColors =
     {
         new Color(0.15f, 0.25f, 0.35f),
         new Color(0.5f, 0.2f, 0.3f),
+        new Color(0.20f, 0.35f, 0.20f),
+        new Color(0.35f, 0.30f, 0.15f),
+        new Color(0.40f, 0.15f, 0.30f),
     };
 
     [MenuItem("Window/Iris/Archived Builders/Build Bookcase Browsing Scene")]
@@ -244,19 +265,10 @@ public static class BookcaseSceneBuilder
         // ── 5. Coffee table (scene-specific room furniture) ──────────
         BuildCoffeeTable();
 
-        // ── 6. Wire coffee table book targets ────────────────────────
-        var coffeeBooks = bookcaseRoot.GetComponentsInChildren<CoffeeTableBook>();
+        // ── 6. Wire coffee table stack base ───────────────────────────
         float coffeeTableTopY = 0.415f;
-        for (int i = 0; i < coffeeBooks.Length; i++)
-        {
-            float tableX = 0.65f + i * 0.25f;
-            var cbSO = new SerializedObject(coffeeBooks[i]);
-            cbSO.FindProperty("coffeeTablePosition").vector3Value =
-                new Vector3(tableX, coffeeTableTopY, 0.8f);
-            cbSO.FindProperty("coffeeTableRotation").quaternionValue =
-                Quaternion.Euler(0f, 15f * (i + 1), 0f);
-            cbSO.ApplyModifiedPropertiesWithoutUndo();
-        }
+        CoffeeTableBook.CoffeeTableStackBase = new Vector3(0.8f, coffeeTableTopY, 0.8f);
+        CoffeeTableBook.CoffeeTableStackRotation = Quaternion.Euler(0f, 5f, 0f);
 
         // ── 7. Environment mood controller ───────────────────────────
         BuildEnvironmentMood(lightGO);
@@ -779,7 +791,7 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Coffee Table Books (on bookcase row 2, right side)
+    // Coffee Table Books (5 stacked flat on row 0, right side)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildCoffeeTableBooks(GameObject bookcaseRoot, int coffeeTableBooksLayer)
@@ -791,10 +803,23 @@ public static class BookcaseSceneBuilder
         var parent = new GameObject("CoffeeTableBooks");
         parent.transform.SetParent(bookcaseRoot.transform);
 
-        // Row 2 — right side of shelf
+        // Row 0 — right side of shelf, stacked flat
         float rowHeight = CaseHeight / ShelfCount;
-        float row2ShelfTopY = 2f * rowHeight + ShelfThickness / 2f;
+        float row0ShelfTopY = 0f * rowHeight + ShelfThickness / 2f;
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
+
+        // Stack base: right third of row 0, centered
+        float stackX = innerWidth / 2f - innerWidth / 6f;
+        Vector3 stackBase = new Vector3(stackX, row0ShelfTopY, CaseCenterZ);
+        Quaternion stackRot = Quaternion.identity;
+
+        // Set static bookcase stack base
+        CoffeeTableBook.BookcaseStackBase = stackBase;
+        CoffeeTableBook.BookcaseStackRotation = stackRot;
+
+        float bookWidth = 0.25f;
+        float bookDepth = 0.18f;
+        float bookThickness = 0.03f;
 
         for (int i = 0; i < CoffeeBookTitles.Length; i++)
         {
@@ -803,20 +828,18 @@ public static class BookcaseSceneBuilder
             def.description = CoffeeBookDescriptions[i];
             def.coverColor = CoffeeBookColors[i];
             def.itemID = $"coffeebook_{i}";
-            def.size = new Vector2(0.20f, 0.16f);
-            def.thickness = 0.025f;
+            def.size = new Vector2(bookWidth, bookDepth);
+            def.thickness = bookThickness;
 
             string defPath = $"{defDir}/CoffeeBook_{i:D2}_{CoffeeBookTitles[i].Replace(" ", "_")}.asset";
             AssetDatabase.CreateAsset(def, defPath);
 
-            // Bookcase position: flat (lying down) on right quarter of row 2
-            float rightZoneStart = innerWidth / 2f - innerWidth / 4f + 0.05f;
-            float bookcaseX = rightZoneStart + i * 0.22f;
-            float bookcaseY = row2ShelfTopY + def.thickness / 2f;
+            // Stacked flat: each book at stackBase + (index * thickness) in Y
+            float bookY = stackBase.y + i * bookThickness + bookThickness / 2f;
 
             var bookGO = CreateBox($"CoffeeBook_{i}", parent.transform,
-                new Vector3(bookcaseX, bookcaseY, CaseCenterZ),
-                new Vector3(def.size.x, def.thickness, def.size.y),
+                new Vector3(stackBase.x, bookY, stackBase.z),
+                new Vector3(bookWidth, bookThickness, bookDepth),
                 CoffeeBookColors[i]);
             bookGO.isStatic = false;
             bookGO.layer = coffeeTableBooksLayer;
@@ -824,7 +847,7 @@ public static class BookcaseSceneBuilder
             var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
             bookGO.AddComponent<InteractableHighlight>();
 
-            // ReactableTag — starts inactive/private on bookcase, toggled by CoffeeTableBook.MoveRoutine
+            // ReactableTag — starts inactive/private on bookcase, toggled by CoffeeTableBook
             var tag = bookGO.AddComponent<ReactableTag>();
             var tagSO = new SerializedObject(tag);
             var tagsProp = tagSO.FindProperty("tags");
@@ -837,10 +860,13 @@ public static class BookcaseSceneBuilder
 
             var cbSO = new SerializedObject(coffeeBook);
             cbSO.FindProperty("definition").objectReferenceValue = def;
+            // First book starts on coffee table
+            if (i == 0)
+                cbSO.FindProperty("startsOnCoffeeTable").boolValue = true;
             cbSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books stacked on row 0.");
     }
 
     // ════════════════════════════════════════════════════════════════════
