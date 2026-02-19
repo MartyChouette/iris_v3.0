@@ -322,7 +322,7 @@ public class DateSessionManager : MonoBehaviour
 
         // Teleport NPC to kitchen
         Vector3 kitchenPos = kitchenStandPoint != null ? kitchenStandPoint.position
-            : (dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero);
+            : new Vector3(-4f, 0f, -4.5f);
         if (_dateCharacter != null)
         {
             _dateCharacter.WarpTo(kitchenPos);
@@ -571,7 +571,7 @@ public class DateSessionManager : MonoBehaviour
     {
         // Spawn at judgment point (entrance area)
         Vector3 spawnPos = judgmentStopPoint != null ? judgmentStopPoint.position
-            : (dateSpawnPoint != null ? dateSpawnPoint.position : Vector3.zero);
+            : new Vector3(-3.2f, 0f, -4f);
 
         if (_currentDate.characterModelPrefab != null)
         {

@@ -407,8 +407,8 @@ public static class ApartmentSceneBuilder
     {
         var go = new GameObject("JudgmentStopPoint");
         go.transform.SetParent(parent);
-        // Halfway between spawn (-3, 0, -5.5) and couch (-5.5, 0, 3) — near the entrance area
-        go.transform.position = new Vector3(-4.2f, 0f, -1.5f);
+        // Inside the house near the front door — clearly visible in entrance area
+        go.transform.position = new Vector3(-3.2f, 0f, -4f);
         return go.transform;
     }
 
