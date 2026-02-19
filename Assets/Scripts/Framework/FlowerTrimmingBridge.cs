@@ -20,7 +20,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
     [Header("Scene")]
     [Tooltip("Name of the flower trimming scene to load additively. Must be in Build Settings.")]
-    [SerializeField] private string _flowerSceneName = "G_Flower_DEC14";
+    [SerializeField] private string _flowerSceneName = "Daisy_Flower_Scene";
 
     private Action<int, int, bool> _onComplete;
     private bool _waitingForResult;
