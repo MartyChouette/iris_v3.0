@@ -148,7 +148,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
         {
             trimmedVisual = TrimmedFlowerSnapshot.Capture(session.brain);
             // Move to DontDestroyOnLoad so it survives the scene unload
-            Object.DontDestroyOnLoad(trimmedVisual);
+            UnityEngine.Object.DontDestroyOnLoad(trimmedVisual);
             trimmedVisual.SetActive(false); // hide until placed
         }
 
