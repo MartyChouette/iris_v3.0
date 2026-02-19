@@ -36,7 +36,7 @@ MonoBehaviour:
     commentary: "She wants someone who owns real records \u2014 not just a Spotify
       playlist."
   flowerPrefab: {fileID: 3126228506876650885, guid: 7582aaee248b6e149b10daac037b2334, type: 3}
-  flowerSceneName: G_Flower_DEC14
+  flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0
   preferences:
     likedTags:

@@ -28,7 +28,7 @@ MonoBehaviour:
   fontSizeOverride: 0
   keywords: []
   flowerPrefab: {fileID: 0}
-  flowerSceneName: G_Flower_DEC8
+  flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0
   preferences:
     likedTags:
