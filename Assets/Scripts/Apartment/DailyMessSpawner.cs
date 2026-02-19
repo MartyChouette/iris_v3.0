@@ -10,8 +10,8 @@ public class DailyMessSpawner : MonoBehaviour
     public static DailyMessSpawner Instance { get; private set; }
 
     [Header("Entrance Items")]
-    [Tooltip("Shoes PlaceableObject — repositioned each morning.")]
-    [SerializeField] private PlaceableObject _shoes;
+    [Tooltip("All shoe PlaceableObjects — repositioned each morning.")]
+    [SerializeField] private PlaceableObject[] _shoes;
 
     [Tooltip("Coat PlaceableObject — repositioned each morning.")]
     [SerializeField] private PlaceableObject _coat;
@@ -75,7 +75,14 @@ public class DailyMessSpawner : MonoBehaviour
         }
 
         int idx = 0;
-        MisplaceItem(_shoes, ref idx, indices);
+
+        // Misplace all shoe pairs
+        if (_shoes != null)
+        {
+            for (int s = 0; s < _shoes.Length; s++)
+                MisplaceItem(_shoes[s], ref idx, indices);
+        }
+
         MisplaceItem(_coat, ref idx, indices);
         MisplaceItem(_hat, ref idx, indices);
     }

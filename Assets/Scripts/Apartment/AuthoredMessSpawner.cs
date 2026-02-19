@@ -27,7 +27,7 @@ public class AuthoredMessSpawner : MonoBehaviour
     [SerializeField, Range(1, 8)] private int _maxStainsPerDay = 4;
 
     [Tooltip("Maximum object messes to spawn per day.")]
-    [SerializeField, Range(1, 8)] private int _maxObjectsPerDay = 3;
+    [SerializeField, Range(1, 8)] private int _maxObjectsPerDay = 5;
 
     [Header("References")]
     [Tooltip("CleaningManager to update with active stain surfaces.")]

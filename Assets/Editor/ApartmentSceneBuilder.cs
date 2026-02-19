@@ -3289,6 +3289,8 @@ public static class ApartmentSceneBuilder
             new Vector3(-0.5f, 0.1f, 3.0f),     // living room floor
             new Vector3(0.5f, 0.1f, 2.0f),      // living room floor 2
             new Vector3(-2.0f, 0.1f, -4.0f),    // kitchen floor 2
+            new Vector3(-3.8f, 0.1f, -1.5f),    // kitchen-hallway transition
+            new Vector3(0.8f, 0.46f, 1.0f),     // side table area
         };
 
         var objSlotsParent = new GameObject("ObjectMessSlots");
@@ -3417,6 +3419,28 @@ public static class ApartmentSceneBuilder
         CreateMessBP(messDir, "Nail_Polish_Drip", "Nail Polish Drip", "A bright drip of nail polish on the floor.",
             MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Stain,
             spillDef: FindSpill("Juice"), weight: 0.8f,
+            areas: new[] { ApartmentArea.LivingRoom });
+
+        // ── Extra Day 1 mess (tutorial needs a messy apartment) ──
+
+        CreateMessBP(messDir, "Empty_Wine_Bottle", "Empty Wine Bottle", "Last night was... something.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
+            weight: 1.8f, objColor: new Color(0.15f, 0.3f, 0.12f), objScale: new Vector3(0.06f, 0.2f, 0.06f),
+            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Pizza_Box", "Pizza Box", "Cold pizza for breakfast? Tempting.",
+            MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Object,
+            weight: 1.4f, objColor: new Color(0.6f, 0.5f, 0.35f), objScale: new Vector3(0.18f, 0.03f, 0.18f),
+            areas: new[] { ApartmentArea.Kitchen });
+
+        CreateMessBP(messDir, "Dirty_Mug", "Dirty Mug", "Rings of old coffee stain the inside.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
+            weight: 1.3f, objColor: new Color(0.85f, 0.82f, 0.75f), objScale: new Vector3(0.06f, 0.08f, 0.06f),
+            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+
+        CreateMessBP(messDir, "Scattered_Magazine", "Scattered Magazine", "Open to a horoscope page.",
+            MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
+            weight: 1.0f, objColor: new Color(0.8f, 0.3f, 0.35f), objScale: new Vector3(0.14f, 0.01f, 0.1f),
             areas: new[] { ApartmentArea.LivingRoom });
 
         AssetDatabase.SaveAssets();
@@ -4371,25 +4395,68 @@ public static class ApartmentSceneBuilder
 
         // ── Entrance items (shoes, coat, hat) — start at home, DailyMessSpawner misplaces them ──
 
-        // Shoes
-        var shoes = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        shoes.name = "Shoes";
-        shoes.transform.SetParent(parent.transform);
-        shoes.transform.position = ShoeRackPos + new Vector3(0f, 0.2f, 0f);
-        shoes.transform.localScale = new Vector3(0.2f, 0.1f, 0.12f);
-        shoes.layer = placeableLayer;
-        shoes.isStatic = false;
-        SetMaterial(shoes, new Color(0.2f, 0.15f, 0.1f));
+        // Sneakers (brown, small)
+        var sneakers = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        sneakers.name = "Sneakers";
+        sneakers.transform.SetParent(parent.transform);
+        sneakers.transform.position = ShoeRackPos + new Vector3(-0.15f, 0.2f, 0f);
+        sneakers.transform.localScale = new Vector3(0.2f, 0.1f, 0.12f);
+        sneakers.layer = placeableLayer;
+        sneakers.isStatic = false;
+        SetMaterial(sneakers, new Color(0.2f, 0.15f, 0.1f));
 
-        var shoesRB = shoes.AddComponent<Rigidbody>();
-        shoesRB.mass = 0.5f;
-        var shoesPO = shoes.AddComponent<PlaceableObject>();
-        var shoesPOSO = new SerializedObject(shoesPO);
-        shoesPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Shoe;
-        shoesPOSO.FindProperty("_homeZoneName").stringValue = "ShoeRack";
-        shoesPOSO.ApplyModifiedPropertiesWithoutUndo();
-        shoes.AddComponent<InteractableHighlight>();
-        AddReactableTag(shoes, new[] { "shoes", "mess" }, true);
+        var sneakersRB = sneakers.AddComponent<Rigidbody>();
+        sneakersRB.mass = 0.5f;
+        var sneakersPO = sneakers.AddComponent<PlaceableObject>();
+        var sneakersPOSO = new SerializedObject(sneakersPO);
+        sneakersPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Shoe;
+        sneakersPOSO.FindProperty("_homeZoneName").stringValue = "ShoeRack";
+        sneakersPOSO.FindProperty("_itemDescription").stringValue = "Nema's beat-up sneakers.";
+        sneakersPOSO.ApplyModifiedPropertiesWithoutUndo();
+        sneakers.AddComponent<InteractableHighlight>();
+        AddReactableTag(sneakers, new[] { "shoes", "mess" }, true);
+
+        // Boots (tall, dark)
+        var boots = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        boots.name = "Boots";
+        boots.transform.SetParent(parent.transform);
+        boots.transform.position = ShoeRackPos + new Vector3(0f, 0.2f, 0f);
+        boots.transform.localScale = new Vector3(0.18f, 0.18f, 0.12f);
+        boots.layer = placeableLayer;
+        boots.isStatic = false;
+        SetMaterial(boots, new Color(0.12f, 0.1f, 0.1f));
+
+        var bootsRB = boots.AddComponent<Rigidbody>();
+        bootsRB.mass = 0.6f;
+        var bootsPO = boots.AddComponent<PlaceableObject>();
+        var bootsPOSO = new SerializedObject(bootsPO);
+        bootsPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Shoe;
+        bootsPOSO.FindProperty("_homeZoneName").stringValue = "ShoeRack";
+        bootsPOSO.FindProperty("_itemDescription").stringValue = "Heavy black boots.";
+        bootsPOSO.ApplyModifiedPropertiesWithoutUndo();
+        boots.AddComponent<InteractableHighlight>();
+        AddReactableTag(boots, new[] { "shoes", "mess" }, true);
+
+        // Slippers (soft, light)
+        var slippers = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        slippers.name = "Slippers";
+        slippers.transform.SetParent(parent.transform);
+        slippers.transform.position = ShoeRackPos + new Vector3(0.15f, 0.2f, 0f);
+        slippers.transform.localScale = new Vector3(0.18f, 0.06f, 0.1f);
+        slippers.layer = placeableLayer;
+        slippers.isStatic = false;
+        SetMaterial(slippers, new Color(0.6f, 0.45f, 0.5f));
+
+        var slippersRB = slippers.AddComponent<Rigidbody>();
+        slippersRB.mass = 0.2f;
+        var slippersPO = slippers.AddComponent<PlaceableObject>();
+        var slippersPOSO = new SerializedObject(slippersPO);
+        slippersPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Shoe;
+        slippersPOSO.FindProperty("_homeZoneName").stringValue = "ShoeRack";
+        slippersPOSO.FindProperty("_itemDescription").stringValue = "Fuzzy house slippers.";
+        slippersPOSO.ApplyModifiedPropertiesWithoutUndo();
+        slippers.AddComponent<InteractableHighlight>();
+        AddReactableTag(slippers, new[] { "shoes", "mess" }, true);
 
         // Coat
         var coat = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -4536,6 +4603,9 @@ public static class ApartmentSceneBuilder
             new Vector3(1.0f, 0.1f, 3.0f),      // living room floor
             new Vector3(-5.0f, 0.1f, -4.0f),    // kitchen floor
             new Vector3(-2.0f, 0.1f, 5.0f),     // near entrance
+            new Vector3(0.3f, 0.1f, 1.0f),      // between rooms
+            new Vector3(-4.2f, 0.1f, -2.0f),    // kitchen doorway
+            new Vector3(-0.8f, 0.1f, 4.5f),     // entrance floor
         };
 
         var wrongTransforms = new Transform[wrongPositions.Length];
@@ -4557,12 +4627,19 @@ public static class ApartmentSceneBuilder
             wrongPosProp.GetArrayElementAtIndex(i).objectReferenceValue = wrongTransforms[i];
 
         // Find entrance items (created by BuildEntranceArea)
-        var shoesGO = GameObject.Find("Shoes");
+        string[] shoeNames = { "Sneakers", "Boots", "Slippers" };
+        var shoesProp = spawnerSO.FindProperty("_shoes");
+        shoesProp.arraySize = shoeNames.Length;
+        for (int i = 0; i < shoeNames.Length; i++)
+        {
+            var shoeGO = GameObject.Find(shoeNames[i]);
+            if (shoeGO != null)
+                shoesProp.GetArrayElementAtIndex(i).objectReferenceValue = shoeGO.GetComponent<PlaceableObject>();
+        }
+
         var coatGO = GameObject.Find("Coat");
         var hatGO = GameObject.Find("Hat");
 
-        if (shoesGO != null)
-            spawnerSO.FindProperty("_shoes").objectReferenceValue = shoesGO.GetComponent<PlaceableObject>();
         if (coatGO != null)
             spawnerSO.FindProperty("_coat").objectReferenceValue = coatGO.GetComponent<PlaceableObject>();
         if (hatGO != null)
@@ -4570,7 +4647,7 @@ public static class ApartmentSceneBuilder
 
         spawnerSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log($"[ApartmentSceneBuilder] DailyMessSpawner built (entrance items only, {wrongPositions.Length} wrong positions).");
+        Debug.Log($"[ApartmentSceneBuilder] DailyMessSpawner built ({shoeNames.Length} shoes, coat, hat, {wrongPositions.Length} wrong positions).");
     }
 
     // ══════════════════════════════════════════════════════════════════
