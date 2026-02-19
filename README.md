@@ -178,8 +178,8 @@ Assets/
 
 ## Development
 
-See [LONGTERM_PLAN.md](LONGTERM_PLAN.md) for the project roadmap and remaining work items.
+See [LONGTERM_PLAN.md](docs/LONGTERM_PLAN.md) for the project roadmap and remaining work items.
 
-See [DEV_JOURNAL.md](DEV_JOURNAL.md) for session-by-session development notes.
+See [DEV_JOURNAL.md](docs/DEV_JOURNAL.md) for session-by-session development notes.
 
-See [CODEBASE_QUALITY_ASSESSMENT.md](CODEBASE_QUALITY_ASSESSMENT.md) for the full technical audit.
+See [CODEBASE_QUALITY_ASSESSMENT.md](docs/CODEBASE_QUALITY_ASSESSMENT.md) for the full technical audit.

@@ -293,4 +293,4 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 
 ## Roadmap Reference
 
-See `LONGTERM_PLAN.md` for full backlog and implementation phases.
+See `docs/LONGTERM_PLAN.md` for full backlog and implementation phases.

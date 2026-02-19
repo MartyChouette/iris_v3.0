@@ -104,3 +104,8 @@ TestResults*.xml
 
 # Windows reserved name junk file
 nul
+
+# Build artifacts & reports
+build_log*.txt
+builds.zip
+TestReport.html
