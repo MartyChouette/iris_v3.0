@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary>
 /// Controls a single drawer below the bookcase. Click to slide open,
 /// revealing contents inside. Re-click or ESC to close.
+/// Aggregates smell from stored items onto its own ReactableTag so
+/// TidyScorer can detect smelly contents even when items are hidden.
 /// </summary>
 public class DrawerController : MonoBehaviour
 {
@@ -35,6 +37,9 @@ public class DrawerController : MonoBehaviour
     private Color _baseColor;
     private bool _isHovered;
 
+    // Smell aggregation — drawer's own ReactableTag proxies stored items' smell
+    private ReactableTag _drawerTag;
+
     private void Awake()
     {
         _closedPosition = transform.localPosition;
@@ -48,6 +53,9 @@ public class DrawerController : MonoBehaviour
 
         if (contentsRoot != null)
             contentsRoot.SetActive(false);
+
+        // Cache or create the drawer's own ReactableTag for smell aggregation
+        _drawerTag = GetComponent<ReactableTag>();
     }
 
     public void SetContentsRoot(GameObject root)
@@ -150,6 +158,8 @@ public class DrawerController : MonoBehaviour
             tag.IsActive = false;
         }
 
+        RecalculateDrawerSmell();
+
         Debug.Log($"[DrawerController] Stored {item.name}. Count: {_storedItems.Count}/{_maxCapacity}");
     }
 
@@ -168,7 +178,30 @@ public class DrawerController : MonoBehaviour
             tag.IsActive = true;
         }
 
+        RecalculateDrawerSmell();
+
         Debug.Log($"[DrawerController] Removed {item.name} from storage. Count: {_storedItems.Count}/{_maxCapacity}");
+    }
+
+    /// <summary>
+    /// Sum up SmellAmount from all stored items and set it on the drawer's
+    /// own ReactableTag. Smell travels through drawers — hiding something
+    /// smelly doesn't hide the smell.
+    /// </summary>
+    private void RecalculateDrawerSmell()
+    {
+        if (_drawerTag == null) return;
+
+        float totalSmell = 0f;
+        for (int i = 0; i < _storedItems.Count; i++)
+        {
+            if (_storedItems[i] == null) continue;
+            var tag = _storedItems[i].GetComponent<ReactableTag>();
+            if (tag != null)
+                totalSmell += tag.SmellAmount;
+        }
+
+        _drawerTag.SmellAmount = totalSmell;
     }
 
     private void PositionStoredItems()
