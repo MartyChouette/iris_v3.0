@@ -55,6 +55,7 @@ public class CleaningManager : MonoBehaviour
     // Input
     private InputAction _mousePosition;
     private InputAction _mouseClick;
+    private InputAction _toolSwitch;
 
     // State
     private CleanableSurface _hoveredSurface;
@@ -146,6 +147,7 @@ public class CleaningManager : MonoBehaviour
 
         _mousePosition = new InputAction("CleanPointer", InputActionType.Value, "<Mouse>/position");
         _mouseClick = new InputAction("CleanClick", InputActionType.Button, "<Mouse>/leftButton");
+        _toolSwitch = new InputAction("ToolSwitch", InputActionType.Button, "<Keyboard>/tab");
 
         if (_mainCamera == null)
             _mainCamera = Camera.main;
@@ -160,12 +162,14 @@ public class CleaningManager : MonoBehaviour
     {
         _mousePosition.Enable();
         _mouseClick.Enable();
+        _toolSwitch.Enable();
     }
 
     void OnDisable()
     {
         _mousePosition.Disable();
         _mouseClick.Disable();
+        _toolSwitch.Disable();
     }
 
     // ── Update ──────────────────────────────────────────────────────
@@ -173,6 +177,13 @@ public class CleaningManager : MonoBehaviour
     void Update()
     {
         if (_mainCamera == null) return;
+
+        // Tab to toggle between Sponge and Spray Bottle
+        if (_toolSwitch.WasPressedThisFrame())
+        {
+            _currentTool = _currentTool == Tool.Sponge ? Tool.SprayBottle : Tool.Sponge;
+            Debug.Log($"[CleaningManager] Switched to: {_currentTool}");
+        }
 
         // Block cleaning outside interaction phases (name entry, newspaper, date end)
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
