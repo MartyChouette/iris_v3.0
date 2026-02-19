@@ -211,6 +211,10 @@ public class ObjectGrabber : MonoBehaviour
 
         placeable.OnPickedUp();
         ShowShadow(true);
+
+        // Show pickup description
+        if (PickupDescriptionHUD.Instance != null)
+            PickupDescriptionHUD.Instance.Show(placeable.ItemDescription);
     }
 
     // ── Place ────────────────────────────────────────────────────────
@@ -318,6 +322,9 @@ public class ObjectGrabber : MonoBehaviour
         _lastValidSurface = null;
         _isOnWall = false;
         ShowShadow(false);
+
+        if (PickupDescriptionHUD.Instance != null)
+            PickupDescriptionHUD.Instance.Hide();
     }
 
     // ── Grab target (surface raycast with depth-plane fallback) ──────

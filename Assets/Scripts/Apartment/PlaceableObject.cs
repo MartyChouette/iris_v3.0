@@ -22,6 +22,9 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Name of the DropZone this item belongs to (empty = no home zone).")]
     [SerializeField] private string _homeZoneName = "";
 
+    [Tooltip("Short description shown when picked up (leave empty to use object name).")]
+    [SerializeField] private string _itemDescription = "";
+
     [Header("Surface Restrictions")]
     [Tooltip("If true, this object can be placed on vertical (wall) surfaces.")]
     [SerializeField] private bool canWallMount;
@@ -42,6 +45,7 @@ public class PlaceableObject : MonoBehaviour
     public State CurrentState { get; private set; } = State.Resting;
     public ItemCategory Category => _itemCategory;
     public string HomeZoneName => _homeZoneName;
+    public string ItemDescription => !string.IsNullOrEmpty(_itemDescription) ? _itemDescription : name;
     public bool IsAtHome { get; set; }
     public bool CanWallMount => canWallMount;
     public bool WallOnly => wallOnly;

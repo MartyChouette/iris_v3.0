@@ -217,6 +217,9 @@ public static class ApartmentSceneBuilder
         // ── 15d. F1 debug overlay ──
         BuildDateDebugOverlay();
 
+        // ── 15e. Pickup description HUD ──
+        BuildPickupDescriptionHUD();
+
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
@@ -3575,6 +3578,67 @@ public static class ApartmentSceneBuilder
         panelGO.SetActive(false);
 
         Debug.Log("[ApartmentSceneBuilder] F1 debug overlay built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Pickup Description HUD
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildPickupDescriptionHUD()
+    {
+        var go = new GameObject("PickupDescriptionHUD");
+
+        var canvas = go.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 150;
+        go.AddComponent<CanvasScaler>();
+        go.AddComponent<GraphicRaycaster>();
+
+        // Bottom-center panel: 50% width, auto-height
+        var panelGO = new GameObject("PickupPanel");
+        panelGO.transform.SetParent(go.transform, false);
+        var panelRT = panelGO.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.25f, 0f);
+        panelRT.anchorMax = new Vector2(0.75f, 0f);
+        panelRT.pivot = new Vector2(0.5f, 0f);
+        panelRT.anchoredPosition = new Vector2(0f, 40f);
+        panelRT.sizeDelta = new Vector2(0f, 50f);
+        panelRT.localScale = Vector3.one;
+
+        var panelImg = panelGO.AddComponent<Image>();
+        panelImg.color = new Color(0f, 0f, 0f, 0.65f);
+        panelImg.raycastTarget = false;
+
+        // Description text
+        var textGO = new GameObject("DescriptionText");
+        textGO.transform.SetParent(panelGO.transform, false);
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = new Vector2(8f, 4f);
+        textRT.offsetMax = new Vector2(-8f, -4f);
+        textRT.localScale = Vector3.one;
+
+        var descTMP = textGO.AddComponent<TextMeshProUGUI>();
+        descTMP.text = "";
+        descTMP.fontSize = 22f;
+        descTMP.alignment = TextAlignmentOptions.Center;
+        descTMP.color = Color.white;
+        descTMP.richText = true;
+        descTMP.enableWordWrapping = true;
+        descTMP.raycastTarget = false;
+
+        // PickupDescriptionHUD component
+        var hud = go.AddComponent<PickupDescriptionHUD>();
+        var hudSO = new SerializedObject(hud);
+        hudSO.FindProperty("_panelRoot").objectReferenceValue = panelGO;
+        hudSO.FindProperty("_descriptionText").objectReferenceValue = descTMP;
+        hudSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Start hidden
+        panelGO.SetActive(false);
+
+        Debug.Log("[ApartmentSceneBuilder] Pickup description HUD built.");
     }
 
     // ══════════════════════════════════════════════════════════════════
