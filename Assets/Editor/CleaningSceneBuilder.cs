@@ -94,7 +94,6 @@ public static class CleaningSceneBuilder
         mgrSO.FindProperty("_mainCamera").objectReferenceValue = cam;
         mgrSO.FindProperty("_hud").objectReferenceValue = hud;
         mgrSO.FindProperty("_spongeVisual").objectReferenceValue = spongeVisual;
-        mgrSO.FindProperty("_sprayVisual").objectReferenceValue = sprayVisual;
         mgrSO.FindProperty("_cleanableLayer").intValue = 1 << cleanableLayer;
 
         var surfacesProp = mgrSO.FindProperty("_surfaces");
@@ -108,12 +107,6 @@ public static class CleaningSceneBuilder
 
         // ── 11. UI Canvas ──────────────────────────────────────────────
         var canvasGO = CreateScreenCanvas("CleaningUI_Canvas", managersGO.transform);
-
-        // Tool name (top-center)
-        var toolNameLabel = CreateLabel("ToolNameLabel", canvasGO.transform,
-            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-            new Vector2(0f, -20f), new Vector2(300f, 40f),
-            "Sponge", 24f, TextAlignmentOptions.Center);
 
         // Instructions (bottom-center)
         var instructionLabel = CreateLabel("InstructionLabel", canvasGO.transform,
@@ -133,27 +126,15 @@ public static class CleaningSceneBuilder
             new Vector2(-100f, -100f), new Vector2(200f, 160f),
             "", 14f, TextAlignmentOptions.TopRight);
 
-        // ── Tool selection buttons (bottom-right) ──────────────────────
-        var spongeBtn = BuildToolButton(canvasGO.transform, "Sponge", mgr, true,
-            new Vector2(1f, 0f), new Vector2(-130f, 50f),
-            new Color(0.35f, 0.60f, 0.25f));
-
-        var sprayBtn = BuildToolButton(canvasGO.transform, "Spray Bottle", mgr, false,
-            new Vector2(1f, 0f), new Vector2(-130f, 100f),
-            new Color(0.25f, 0.45f, 0.70f));
-
         // ── Completion panel (center, starts inactive) ─────────────────
         var completionPanel = BuildCompletionPanel(canvasGO.transform);
 
         // ── Wire HUD ───────────────────────────────────────────────────
         var hudSO = new SerializedObject(hud);
         hudSO.FindProperty("manager").objectReferenceValue = mgr;
-        hudSO.FindProperty("toolNameLabel").objectReferenceValue = toolNameLabel.GetComponent<TMP_Text>();
         hudSO.FindProperty("instructionLabel").objectReferenceValue = instructionLabel.GetComponent<TMP_Text>();
         hudSO.FindProperty("progressLabel").objectReferenceValue = progressLabel.GetComponent<TMP_Text>();
         hudSO.FindProperty("surfaceDetailLabel").objectReferenceValue = surfaceDetailLabel.GetComponent<TMP_Text>();
-        hudSO.FindProperty("spongeButton").objectReferenceValue = spongeBtn;
-        hudSO.FindProperty("sprayButton").objectReferenceValue = sprayBtn;
         hudSO.FindProperty("completionPanel").objectReferenceValue = completionPanel;
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 
@@ -348,78 +329,6 @@ public static class CleaningSceneBuilder
     // ════════════════════════════════════════════════════════════════════
     // UI builders
     // ════════════════════════════════════════════════════════════════════
-
-    private static UnityEngine.UI.Button BuildToolButton(Transform canvasParent,
-        string label, CleaningManager mgr, bool isSponge,
-        Vector2 anchor, Vector2 anchoredPos, Color tintColor)
-    {
-        var btnGO = new GameObject($"Btn_{label.Replace(" ", "")}");
-        btnGO.transform.SetParent(canvasParent);
-
-        var rt = btnGO.AddComponent<RectTransform>();
-        rt.anchorMin = anchor;
-        rt.anchorMax = anchor;
-        rt.pivot = new Vector2(1f, 0f);
-        rt.sizeDelta = new Vector2(140f, 40f);
-        rt.anchoredPosition = anchoredPos;
-        rt.localScale = Vector3.one;
-
-        var img = btnGO.AddComponent<UnityEngine.UI.Image>();
-        img.color = new Color(0.25f, 0.25f, 0.35f);
-
-        var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
-
-        // Wire onClick
-        if (isSponge)
-        {
-            var action = System.Delegate.CreateDelegate(
-                typeof(UnityEngine.Events.UnityAction), mgr,
-                typeof(CleaningManager).GetMethod(nameof(CleaningManager.SelectSponge),
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                as UnityEngine.Events.UnityAction;
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, action);
-        }
-        else
-        {
-            var action = System.Delegate.CreateDelegate(
-                typeof(UnityEngine.Events.UnityAction), mgr,
-                typeof(CleaningManager).GetMethod(nameof(CleaningManager.SelectSpray),
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                as UnityEngine.Events.UnityAction;
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, action);
-        }
-
-        // Colour indicator
-        var indicatorGO = new GameObject("ColorIndicator");
-        indicatorGO.transform.SetParent(btnGO.transform);
-        var indicatorRT = indicatorGO.AddComponent<RectTransform>();
-        indicatorRT.anchorMin = new Vector2(0f, 0.5f);
-        indicatorRT.anchorMax = new Vector2(0f, 0.5f);
-        indicatorRT.pivot = new Vector2(0f, 0.5f);
-        indicatorRT.anchoredPosition = new Vector2(4f, 0f);
-        indicatorRT.sizeDelta = new Vector2(14f, 14f);
-        indicatorRT.localScale = Vector3.one;
-        var indicatorImg = indicatorGO.AddComponent<UnityEngine.UI.Image>();
-        indicatorImg.color = tintColor;
-
-        // Label text
-        var labelGO = new GameObject("Label");
-        labelGO.transform.SetParent(btnGO.transform);
-        var labelRT = labelGO.AddComponent<RectTransform>();
-        labelRT.anchorMin = Vector2.zero;
-        labelRT.anchorMax = Vector2.one;
-        labelRT.offsetMin = new Vector2(22f, 0f);
-        labelRT.offsetMax = Vector2.zero;
-        labelRT.localScale = Vector3.one;
-
-        var tmp = labelGO.AddComponent<TextMeshProUGUI>();
-        tmp.text = label;
-        tmp.fontSize = 14f;
-        tmp.alignment = TextAlignmentOptions.MidlineLeft;
-        tmp.color = Color.white;
-
-        return btn;
-    }
 
     private static GameObject BuildCompletionPanel(Transform canvasParent)
     {

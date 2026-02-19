@@ -120,7 +120,6 @@ public class CleanableSurface : MonoBehaviour
         int yMin = Mathf.Max(cy - r, 0);
         int yMax = Mathf.Min(cy + r, _textureSize - 1);
 
-        float stubbornness = _definition.stubbornness;
         bool dirty = false;
 
         for (int y = yMin; y <= yMax; y++)
@@ -134,16 +133,8 @@ public class CleanableSurface : MonoBehaviour
                 int idx = y * _textureSize + x;
                 if (_dirtAlpha[idx] == 0) continue;
 
-                // Wetness boosts effectiveness
-                float wetness = _wetAlpha[idx] / 255f;
-                float dryEffectiveness = 1f - stubbornness;
-                float effectiveness = Mathf.Lerp(dryEffectiveness, 1f, wetness);
-
-                int reduction = Mathf.RoundToInt(effectiveness * 255f);
-                int newAlpha = Mathf.Max(0, _dirtAlpha[idx] - reduction);
-                _dirtAlpha[idx] = (byte)newAlpha;
-
-                // Wiping absorbs the cleaning fluid
+                // Sponge is always fully effective
+                _dirtAlpha[idx] = 0;
                 _wetAlpha[idx] = 0;
                 dirty = true;
             }

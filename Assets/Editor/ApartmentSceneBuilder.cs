@@ -3014,18 +3014,12 @@ public static class ApartmentSceneBuilder
             slotGO.SetActive(false); // Starts disabled, ApartmentStainSpawner activates subset
         }
 
-        // ── Tool visuals (sponge + spray) ─────────────────────────────
+        // ── Tool visual (sponge) ────────────────────────────────────────
         var spongeGO = CreateBox("SpongeVisual", null,
             Vector3.zero, new Vector3(0.06f, 0.03f, 0.08f),
             new Color(0.9f, 0.85f, 0.3f));
         spongeGO.isStatic = false;
         spongeGO.SetActive(false);
-
-        var sprayGO = CreateBox("SprayVisual", null,
-            Vector3.zero, new Vector3(0.04f, 0.12f, 0.04f),
-            new Color(0.3f, 0.6f, 0.8f));
-        sprayGO.isStatic = false;
-        sprayGO.SetActive(false);
 
         // ── CleaningManager ───────────────────────────────────────────
         var managersGO = new GameObject("AmbientCleaningManagers");
@@ -3041,10 +3035,8 @@ public static class ApartmentSceneBuilder
         cleanHudCanvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
         cleanHudCanvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
-        var toolNameLabel = CreateHUDText("ToolNameLabel", cleanHudCanvasGO.transform,
-            new Vector2(0f, 200f), 22f, "Sponge");
         var instrLabel = CreateHUDText("InstructionLabel", cleanHudCanvasGO.transform,
-            new Vector2(0f, -200f), 16f, "Click stains to clean | Tab to switch tool");
+            new Vector2(0f, -200f), 16f, "Click stains to scrub them clean");
         var progressLabel = CreateHUDText("ProgressLabel", cleanHudCanvasGO.transform,
             new Vector2(350f, 200f), 18f, "Clean: 0%");
         var surfaceDetailLabel = CreateHUDText("SurfaceDetailLabel", cleanHudCanvasGO.transform,
@@ -3053,7 +3045,6 @@ public static class ApartmentSceneBuilder
         // Wire CleaningHUD (public fields)
         var cleanHudSO = new SerializedObject(cleanHud);
         cleanHudSO.FindProperty("manager").objectReferenceValue = cleanMgr;
-        cleanHudSO.FindProperty("toolNameLabel").objectReferenceValue = toolNameLabel;
         cleanHudSO.FindProperty("instructionLabel").objectReferenceValue = instrLabel;
         cleanHudSO.FindProperty("progressLabel").objectReferenceValue = progressLabel;
         cleanHudSO.FindProperty("surfaceDetailLabel").objectReferenceValue = surfaceDetailLabel;
@@ -3066,7 +3057,6 @@ public static class ApartmentSceneBuilder
         cleanSO.FindProperty("_mainCamera").objectReferenceValue = cam;
         cleanSO.FindProperty("_hud").objectReferenceValue = cleanHud;
         cleanSO.FindProperty("_spongeVisual").objectReferenceValue = spongeGO.transform;
-        cleanSO.FindProperty("_sprayVisual").objectReferenceValue = sprayGO.transform;
         cleanSO.FindProperty("_cleanableLayer").intValue = 1 << cleanableLayer;
 
         var surfacesProp = cleanSO.FindProperty("_surfaces");

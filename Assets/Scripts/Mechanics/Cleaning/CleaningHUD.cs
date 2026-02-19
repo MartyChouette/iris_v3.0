@@ -1,10 +1,9 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// HUD overlay for the kitchen cleaning prototype. Shows current tool,
-/// context-sensitive instructions, per-surface progress, and completion state.
+/// HUD overlay for cleaning. Shows context-sensitive instruction,
+/// per-surface progress, and completion state.
 /// </summary>
 [DisallowMultipleComponent]
 public class CleaningHUD : MonoBehaviour
@@ -14,9 +13,6 @@ public class CleaningHUD : MonoBehaviour
     public CleaningManager manager;
 
     [Header("Labels")]
-    [Tooltip("Current tool name display.")]
-    public TMP_Text toolNameLabel;
-
     [Tooltip("Context-sensitive instruction text.")]
     public TMP_Text instructionLabel;
 
@@ -26,40 +22,18 @@ public class CleaningHUD : MonoBehaviour
     [Tooltip("Per-surface breakdown display.")]
     public TMP_Text surfaceDetailLabel;
 
-    [Header("Tool Buttons")]
-    [Tooltip("Sponge selection button.")]
-    public Button spongeButton;
-
-    [Tooltip("Spray bottle selection button.")]
-    public Button sprayButton;
-
     [Header("Completion")]
     [Tooltip("Panel shown when all surfaces are clean.")]
     public GameObject completionPanel;
-
-    // Button highlight colours
-    private static readonly Color _normalColor = new Color(0.25f, 0.25f, 0.35f);
-    private static readonly Color _selectedColor = new Color(0.45f, 0.65f, 0.45f);
 
     void Update()
     {
         if (manager == null) return;
 
-        UpdateToolName();
         UpdateInstruction();
         UpdateProgress();
         UpdateSurfaceDetails();
-        UpdateButtonHighlights();
         UpdateCompletion();
-    }
-
-    private void UpdateToolName()
-    {
-        if (toolNameLabel == null) return;
-
-        toolNameLabel.text = manager.CurrentTool == CleaningManager.Tool.Sponge
-            ? "Sponge"
-            : "Spray Bottle";
     }
 
     private void UpdateInstruction()
@@ -67,33 +41,13 @@ public class CleaningHUD : MonoBehaviour
         if (instructionLabel == null) return;
 
         var surface = manager.HoveredSurface;
-
         if (surface == null)
         {
-            instructionLabel.text = "Move mouse over a dirty surface";
+            instructionLabel.text = "Click stains to scrub them clean";
             return;
         }
 
-        var def = surface.Definition;
-        if (def == null)
-        {
-            instructionLabel.text = "";
-            return;
-        }
-
-        switch (manager.CurrentTool)
-        {
-            case CleaningManager.Tool.Sponge:
-                if (def.stubbornness > 0.5f)
-                    instructionLabel.text = "This is stubborn! Try spraying first";
-                else
-                    instructionLabel.text = "Click+drag to wipe";
-                break;
-
-            case CleaningManager.Tool.SprayBottle:
-                instructionLabel.text = "Click+hold to spray cleaning fluid";
-                break;
-        }
+        instructionLabel.text = "Click+drag to scrub";
     }
 
     private void UpdateProgress()
@@ -120,25 +74,6 @@ public class CleaningHUD : MonoBehaviour
         }
 
         surfaceDetailLabel.text = sb.ToString();
-    }
-
-    private void UpdateButtonHighlights()
-    {
-        bool isSponge = manager.CurrentTool == CleaningManager.Tool.Sponge;
-
-        if (spongeButton != null)
-        {
-            var img = spongeButton.GetComponent<Image>();
-            if (img != null)
-                img.color = isSponge ? _selectedColor : _normalColor;
-        }
-
-        if (sprayButton != null)
-        {
-            var img = sprayButton.GetComponent<Image>();
-            if (img != null)
-                img.color = !isSponge ? _selectedColor : _normalColor;
-        }
     }
 
     private void UpdateCompletion()

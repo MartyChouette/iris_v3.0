@@ -2,15 +2,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Scene-scoped singleton for the kitchen cleaning prototype.
-/// Handles tool selection (sponge/spray), input dispatch, and raycasting
-/// onto <see cref="CleanableSurface"/> instances.
+/// Scene-scoped singleton for ambient cleaning. Sponge only — click+drag
+/// stains to wipe them clean. Raycasts onto <see cref="CleanableSurface"/>.
 /// </summary>
 [DisallowMultipleComponent]
 public class CleaningManager : MonoBehaviour
 {
-    public enum Tool { Sponge, SprayBottle }
-
     public static CleaningManager Instance { get; private set; }
 
     [Header("References")]
@@ -23,23 +20,13 @@ public class CleaningManager : MonoBehaviour
     [Tooltip("HUD display.")]
     [SerializeField] private CleaningHUD _hud;
 
-    [Header("Tools")]
-    [Tooltip("Currently selected cleaning tool.")]
-    [SerializeField] private Tool _currentTool = Tool.Sponge;
-
     [Header("Visuals")]
     [Tooltip("Sponge visual that follows the mouse on surfaces.")]
     [SerializeField] private Transform _spongeVisual;
 
-    [Tooltip("Spray bottle visual that follows the mouse on surfaces.")]
-    [SerializeField] private Transform _sprayVisual;
-
     [Header("Settings")]
     [Tooltip("UV-space radius for wipe brush.")]
     [SerializeField] private float _wipeRadius = 0.06f;
-
-    [Tooltip("UV-space radius for spray brush.")]
-    [SerializeField] private float _sprayRadius = 0.08f;
 
     [Tooltip("Layer mask for raycasting onto cleanable surfaces.")]
     [SerializeField] private LayerMask _cleanableLayer;
@@ -49,13 +36,11 @@ public class CleaningManager : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip wipeSFX;
-    public AudioClip spraySFX;
     public AudioClip allCleanSFX;
 
     // Input
     private InputAction _mousePosition;
     private InputAction _mouseClick;
-    private InputAction _toolSwitch;
 
     // State
     private CleanableSurface _hoveredSurface;
@@ -65,9 +50,6 @@ public class CleaningManager : MonoBehaviour
     private const float SFX_COOLDOWN = 0.15f;
 
     // ── Public API ──────────────────────────────────────────────────
-
-    /// <summary>Currently selected tool.</summary>
-    public Tool CurrentTool => _currentTool;
 
     /// <summary>The surface currently under the cursor, or null.</summary>
     public CleanableSurface HoveredSurface => _hoveredSurface;
@@ -120,20 +102,6 @@ public class CleaningManager : MonoBehaviour
         }
     }
 
-    /// <summary>Select the sponge tool. Called by HUD button.</summary>
-    public void SelectSponge()
-    {
-        _currentTool = Tool.Sponge;
-        Debug.Log("[CleaningManager] Selected: Sponge");
-    }
-
-    /// <summary>Select the spray bottle tool. Called by HUD button.</summary>
-    public void SelectSpray()
-    {
-        _currentTool = Tool.SprayBottle;
-        Debug.Log("[CleaningManager] Selected: Spray Bottle");
-    }
-
     // ── Singleton lifecycle ─────────────────────────────────────────
 
     void Awake()
@@ -147,7 +115,6 @@ public class CleaningManager : MonoBehaviour
 
         _mousePosition = new InputAction("CleanPointer", InputActionType.Value, "<Mouse>/position");
         _mouseClick = new InputAction("CleanClick", InputActionType.Button, "<Mouse>/leftButton");
-        _toolSwitch = new InputAction("ToolSwitch", InputActionType.Button, "<Keyboard>/tab");
 
         if (_mainCamera == null)
             _mainCamera = Camera.main;
@@ -162,14 +129,12 @@ public class CleaningManager : MonoBehaviour
     {
         _mousePosition.Enable();
         _mouseClick.Enable();
-        _toolSwitch.Enable();
     }
 
     void OnDisable()
     {
         _mousePosition.Disable();
         _mouseClick.Disable();
-        _toolSwitch.Disable();
     }
 
     // ── Update ──────────────────────────────────────────────────────
@@ -178,17 +143,10 @@ public class CleaningManager : MonoBehaviour
     {
         if (_mainCamera == null) return;
 
-        // Tab to toggle between Sponge and Spray Bottle
-        if (_toolSwitch.WasPressedThisFrame())
-        {
-            _currentTool = _currentTool == Tool.Sponge ? Tool.SprayBottle : Tool.Sponge;
-            Debug.Log($"[CleaningManager] Switched to: {_currentTool}");
-        }
-
         // Block cleaning outside interaction phases (name entry, newspaper, date end)
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
         {
-            SetToolVisual(Vector3.zero, false);
+            SetSpongeVisual(Vector3.zero, false);
             _hoveredSurface = null;
             return;
         }
@@ -197,14 +155,14 @@ public class CleaningManager : MonoBehaviour
         if (ApartmentManager.Instance != null
             && ApartmentManager.Instance.CurrentState != ApartmentManager.State.Browsing)
         {
-            SetToolVisual(Vector3.zero, false);
+            SetSpongeVisual(Vector3.zero, false);
             _hoveredSurface = null;
             return;
         }
 
         if (ObjectGrabber.IsHoldingObject)
         {
-            SetToolVisual(Vector3.zero, false);
+            SetSpongeVisual(Vector3.zero, false);
             _hoveredSurface = null;
             return;
         }
@@ -220,33 +178,20 @@ public class CleaningManager : MonoBehaviour
         {
             _hoveredSurface = hitInfo.collider.GetComponentInParent<CleanableSurface>();
 
-            // Position tool visual at hit point
             Vector3 toolPos = hitInfo.point + hitInfo.normal * _surfaceOffset;
-            SetToolVisual(toolPos, true);
+            SetSpongeVisual(toolPos, true);
 
-            // Apply tool on click
             if (_mouseClick.IsPressed() && _hoveredSurface != null)
             {
                 Vector2 uv = hitInfo.textureCoord;
-
-                switch (_currentTool)
-                {
-                    case Tool.Sponge:
-                        _hoveredSurface.Wipe(uv, _wipeRadius);
-                        PlaySFX(wipeSFX);
-                        break;
-
-                    case Tool.SprayBottle:
-                        _hoveredSurface.Spray(uv, _sprayRadius);
-                        PlaySFX(spraySFX);
-                        break;
-                }
+                _hoveredSurface.Wipe(uv, _wipeRadius);
+                PlaySFX(wipeSFX);
             }
         }
         else
         {
             _hoveredSurface = null;
-            SetToolVisual(Vector3.zero, false);
+            SetSpongeVisual(Vector3.zero, false);
         }
 
         // Check all-clean
@@ -262,33 +207,17 @@ public class CleaningManager : MonoBehaviour
     // ── Helpers ──────────────────────────────────────────────────────
 
     private bool _lastSpongeVisible;
-    private bool _lastSprayVisible;
 
-    private void SetToolVisual(Vector3 position, bool visible)
+    private void SetSpongeVisual(Vector3 position, bool visible)
     {
-        bool isSponge = _currentTool == Tool.Sponge;
-        bool spongeTarget = visible && isSponge;
-        bool sprayTarget = visible && !isSponge;
+        if (_spongeVisual == null) return;
 
-        if (_spongeVisual != null)
+        if (visible != _lastSpongeVisible)
         {
-            if (spongeTarget != _lastSpongeVisible)
-            {
-                _spongeVisual.gameObject.SetActive(spongeTarget);
-                _lastSpongeVisible = spongeTarget;
-            }
-            if (spongeTarget) _spongeVisual.position = position;
+            _spongeVisual.gameObject.SetActive(visible);
+            _lastSpongeVisible = visible;
         }
-
-        if (_sprayVisual != null)
-        {
-            if (sprayTarget != _lastSprayVisible)
-            {
-                _sprayVisual.gameObject.SetActive(sprayTarget);
-                _lastSprayVisible = sprayTarget;
-            }
-            if (sprayTarget) _sprayVisual.position = position;
-        }
+        if (visible) _spongeVisual.position = position;
     }
 
     private void PlaySFX(AudioClip clip)
