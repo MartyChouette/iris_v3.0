@@ -51,6 +51,10 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Camera preset used as the default browse angles (e.g. V1). If set, overrides ApartmentAreaDefinition camera values.")]
     [SerializeField] private CameraPresetDefinition defaultPreset;
 
+    [Header("Audio")]
+    [Tooltip("SFX played when navigating between areas (A/D or click-arrows).")]
+    [SerializeField] private AudioClip _areaTransitionSFX;
+
     [Header("UI")]
     [Tooltip("Panel showing the current area name during browsing.")]
     [SerializeField] private GameObject areaNamePanel;
@@ -307,6 +311,8 @@ public class ApartmentManager : MonoBehaviour
 
         _currentAreaIndex = (_currentAreaIndex + direction + areas.Length) % areas.Length;
         var area = areas[_currentAreaIndex];
+
+        AudioManager.Instance?.PlaySFX(_areaTransitionSFX);
 
         if (cameraTestController != null && cameraTestController.ActivePresetIndex >= 0)
         {
