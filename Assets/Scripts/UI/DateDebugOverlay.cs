@@ -271,6 +271,23 @@ public class DateDebugOverlay : MonoBehaviour
             sb.AppendLine();
         }
 
+        // ── MID-DATE PENALTIES ──
+        var mdw = MidDateActionWatcher.Instance;
+        sb.AppendLine("<b>MID-DATE PENALTIES</b>");
+        if (mdw != null)
+        {
+            sb.AppendLine($"  Count: {mdw.PenaltyCount}");
+            sb.AppendLine($"  Since Last: {mdw.TimeSinceLastPenalty:F1}s");
+            float cd = mdw.CooldownRemaining;
+            string cdColor = cd > 0f ? "yellow" : "green";
+            sb.AppendLine($"  Cooldown: <color={cdColor}>{cd:F1}s</color>");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
+        sb.AppendLine();
+
         // ── REACTION LOG ──
         sb.AppendLine("<b>REACTION LOG</b>");
         if (_reactionLog.Count == 0)
