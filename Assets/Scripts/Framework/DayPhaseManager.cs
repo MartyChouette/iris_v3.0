@@ -35,7 +35,7 @@ using TMPro;
 /// </summary>
 public class DayPhaseManager : MonoBehaviour
 {
-    public enum DayPhase { Morning, Exploration, DateInProgress, Evening }
+    public enum DayPhase { Morning, Exploration, DateInProgress, FlowerTrimming, Evening }
 
     public static DayPhaseManager Instance { get; private set; }
 
@@ -57,6 +57,9 @@ public class DayPhaseManager : MonoBehaviour
 
     [Tooltip("Daily mess spawner for entrance item misplacement.")]
     [SerializeField] private DailyMessSpawner _entranceMessSpawner;
+
+    [Tooltip("Bridge for loading flower trimming scene after successful dates.")]
+    [SerializeField] private FlowerTrimmingBridge _flowerTrimmingBridge;
 
     [Tooltip("Apartment UI canvas root — hidden during Morning, shown during Exploration.")]
     [SerializeField] private GameObject _apartmentUI;
@@ -234,6 +237,13 @@ public class DayPhaseManager : MonoBehaviour
     /// <summary>Called by DateSessionManager.OnDateSessionEnded event.</summary>
     public void EnterEvening(DatePersonalDefinition _, float __)
     {
+        // If there's a pending flower from a successful date, trim it first
+        if (DateSessionManager.PendingFlowerPrefab != null)
+        {
+            SetPhase(DayPhase.FlowerTrimming);
+            return;
+        }
+
         SetPhase(DayPhase.Evening);
     }
 
@@ -270,6 +280,7 @@ public class DayPhaseManager : MonoBehaviour
 
             case DayPhase.Exploration:
             case DayPhase.DateInProgress:
+            case DayPhase.FlowerTrimming:
             case DayPhase.Evening:
                 // Free-roam — browse camera active, newspaper off
                 if (_readCamera != null)
@@ -325,6 +336,9 @@ public class DayPhaseManager : MonoBehaviour
             case DayPhase.DateInProgress:
                 // Stop prep timer — date is in progress
                 StopPrepTimer();
+                break;
+            case DayPhase.FlowerTrimming:
+                StartCoroutine(FlowerTrimmingTransition());
                 break;
             case DayPhase.Evening:
                 // DateEndScreen shows via existing DateSessionManager flow
@@ -420,6 +434,72 @@ public class DayPhaseManager : MonoBehaviour
 
         // 9. Start preparation countdown
         StartPrepTimer();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FLOWER TRIMMING TRANSITION
+    // ═══════════════════════════════════════════════════════════════
+
+    private IEnumerator FlowerTrimmingTransition()
+    {
+        var flowerPrefab = DateSessionManager.PendingFlowerPrefab;
+        if (flowerPrefab == null)
+        {
+            Debug.LogWarning("[DayPhaseManager] FlowerTrimming phase but no pending flower. Skipping to Evening.");
+            SetPhase(DayPhase.Evening);
+            yield break;
+        }
+
+        var bridge = _flowerTrimmingBridge != null ? _flowerTrimmingBridge : FlowerTrimmingBridge.Instance;
+        if (bridge == null)
+        {
+            Debug.LogWarning("[DayPhaseManager] No FlowerTrimmingBridge found. Skipping to Evening.");
+            DateSessionManager.PendingFlowerPrefab = null;
+            SetPhase(DayPhase.Evening);
+            yield break;
+        }
+
+        // 1. Fade to black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+
+        // 2. Show phase title
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Flower Trimming");
+        yield return new WaitForSeconds(1.0f);
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        // 3. Fade in — the flower scene camera (priority 40) will take over
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        // 4. Begin trimming and wait for completion
+        bool trimmingComplete = false;
+        bridge.BeginTrimming(flowerPrefab, (score, days, gameOver) =>
+        {
+            trimmingComplete = true;
+        });
+
+        while (!trimmingComplete)
+            yield return null;
+
+        // 5. Fade to black, unload flower scene, transition to Evening
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+
+        // 6. Enter Evening phase
+        _currentPhase = DayPhase.Evening;
+        Debug.Log("[DayPhaseManager] Phase → Evening (after flower trimming)");
+
+        if (_goToBedPanel != null)
+            _goToBedPanel.SetActive(true);
+
+        OnPhaseChanged?.Invoke((int)DayPhase.Evening);
+
+        // 7. Fade in from black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
     }
 
     // ─── UI Cleanup ─────────────────────────────────────────────────
