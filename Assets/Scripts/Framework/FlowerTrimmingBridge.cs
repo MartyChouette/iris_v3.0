@@ -166,7 +166,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
         else if (trimmedVisual != null)
         {
             // No days alive — discard the snapshot
-            Object.Destroy(trimmedVisual);
+            UnityEngine.Object.Destroy(trimmedVisual);
         }
 
         // Clean up
