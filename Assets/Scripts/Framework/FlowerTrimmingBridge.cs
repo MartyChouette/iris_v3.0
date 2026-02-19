@@ -17,6 +17,9 @@ public class FlowerTrimmingBridge : MonoBehaviour
     [Tooltip("Default flower trimming scene. Overridden per-date via DatePersonalDefinition.flowerSceneName.")]
     [SerializeField] private string _flowerSceneName = "Daisy_Flower_Scene";
 
+    [Tooltip("Vertical offset applied to the flower scene so it doesn't overlap the apartment.")]
+    [SerializeField] private float _sceneYOffset = 50f;
+
     private Action<int, int, bool> _onComplete;
     private bool _waitingForResult;
 
@@ -96,6 +99,11 @@ public class FlowerTrimmingBridge : MonoBehaviour
             _onComplete?.Invoke(0, 0, true);
             yield break;
         }
+
+        // Offset all root objects so the flower scene doesn't overlap the apartment
+        Vector3 offset = new Vector3(0f, _sceneYOffset, 0f);
+        foreach (var root in flowerScene.GetRootGameObjects())
+            root.transform.position += offset;
 
         // Find the FlowerSessionController in the loaded scene
         FlowerSessionController session = null;
