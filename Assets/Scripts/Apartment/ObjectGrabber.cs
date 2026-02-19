@@ -35,6 +35,13 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Camera used for raycasting. Auto-finds MainCamera if null.")]
     [SerializeField] private Camera cam;
 
+    [Header("Audio")]
+    [Tooltip("SFX played when picking up an object.")]
+    [SerializeField] private AudioClip _pickupSFX;
+
+    [Tooltip("SFX played when placing an object on a surface.")]
+    [SerializeField] private AudioClip _placeSFX;
+
     [Header("Tether")]
     [Tooltip("Max distance between grab target and held object before teleporting to catch up.")]
     [SerializeField] private float maxTetherDistance = 3f;
@@ -210,6 +217,7 @@ public class ObjectGrabber : MonoBehaviour
         _isOnWall = false;
 
         placeable.OnPickedUp();
+        AudioManager.Instance?.PlaySFX(_pickupSFX);
         ShowShadow(true);
 
         // Show pickup description
@@ -291,6 +299,7 @@ public class ObjectGrabber : MonoBehaviour
 
         _held.OnPlaced(_currentSurface, _gridSnap, pos, rot);
         OnObjectPlaced?.Invoke();
+        AudioManager.Instance?.PlaySFX(_placeSFX);
 
         // DropZone deposit (non-destroy — item stays placed on surface)
         if (!string.IsNullOrEmpty(_held.HomeZoneName))
