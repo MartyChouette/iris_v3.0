@@ -161,6 +161,16 @@ public class AuthoredMessSpawner : MonoBehaviour
         // Day check
         if (currentDay < bp.minDay) return false;
 
+        // Flower trim conditions
+        if (bp.requireBadFlowerTrim)
+        {
+            if (!outcome.hadFlowerTrim || outcome.flowerScore >= 40) return false;
+        }
+        if (bp.requireGoodFlowerTrim)
+        {
+            if (!outcome.hadFlowerTrim || outcome.flowerScore < 80) return false;
+        }
+
         // DateAftermath conditions
         if (bp.category == MessBlueprint.MessCategory.DateAftermath)
         {

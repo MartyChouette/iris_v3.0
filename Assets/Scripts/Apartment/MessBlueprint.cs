@@ -56,6 +56,12 @@ public class MessBlueprint : ScriptableObject
     [Tooltip("Require a specific reaction item tag (e.g. 'wine' if drink was served).")]
     public string requireReactionTag = "";
 
+    [Tooltip("Only eligible if last flower trim score < 40.")]
+    public bool requireBadFlowerTrim;
+
+    [Tooltip("Only eligible if last flower trim score >= 80.")]
+    public bool requireGoodFlowerTrim;
+
     [Tooltip("Minimum day number for this mess to appear.")]
     public int minDay = 1;
 
