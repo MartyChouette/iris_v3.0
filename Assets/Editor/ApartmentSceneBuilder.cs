@@ -2121,64 +2121,73 @@ public static class ApartmentSceneBuilder
         var v1 = CreateCameraPreset("CameraPreset_V1", soDir, "V1 — High Angle",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.0f, 3.5f, -3.5f), rotation = new Vector3(35f, 45f, 0f), lens = MakeLens(48f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 3.5f, 2.0f),   rotation = new Vector3(30f, 60f, 0f), lens = MakeLens(48f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.0f, 3.5f, -3.5f), rotation = new Vector3(35f, 45f, 0f),  lens = MakeLens(48f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 3.5f, 2.0f),   rotation = new Vector3(30f, 60f, 0f),  lens = MakeLens(48f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 3.5f, 9.0f),  rotation = new Vector3(35f, 200f, 0f), lens = MakeLens(48f) },
             });
 
         var v2 = CreateCameraPreset("CameraPreset_V2", soDir, "V2 — Low & Wide",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 1.8f, -5.5f), rotation = new Vector3(15f, 30f, 0f), lens = MakeLens(62f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-0.5f, 1.8f, 1.0f),  rotation = new Vector3(12f, 50f, 0f), lens = MakeLens(62f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 1.8f, -5.5f), rotation = new Vector3(15f, 30f, 0f),  lens = MakeLens(62f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-0.5f, 1.8f, 1.0f),  rotation = new Vector3(12f, 50f, 0f),  lens = MakeLens(62f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 1.8f, 9.5f),  rotation = new Vector3(12f, 195f, 0f), lens = MakeLens(62f) },
             });
 
         var v3 = CreateCameraPreset("CameraPreset_V3", soDir, "V3 — Isometric Ortho",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 6.0f, -4.5f), rotation = new Vector3(55f, 45f, 0f), lens = MakeLensOrtho(3.5f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(1.0f, 6.0f, 2.5f),   rotation = new Vector3(55f, 45f, 0f), lens = MakeLensOrtho(3.5f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 6.0f, -4.5f), rotation = new Vector3(55f, 45f, 0f),  lens = MakeLensOrtho(3.5f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(1.0f, 6.0f, 2.5f),   rotation = new Vector3(55f, 45f, 0f),  lens = MakeLensOrtho(3.5f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 6.0f, 9.5f),  rotation = new Vector3(55f, 225f, 0f), lens = MakeLensOrtho(3.5f) },
             });
 
         var v4 = CreateCameraPreset("CameraPreset_V4", soDir, "V4 — Overhead",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 5.0f, -3.5f), rotation = new Vector3(75f, 0f, 0f), lens = MakeLens(40f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 5.0f, 2.5f),   rotation = new Vector3(75f, 0f, 0f), lens = MakeLens(40f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 5.0f, -3.5f), rotation = new Vector3(75f, 0f, 0f),   lens = MakeLens(40f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 5.0f, 2.5f),   rotation = new Vector3(75f, 0f, 0f),   lens = MakeLens(40f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 5.0f, 7.5f),  rotation = new Vector3(75f, 180f, 0f), lens = MakeLens(40f) },
             });
 
         var v5 = CreateCameraPreset("CameraPreset_V5", soDir, "V5 — Dutch Tilt",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-3.0f, 2.5f, -4.0f), rotation = new Vector3(20f, 40f, 0f), lens = MakeLensDutch(52f, 12f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-1.0f, 2.5f, 1.5f),  rotation = new Vector3(18f, 55f, 0f), lens = MakeLensDutch(52f, -10f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-3.0f, 2.5f, -4.0f), rotation = new Vector3(20f, 40f, 0f),  lens = MakeLensDutch(52f, 12f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-1.0f, 2.5f, 1.5f),  rotation = new Vector3(18f, 55f, 0f),  lens = MakeLensDutch(52f, -10f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(1.0f, 2.5f, 9.0f),   rotation = new Vector3(18f, 210f, 0f), lens = MakeLensDutch(52f, 8f) },
             });
 
         var v6 = CreateCameraPreset("CameraPreset_V6", soDir, "V6 — Tight Close-Up",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 1.5f, -3.0f), rotation = new Vector3(10f, 35f, 0f), lens = MakeLens(32f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 1.5f, 2.0f),   rotation = new Vector3(8f, 50f, 0f),  lens = MakeLens(32f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 1.5f, -3.0f), rotation = new Vector3(10f, 35f, 0f),  lens = MakeLens(32f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 1.5f, 2.0f),   rotation = new Vector3(8f, 50f, 0f),   lens = MakeLens(32f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 1.5f, 8.5f),  rotation = new Vector3(10f, 190f, 0f), lens = MakeLens(32f) },
             });
 
         var v7 = CreateCameraPreset("CameraPreset_V7", soDir, "V7 — Ultra Wide",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.5f, 2.8f, -5.0f), rotation = new Vector3(25f, 35f, 0f), lens = MakeLens(80f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 2.8f, 0.5f),   rotation = new Vector3(22f, 55f, 0f), lens = MakeLens(80f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.5f, 2.8f, -5.0f), rotation = new Vector3(25f, 35f, 0f),  lens = MakeLens(80f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 2.8f, 0.5f),   rotation = new Vector3(22f, 55f, 0f),  lens = MakeLens(80f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 2.8f, 9.5f),  rotation = new Vector3(22f, 200f, 0f), lens = MakeLens(80f) },
             });
 
         var v8 = CreateCameraPreset("CameraPreset_V8", soDir, "V8 — Side Profile",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-5.0f, 2.0f, -3.5f), rotation = new Vector3(15f, 90f, 0f), lens = MakeLens(50f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-4.0f, 2.0f, 2.5f),  rotation = new Vector3(12f, 80f, 0f), lens = MakeLens(50f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-5.0f, 2.0f, -3.5f), rotation = new Vector3(15f, 90f, 0f),  lens = MakeLens(50f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-4.0f, 2.0f, 2.5f),  rotation = new Vector3(12f, 80f, 0f),  lens = MakeLens(50f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-3.0f, 2.0f, 7.5f),  rotation = new Vector3(12f, 160f, 0f), lens = MakeLens(50f) },
             });
 
         var v9 = CreateCameraPreset("CameraPreset_V9", soDir, "V9 — Surveillance",
             new AreaCameraConfig[]
             {
-                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-0.5f, 4.0f, -6.0f), rotation = new Vector3(40f, 20f, 0f), lens = MakeLens(35f) },
-                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(2.0f, 4.0f, 0.5f),   rotation = new Vector3(42f, -30f, 0f), lens = MakeLens(35f) },
+                new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-0.5f, 4.0f, -6.0f), rotation = new Vector3(40f, 20f, 0f),   lens = MakeLens(35f) },
+                new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(2.0f, 4.0f, 0.5f),   rotation = new Vector3(42f, -30f, 0f),  lens = MakeLens(35f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(2.0f, 4.0f, 9.5f),   rotation = new Vector3(40f, 210f, 0f),  lens = MakeLens(35f) },
             });
 
         var allPresets = new CameraPresetDefinition[] { v1, v2, v3, v4, v5, v6, v7, v8, v9 };
@@ -2319,6 +2328,19 @@ public static class ApartmentSceneBuilder
         }
         else
         {
+            // Append missing area configs (e.g. Entrance added after initial creation)
+            // without overwriting existing Kitchen/Living Room data
+            if (def.areaConfigs != null && configs != null && def.areaConfigs.Length < configs.Length)
+            {
+                var expanded = new AreaCameraConfig[configs.Length];
+                for (int i = 0; i < expanded.Length; i++)
+                {
+                    expanded[i] = i < def.areaConfigs.Length
+                        ? def.areaConfigs[i]   // preserve existing
+                        : configs[i];           // append new default
+                }
+                def.areaConfigs = expanded;
+            }
             EditorUtility.SetDirty(def);
         }
 
