@@ -220,6 +220,9 @@ public static class ApartmentSceneBuilder
         // ── 15e. Pickup description HUD ──
         BuildPickupDescriptionHUD();
 
+        // ── 15f. Pause menu ──
+        BuildPauseMenu();
+
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
@@ -3639,6 +3642,138 @@ public static class ApartmentSceneBuilder
         panelGO.SetActive(false);
 
         Debug.Log("[ApartmentSceneBuilder] Pickup description HUD built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Pause Menu
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildPauseMenu()
+    {
+        var go = new GameObject("PauseMenu");
+
+        var canvas = go.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 300;
+        go.AddComponent<CanvasScaler>();
+        go.AddComponent<GraphicRaycaster>();
+
+        // Full-screen dark overlay
+        var overlayGO = new GameObject("DarkOverlay");
+        overlayGO.transform.SetParent(go.transform, false);
+        var overlayRT = overlayGO.AddComponent<RectTransform>();
+        overlayRT.anchorMin = Vector2.zero;
+        overlayRT.anchorMax = Vector2.one;
+        overlayRT.offsetMin = Vector2.zero;
+        overlayRT.offsetMax = Vector2.zero;
+        overlayRT.localScale = Vector3.one;
+        var overlayImg = overlayGO.AddComponent<Image>();
+        overlayImg.color = new Color(0f, 0f, 0f, 0.8f);
+        overlayImg.raycastTarget = true;
+
+        // Center panel (400x300)
+        var panelGO = new GameObject("PausePanel");
+        panelGO.transform.SetParent(overlayGO.transform, false);
+        var panelRT = panelGO.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRT.pivot = new Vector2(0.5f, 0.5f);
+        panelRT.sizeDelta = new Vector2(400f, 300f);
+        panelRT.localScale = Vector3.one;
+        var panelImg = panelGO.AddComponent<Image>();
+        panelImg.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+
+        // "PAUSED" title
+        var titleGO = new GameObject("PausedTitle");
+        titleGO.transform.SetParent(panelGO.transform, false);
+        var titleRT = titleGO.AddComponent<RectTransform>();
+        titleRT.anchorMin = new Vector2(0f, 0.75f);
+        titleRT.anchorMax = new Vector2(1f, 1f);
+        titleRT.offsetMin = Vector2.zero;
+        titleRT.offsetMax = Vector2.zero;
+        titleRT.localScale = Vector3.one;
+        var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        titleTMP.text = "PAUSED";
+        titleTMP.fontSize = 36f;
+        titleTMP.alignment = TextAlignmentOptions.Center;
+        titleTMP.color = Color.white;
+        titleTMP.fontStyle = FontStyles.Bold;
+
+        // Button style helpers
+        Color btnColor = new Color(0.25f, 0.25f, 0.25f, 1f);
+        float btnWidth = 300f;
+        float btnHeight = 50f;
+        float gap = 10f;
+        float startY = 30f; // from center of panel, going down
+
+        string[] labels = { "Resume", "Quit to Menu", "Quit to Desktop" };
+        string[] methods = { "Resume", "QuitToMenu", "QuitToDesktop" };
+
+        // We need a SimplePauseMenu component first so buttons can reference it
+        var pauseMenu = go.AddComponent<SimplePauseMenu>();
+
+        for (int i = 0; i < labels.Length; i++)
+        {
+            var btnGO = new GameObject($"Btn_{labels[i]}");
+            btnGO.transform.SetParent(panelGO.transform, false);
+            var btnRT = btnGO.AddComponent<RectTransform>();
+            btnRT.anchorMin = new Vector2(0.5f, 0.5f);
+            btnRT.anchorMax = new Vector2(0.5f, 0.5f);
+            btnRT.pivot = new Vector2(0.5f, 0.5f);
+            float yPos = startY - i * (btnHeight + gap);
+            btnRT.anchoredPosition = new Vector2(0f, yPos);
+            btnRT.sizeDelta = new Vector2(btnWidth, btnHeight);
+            btnRT.localScale = Vector3.one;
+
+            var btnImg = btnGO.AddComponent<Image>();
+            btnImg.color = btnColor;
+
+            var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
+            var colors = btn.colors;
+            colors.highlightedColor = new Color(0.35f, 0.35f, 0.35f, 1f);
+            colors.pressedColor = new Color(0.2f, 0.2f, 0.2f, 1f);
+            btn.colors = colors;
+
+            var labelGO = new GameObject("Label");
+            labelGO.transform.SetParent(btnGO.transform, false);
+            var labelRT = labelGO.AddComponent<RectTransform>();
+            labelRT.anchorMin = Vector2.zero;
+            labelRT.anchorMax = Vector2.one;
+            labelRT.offsetMin = Vector2.zero;
+            labelRT.offsetMax = Vector2.zero;
+            labelRT.localScale = Vector3.one;
+            var labelTMP = labelGO.AddComponent<TextMeshProUGUI>();
+            labelTMP.text = labels[i];
+            labelTMP.fontSize = 22f;
+            labelTMP.alignment = TextAlignmentOptions.Center;
+            labelTMP.color = Color.white;
+            labelTMP.raycastTarget = false;
+
+            // Wire button click via persistent listener
+            int idx = i; // capture for closure
+            switch (idx)
+            {
+                case 0:
+                    btn.onClick.AddListener(() => SimplePauseMenu.Instance?.Resume());
+                    break;
+                case 1:
+                    btn.onClick.AddListener(() => SimplePauseMenu.Instance?.QuitToMenu());
+                    break;
+                case 2:
+                    btn.onClick.AddListener(() => SimplePauseMenu.Instance?.QuitToDesktop());
+                    break;
+            }
+        }
+
+        // Wire pause root
+        var pauseSO = new SerializedObject(pauseMenu);
+        pauseSO.FindProperty("_pauseRoot").objectReferenceValue = overlayGO;
+        pauseSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Start hidden
+        overlayGO.SetActive(false);
+
+        Debug.Log("[ApartmentSceneBuilder] Pause menu built.");
     }
 
     // ══════════════════════════════════════════════════════════════════
