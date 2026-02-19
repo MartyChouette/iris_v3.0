@@ -1264,6 +1264,23 @@ public static class ApartmentSceneBuilder
         so.FindProperty("isPrivate").boolValue = isPrivate;
         so.FindProperty("smellAmount").floatValue = smellAmount;
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        // Ensure an InteractableHighlight is reachable via GetComponentInChildren
+        // so NPCGazeHighlight can find it during date investigations.
+        if (go.GetComponentInChildren<InteractableHighlight>() == null)
+        {
+            var rend = go.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                go.AddComponent<InteractableHighlight>();
+            }
+            else
+            {
+                var childRend = go.GetComponentInChildren<Renderer>();
+                if (childRend != null)
+                    childRend.gameObject.AddComponent<InteractableHighlight>();
+            }
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════

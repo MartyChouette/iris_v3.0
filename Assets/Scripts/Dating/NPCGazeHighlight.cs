@@ -24,7 +24,7 @@ public class NPCGazeHighlight : MonoBehaviour
 
         ReactableTag target = shouldHighlight ? _controller.CurrentTarget : null;
         InteractableHighlight desired = target != null
-            ? target.GetComponent<InteractableHighlight>()
+            ? target.GetComponentInChildren<InteractableHighlight>()
             : null;
 
         if (desired == _currentHighlight) return;
