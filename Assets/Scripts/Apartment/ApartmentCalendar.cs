@@ -293,7 +293,10 @@ public class ApartmentCalendar : MonoBehaviour
             }
             else if (dayToEntry.TryGetValue(day, out var entry))
             {
-                _cellTexts[i].text = $"Day {day}\n{entry.name}\n<color={GetGradeColor(entry.grade)}>{entry.grade}</color>";
+                string cellText = $"Day {day}\n{entry.name}\n<color={GetGradeColor(entry.grade)}>{entry.grade}</color>";
+                if (!string.IsNullOrEmpty(entry.flowerGrade))
+                    cellText += $" | <color={GetGradeColor(entry.flowerGrade)}>\u2702{entry.flowerGrade}</color>";
+                _cellTexts[i].text = cellText;
                 _cellBGs[i].color = new Color(0.15f, 0.15f, 0.18f, 0.8f);
             }
             else if (day < currentDay)
@@ -340,9 +343,16 @@ public class ApartmentCalendar : MonoBehaviour
             return;
         }
 
-        _detailText.text = $"<b>Day {day} \u2014 {match.name}</b>   " +
-                           $"Grade: <color={GetGradeColor(match.grade)}>{match.grade}</color>   " +
-                           $"Affection: {match.affection:F0}%";
+        string detail = $"<b>Day {day} \u2014 {match.name}</b>   " +
+                        $"Date: <color={GetGradeColor(match.grade)}>{match.grade}</color> ({match.affection:F0}%)";
+
+        if (!string.IsNullOrEmpty(match.flowerGrade))
+        {
+            detail += $"   Flower: <color={GetGradeColor(match.flowerGrade)}>{match.flowerGrade}</color> " +
+                      $"({match.flowerScore}pts, {match.flowerDaysAlive} days)";
+        }
+
+        _detailText.text = detail;
     }
 
     private void ClearDetail()
