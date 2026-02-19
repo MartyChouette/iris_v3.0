@@ -2,8 +2,11 @@ using UnityEngine;
 
 /// <summary>
 /// Toggleable rim-light overlay material on the object's renderer.
-/// Supports two independent layers: hover (white, player mouse) and gaze (amber, NPC focus).
-/// Both can be active simultaneously — gaze renders first, hover on top.
+/// Supports three independent layers:
+///   1. Display (warm peach, "public item" indicator — always-on background glow)
+///   2. Gaze (amber, NPC focus)
+///   3. Hover (warm ivory, player mouse — strongest, on top)
+/// All can be active simultaneously — additive blend means stronger highlights overpower subtle ones.
 /// Attach to any clickable object (books, records, placeables, etc.).
 /// </summary>
 [RequireComponent(typeof(Renderer))]
@@ -11,11 +14,13 @@ public class InteractableHighlight : MonoBehaviour
 {
     private static Material s_sharedRimMat;
     private static Material s_sharedGazeMat;
+    private static Material s_sharedDisplayMat;
 
     private Renderer _renderer;
     private Material[] _baseMaterials;
     private bool _highlighted;
     private bool _gazeActive;
+    private bool _displayActive;
 
     private void Awake()
     {
@@ -32,7 +37,7 @@ public class InteractableHighlight : MonoBehaviour
     }
 
     /// <summary>
-    /// Toggle hover rim light (white) on or off.
+    /// Toggle hover rim light (warm ivory) on or off.
     /// </summary>
     public void SetHighlighted(bool on)
     {
@@ -51,9 +56,23 @@ public class InteractableHighlight : MonoBehaviour
         RebuildMaterials();
     }
 
+    /// <summary>
+    /// Toggle display rim light (warm peach, public item indicator) on or off.
+    /// Items with ReactableTag.IsActive and !IsPrivate use this to show they're
+    /// visible to date NPCs.
+    /// </summary>
+    public void SetDisplayHighlighted(bool on)
+    {
+        if (_renderer == null || _baseMaterials == null || on == _displayActive) return;
+        _displayActive = on;
+        RebuildMaterials();
+    }
+
     private void RebuildMaterials()
     {
-        int extraCount = (_gazeActive ? 1 : 0) + (_highlighted ? 1 : 0);
+        int extraCount = (_displayActive ? 1 : 0)
+                       + (_gazeActive ? 1 : 0)
+                       + (_highlighted ? 1 : 0);
 
         if (extraCount == 0)
         {
@@ -67,7 +86,11 @@ public class InteractableHighlight : MonoBehaviour
 
         int slot = _baseMaterials.Length;
 
-        // Gaze renders first (underneath)
+        // Display renders first (background — subtlest)
+        if (_displayActive && s_sharedDisplayMat != null)
+            mats[slot++] = s_sharedDisplayMat;
+
+        // Gaze renders second (middle)
         if (_gazeActive && s_sharedGazeMat != null)
             mats[slot++] = s_sharedGazeMat;
 
@@ -109,6 +132,22 @@ public class InteractableHighlight : MonoBehaviour
                 s_sharedGazeMat.SetColor("_RimColor", new Color(1f, 0.75f, 0.2f, 0.5f));
                 s_sharedGazeMat.SetFloat("_RimPower", 3.0f);
                 s_sharedGazeMat.SetFloat("_RimIntensity", 0.8f);
+            }
+        }
+
+        if (s_sharedDisplayMat == null)
+        {
+            var shader = Shader.Find("Iris/RimLight");
+            if (shader == null)
+            {
+                Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found for display material.");
+            }
+            else
+            {
+                s_sharedDisplayMat = new Material(shader);
+                s_sharedDisplayMat.SetColor("_RimColor", new Color(1f, 0.85f, 0.65f, 0.35f));
+                s_sharedDisplayMat.SetFloat("_RimPower", 3.8f);
+                s_sharedDisplayMat.SetFloat("_RimIntensity", 0.35f);
             }
         }
     }
