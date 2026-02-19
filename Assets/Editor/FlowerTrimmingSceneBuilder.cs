@@ -6,6 +6,7 @@ using UnityEditor.SceneManagement;
 using Unity.Cinemachine;
 using TMPro;
 using UnityEngine.UI;
+using DynamicMeshCutter;
 
 /// <summary>
 /// Editor utility that builds the FlowerTrimming scene used for additive loading
