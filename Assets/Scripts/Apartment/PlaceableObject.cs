@@ -246,7 +246,7 @@ public class PlaceableObject : MonoBehaviour
 
     public void AlignToWall(Vector3 wallNormal, float rotationAngle)
     {
-        transform.rotation = Quaternion.LookRotation(-wallNormal, Vector3.up)
+        transform.rotation = Quaternion.LookRotation(wallNormal, Vector3.up)
             * Quaternion.AngleAxis(rotationAngle, Vector3.forward);
     }
 
@@ -321,7 +321,7 @@ public class PlaceableObject : MonoBehaviour
 
                 Vector3 pos = hit.worldPosition + hit.surfaceNormal * halfY;
                 Quaternion rot = nearest.IsVertical
-                    ? Quaternion.LookRotation(-hit.surfaceNormal, Vector3.up)
+                    ? Quaternion.LookRotation(hit.surfaceNormal, Vector3.up)
                     : transform.rotation;
 
                 Debug.Log($"[PlaceableObject] {name} out of view after drop — placed on {nearest.name}.");

@@ -260,7 +260,9 @@ public class ObjectGrabber : MonoBehaviour
         if (_currentSurface.IsVertical && !_held.CanWallMount) return;
         if (!_currentSurface.IsVertical && _held.WallOnly) return;
 
-        var hitResult = _currentSurface.ProjectOntoSurface(_heldRb.position);
+        // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
+        // detection — the rigidbody can overshoot through thin wall triggers.
+        var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget);
         Vector3 pos = _gridSnap
             ? _currentSurface.SnapToGrid(hitResult.worldPosition, gridSize)
             : hitResult.worldPosition;
@@ -271,7 +273,7 @@ public class ObjectGrabber : MonoBehaviour
         Quaternion rot;
         if (_currentSurface.IsVertical)
         {
-            rot = Quaternion.LookRotation(-hitResult.surfaceNormal, Vector3.up)
+            rot = Quaternion.LookRotation(hitResult.surfaceNormal, Vector3.up)
                 * Quaternion.AngleAxis(_wallRotation, Vector3.forward);
         }
         else
@@ -523,7 +525,7 @@ public class ObjectGrabber : MonoBehaviour
                 float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
                 Vector3 pos = hitResult.worldPosition + hitResult.surfaceNormal * halfExtent;
                 Quaternion rot = nearest.IsVertical
-                    ? Quaternion.LookRotation(-hitResult.surfaceNormal, Vector3.up)
+                    ? Quaternion.LookRotation(hitResult.surfaceNormal, Vector3.up)
                     : _held.transform.rotation;
 
                 _heldRb.linearVelocity = Vector3.zero;
