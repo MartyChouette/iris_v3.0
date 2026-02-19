@@ -15,6 +15,13 @@ public static class DateOutcomeCapture
         public string characterName;
         public string[] reactionTags;
         public bool drinkServed;
+
+        // Flower trimming results (populated after flower scene completes)
+        public bool hadFlowerTrim;
+        public int flowerScore;
+        public int flowerDaysAlive;
+        public string flowerGrade;
+        public bool flowerWasGameOver;
     }
 
     public static DateOutcome LastOutcome { get; private set; }
@@ -59,6 +66,33 @@ public static class DateOutcomeCapture
         Debug.Log($"[DateOutcomeCapture] Captured: {LastOutcome.characterName}, " +
                   $"succeeded={succeeded}, affection={affection:F1}, " +
                   $"reactions={tags.Length}, drink={drink}");
+    }
+
+    /// <summary>
+    /// Called by FlowerTrimmingBridge after the flower scene completes.
+    /// Populates flower fields on the current outcome.
+    /// </summary>
+    public static void CaptureFlowerResult(int score, int days, bool gameOver)
+    {
+        var o = LastOutcome;
+        o.hadFlowerTrim = true;
+        o.flowerScore = score;
+        o.flowerDaysAlive = days;
+        o.flowerWasGameOver = gameOver;
+        o.flowerGrade = ComputeFlowerGrade(score);
+        LastOutcome = o;
+
+        Debug.Log($"[DateOutcomeCapture] Flower result: score={score}, days={days}, " +
+                  $"grade={o.flowerGrade}, gameOver={gameOver}");
+    }
+
+    private static string ComputeFlowerGrade(int score)
+    {
+        if (score >= 90) return "S";
+        if (score >= 75) return "A";
+        if (score >= 60) return "B";
+        if (score >= 40) return "C";
+        return "D";
     }
 
     /// <summary>Called after spawning daily mess to reset for the next day.</summary>

@@ -30,6 +30,9 @@ public class IrisSaveData
 
     // ── Object Positions ──────────────────────────────────────────
     public List<PlaceablePositionRecord> objectPositions = new List<PlaceablePositionRecord>();
+
+    // ── Living Plants (flower trimming results → apartment decorations) ──
+    public List<LivingPlantRecord> livingPlants = new List<LivingPlantRecord>();
 }
 
 /// <summary>Serializable record of an item's display state.</summary>
@@ -47,4 +50,15 @@ public class PlaceablePositionRecord
     public string objectName;
     public float px, py, pz;
     public float rx, ry, rz, rw;
+}
+
+/// <summary>Serializable record of a living plant (trimmed flower) in the apartment.</summary>
+[Serializable]
+public class LivingPlantRecord
+{
+    public string characterName;
+    public int spawnDay;
+    public int totalDaysAlive;
+    public float currentHealth;
+    public float px, py, pz;
 }

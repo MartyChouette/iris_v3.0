@@ -16,6 +16,11 @@ public static class DateHistory
         public bool succeeded;
         public List<string> learnedLikes = new List<string>();
         public List<string> learnedDislikes = new List<string>();
+
+        // Flower trimming results (populated after flower scene completes)
+        public int flowerScore;
+        public int flowerDaysAlive;
+        public string flowerGrade;
     }
 
     private static readonly List<DateHistoryEntry> s_entries = new List<DateHistoryEntry>();
@@ -47,6 +52,23 @@ public static class DateHistory
     {
         s_entries.Add(entry);
         Debug.Log($"[DateHistory] Recorded: {entry.name} day {entry.day} → {entry.grade} ({entry.affection:F0}%) succeeded={entry.succeeded}");
+    }
+
+    /// <summary>Update the most recent entry with flower trimming results.</summary>
+    public static void UpdateFlowerResult(int score, int days, string grade)
+    {
+        if (s_entries.Count == 0)
+        {
+            Debug.LogWarning("[DateHistory] No entries to update with flower result.");
+            return;
+        }
+
+        var latest = s_entries[s_entries.Count - 1];
+        latest.flowerScore = score;
+        latest.flowerDaysAlive = days;
+        latest.flowerGrade = grade;
+        Debug.Log($"[DateHistory] Updated latest entry ({latest.name}) with flower: " +
+                  $"score={score}, days={days}, grade={grade}");
     }
 
     /// <summary>Return a copy of all entries for serialization.</summary>
