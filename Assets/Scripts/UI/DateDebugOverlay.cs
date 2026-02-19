@@ -258,6 +258,44 @@ public class DateDebugOverlay : MonoBehaviour
         }
         sb.AppendLine();
 
+        // ── CLUTTER ──
+        sb.AppendLine("<b>CLUTTER</b>");
+        if (ts != null)
+        {
+            int totalFloor = 0;
+            foreach (ApartmentArea clutterArea in System.Enum.GetValues(typeof(ApartmentArea)))
+            {
+                int floorCount = ts.GetFloorItemCount(clutterArea);
+                totalFloor += floorCount;
+                float clutterClean = ts.GetClutterClean(clutterArea);
+                string cColor = clutterClean >= 0.8f ? "green" : clutterClean >= 0.5f ? "yellow" : "red";
+                sb.AppendLine($"  {clutterArea}: {floorCount} items <color={cColor}>({clutterClean:P0} clean)</color>");
+            }
+
+            // Date clutter reaction preview
+            if (dsm != null && dsm.CurrentDate != null)
+            {
+                float overallClutter = 0f;
+                int areaCount = 0;
+                foreach (ApartmentArea a in System.Enum.GetValues(typeof(ApartmentArea)))
+                {
+                    overallClutter += ts.GetClutterClean(a);
+                    areaCount++;
+                }
+                overallClutter = areaCount > 0 ? overallClutter / areaCount : 1f;
+                float tolerance = dsm.CurrentDate.preferences.clutterTolerance;
+                var clutterReaction = ReactionEvaluator.EvaluateClutter(overallClutter, tolerance);
+                string crColor = clutterReaction == ReactionType.Like ? "green"
+                    : clutterReaction == ReactionType.Dislike ? "red" : "white";
+                sb.AppendLine($"  Date Reaction: <color={crColor}>{clutterReaction}</color> (tolerance: {tolerance:F1}, score: {overallClutter:F2})");
+            }
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>N/A</color>");
+        }
+        sb.AppendLine();
+
         // ── SMELL ──
         sb.AppendLine("<b>SMELL</b>");
         float totalSmell = SmellTracker.TotalSmell;
@@ -291,6 +329,30 @@ public class DateDebugOverlay : MonoBehaviour
             }
         }
         if (privCount == 0) sb.AppendLine("  <color=#888>none</color>");
+        sb.AppendLine();
+
+        // ── AUTHORED MESS ──
+        sb.AppendLine("<b>AUTHORED MESS</b>");
+        var ams = AuthoredMessSpawner.Instance;
+        if (ams != null && ams.SpawnedBlueprintNames.Count > 0)
+        {
+            foreach (var bpName in ams.SpawnedBlueprintNames)
+                sb.AppendLine($"  {bpName}");
+        }
+        else
+        {
+            sb.AppendLine("  <color=#888>none spawned</color>");
+        }
+        // Show last date outcome for debugging
+        var lastOutcome = DateOutcomeCapture.LastOutcome;
+        if (lastOutcome.hadDate)
+        {
+            string outcomeColor = lastOutcome.succeeded ? "green" : "red";
+            sb.AppendLine($"  Last Date: <color={outcomeColor}>{lastOutcome.characterName} ({(lastOutcome.succeeded ? "OK" : "FAIL")}, {lastOutcome.affection:F1})</color>");
+            if (lastOutcome.reactionTags != null && lastOutcome.reactionTags.Length > 0)
+                sb.AppendLine($"  Tags: {string.Join(", ", lastOutcome.reactionTags)}");
+            sb.AppendLine($"  Drink: {lastOutcome.drinkServed}");
+        }
         sb.AppendLine();
 
         // ── ACCUMULATED REACTIONS ──
