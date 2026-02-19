@@ -15,7 +15,7 @@ MonoBehaviour:
   areaName: Entrance
   description: Shoe rack, coat rack, front door.
   stationType: 0
-  cameraPosition: {x: 0, y: 0, z: 0}
-  cameraRotation: {x: 0, y: 0, z: 0}
+  cameraPosition: {x: -0.5, y: 3, z: 7.5}
+  cameraRotation: {x: 35, y: 180, z: 0}
   cameraFOV: 50
   browseBlendDuration: 0.8

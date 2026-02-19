@@ -575,7 +575,7 @@ public class DateSessionManager : MonoBehaviour
     {
         // Spawn at judgment point (entrance area)
         Vector3 spawnPos = judgmentStopPoint != null ? judgmentStopPoint.position
-            : new Vector3(-3.2f, 0f, -4f);
+            : new Vector3(-1.0f, 0f, 5.5f);
 
         if (_currentDate.characterModelPrefab != null)
         {

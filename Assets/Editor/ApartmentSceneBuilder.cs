@@ -419,8 +419,9 @@ public static class ApartmentSceneBuilder
     {
         var go = new GameObject("JudgmentStopPoint");
         go.transform.SetParent(parent);
-        // Inside the house near the front door — clearly visible in entrance area
-        go.transform.position = new Vector3(-3.2f, 0f, -4f);
+        // In front of the entrance area, visible from the entrance camera
+        go.transform.position = new Vector3(-1.0f, 0f, 5.5f);
+        go.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
         return go.transform;
     }
 
@@ -965,7 +966,7 @@ public static class ApartmentSceneBuilder
         var entrance = CreateAreaDef("Entrance", soDir,
             "Entrance", "Shoe rack, coat rack, front door.",
             StationType.None,
-            new Vector3(-0.5f, 3.0f, 7.0f), new Vector3(25f, 180f, 0f), 48f);
+            new Vector3(-0.5f, 3.0f, 7.5f), new Vector3(35f, 180f, 0f), 50f);
 
         return new[] { kitchen, livingRoom, entrance };
     }
