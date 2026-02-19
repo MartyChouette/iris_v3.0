@@ -19,6 +19,13 @@ public class MoodMachine : MonoBehaviour
     [Tooltip("Optional rain particle system. Emission rate driven by profile.")]
     [SerializeField] private ParticleSystem rainParticles;
 
+    [Header("Audio")]
+    [Tooltip("Looping room tone clip. Volume driven by profile.ambienceVolume curve.")]
+    [SerializeField] private AudioClip _ambienceClip;
+
+    [Tooltip("Looping rain/storm clip. Volume driven by profile.weatherVolume curve.")]
+    [SerializeField] private AudioClip _weatherClip;
+
     [Header("Settings")]
     [Tooltip("Speed of mood lerp (units per second). 0.5 ≈ 2 seconds for full traverse.")]
     [SerializeField] private float lerpSpeed = 0.5f;
@@ -46,9 +53,27 @@ public class MoodMachine : MonoBehaviour
         Instance = this;
     }
 
+    private void Start()
+    {
+        // Start ambience/weather loops at volume 0 — ApplyMood() curves control fade-in
+        if (AudioManager.Instance != null)
+        {
+            if (_ambienceClip != null)
+                AudioManager.Instance.PlayAmbience(_ambienceClip, 0f);
+            if (_weatherClip != null)
+                AudioManager.Instance.PlayWeather(_weatherClip, 0f);
+        }
+    }
+
     private void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this)
+        {
+            // Stop loops to avoid orphaned audio after scene change
+            AudioManager.Instance?.StopAmbience();
+            AudioManager.Instance?.StopWeather();
+            Instance = null;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -112,6 +137,15 @@ public class MoodMachine : MonoBehaviour
         {
             var emission = rainParticles.emission;
             emission.rateOverTime = profile.rainRate.Evaluate(t);
+        }
+
+        // Audio — adjust ambience/weather volume from mood
+        if (AudioManager.Instance != null)
+        {
+            if (AudioManager.Instance.ambienceSource != null && AudioManager.Instance.ambienceSource.isPlaying)
+                AudioManager.Instance.ambienceSource.volume = profile.ambienceVolume.Evaluate(t);
+            if (AudioManager.Instance.weatherSource != null && AudioManager.Instance.weatherSource.isPlaying)
+                AudioManager.Instance.weatherSource.volume = profile.weatherVolume.Evaluate(t);
         }
     }
 }

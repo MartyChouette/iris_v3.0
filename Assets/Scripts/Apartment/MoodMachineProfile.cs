@@ -24,6 +24,14 @@ public class MoodMachineProfile : ScriptableObject
     [Tooltip("RenderSettings.fogDensity (0.001 → 0.03).")]
     public AnimationCurve fogDensity = AnimationCurve.Linear(0f, 0.001f, 1f, 0.03f);
 
+    [Header("Audio")]
+    [Tooltip("Ambience volume across mood range (room tone dips in storms as rain takes over).")]
+    public AnimationCurve ambienceVolume = AnimationCurve.Linear(0f, 0.6f, 1f, 0.3f);
+
+    [Tooltip("Weather volume across mood range (silent until 0.4, ramps with storm intensity).")]
+    public AnimationCurve weatherVolume = new AnimationCurve(
+        new Keyframe(0f, 0f), new Keyframe(0.4f, 0f), new Keyframe(0.6f, 0.3f), new Keyframe(1f, 0.8f));
+
     [Header("Effects")]
     [Tooltip("Rain particle emission rate (0 → 200/sec).")]
     public AnimationCurve rainRate = AnimationCurve.Linear(0f, 0f, 1f, 200f);
