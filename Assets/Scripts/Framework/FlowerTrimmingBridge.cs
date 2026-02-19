@@ -5,14 +5,22 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Scene-scoped singleton that manages the transition into and out of the
-/// flower trimming scene. Lives in the apartment scene, loads FlowerTrimming
-/// additively, captures results, and unloads it.
+/// flower trimming scene. Lives in the apartment scene, loads the flower
+/// scene additively, captures results, and unloads it.
+///
+/// Supports two modes:
+/// 1. Self-contained scene (default): loads a scene that already contains a
+///    flower with FlowerSessionController. The flowerPrefab parameter is ignored.
+/// 2. Spawn-point scene: if the loaded scene has a "FlowerSpawnPoint" and no
+///    existing FlowerSessionController, instantiates the flowerPrefab there.
 /// </summary>
 public class FlowerTrimmingBridge : MonoBehaviour
 {
     public static FlowerTrimmingBridge Instance { get; private set; }
 
-    private const string FlowerSceneName = "FlowerTrimming";
+    [Header("Scene")]
+    [Tooltip("Name of the flower trimming scene to load additively. Must be in Build Settings.")]
+    [SerializeField] private string _flowerSceneName = "G_Flower_DEC14";
 
     private Action<int, int, bool> _onComplete;
     private bool _waitingForResult;
@@ -34,10 +42,11 @@ public class FlowerTrimmingBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// Load the flower trimming scene additively, instantiate the flower,
+    /// Load the flower trimming scene additively, find or instantiate the flower,
     /// wait for the player to trim it, and invoke onComplete with results.
     /// </summary>
-    /// <param name="flowerPrefab">The flower prefab to instantiate at the spawn point.</param>
+    /// <param name="flowerPrefab">Flower prefab to instantiate if the scene has a spawn point
+    /// but no existing FlowerSessionController. Can be null for self-contained scenes.</param>
     /// <param name="onComplete">Callback: (score, daysAlive, isGameOver)</param>
     public void BeginTrimming(GameObject flowerPrefab, Action<int, int, bool> onComplete)
     {
@@ -55,10 +64,10 @@ public class FlowerTrimmingBridge : MonoBehaviour
     private IEnumerator TrimmingSequence(GameObject flowerPrefab)
     {
         // Load the flower trimming scene additively
-        var loadOp = SceneManager.LoadSceneAsync(FlowerSceneName, LoadSceneMode.Additive);
+        var loadOp = SceneManager.LoadSceneAsync(_flowerSceneName, LoadSceneMode.Additive);
         if (loadOp == null)
         {
-            Debug.LogError($"[FlowerTrimmingBridge] Failed to load scene '{FlowerSceneName}'. " +
+            Debug.LogError($"[FlowerTrimmingBridge] Failed to load scene '{_flowerSceneName}'. " +
                            "Is it added to Build Settings?");
             _waitingForResult = false;
             _onComplete?.Invoke(0, 0, true);
@@ -67,7 +76,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         yield return loadOp;
 
-        var flowerScene = SceneManager.GetSceneByName(FlowerSceneName);
+        var flowerScene = SceneManager.GetSceneByName(_flowerSceneName);
         if (!flowerScene.IsValid())
         {
             Debug.LogError("[FlowerTrimmingBridge] Flower scene not valid after load.");
@@ -76,31 +85,45 @@ public class FlowerTrimmingBridge : MonoBehaviour
             yield break;
         }
 
-        // Find the spawn point in the flower scene
-        Transform spawnPoint = null;
+        // Look for an existing FlowerSessionController already in the scene
+        FlowerSessionController session = null;
         foreach (var root in flowerScene.GetRootGameObjects())
         {
-            var sp = root.transform.Find("FlowerSpawnPoint");
-            if (sp != null) { spawnPoint = sp; break; }
-            if (root.name == "FlowerSpawnPoint") { spawnPoint = root.transform; break; }
+            session = root.GetComponentInChildren<FlowerSessionController>();
+            if (session != null) break;
         }
 
-        // Instantiate the flower prefab
-        Vector3 spawnPos = spawnPoint != null ? spawnPoint.position : Vector3.zero;
-        Quaternion spawnRot = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
-        var flowerGO = Instantiate(flowerPrefab, spawnPos, spawnRot);
-        SceneManager.MoveGameObjectToScene(flowerGO, flowerScene);
+        // If no session found in the scene, try instantiating the prefab at a spawn point
+        if (session == null && flowerPrefab != null)
+        {
+            Transform spawnPoint = null;
+            foreach (var root in flowerScene.GetRootGameObjects())
+            {
+                var sp = root.transform.Find("FlowerSpawnPoint");
+                if (sp != null) { spawnPoint = sp; break; }
+                if (root.name == "FlowerSpawnPoint") { spawnPoint = root.transform; break; }
+            }
 
-        // Find or add FlowerSessionController
-        var session = flowerGO.GetComponentInChildren<FlowerSessionController>();
+            Vector3 spawnPos = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+            Quaternion spawnRot = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+            var flowerGO = Instantiate(flowerPrefab, spawnPos, spawnRot);
+            SceneManager.MoveGameObjectToScene(flowerGO, flowerScene);
+
+            session = flowerGO.GetComponentInChildren<FlowerSessionController>();
+        }
+
         if (session == null)
         {
-            Debug.LogWarning("[FlowerTrimmingBridge] No FlowerSessionController on flower prefab. " +
+            Debug.LogWarning("[FlowerTrimmingBridge] No FlowerSessionController found in scene or on prefab. " +
                              "Results will default to 0.");
             _waitingForResult = false;
             _onComplete?.Invoke(0, 0, true);
             yield break;
         }
+
+        // Reset session state in case the scene was previously played standalone
+        session.sessionEnded = false;
+        session.endRequested = false;
 
         // Wait for the session to produce a result
         int resultScore = 0;
