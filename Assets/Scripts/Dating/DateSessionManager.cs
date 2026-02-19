@@ -121,8 +121,8 @@ public class DateSessionManager : MonoBehaviour
         public ReactionType type;
     }
 
-    /// <summary>Flower prefab stashed after a successful date for the flower trimming scene.</summary>
-    public static GameObject PendingFlowerPrefab { get; set; }
+    /// <summary>True when a successful date should trigger flower trimming before evening.</summary>
+    public static bool PendingFlowerTrim { get; set; }
 
     /// <summary>Fired for each reaction (HUD display).</summary>
     public event System.Action<AccumulatedReaction> OnRevealReaction;
@@ -544,9 +544,9 @@ public class DateSessionManager : MonoBehaviour
         PopulateLearnedPreferences(successEntry);
         DateHistory.Record(successEntry);
 
-        // Stash flower prefab for the flower trimming scene
-        if (_currentDate != null && _currentDate.flowerPrefab != null)
-            PendingFlowerPrefab = _currentDate.flowerPrefab;
+        // Signal flower trimming if this date has a flower scene configured
+        if (_currentDate != null && !string.IsNullOrEmpty(_currentDate.flowerSceneName))
+            PendingFlowerTrim = true;
 
         DismissCharacter();
         OnDateSessionEnded?.Invoke(_currentDate, _affection);

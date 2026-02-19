@@ -74,7 +74,7 @@ public class DatePersonalDefinition : ScriptableObject
     // Flower Gift
     // ──────────────────────────────────────────────────────────────
     [Header("Flower Gift")]
-    [Tooltip("Flower prefab given on successful date.")]
+    [Tooltip("Flower prefab presented as a gift at the end of a successful date (Zelda-style item get).")]
     public GameObject flowerPrefab;
 
     [Tooltip("Name of the flower trimming scene to load. Must be in Build Settings. " +

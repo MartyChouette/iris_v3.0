@@ -237,8 +237,8 @@ public class DayPhaseManager : MonoBehaviour
     /// <summary>Called by DateSessionManager.OnDateSessionEnded event.</summary>
     public void EnterEvening(DatePersonalDefinition _, float __)
     {
-        // If there's a pending flower from a successful date, trim it first
-        if (DateSessionManager.PendingFlowerPrefab != null)
+        // If there's a pending flower trim from a successful date, do it first
+        if (DateSessionManager.PendingFlowerTrim)
         {
             SetPhase(DayPhase.FlowerTrimming);
             return;
@@ -442,10 +442,9 @@ public class DayPhaseManager : MonoBehaviour
 
     private IEnumerator FlowerTrimmingTransition()
     {
-        var flowerPrefab = DateSessionManager.PendingFlowerPrefab;
-        if (flowerPrefab == null)
+        if (!DateSessionManager.PendingFlowerTrim)
         {
-            Debug.LogWarning("[DayPhaseManager] FlowerTrimming phase but no pending flower. Skipping to Evening.");
+            Debug.LogWarning("[DayPhaseManager] FlowerTrimming phase but no pending trim. Skipping to Evening.");
             SetPhase(DayPhase.Evening);
             yield break;
         }
@@ -454,7 +453,7 @@ public class DayPhaseManager : MonoBehaviour
         if (bridge == null)
         {
             Debug.LogWarning("[DayPhaseManager] No FlowerTrimmingBridge found. Skipping to Evening.");
-            DateSessionManager.PendingFlowerPrefab = null;
+            DateSessionManager.PendingFlowerTrim = false;
             SetPhase(DayPhase.Evening);
             yield break;
         }
@@ -476,7 +475,7 @@ public class DayPhaseManager : MonoBehaviour
 
         // 4. Begin trimming and wait for completion
         bool trimmingComplete = false;
-        bridge.BeginTrimming(flowerPrefab, (score, days, gameOver) =>
+        bridge.BeginTrimming((score, days, gameOver) =>
         {
             trimmingComplete = true;
         });
