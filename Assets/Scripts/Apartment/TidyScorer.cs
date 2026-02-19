@@ -14,10 +14,10 @@ public class TidyScorer : MonoBehaviour
 
     [Header("Weights")]
     [Tooltip("Weight for stain cleanliness in the tidiness formula.")]
-    [SerializeField] private float _stainWeight = 0.35f;
+    [SerializeField] private float _stainWeight = 0.45f;
 
     [Tooltip("Weight for object mess in the tidiness formula.")]
-    [SerializeField] private float _objectWeight = 0.35f;
+    [SerializeField] private float _objectWeight = 0.25f;
 
     [Tooltip("Weight for smell cleanliness in the tidiness formula.")]
     [SerializeField] private float _smellWeight = 0.15f;
@@ -27,10 +27,10 @@ public class TidyScorer : MonoBehaviour
 
     [Header("Thresholds")]
     [Tooltip("Maximum expected mess items per area before objectClean = 0.")]
-    [SerializeField] private int _maxExpectedMess = 4;
+    [SerializeField] private int _maxExpectedMess = 3;
 
     [Tooltip("Maximum expected floor items per area before clutterClean = 0.")]
-    [SerializeField] private int _maxExpectedClutter = 5;
+    [SerializeField] private int _maxExpectedClutter = 3;
 
     [Tooltip("Smell amount per area above which smellClean = 0.")]
     [SerializeField] private float _smellThreshold = 1.5f;
