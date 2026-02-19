@@ -776,7 +776,47 @@ public static class ApartmentSceneBuilder
         gzSO.FindProperty("_zoneRenderer").objectReferenceValue = zoneRend;
         gzSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log($"[ApartmentSceneBuilder] Built {positions.Length} dirty dishes + drop zone.");
+        // ── Dish rack visual (open-top tray under the drop zone) ──
+        var rackMat = new Material(litShader);
+        rackMat.color = new Color(0.6f, 0.6f, 0.65f); // steel grey
+
+        var rack = new GameObject("DishRack");
+        rack.transform.SetParent(parent.transform);
+        rack.transform.position = zoneGO.transform.position + Vector3.down * 0.06f;
+
+        // Base
+        var rackBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        rackBase.name = "Rack_Base";
+        rackBase.transform.SetParent(rack.transform);
+        rackBase.transform.localPosition = Vector3.zero;
+        rackBase.transform.localScale = new Vector3(0.52f, 0.02f, 0.42f);
+        rackBase.GetComponent<Renderer>().sharedMaterial = rackMat;
+        rackBase.isStatic = true;
+
+        // Side walls (left, right, back)
+        float wallH = 0.06f;
+        Vector3[] wallPositions = {
+            new Vector3(-0.26f, wallH * 0.5f, 0f),  // left
+            new Vector3( 0.26f, wallH * 0.5f, 0f),  // right
+            new Vector3(0f, wallH * 0.5f, -0.21f),   // back
+        };
+        Vector3[] wallScales = {
+            new Vector3(0.02f, wallH, 0.42f),  // left
+            new Vector3(0.02f, wallH, 0.42f),  // right
+            new Vector3(0.52f, wallH, 0.02f),  // back
+        };
+        for (int w = 0; w < 3; w++)
+        {
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = $"Rack_Wall_{w}";
+            wall.transform.SetParent(rack.transform);
+            wall.transform.localPosition = wallPositions[w];
+            wall.transform.localScale = wallScales[w];
+            wall.GetComponent<Renderer>().sharedMaterial = rackMat;
+            wall.isStatic = true;
+        }
+
+        Debug.Log($"[ApartmentSceneBuilder] Built {positions.Length} dirty dishes + dish rack + drop zone.");
     }
 
     // ══════════════════════════════════════════════════════════════════
