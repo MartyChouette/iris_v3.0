@@ -308,7 +308,16 @@ public class ObjectGrabber : MonoBehaviour
             var dishZone = _currentSurface != null
                 ? _currentSurface.GetComponent<DishDropZone>() : null;
             if (dishZone != null)
+            {
+                // Deposit the held plate plus any child plates in the stack
                 dishZone.RegisterDeposit(stackable);
+                var childPlates = stackable.GetComponentsInChildren<StackablePlate>();
+                foreach (var child in childPlates)
+                {
+                    if (child != stackable)
+                        dishZone.RegisterDeposit(child);
+                }
+            }
         }
 
         ClearHeld();
@@ -545,7 +554,15 @@ public class ObjectGrabber : MonoBehaviour
                     stackable.TryJoinStack();
                     var dropZone = nearest.GetComponent<DishDropZone>();
                     if (dropZone != null)
+                    {
                         dropZone.RegisterDeposit(stackable);
+                        var childPlates = stackable.GetComponentsInChildren<StackablePlate>();
+                        foreach (var child in childPlates)
+                        {
+                            if (child != stackable)
+                                dropZone.RegisterDeposit(child);
+                        }
+                    }
                 }
             }
             else
