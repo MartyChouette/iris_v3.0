@@ -1013,9 +1013,14 @@ public static class ApartmentSceneBuilder
     {
         var groupGO = new GameObject("Station_Bookcase");
 
+        // Coffee table target (world-space, baked into each CoffeeTableBook's serialized fields)
+        Vector3 ctBase = new Vector3(-0.571f, 0.38f, 2.007f);
+        Quaternion ctRot = Quaternion.Euler(0f, 5f, 0f);
+
         // Bookcase unit (shared with standalone bookcase scene)
         var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
-            booksLayer, drawersLayer, perfumesLayer, coffeeTableBooksLayer);
+            booksLayer, drawersLayer, perfumesLayer, coffeeTableBooksLayer,
+            ctBase, ctRot);
         bookcaseRoot.transform.SetParent(groupGO.transform);
         bookcaseRoot.transform.localPosition = Vector3.zero;
         bookcaseRoot.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
@@ -1031,10 +1036,6 @@ public static class ApartmentSceneBuilder
         // Position and rotate the entire group
         groupGO.transform.position = BookcaseStationPos;
         groupGO.transform.rotation = BookcaseStationRot;
-
-        // Wire coffee table stack base (coffee table top at Y=0.375, small offset)
-        CoffeeTableBook.CoffeeTableStackBase = new Vector3(-0.571f, 0.38f, 2.007f);
-        CoffeeTableBook.CoffeeTableStackRotation = Quaternion.Euler(0f, 5f, 0f);
 
         Debug.Log("[ApartmentSceneBuilder] Bookcase station group built.");
     }

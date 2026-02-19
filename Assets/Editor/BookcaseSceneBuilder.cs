@@ -257,18 +257,17 @@ public static class BookcaseSceneBuilder
         // ── 3. Room geometry ───────────────────────────────────────────
         BuildRoom();
 
-        // ── 4. Bookcase unit (frame, books, perfumes, drawers, coffee books)
-        var bookcaseRoot = BuildBookcaseUnit(booksLayer, drawersLayer,
-            perfumesLayer, coffeeTableBooksLayer);
-        bookcaseRoot.transform.position = new Vector3(0f, 0f, 1.8f);
-
-        // ── 5. Coffee table (scene-specific room furniture) ──────────
+        // ── 4. Coffee table (scene-specific room furniture) ──────────
         BuildCoffeeTable();
 
-        // ── 6. Wire coffee table stack base ───────────────────────────
+        // ── 5. Bookcase unit (frame, books, perfumes, drawers, coffee books)
         float coffeeTableTopY = 0.415f;
-        CoffeeTableBook.CoffeeTableStackBase = new Vector3(0.8f, coffeeTableTopY, 0.8f);
-        CoffeeTableBook.CoffeeTableStackRotation = Quaternion.Euler(0f, 5f, 0f);
+        Vector3 ctBase = new Vector3(0.8f, coffeeTableTopY, 0.8f);
+        Quaternion ctRot = Quaternion.Euler(0f, 5f, 0f);
+
+        var bookcaseRoot = BuildBookcaseUnit(booksLayer, drawersLayer,
+            perfumesLayer, coffeeTableBooksLayer, ctBase, ctRot);
+        bookcaseRoot.transform.position = new Vector3(0f, 0f, 1.8f);
 
         // ── 7. Environment mood controller ───────────────────────────
         BuildEnvironmentMood(lightGO);
@@ -297,11 +296,11 @@ public static class BookcaseSceneBuilder
     /// <summary>
     /// Builds a self-contained bookcase unit at local origin (0,0,0) with all items:
     /// frame, books, perfume bottles, drawers, and coffee table books.
-    /// Caller positions/rotates the returned root and wires
-    /// coffee table book targets to scene-specific furniture.
+    /// coffeeTableBase/Rotation are the world-space target for books sent to the coffee table.
     /// </summary>
     public static GameObject BuildBookcaseUnit(int booksLayer, int drawersLayer,
-        int perfumesLayer, int coffeeTableBooksLayer)
+        int perfumesLayer, int coffeeTableBooksLayer,
+        Vector3 coffeeTableBase, Quaternion coffeeTableRotation)
     {
         var bookcaseRoot = new GameObject("Bookcase");
 
@@ -309,7 +308,7 @@ public static class BookcaseSceneBuilder
         BuildBooks(bookcaseRoot, booksLayer);
         BuildPerfumeShelf(bookcaseRoot, perfumesLayer);
         BuildDrawers(bookcaseRoot, drawersLayer);
-        BuildCoffeeTableBooks(bookcaseRoot, coffeeTableBooksLayer);
+        BuildCoffeeTableBooks(bookcaseRoot, coffeeTableBooksLayer, coffeeTableBase, coffeeTableRotation);
 
         return bookcaseRoot;
     }
@@ -810,7 +809,8 @@ public static class BookcaseSceneBuilder
     private static readonly float[] CoffeeBookHeightFracs = { 0.90f, 0.85f, 0.80f, 0.92f, 0.88f };
     private static readonly float[] CoffeeBookDepthFracs  = { 0.90f, 0.85f, 0.80f, 0.88f, 0.82f };
 
-    private static void BuildCoffeeTableBooks(GameObject bookcaseRoot, int coffeeTableBooksLayer)
+    private static void BuildCoffeeTableBooks(GameObject bookcaseRoot, int coffeeTableBooksLayer,
+        Vector3 coffeeTableBase, Quaternion coffeeTableRotation)
     {
         string defDir = "Assets/ScriptableObjects/Bookcase";
         if (!AssetDatabase.IsValidFolder(defDir))
@@ -825,10 +825,7 @@ public static class BookcaseSceneBuilder
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float caseLeftX = -innerWidth / 2f;
 
-        // Bookcase stack base: left edge of the shelf, Y at shelf surface
-        Vector3 stackBase = new Vector3(caseLeftX + 0.01f, shelfTopY, CaseCenterZ);
-        CoffeeTableBook.BookcaseStackBase = stackBase;
-        CoffeeTableBook.BookcaseStackRotation = Quaternion.identity;
+        // Books save their own shelf positions in Awake() — no static base needed
 
         for (int i = 0; i < CoffeeBookTitles.Length; i++)
         {
@@ -881,6 +878,8 @@ public static class BookcaseSceneBuilder
 
             var cbSO = new SerializedObject(coffeeBook);
             cbSO.FindProperty("definition").objectReferenceValue = def;
+            cbSO.FindProperty("coffeeTableBase").vector3Value = coffeeTableBase;
+            cbSO.FindProperty("coffeeTableRotation").quaternionValue = coffeeTableRotation;
             // First book starts on coffee table
             if (i == 0)
                 cbSO.FindProperty("startsOnCoffeeTable").boolValue = true;
