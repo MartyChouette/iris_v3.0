@@ -9,13 +9,6 @@ public class DailyMessSpawner : MonoBehaviour
 {
     public static DailyMessSpawner Instance { get; private set; }
 
-    [Header("Trash Spawning")]
-    [Tooltip("Pre-placed disabled trash GameObjects at various apartment positions.")]
-    [SerializeField] private GameObject[] _trashSlots;
-
-    [Tooltip("How many trash items to activate each day.")]
-    [SerializeField, Range(1, 8)] private int _trashPerDay = 3;
-
     [Header("Entrance Items")]
     [Tooltip("Shoes PlaceableObject — repositioned each morning.")]
     [SerializeField] private PlaceableObject _shoes;
@@ -58,52 +51,14 @@ public class DailyMessSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawn daily mess: activate trash subset + misplace entrance items.
+    /// Misplace entrance items each morning.
     /// Called by DayPhaseManager during ExplorationTransition.
+    /// Trash/stain spawning is now handled by AuthoredMessSpawner.
     /// </summary>
     public void SpawnDailyMess()
     {
-        SpawnTrash();
         MisplaceEntranceItems();
-        Debug.Log("[DailyMessSpawner] Daily mess spawned.");
-    }
-
-    private void SpawnTrash()
-    {
-        if (_trashSlots == null || _trashSlots.Length == 0) return;
-
-        // Deactivate all
-        for (int i = 0; i < _trashSlots.Length; i++)
-        {
-            if (_trashSlots[i] != null)
-                _trashSlots[i].SetActive(false);
-        }
-
-        // Fisher-Yates shuffle indices
-        int[] indices = new int[_trashSlots.Length];
-        for (int i = 0; i < indices.Length; i++) indices[i] = i;
-        for (int i = indices.Length - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            (indices[i], indices[j]) = (indices[j], indices[i]);
-        }
-
-        int count = Mathf.Min(_trashPerDay, _trashSlots.Length);
-        for (int i = 0; i < count; i++)
-        {
-            var slot = _trashSlots[indices[i]];
-            if (slot != null)
-            {
-                slot.SetActive(true);
-
-                // Reset PlaceableObject state
-                var placeable = slot.GetComponent<PlaceableObject>();
-                if (placeable != null)
-                    placeable.IsAtHome = false;
-            }
-        }
-
-        Debug.Log($"[DailyMessSpawner] Activated {count} trash items.");
+        Debug.Log("[DailyMessSpawner] Entrance items misplaced.");
     }
 
     private void MisplaceEntranceItems()

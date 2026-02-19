@@ -52,11 +52,11 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("Transform for the tossed newspaper position on the coffee table.")]
     [SerializeField] private Transform _tossedNewspaperPosition;
 
-    [Tooltip("Stain spawner triggered at exploration start.")]
-    [SerializeField] private ApartmentStainSpawner _stainSpawner;
+    [Tooltip("Authored mess spawner triggered at exploration start (stains + objects).")]
+    [SerializeField] private AuthoredMessSpawner _authoredMessSpawner;
 
-    [Tooltip("Mess spawner triggered at exploration start (trash + misplaced items).")]
-    [SerializeField] private DailyMessSpawner _messSpawner;
+    [Tooltip("Daily mess spawner for entrance item misplacement.")]
+    [SerializeField] private DailyMessSpawner _entranceMessSpawner;
 
     [Tooltip("Apartment UI canvas root — hidden during Morning, shown during Exploration.")]
     [SerializeField] private GameObject _apartmentUI;
@@ -406,11 +406,11 @@ public class DayPhaseManager : MonoBehaviour
         if (_newspaperHUD != null)
             _newspaperHUD.SetActive(false);
 
-        // 6. Spawn daily stains + mess
-        if (_stainSpawner != null)
-            _stainSpawner.SpawnDailyStains();
-        if (_messSpawner != null)
-            _messSpawner.SpawnDailyMess();
+        // 6. Spawn authored messes (stains + objects) + misplace entrance items
+        if (_authoredMessSpawner != null)
+            _authoredMessSpawner.SpawnDailyMess();
+        if (_entranceMessSpawner != null)
+            _entranceMessSpawner.SpawnDailyMess();
 
         // 7. Wait for Cinemachine blend to finish (default 0.8s EaseInOut)
         yield return new WaitForSeconds(0.9f);
