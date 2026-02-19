@@ -503,6 +503,8 @@ public class DateSessionManager : MonoBehaviour
         _datePhase = DatePhase.None;
         Debug.Log($"[DateSessionManager] Date FAILED with {_currentDate?.characterName}. Affection: {_affection:F1}");
 
+        DateOutcomeCapture.Capture(_currentDate, _affection, false, _accumulatedReactions);
+
         var failEntry = new DateHistory.DateHistoryEntry
         {
             name = _currentDate?.characterName ?? "Unknown",
@@ -528,6 +530,8 @@ public class DateSessionManager : MonoBehaviour
         _state = SessionState.DateEnding;
         _datePhase = DatePhase.None;
         Debug.Log($"[DateSessionManager] Date SUCCEEDED with {_currentDate?.characterName}. Affection: {_affection:F1}");
+
+        DateOutcomeCapture.Capture(_currentDate, _affection, true, _accumulatedReactions);
 
         var successEntry = new DateHistory.DateHistoryEntry
         {
