@@ -188,13 +188,34 @@ public class DateDebugOverlay : MonoBehaviour
         sb.AppendLine(npc != null ? $"  {npc.CurrentState}" : "  <color=#888>N/A</color>");
         sb.AppendLine();
 
-        // ── CLEANLINESS ──
+        // ── CLEANLINESS / TIDINESS ──
+        var ts = TidyScorer.Instance;
         var cm = CleaningManager.Instance;
-        sb.AppendLine("<b>CLEANLINESS</b>");
-        if (cm != null)
+        sb.AppendLine("<b>CLEANLINESS / TIDINESS</b>");
+        if (ts != null)
         {
-            sb.AppendLine($"  Kitchen: {cm.GetAreaCleanPercent(ApartmentArea.Kitchen):P0}");
-            sb.AppendLine($"  Living Room: {cm.GetAreaCleanPercent(ApartmentArea.LivingRoom):P0}");
+            foreach (ApartmentArea area in System.Enum.GetValues(typeof(ApartmentArea)))
+            {
+                float tidiness = ts.GetAreaTidiness(area);
+                float stainClean = cm != null ? cm.GetAreaCleanPercent(area) : 1f;
+                string color = tidiness >= 0.8f ? "green" : tidiness >= 0.5f ? "yellow" : "red";
+                sb.AppendLine($"  {area}: <color={color}>{tidiness:P0}</color> (stains {stainClean:P0})");
+            }
+            float overall = ts.OverallTidiness;
+            string oColor = overall >= 0.8f ? "green" : overall >= 0.5f ? "yellow" : "red";
+            sb.AppendLine($"  <b>Overall: <color={oColor}>{overall:P0}</color></b>");
+
+            // Show what the date NPC would judge
+            var cleanReaction = ReactionEvaluator.EvaluateCleanliness(overall);
+            string rColor = cleanReaction == ReactionType.Like ? "green"
+                : cleanReaction == ReactionType.Dislike ? "red" : "white";
+            sb.AppendLine($"  Date Reaction: <color={rColor}>{cleanReaction}</color>");
+        }
+        else if (cm != null)
+        {
+            // Fallback: show stain data without TidyScorer
+            foreach (ApartmentArea area in System.Enum.GetValues(typeof(ApartmentArea)))
+                sb.AppendLine($"  {area} stains: {cm.GetAreaCleanPercent(area):P0}");
         }
         else
         {

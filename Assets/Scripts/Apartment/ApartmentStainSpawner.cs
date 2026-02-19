@@ -41,6 +41,17 @@ public class ApartmentStainSpawner : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    private void Start()
+    {
+        // Auto-spawn when DayPhaseManager isn't driving the flow (e.g. jumping
+        // directly into the apartment scene from the editor).
+        if (DayPhaseManager.Instance == null)
+        {
+            Debug.Log("[ApartmentStainSpawner] No DayPhaseManager — auto-spawning stains.");
+            SpawnDailyStains();
+        }
+    }
+
     /// <summary>
     /// Deactivate all slots, pick a random subset, assign random SpillDefinitions,
     /// regenerate textures, activate, and update CleaningManager.

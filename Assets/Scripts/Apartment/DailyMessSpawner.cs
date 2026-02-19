@@ -46,6 +46,17 @@ public class DailyMessSpawner : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    private void Start()
+    {
+        // Auto-spawn when DayPhaseManager isn't driving the flow (e.g. jumping
+        // directly into the apartment scene from the editor).
+        if (DayPhaseManager.Instance == null)
+        {
+            Debug.Log("[DailyMessSpawner] No DayPhaseManager — auto-spawning mess.");
+            SpawnDailyMess();
+        }
+    }
+
     /// <summary>
     /// Spawn daily mess: activate trash subset + misplace entrance items.
     /// Called by DayPhaseManager during ExplorationTransition.
