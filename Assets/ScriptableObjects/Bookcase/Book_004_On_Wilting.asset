@@ -21,6 +21,6 @@ MonoBehaviour:
     bloom.
   - We fear wilting because we see ourselves in it. But the plant does not fear.
     It simply returns.
-  spineColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
-  heightScale: 0.7344448
-  thicknessScale: 0.04295909
+  spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
+  heightScale: 0.8584999
+  thicknessScale: 0.024229424

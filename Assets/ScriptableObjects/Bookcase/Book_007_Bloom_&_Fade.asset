@@ -21,6 +21,6 @@ MonoBehaviour:
     deserves its own ovation.
   - Between bloom and fade there is a single perfect day. The flower does not know
     which one it is.
-  spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
-  heightScale: 0.8079827
-  thicknessScale: 0.032316726
+  spineColor: {r: 0.5, g: 0.12, b: 0.18, a: 1}
+  heightScale: 0.82509214
+  thicknessScale: 0.029065738

@@ -16,5 +16,5 @@ MonoBehaviour:
   description: "Macro photographs of petals \u2014 textures you've never noticed."
   itemID: coffeebook_1
   coverColor: {r: 0.5, g: 0.2, b: 0.3, a: 1}
-  size: {x: 0.2, y: 0.16}
-  thickness: 0.025
+  size: {x: 0.24499999, y: 0.3696}
+  thickness: 0.07

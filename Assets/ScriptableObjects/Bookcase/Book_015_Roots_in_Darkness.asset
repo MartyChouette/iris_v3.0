@@ -20,6 +20,6 @@ MonoBehaviour:
   - I have often wondered if the flower knows it is beautiful, or if beauty is simply
     a side effect of reaching toward light.
   - "When the last petal falls, the stem stands bare \u2014 not empty, but unburdened."
-  spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
-  heightScale: 0.7078217
-  thicknessScale: 0.040312614
+  spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
+  heightScale: 0.8160739
+  thicknessScale: 0.043701656

@@ -23,12 +23,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Current_Build/G_Flower_DEC14.unity
     guid: 058acf0ee14c7cc4185e6817383041d9
+  - enabled: 0
+    path: Assets/Scenes/apartment_prototype.unity
+    guid: 96d1c49de80474d43b4abb4d79b02dce
   - enabled: 1
     path: Assets/Scenes/mainmenu.unity
     guid: a641b70817a19454eb015b20fad2e8f8
   - enabled: 1
-    path: Assets/Scenes/apartment_prototype.unity
-    guid: 96d1c49de80474d43b4abb4d79b02dce
+    path: Assets/Scenes/apartment.unity
+    guid: e700961ca0bfc494e83e0f64e787dbd7
   - enabled: 1
     path: Assets/Flower_Trim.unity
     guid: 1c4fabe4781bc1344a28c82cf74d9616

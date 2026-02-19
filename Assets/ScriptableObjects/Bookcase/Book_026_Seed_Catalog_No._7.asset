@@ -18,6 +18,6 @@ MonoBehaviour:
   - 'Item 7A: Moonflower seeds. Plant in evening. Do not expect results before midnight.'
   - 'Item 12C: Forget-me-nots. Self-explanatory. Plant near things you wish to remember.'
   - 'Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway.'
-  spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
-  heightScale: 0.9164893
-  thicknessScale: 0.0214774
+  spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
+  heightScale: 0.7960672
+  thicknessScale: 0.037224293

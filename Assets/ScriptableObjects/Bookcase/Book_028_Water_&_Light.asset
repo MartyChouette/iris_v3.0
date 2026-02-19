@@ -21,5 +21,5 @@ MonoBehaviour:
     between extremes.
   - The best gardeners understand that water and light are not gifts. They are partnerships.
   spineColor: {r: 0.1, g: 0.1, b: 0.25, a: 1}
-  heightScale: 0.9443491
-  thicknessScale: 0.047056854
+  heightScale: 0.74522245
+  thicknessScale: 0.0444666
