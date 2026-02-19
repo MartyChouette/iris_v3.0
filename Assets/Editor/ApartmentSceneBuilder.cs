@@ -2661,6 +2661,9 @@ public static class ApartmentSceneBuilder
         dsmSO.FindProperty("_entranceJudgments").objectReferenceValue = entranceJudgments;
         dsmSO.ApplyModifiedPropertiesWithoutUndo();
 
+        // ── MidDateActionWatcher ──────────────────────────────────────
+        managersGO.AddComponent<MidDateActionWatcher>();
+
         // ── PhoneController ───────────────────────────────────────────
         PhoneController phoneCtrl = null;
         if (furnitureRefs.phoneTransform != null)
