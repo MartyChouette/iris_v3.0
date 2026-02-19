@@ -36,6 +36,7 @@ MonoBehaviour:
   - keyword: watches, gym, and whiskey
     commentary: Wearing a suit. Just got off work. Will complain about work.
   flowerPrefab: {fileID: 0}
+  flowerSceneName: Flower_Building_Scene
   forceAvailable: 0
   preferences:
     likedTags:
@@ -52,4 +53,5 @@ MonoBehaviour:
     dislikedDrinks: []
     likedOutfitTags: []
     dislikedOutfitTags: []
+    clutterTolerance: 0.5
     reactionStrength: 0.9

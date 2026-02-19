@@ -36,6 +36,7 @@ MonoBehaviour:
   - keyword: catlike
     commentary: Soft and gentle, but on her own terms. Don't push.
   flowerPrefab: {fileID: 0}
+  flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0
   preferences:
     likedTags:
@@ -52,4 +53,5 @@ MonoBehaviour:
     dislikedDrinks: []
     likedOutfitTags: []
     dislikedOutfitTags: []
+    clutterTolerance: 0.5
     reactionStrength: 1

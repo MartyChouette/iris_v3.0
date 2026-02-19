@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Date_Paris
   m_EditorClassIdentifier: Assembly-CSharp::DatePersonalDefinition
   characterName: Paris
-  adText: "Art school dropout turned florist. Looking for someone who waters their\
-    \ plants and owns at least one record player. Vinyl snobs welcome."
+  adText: Art school dropout turned florist. Looking for someone who waters their
+    plants and owns at least one record player. Vinyl snobs welcome.
   arrivalTimeSec: 30
   portrait: {fileID: 0}
   characterPrefab: {fileID: 0}
@@ -28,11 +28,16 @@ MonoBehaviour:
   fontSizeOverride: 0
   keywords:
   - keyword: Art school dropout
-    commentary: She traded brushes for bouquets. Probably still has paint under her nails.
+    commentary: She traded brushes for bouquets. Probably still has paint under her
+      nails.
   - keyword: waters their plants
     commentary: A simple test of care. Do you keep things alive?
   - keyword: Vinyl snobs welcome
-    commentary: She wants someone who owns real records — not just a Spotify playlist.
+    commentary: "She wants someone who owns real records \u2014 not just a Spotify
+      playlist."
+  flowerPrefab: {fileID: 3126228506876650885, guid: 7582aaee248b6e149b10daac037b2334, type: 3}
+  flowerSceneName: G_Flower_DEC14
+  forceAvailable: 0
   preferences:
     likedTags:
     - vinyl
@@ -53,4 +58,5 @@ MonoBehaviour:
     - elegant
     dislikedOutfitTags:
     - edgy
+    clutterTolerance: 0.5
     reactionStrength: 1

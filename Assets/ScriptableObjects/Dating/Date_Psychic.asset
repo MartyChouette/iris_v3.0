@@ -26,6 +26,10 @@ MonoBehaviour:
     height: 0.15
   characterModelPrefab: {fileID: 0}
   fontSizeOverride: 0
+  keywords: []
+  flowerPrefab: {fileID: 0}
+  flowerSceneName: G_Flower_DEC8
+  forceAvailable: 0
   preferences:
     likedTags:
     - incense
