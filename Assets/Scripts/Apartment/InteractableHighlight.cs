@@ -90,9 +90,9 @@ public class InteractableHighlight : MonoBehaviour
             else
             {
                 s_sharedRimMat = new Material(shader);
-                s_sharedRimMat.SetColor("_RimColor", new Color(1f, 1f, 1f, 0.6f));
-                s_sharedRimMat.SetFloat("_RimPower", 2.5f);
-                s_sharedRimMat.SetFloat("_RimIntensity", 1.0f);
+                s_sharedRimMat.SetColor("_RimColor", new Color(1f, 0.95f, 0.85f, 0.5f));
+                s_sharedRimMat.SetFloat("_RimPower", 3.0f);
+                s_sharedRimMat.SetFloat("_RimIntensity", 0.85f);
             }
         }
 

@@ -79,8 +79,8 @@ public class ObjectGrabber : MonoBehaviour
     private GameObject _shadowGO;
     private MeshRenderer _shadowRenderer;
     private Material _shadowMat;
-    private static readonly Color s_shadowValid = new Color(0.2f, 0.8f, 0.3f, 0.5f);
-    private static readonly Color s_shadowInvalid = new Color(0.8f, 0.2f, 0.2f, 0.5f);
+    private static readonly Color s_shadowValid = new Color(0.55f, 0.7f, 0.55f, 0.45f);
+    private static readonly Color s_shadowInvalid = new Color(0.72f, 0.45f, 0.48f, 0.45f);
 
     private void Awake()
     {
