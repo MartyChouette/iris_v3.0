@@ -23,7 +23,7 @@
 
 ## Executive Summary
 
-**Iris** is a contemplative flower-trimming game built in Unity 6 (URP) that blends cozy apartment life simulation, dating mechanics, and meditative craft gameplay into a single cohesive loop. Developed as a thesis project over 5.5 months — from early flower-trimming physics prototypes in September 2025 through an intensive 12-day apartment systems sprint — it has reached a remarkable state of technical maturity: **43,000+ lines of gameplay C#**, **255 runtime scripts**, **233 ScriptableObject assets**, and **14 interconnected gameplay systems** — all driven by a fully procedural scene builder that regenerates the entire game world from code.
+**Iris** is a contemplative flower-trimming game built in Unity 6 (URP) that blends cozy apartment life simulation, dating mechanics, and meditative craft gameplay into a single cohesive loop. Developed as a thesis project over 5.5 months — from early flower-trimming physics prototypes in September 2025 through an intensive 17-day apartment systems sprint — it has reached a remarkable state of technical maturity: **45,000+ lines of gameplay C#**, **247 runtime scripts**, **242 ScriptableObject assets**, and **18+ interconnected gameplay systems** — all driven by a fully procedural scene builder that regenerates the entire game world from code. A Feb 17–19 integration sprint connected all major systems into a unified loop: flower trimming feeds living apartment plants, authored messes and clutter affect date outcomes, date results persist across days via DateOutcomeCapture, and audio infrastructure now drives ambience/weather through MoodMachine profile curves with SFX hooks across grab, placement, area transitions, and day phase changes.
 
 The game enters a **$450M+ romance/dating sim market** growing at ~10% annually, with a female-majority audience (60%) in the 18-35 age range — a demographic actively seeking exactly the kind of thoughtful, emotionally resonant hybrid experience Iris provides.
 
@@ -40,12 +40,16 @@ mindmap
       Mirror Makeup
       Plant Watering
       Cleaning
+      Authored Mess & Clutter
+      Living Flower Plants
+      Date Outcome Persistence
     Tech
       Unity 6 URP
       Cinemachine 3
       New Input System
       Procedural Scene Builder
-      43K Lines C#
+      Additive Scene Loading
+      45K Lines C#
     Market
       $450M Dating Sim Segment
       10% Annual Growth
@@ -98,8 +102,23 @@ gantt
     Mega-Systems (Save/Collectibles)   :done, pol4, 2026-02-14, 1d
     Main Menu & Game Modes             :done, pol5, 2026-02-15, 1d
 
+    section Apartment Integration (Feb 17–19)
+    Flower Trimming Bridge (Additive Scene)  :done, int1, 2026-02-17, 1d
+    Living Flower Plants + Manager           :done, int2, 2026-02-17, 1d
+    Authored Mess Spawner (12 Blueprints)    :done, int3, 2026-02-17, 1d
+    Clutter Stat & Date Reactions            :done, int4, 2026-02-17, 1d
+    Date Outcome Capture & Persistence       :done, int5, 2026-02-17, 1d
+    Record Player Rewrite (4-State FSM)      :done, int6, 2026-02-18, 1d
+    Coffee Table Books Rework                :done, int7, 2026-02-18, 1d
+    NPC Teleport + Gaze Fixes                :done, int8, 2026-02-18, 1d
+    Dish Rack & Plate Stacking               :done, int9, 2026-02-19, 1d
+    Entrance Camera Configs (All 9 Presets)  :done, int10, 2026-02-19, 1d
+    Pause Menu + Item Description HUD        :done, int11, 2026-02-18, 1d
+    Debug Overlay Improvements               :done, int12, 2026-02-18, 1d
+    Audio Hookups (MoodMachine, Grab, Phase) :done, int13, 2026-02-19, 1d
+
     section Upcoming
-    Vertical Slice Polish              :active, vs1, 2026-02-16, 14d
+    Vertical Slice Polish              :active, vs1, 2026-02-20, 10d
     Playtesting & Feedback             :        pt1, after vs1, 14d
     Art Pass & Asset Swap              :        art1, after pt1, 30d
 ```
@@ -111,10 +130,12 @@ gantt
 | **Production started** | September 2025 |
 | **Total production time** | ~5.5 months (Sep 2025 – Feb 2026) |
 | **Flower trimming prototype** | ~4 months (Sep – Dec 2025) |
-| **Apartment & systems sprint** | ~12 days (Feb 3–15, 2026) |
-| **Total commits** | 66 |
-| **New systems per day (Feb sprint)** | ~1.2 major systems |
-| **Peak sprint** | Feb 3–5: 8 mechanic prototypes in 3 days |
+| **Apartment & systems sprint** | ~17 days (Feb 3–19, 2026) |
+| **Total commits** | 240 |
+| **Commits since Feb 17** | 132 (integration sprint) |
+| **New systems per day (Feb sprint)** | ~1.1 major systems |
+| **Peak sprint (early Feb)** | Feb 3–5: 8 mechanic prototypes in 3 days |
+| **Peak sprint (late Feb)** | Feb 17–19: 44 commits, full loop integration + audio |
 
 ---
 
@@ -215,7 +236,7 @@ flowchart LR
         PD["PlayerData"]
     end
 
-    subgraph SCENE["Scene-Scoped Singletons"]
+    subgraph SCENE["Scene-Scoped Singletons (20)"]
         APM["ApartmentManager"]
         GC["GameClock"]
         DSM["DateSessionManager"]
@@ -231,6 +252,11 @@ flowchart LR
         ASC["AutoSaveController"]
         PHT["PlantHealthTracker"]
         WS["WeatherSystem"]
+        FTB["FlowerTrimmingBridge"]
+        AMS["AuthoredMessSpawner"]
+        LFPM["LivingFlowerPlantManager"]
+        DOC["DateOutcomeCapture"]
+        RPM["RecordPlayerManager"]
     end
 
     DPM -->|"orchestrates"| NM
@@ -272,7 +298,7 @@ flowchart TB
         direction LR
         SRC["Sources<br/><i>Perfume · Record · Time · Gaming</i>"]
         AVG["Average → Lerp"]
-        OUT["Light · Ambient · Fog · Rain"]
+        OUT["Light · Ambient · Fog · Rain · Ambience · Weather"]
         SRC --> AVG --> OUT
     end
 
@@ -329,6 +355,8 @@ stateDiagram-v2
         DatePreferences (liked/disliked tags)
         → ReactionType (8 types)
         → Thought bubble + emote + SFX
+        Clutter stat affects tidiness reactions
+        NPC teleports between phases (not NavMesh)
     end note
 ```
 
@@ -341,29 +369,29 @@ stateDiagram-v2
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
 pie title Feature Completion by Category
-    "Complete & Integrated" : 18
+    "Complete & Integrated" : 24
     "Complete — Needs Polish" : 6
-    "Partially Built" : 4
-    "Not Yet Started" : 7
+    "Partially Built" : 3
+    "Not Yet Started" : 6
 ```
 
 | System | Status | Completion | Notes |
 |--------|--------|:----------:|-------|
 | **Apartment Hub (2 rooms)** | Complete | 95% | Kitchen + Living Room, browse & station entry |
-| **Spline Camera + Presets** | Complete | 95% | 9 preset variants, parallax mouse look |
+| **Spline Camera + Presets** | Complete | 95% | 9 preset variants + entrance configs, parallax mouse look |
 | **Newspaper (button select)** | Complete | 90% | Two-page spread, keyword tooltips |
 | **Date Session (3 phases)** | Complete | 90% | Full loop with entrance judgments |
-| **Date Character AI** | Complete | 85% | NavMesh pathfinding, 8 reaction types |
+| **Date Character AI** | Complete | 88% | Teleport-based phase transitions, 8 reaction types, gaze highlights |
 | **Bookcase (11-state FSM)** | Complete | 90% | Books, perfumes, trinkets, drawers |
 | **Drink Making** | Complete | 85% | Perfect-pour mechanic, recipe scoring |
-| **Record Player** | Complete | 90% | Browse/play FSM, MoodMachine integration |
+| **Record Player** | Complete | 92% | 4-state FSM with sleeve browsing, MoodMachine integration |
 | **Cleaning (sponge + spray)** | Complete | 85% | Two-texture, stubbornness, evaporation |
 | **Watering (ambient)** | Complete | 85% | One-shot pour mechanic, plant health |
 | **Mirror Makeup** | Complete | 80% | Texture painting, stickers, smear (separate scene) |
-| **Object Grab & Place** | Complete | 90% | Spring-damper, wall mount, cross-room |
-| **MoodMachine** | Complete | 95% | Multi-source mood with camera presets |
+| **Object Grab & Place** | Complete | 92% | Spring-damper, wall mount, cross-room, pickup/place SFX |
+| **MoodMachine** | Complete | 97% | Multi-source mood with camera presets, ambience/weather audio channels |
 | **GameClock + Calendar** | Complete | 90% | 7-day calendar, time-of-day mood |
-| **DayPhaseManager** | Complete | 90% | Morning→Explore→Date→Evening |
+| **DayPhaseManager** | Complete | 92% | Morning→Explore→Date→Evening, phase-specific ambience swaps |
 | **Save System** | Complete | 85% | Full game state persistence |
 | **Date Memory System** | Complete | 80% | Rich history, learned preferences |
 | **Main Menu + Game Modes** | Complete | 85% | 3 modes, continue, demo timer |
@@ -373,13 +401,21 @@ pie title Feature Completion by Category
 | **Weather System** | Built | 65% | Parallax windows, rain |
 | **Name Entry Screen** | Built | 75% | Earthbound-style grid |
 | **Game End Screen** | Built | 80% | Score summary + credits |
-| **Flower Trimming** | Working (v2) | 75% | Separate scene, needs apartment integration |
+| **Flower Trimming** | Complete | 85% | Integrated via FlowerTrimmingBridge, additive scene loading |
+| **Living Flower Plants** | Complete | 85% | LivingFlowerPlantManager, apartment decorations from trimming |
+| **Authored Mess System** | Complete | 90% | AuthoredMessSpawner, 12 MessBlueprint SOs, morning generation |
+| **Clutter & Tidiness** | Complete | 85% | Floor items affect tidiness stat, date NPC reactions |
+| **Date Outcome Persistence** | Complete | 85% | DateOutcomeCapture bridges results to next morning |
+| **Pause Menu** | Complete | 90% | ESC to pause, resume/quit buttons |
+| **Item Description HUD** | Complete | 85% | Shows description on pickup, auto-hides |
+| **Dish Rack & Plate Stacking** | Complete | 90% | Visual stacking, DishDropZone, full stack deposit |
+| **Coffee Table Books** | Complete | 90% | Flat layout, varied sizes, one-at-a-time via ReturnToShelf() |
+| **Debug Overlay** | Complete | 85% | 18px font, PgUp/PgDn scroll, clutter/mess sections, L-key labels |
 | **Outfit Selection** | Partial | 30% | Date judges outfit, no closet UI |
 | **Tutorial Card** | Not Started | 0% | Overlay between menu and gameplay |
 | **Main Menu Art** | Not Started | 0% | Currently procedural dark background |
 | **Photo Intro Sequence** | Not Started | 0% | B&W photo → newspaper transition |
 | **Couch Win Scene** | Not Started | 0% | Cuddling + hidden scissors |
-| **Half-Folded Newspaper** | Not Started | 0% | Visual rework of newspaper mesh |
 | **Profanity Filter** | Not Started | 0% | Block bad words in name entry |
 | **Art Asset Pass** | Not Started | 0% | Replace all procedural boxes |
 
@@ -389,9 +425,9 @@ pie title Feature Completion by Category
 %%{init: {'theme': 'dark'}}%%
 xychart-beta
     title "Cumulative Systems Built Over Development"
-    x-axis ["Feb 3", "Feb 4", "Feb 5", "Feb 8", "Feb 9", "Feb 10", "Feb 11", "Feb 12", "Feb 13", "Feb 14", "Feb 15"]
-    y-axis "Total Integrated Systems" 0 --> 25
-    line [3, 8, 12, 14, 15, 17, 19, 21, 22, 23, 25]
+    x-axis ["Feb 3", "Feb 4", "Feb 5", "Feb 8", "Feb 9", "Feb 10", "Feb 11", "Feb 12", "Feb 13", "Feb 14", "Feb 15", "Feb 17", "Feb 19"]
+    y-axis "Total Integrated Systems" 0 --> 35
+    line [3, 8, 12, 14, 15, 17, 19, 21, 22, 23, 25, 28, 33]
 ```
 
 ### Lines of Code by Domain
@@ -415,46 +451,53 @@ xychart-beta
 |--------|-------|
 | **Engine** | Unity 6 (URP) |
 | **Language** | C# (.NET Standard 2.1) |
-| **Runtime C# scripts** | 255 |
-| **Lines of gameplay C#** | 43,227 |
-| **ScriptableObject assets** | 233 |
-| **Scene files** | 27 |
-| **Custom shaders** | 6 |
-| **Mechanic prototypes** | 14 (10 subdirs + 4 ambient) |
-| **Singleton managers** | 15 scene-scoped + 1 persistent |
+| **Runtime C# scripts** | 247 |
+| **Lines of gameplay C#** | 45,310 |
+| **Editor scripts** | 24 (15,805 lines) |
+| **Total C# (runtime + editor)** | ~61,115 |
+| **ScriptableObject assets** | 242 |
+| **Scene files** | 33 |
+| **Custom shaders** | 7 |
+| **Mechanic prototypes** | 18+ (10 subdirs + 8 ambient/integrated) |
+| **Singleton managers** | 20 scene-scoped + 1 persistent |
 | **Static registries** | 8 |
+| **Total commits** | 236 |
 
 ### Code Distribution
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
-pie title C# Lines by Directory (Runtime Only)
-    "Mechanics (7.2K)" : 7187
-    "Framework (7.0K)" : 7038
+pie title C# Lines by Directory (Runtime Only — 45.3K)
+    "Framework (7.5K)" : 7547
+    "Mechanics (7.4K)" : 7353
+    "Apartment (5.3K)" : 5294
+    "Dating (5.2K)" : 5219
     "Mesh Cutter (5.1K)" : 5120
-    "Dating (5.0K)" : 4979
-    "Game Logic (4.1K)" : 4072
-    "Apartment (3.9K)" : 3875
-    "UI (3.5K)" : 3497
-    "Interaction (3.0K)" : 3013
-    "Bookcase (2.2K)" : 2223
-    "Other (1.5K)" : 1538
+    "Game Logic (4.1K)" : 4060
+    "UI (3.6K)" : 3633
+    "Interaction (3.0K)" : 3029
+    "Bookcase (2.0K)" : 1985
+    "Fluids (1.2K)" : 1155
+    "Other (0.9K)" : 915
 ```
 
 ### ScriptableObject Asset Distribution
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
-pie title ScriptableObject Assets by Category
-    "Bookcase (76)" : 76
+pie title ScriptableObject Assets by Category (242 Total)
+    "Bookcase (71)" : 71
     "Mirror Makeup (52)" : 52
     "Drink Making (31)" : 31
     "Apartment (17)" : 17
-    "Dating (16)" : 16
+    "Messes (15)" : 15
     "Cleaning (15)" : 15
     "Watering (15)" : 15
+    "Dating (12)" : 12
     "Flowers (6)" : 6
     "Record Player (5)" : 5
+    "Game Modes (3)" : 3
+    "Other (5)" : 5
 ```
 
 ---
@@ -535,7 +578,7 @@ quadrantChart
     quadrant-2 "Art Games"
     quadrant-3 "Casual VNs"
     quadrant-4 "Sim Hybrids"
-    Iris: [0.65, 0.80]
+    Iris: [0.70, 0.80]
     Wanderstop: [0.40, 0.85]
     Coffee Talk: [0.35, 0.60]
     Boyfriend Dungeon: [0.70, 0.45]
@@ -550,7 +593,7 @@ quadrantChart
 
 | Game | Price | Hours | Revenue Est. | Iris Differentiator |
 |------|:-----:|:-----:|:------------:|---------------------|
-| **Wanderstop** | $24.99 | 4–6h | Strong | Iris has deeper systems (14 mechanics vs 1) |
+| **Wanderstop** | $24.99 | 4–6h | Strong | Iris has deeper systems (18+ mechanics vs 1), interconnected loop |
 | **Coffee Talk** | $12.99 | 3–5h | $550K/mo1 | Iris adds apartment life + physical interaction |
 | **Boyfriend Dungeon** | $19.99 | 8–12h | $1.4M | Iris trades combat for contemplation |
 | **Potionomics** | $24.99 | 15–25h | Moderate | Iris is more intimate, less competitive |
@@ -572,6 +615,8 @@ mindmap
       Kitchen & Living Room as stage
       Object placement affects dates
       MoodMachine reacts to choices
+      Living plants persist in apartment
+      Authored messes create environmental storytelling
     Date as Performance
       3-phase evaluation structure
       Your space IS the conversation
@@ -580,6 +625,9 @@ mindmap
       Dates remember previous visits
       Stains tell stories
       Souvenirs accumulate
+      Flower trim outcomes shape next morning
+      Clutter stat and authored messes
+      Date results persist across days
     Tone
       Contemplative not competitive
       Cozy with edge — scissors behind back
@@ -976,7 +1024,10 @@ flowchart TB
 
 | Content | Price | Timing | Revenue Potential |
 |---------|:-----:|--------|:-----------------:|
+| **Flower Variety Packs** (orchids, succulents, bonsai) | $3.99–$4.99 | Launch +3 months | 15-25% attach rate |
 | **Narrative DLC — Season 2** (new Nema story arc, 2-4h) | $5.99–$7.99 | Launch +6 months | 20-30% attach rate |
+| **New Date Characters** (2-3 new NPCs + story arcs) | $4.99–$6.99 | Launch +6 months | 20-30% attach rate |
+| **Apartment Expansion** (Bedroom + Balcony stations) | $4.99 | Launch +9 months | 15-20% attach rate |
 | **Original Soundtrack** | $6.99 | At launch | 5-10% attach rate |
 | **Seasonal Events** (Valentine's, Halloween) | Free update | Seasonal | Drives wishlist conversion |
 
@@ -994,26 +1045,28 @@ quadrantChart
     quadrant-2 "Monitor Closely"
     quadrant-3 "Accept"
     quadrant-4 "Plan For"
-    Scope Creep: [0.75, 0.70]
+    Scope Creep: [0.60, 0.70]
     Art Pipeline Delay: [0.65, 0.65]
     Small Team Burnout: [0.70, 0.80]
+    Integration Complexity: [0.55, 0.55]
     Market Saturation: [0.45, 0.50]
     Steam Algorithm Burial: [0.60, 0.55]
     Publisher Rejection: [0.50, 0.35]
     Unity License Changes: [0.20, 0.60]
-    Technical Debt: [0.55, 0.40]
+    Technical Debt: [0.35, 0.30]
 ```
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|:----------:|:------:|------------|
-| **Small team burnout** | High | High | 2-person team — scope to vertical slice first. Ship small, expand post-launch. |
-| **Scope creep** | High | High | 35 features tracked — freeze scope at vertical slice. |
-| **Art pipeline delay** | Med-High | Med | All art is swappable by design (procedural boxes). Ship with stylized minimal art if needed. |
-| **Steam algorithm burial** | Med | Med | Steam Next Fest + publisher + social media pre-launch. |
-| **Market saturation** | Med | Med | Iris's hybrid formula has no direct competitor. Differentiation is strong. |
-| **Publisher rejection** | Med | Low | Self-publishing is viable at this price point. |
-| **Technical debt** | Med | Low | Procedural scene builder means full rebuilds are fast. |
-| **Unity license changes** | Low | Med | Code is portable. Monitor but don't preempt. |
+| Risk | Likelihood | Impact | Trend | Mitigation |
+|------|:----------:|:------:|:-----:|------------|
+| **Small team burnout** | High | High | → | 2-person team — scope to vertical slice first. Ship small, expand post-launch. 128 commits in 3 days shows momentum but also risk. |
+| **Scope creep** | Med-High | High | ↓ | 39 features tracked — but systems are now *integrating*, not just accumulating. Flower trimming, messes, clutter, and dates all feed one loop. Freeze scope at vertical slice. |
+| **Art pipeline delay** | Med-High | Med | → | All art is swappable by design (procedural boxes). Ship with stylized minimal art if needed. |
+| **Integration complexity** | Med | Med | NEW | 20 singleton managers, 18+ interconnected systems. Risk of cascading bugs as systems interact. Mitigated by procedural scene builder enabling full rebuilds. |
+| **Steam algorithm burial** | Med | Med | → | Steam Next Fest + publisher + social media pre-launch. |
+| **Market saturation** | Med | Med | → | Iris's hybrid formula has no direct competitor. Differentiation is stronger now with connected flower-to-date loop. |
+| **Publisher rejection** | Med | Low | → | Self-publishing is viable at this price point. Deeper feature set strengthens pitch. |
+| **Technical debt** | Low | Low | ↓ | Procedural scene builder means full rebuilds are fast. Most systems now well-integrated with clear manager responsibilities. |
+| **Unity license changes** | Low | Med | → | Code is portable. Monitor but don't preempt. |
 
 ---
 
@@ -1069,9 +1122,10 @@ timeline
     title Iris Key Milestones
     Sep 2025 : Flower trimming prototype begins
              : Physics R&D, mesh cutting, sap particles
-    Feb 2026 : Apartment systems sprint (43K LOC)
+    Feb 2026 : Apartment systems sprint (45K+ LOC, 236 commits)
              : Main menu + 3 game modes
-             : 14 integrated systems
+             : 18+ integrated systems
+             : Full loop connected (flower → apartment → date → persistence)
     Mar 2026 : Vertical slice locked
              : Publisher pitches sent
              : Art direction finalized
@@ -1094,19 +1148,21 @@ timeline
 
 ## Closing Statement
 
-Iris represents an extraordinary technical achievement: a fully integrated game with 14 interconnected systems, 43,000 lines of gameplay C#, and a procedural scene builder that can regenerate the entire world from scratch — built over 5.5 months of production, from early flower-trimming physics prototypes through a 12-day apartment systems sprint.
+Iris represents an extraordinary technical achievement: a fully integrated game with 18+ interconnected systems, 45,000+ lines of gameplay C#, 242 ScriptableObject assets, and a procedural scene builder that can regenerate the entire world from scratch — built over 5.5 months of production, from early flower-trimming physics prototypes through a 17-day apartment systems sprint peaking at 128 commits in 3 days.
 
-The game enters a $450M market segment growing at 10% annually, with a demographic actively seeking the exact experience Iris provides: contemplative, emotionally resonant, and mechanically unique. No existing game combines flower trimming, apartment life simulation, and dating mechanics into a single cohesive loop.
+As of February 19, 2026, the game's core loop is fully connected: flower trimming feeds living apartment plants, authored messes and clutter affect date outcomes, date results persist across days via DateOutcomeCapture, and each morning reflects the previous evening's choices. This is no longer a collection of prototypes — it's a cohesive game where every system talks to every other system.
+
+The game enters a $450M+ market segment growing at ~10% annually, with a demographic actively seeking the exact experience Iris provides: contemplative, emotionally resonant, and mechanically unique. No existing game combines flower trimming, apartment life simulation, and dating mechanics into a single interconnected loop with day-over-day persistence.
 
 The path from thesis project to commercial release is clear:
 
-1. **Polish the vertical slice** (2-4 weeks)
-2. **Pitch to publishers** (Kitfox, Whitethorn, Fellow Traveller)
+1. **Polish the vertical slice** (2-3 weeks remaining)
+2. **Pitch to publishers** (Kitfox, Whitethorn, Fellow Traveller) — feature depth now supports a strong pitch
 3. **Demo on itch.io** → **Steam Next Fest** → **Launch at $14.99**
-4. **Narrative DLC** (Season 2 story) and **port to Switch** based on sales
+4. **Flower Pack DLC** + **New Date Characters** + **Narrative DLC** + **Switch port** based on sales
 
-The question is not whether Iris can find an audience — the audience already exists and is looking for exactly this game. The question is execution, and the development velocity speaks for itself.
+The question is not whether Iris can find an audience — the audience already exists and is looking for exactly this game. The question is execution, and 236 commits with a fully connected gameplay loop speaks for itself.
 
 ---
 
-*Report generated February 15, 2026. Data sources include Steam market analysis, industry reports, publisher research, and codebase metrics.*
+*Report updated February 19, 2026. Data sources include Steam market analysis, industry reports, publisher research, and verified codebase metrics (247 scripts, 45,310 lines C#, 242 SOs, 236 commits).*

@@ -2,6 +2,85 @@
 
 ---
 
+## 2026-02-19 — Audio Hookups & SFX Infrastructure
+
+### Session Summary
+
+Wired audio across four core systems: MoodMachine ambience/weather, ObjectGrabber pickup/place, ApartmentManager area transitions, and DayPhaseManager phase-specific ambience. All hooks are null-guarded and work silently with no clips assigned — activate when clips are added in Inspector.
+
+---
+
+### 1. MoodMachine — Ambience & Weather Audio Channels
+
+Added `_ambienceClip` and `_weatherClip` fields to `MoodMachine`. On Start, both loops begin playing at volume 0 via `AudioManager.PlaySFX`. `ApplyMood()` now reads `ambienceVolume` and `weatherVolume` AnimationCurves from `MoodMachineProfile` and drives loop volume based on current mood value. `OnDestroy` stops both loops.
+
+- New `MoodMachineProfile` fields: `ambienceVolume` and `weatherVolume` AnimationCurves
+- Volume driven continuously by mood lerp, not triggered on/off
+
+**Files:** `MoodMachine.cs`, `MoodMachineProfile.cs`
+
+---
+
+### 2. ObjectGrabber — Pickup & Place SFX
+
+Added `_pickupSFX` and `_placeSFX` AudioClip fields. `PlaySFX` calls fire on grab and on successful placement. Null-guarded on both the clip and `AudioManager.Instance`.
+
+**Files:** `ObjectGrabber.cs`
+
+---
+
+### 3. ApartmentManager — Area Transition SFX
+
+Added `_areaTransitionSFX` field. Plays via `AudioManager.PlaySFX` inside `CycleArea()` when the player navigates between apartment areas.
+
+**Files:** `ApartmentManager.cs`
+
+---
+
+### 4. DayPhaseManager — Phase-Specific Ambience
+
+Added `_morningAmbienceClip` and `_explorationAmbienceClip` fields. Ambience swaps when transitioning between Morning and Exploration phases. Each clip is played through `AudioManager` and the previous one stops on transition.
+
+**Files:** `DayPhaseManager.cs`
+
+---
+
+### Follow-Up Work Identified
+
+| Task | Notes |
+|------|-------|
+| Per-stain sparkle VFX + completion SFX | Stain quad should deactivate or sparkle after cleaning |
+| Already-clean stain gating | Clean stain spots should not trigger sponge interaction |
+| Tighten tidiness scoring thresholds | Currently too lenient at 35% weight for stains |
+| Visual indicator for public vs private items | Items left out for date vs stored in drawers |
+| Polish highlight shaders | Tone down bright green/red placement shadow, warmer rim colors |
+| Complete SFX/music asset list | ~35-40 assets needed across all systems |
+
+---
+
+### Commits
+
+| Hash | Description |
+|------|-------------|
+| `d9f37df` | MoodMachine ambience/weather audio channels |
+| `a75627f` | ObjectGrabber pickup/place SFX |
+| `8f90293` | ApartmentManager area transition SFX |
+| `ffa6c84` | DayPhaseManager phase-specific ambience |
+
+---
+
+### Files Changed (Summary)
+
+| File | Change |
+|------|--------|
+| `MoodMachine.cs` | Ambience/weather clip fields, volume from profile curves, OnDestroy cleanup |
+| `MoodMachineProfile.cs` | Added ambienceVolume, weatherVolume AnimationCurves |
+| `ObjectGrabber.cs` | Pickup/place SFX fields with PlaySFX calls |
+| `ApartmentManager.cs` | Area transition SFX field in CycleArea |
+| `DayPhaseManager.cs` | Morning/exploration ambience clip fields with swap logic |
+
+---
+
 ## 2026-02-18 — Bookcase Refactor, Cleaning Simplification & Bug Fixes
 
 ### Session Summary
