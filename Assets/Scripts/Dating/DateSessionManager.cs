@@ -132,6 +132,7 @@ public class DateSessionManager : MonoBehaviour
     public DatePersonalDefinition CurrentDate => _currentDate;
     public float Affection => _affection;
     public bool IsDateActive => _state == SessionState.DateInProgress;
+    public DateCharacterController DateCharacter => _dateCharacter;
 
     // Debug read-only accessors
     public float StartingAffection => startingAffection;
@@ -535,6 +536,10 @@ public class DateSessionManager : MonoBehaviour
         var reactionUI = _dateCharacterGO.GetComponent<DateReactionUI>();
         if (reactionUI == null)
             reactionUI = _dateCharacterGO.AddComponent<DateReactionUI>();
+
+        // Add gaze highlight driver
+        if (_dateCharacterGO.GetComponent<NPCGazeHighlight>() == null)
+            _dateCharacterGO.AddComponent<NPCGazeHighlight>();
 
         // Add NavMeshAgent if missing
         var agent = _dateCharacterGO.GetComponent<UnityEngine.AI.NavMeshAgent>();

@@ -82,6 +82,7 @@ public class DateCharacterController : MonoBehaviour
     private bool _judgmentPointFired;
 
     public CharState CurrentState => _state;
+    public ReactableTag CurrentTarget => _currentTarget;
 
     // ──────────────────────────────────────────────────────────────
     // Public API
