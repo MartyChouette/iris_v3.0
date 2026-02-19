@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Static utility tracking display state of inspectable items (perfumes, trinkets, coffee books).
+/// Static utility tracking display state of inspectable items (perfumes, coffee books).
 /// Future date-likability system queries GetAllStates() to evaluate apartment presentation.
 /// </summary>
 public static class ItemStateRegistry
