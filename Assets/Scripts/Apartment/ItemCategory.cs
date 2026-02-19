@@ -9,5 +9,6 @@ public enum ItemCategory
     Shoe,
     Coat,
     Hat,
-    CoffeeBook
+    CoffeeBook,
+    Record
 }

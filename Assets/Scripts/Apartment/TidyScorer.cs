@@ -14,17 +14,23 @@ public class TidyScorer : MonoBehaviour
 
     [Header("Weights")]
     [Tooltip("Weight for stain cleanliness in the tidiness formula.")]
-    [SerializeField] private float _stainWeight = 0.4f;
+    [SerializeField] private float _stainWeight = 0.35f;
 
     [Tooltip("Weight for object mess in the tidiness formula.")]
-    [SerializeField] private float _objectWeight = 0.4f;
+    [SerializeField] private float _objectWeight = 0.35f;
 
     [Tooltip("Weight for smell cleanliness in the tidiness formula.")]
-    [SerializeField] private float _smellWeight = 0.2f;
+    [SerializeField] private float _smellWeight = 0.15f;
+
+    [Tooltip("Weight for floor clutter in the tidiness formula.")]
+    [SerializeField] private float _clutterWeight = 0.15f;
 
     [Header("Thresholds")]
     [Tooltip("Maximum expected mess items per area before objectClean = 0.")]
     [SerializeField] private int _maxExpectedMess = 4;
+
+    [Tooltip("Maximum expected floor items per area before clutterClean = 0.")]
+    [SerializeField] private int _maxExpectedClutter = 5;
 
     [Tooltip("Smell amount per area above which smellClean = 0.")]
     [SerializeField] private float _smellThreshold = 1.5f;
@@ -58,8 +64,12 @@ public class TidyScorer : MonoBehaviour
         float stainClean = GetStainClean(area);
         float objectClean = GetObjectClean(area);
         float smellClean = GetSmellClean(area);
+        float clutterClean = GetClutterClean(area);
 
-        return stainClean * _stainWeight + objectClean * _objectWeight + smellClean * _smellWeight;
+        return stainClean * _stainWeight
+             + objectClean * _objectWeight
+             + smellClean * _smellWeight
+             + clutterClean * _clutterWeight;
     }
 
     /// <summary>Average tidiness across all areas.</summary>
@@ -110,6 +120,37 @@ public class TidyScorer : MonoBehaviour
         }
 
         return 1f - Mathf.Clamp01((float)messCount / _maxExpectedMess);
+    }
+
+    /// <summary>Clutter cleanliness for an area: items on the floor that aren't on surfaces.</summary>
+    public float GetClutterClean(ApartmentArea area)
+    {
+        int floorItems = 0;
+        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        foreach (var p in placeables)
+        {
+            if (!p.IsOnFloor) continue;
+            if (p.IsAtHome) continue;
+            if (ClassifyPosition(p.transform.position) == area)
+                floorItems++;
+        }
+
+        return 1f - Mathf.Clamp01((float)floorItems / _maxExpectedClutter);
+    }
+
+    /// <summary>Count of floor items in an area (for debug overlay).</summary>
+    public int GetFloorItemCount(ApartmentArea area)
+    {
+        int count = 0;
+        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        foreach (var p in placeables)
+        {
+            if (!p.IsOnFloor) continue;
+            if (p.IsAtHome) continue;
+            if (ClassifyPosition(p.transform.position) == area)
+                count++;
+        }
+        return count;
     }
 
     private float GetSmellClean(ApartmentArea area)

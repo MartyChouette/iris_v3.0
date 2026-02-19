@@ -37,6 +37,11 @@ public class DatePreferences
     [Tooltip("Outfit style tags this date dislikes.")]
     public string[] dislikedOutfitTags = { };
 
+    [Header("Clutter")]
+    [Tooltip("How much floor clutter this date tolerates (1 = doesn't care, 0 = hates it).")]
+    [Range(0f, 1f)]
+    public float clutterTolerance = 0.5f;
+
     [Header("Personality")]
     [Tooltip("Multiplier on reaction strength. >1 = expressive, <1 = reserved.")]
     public float reactionStrength = 1f;

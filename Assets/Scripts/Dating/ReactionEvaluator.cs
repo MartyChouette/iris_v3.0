@@ -98,6 +98,14 @@ public static class ReactionEvaluator
         return ReactionType.Neutral;
     }
 
+    /// <summary>Evaluate floor clutter against a date's tolerance. clutterScore 0 = cluttered, 1 = clean.</summary>
+    public static ReactionType EvaluateClutter(float clutterScore, float tolerance)
+    {
+        if (clutterScore >= tolerance) return ReactionType.Like;
+        if (clutterScore >= tolerance * 0.5f) return ReactionType.Neutral;
+        return ReactionType.Dislike;
+    }
+
     /// <summary>Evaluate apartment cleanliness/tidiness. 0 = filthy, 1 = spotless.</summary>
     public static ReactionType EvaluateCleanliness(float tidiness)
     {

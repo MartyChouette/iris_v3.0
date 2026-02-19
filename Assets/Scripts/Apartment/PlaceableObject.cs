@@ -51,6 +51,14 @@ public class PlaceableObject : MonoBehaviour
     public bool WallOnly => wallOnly;
     public PlacementSurface LastPlacedSurface => _lastPlacedSurface;
 
+    /// <summary>
+    /// True when the object is resting on the floor (not held, not on a surface/DropZone).
+    /// Items on PlacementSurfaces or in DropZones are NOT considered clutter.
+    /// </summary>
+    public bool IsOnFloor => CurrentState != State.Held
+                          && transform.position.y < 0.15f
+                          && _lastPlacedSurface == null;
+
     private Renderer _renderer;
     private Material _instanceMat;
     private Color _originalColor;
