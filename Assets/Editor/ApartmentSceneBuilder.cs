@@ -2736,6 +2736,9 @@ public static class ApartmentSceneBuilder
         // ── MidDateActionWatcher ──────────────────────────────────────
         managersGO.AddComponent<MidDateActionWatcher>();
 
+        // ── ReactableTag Debug Labels (toggle with L key) ────────────
+        managersGO.AddComponent<ReactableTagDebugLabels>();
+
         // ── PhoneController ───────────────────────────────────────────
         PhoneController phoneCtrl = null;
         if (furnitureRefs.phoneTransform != null)
