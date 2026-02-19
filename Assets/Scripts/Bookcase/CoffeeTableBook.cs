@@ -125,6 +125,20 @@ public class CoffeeTableBook : MonoBehaviour
     }
 
     /// <summary>
+    /// Animate this book back to its shelf position (used by one-at-a-time swap).
+    /// </summary>
+    public void ReturnToShelf()
+    {
+        if (!IsOnCoffeeTable || CurrentState == State.Moving) return;
+
+        IsOnCoffeeTable = false;
+        OnBookMoved?.Invoke();
+
+        StopAllCoroutines();
+        StartCoroutine(AnimateToPosition(_shelfPosition, _shelfRotation));
+    }
+
+    /// <summary>
     /// Toggle between bookcase shelf (upright) and coffee table (flat).
     /// </summary>
     public void TogglePlacement()
@@ -144,6 +158,14 @@ public class CoffeeTableBook : MonoBehaviour
 
         if (IsOnCoffeeTable)
         {
+            // Return any other book that's currently on the coffee table
+            for (int i = 0; i < All.Count; i++)
+            {
+                var other = All[i];
+                if (other != null && other != this && other.IsOnCoffeeTable && !other.IsMoving)
+                    other.ReturnToShelf();
+            }
+
             // Animate this book to coffee table, recalculate coffee table stack
             RecalculateCoffeeTableStack();
         }
