@@ -67,17 +67,18 @@
 - [x] **CleaningManager gating** — stains only interactable in Selected apartment state
 - [x] **ReactableTags** on key objects for date NPC reactions (plants, books, record player, drinks)
 
-### Phase 7: Enhanced Bookcase Station (Done)
-- [x] **BookInteractionManager** — 11-state FSM with multi-layer raycast (Books, Drawers, Perfumes, Trinkets, CoffeeTableBooks)
-- [x] **BookVolume / BookDefinition** — book interaction with pull/read/put-back states
-- [x] **PerfumeBottle / PerfumeDefinition** — hold and spray interaction
-- [x] **DrawerController** — open/close slide with trinket storage
-- [x] **TrinketVolume / TrinketDefinition** — double-click inspection items
-- [x] **CoffeeTableBook / CoffeeTableBookDefinition** — moveable display books
+### Phase 7: Enhanced Bookcase Station (Done — Refactored)
+- [x] **BookInteractionManager** — FSM with multi-layer raycast (Books, Drawers, Perfumes, CoffeeTableBooks)
+- [x] **BookVolume / BookDefinition** — book interaction with pull/read/put-back states; hides mesh/spine during reading
+- [x] **PerfumeBottle / PerfumeDefinition** — one-click spray, re-sprayable (switch between perfumes freely)
+- [x] **DrawerController** — open/close slide with item storage
+- [x] ~~**TrinketVolume / TrinketDefinition**~~ — REMOVED (trinket system deleted)
+- [x] **CoffeeTableBook / CoffeeTableBookDefinition** — 5 upright books on shelf, click to toggle flat on coffee table
 - [x] **ItemInspector** — double-click close-up view for items
 - [x] **EnvironmentMoodController** — light color lerp per book/perfume
 - [x] **ItemStateRegistry** — static dictionary tracking item states
-- [x] **BookcaseSceneBuilder** — generates standalone bookcase scene
+- [x] **BookcaseSceneBuilder** — generates standalone bookcase scene; 15 deterministic books (row 1), 5 coffee table books (row 2), 3 perfumes (row 3)
+- [x] **Spine title rendering** — PPM technique (2000px/m) for crisp text on narrow spine faces
 
 ### Phase 8: Mechanic Prototypes (Done)
 - [x] 10 standalone mechanic prototypes with scene builders:
@@ -170,12 +171,12 @@ Each date character brings a specific flower. The flower trimming score determin
 
 ### VS-2: Preparation Phase (Partially Built)
 
-- [x] **Cleaning** — CleaningManager with sponge + spray (working)
-- [x] **Object grab/place** — ObjectGrabber (working)
+- [x] **Cleaning** — CleaningManager with sponge only (spray removed for now, may return for harder stains)
+- [x] **Object grab/place** — ObjectGrabber (working, two-sided wall detection for pictures)
 - [x] **Record player** — RecordPlayerManager (working)
-- [x] **Perfume spray** — PerfumeBottle + MoodMachine (working, changes hue/filter/weather/environment SFX)
-- [x] **Coffee table books** — BookInteractionManager (working)
-- [x] **Trinkets on shelf** — DrawerController + TrinketVolume (working)
+- [x] **Perfume spray** — PerfumeBottle + MoodMachine (working, re-sprayable — can switch between perfumes)
+- [x] **Coffee table books** — 5 upright books on shelf, click to toggle flat on coffee table (working)
+- [x] ~~**Trinkets on shelf**~~ — Trinket system removed; drawers still available for item storage
 - [x] **Preparation timer UI** — Countdown panel (top-right) wired to DayPhaseManager. Auto-shows/hides on prep start/end.
 - [ ] **Outfit selection** — New system. Player chooses outfit during prep. Date judges in Phase 1.
 - [ ] **Perfect pour mechanic** — Shared one-shot click-timing game used by both plant watering and drink making. Single click at right moment for perfect pour.

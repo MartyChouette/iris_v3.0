@@ -2,6 +2,142 @@
 
 ---
 
+## 2026-02-18 — Bookcase Refactor, Cleaning Simplification & Bug Fixes
+
+### Session Summary
+
+Major bookcase overhaul: removed trinkets, deterministic 15-book layout on one row, expanded coffee table books to 5 with upright shelf placement, and multiple bug fixes across cleaning, perfumes, and wall placement.
+
+---
+
+### 1. Bookcase Refactor — Remove Trinkets
+
+**Before:** Trinkets (small display items) on bookcase with double-click inspection, dedicated layer, separate SOs.
+**After:** Trinket system removed entirely. Bookcase focuses on books, coffee table books, perfumes, and drawers.
+
+- Deleted `TrinketVolume.cs`, `TrinketDefinition.cs`
+- Removed trinket mask, hover/click logic, and Inspecting state paths from `BookInteractionManager.cs`
+- Removed `TrinketNames` array, `BuildTrinketDisplaySlots()`, `"Trinkets"` layer from `BookcaseSceneBuilder.cs`
+
+---
+
+### 2. Deterministic 15 Books on One Row
+
+**Before:** Random book count per row (3-6), spread across 4 rows with random colors/sizes.
+**After:** Exactly 15 books, all on row 1, with varying heights/thickness but deterministic titles.
+
+- All 15 `BookTitles` entries packed onto a single shelf row
+- Rewrote `BuildBookSpineTitle()` using PPM (2000 pixels-per-meter) technique — canvas `sizeDelta = worldSize * PPM`, `localScale = 1/PPM` for crisp text on narrow spine faces
+- Auto-sizing TMP text fills the spine proportionally
+
+**Files:** `BookcaseSceneBuilder.cs`
+
+---
+
+### 3. Fix Pages Rendering Behind Book
+
+**Problem:** When opening a book to read, the world-space pages canvas was occluded by the opaque book mesh.
+
+**Fix:** In `BookVolume.EnterReading()`, disable `MeshRenderer` and hide `SpineTitle` child. Re-enable both in `PutBackRoutine()`.
+
+**Files:** `BookVolume.cs`
+
+---
+
+### 4. Coffee Table Books — Upright on Shelf, 5 Books
+
+**Before:** 2 small flat coffee table books stacked on shelf.
+**After:** 5 upright coffee table books on row 2 with varying sizes. Click to toggle between bookcase (upright, side-by-side) and coffee table (flat, stacked). One book starts on the coffee table.
+
+- Varying sizes per book: different thicknesses (0.035-0.06), heights, depths
+- `RecalculateCoffeeTableStack()` — only repositions books on the coffee table; bookcase books stay at saved positions
+- Hover: slides forward on shelf, up on table
+- Spine titles on coffee table books too
+- **Static field domain reload fix**: replaced `static BookcaseStackBase/CoffeeTableStackBase` (wiped on domain reload) with per-instance serialized `coffeeTableBase`/`coffeeTableRotation` fields
+
+**Files:** `CoffeeTableBook.cs`, `BookcaseSceneBuilder.cs`, `ApartmentSceneBuilder.cs`
+
+---
+
+### 5. ReactableTag Cleanup
+
+**Before:** Station-level ReactableTag on bookcase group, individual ReactableTags toggled on coffee table books when moved.
+**After:** Only coffee table books get ReactableTags (always active/public). No station-level tag. Drawers remain private via DrawerController privacy toggle.
+
+**Files:** `ApartmentSceneBuilder.cs`, `CoffeeTableBook.cs`
+
+---
+
+### 6. Cleaning — Sponge Only
+
+**Before:** Cleaning had sponge + spray tools with Tab toggle, stubbornness gating (some stains needed spray first).
+**After:** Sponge only. Sponge is always 100% effective. Spray mechanic removed entirely (may return later for harder stains).
+
+- Removed: `Tool` enum, `_sprayVisual`, `SelectSponge()`/`SelectSpray()`, Tab toggle from `CleaningManager.cs`
+- Removed stubbornness gating from `CleanableSurface.Wipe()` — sponge now clears stains directly
+- Simplified `CleaningHUD.cs` — removed tool name label and tool buttons
+- Updated `CleaningSceneBuilder.cs` and `ApartmentSceneBuilder.cs` — removed spray visual, tool buttons, spray wiring
+
+**Files:** `CleaningManager.cs`, `CleanableSurface.cs`, `CleaningHUD.cs`, `CleaningSceneBuilder.cs`, `ApartmentSceneBuilder.cs`
+
+---
+
+### 7. Perfume Fixes — Lower Shelf + Re-Spraying
+
+**Problem 1:** Perfumes were one-shot locked — `SprayOnce()` had a `if (SprayComplete) return;` guard.
+**Problem 2:** Perfumes on top shelf (row 4) were hard to notice.
+
+**Fix:** Removed one-shot guard. `SprayOnce()` now deactivates all other perfumes first (via `Deactivate()` method), then activates the sprayed one. Allows switching between perfumes freely. Moved perfumes from row 4 to row 3.
+
+**Files:** `PerfumeBottle.cs`, `BookcaseSceneBuilder.cs`
+
+---
+
+### 8. Wall Pictures — Wrong Side Fix
+
+**Problem:** Pictures picked up and re-placed on walls snapped to the wrong side of the wall surface.
+
+**Root cause:** `PlacementSurface.ProjectOntoSurface()` always projected to `center[n] + extents[n]` (the front face), regardless of which side the player was interacting from. For walls whose `transform.forward` didn't face the room, pictures ended up on the outside.
+
+**Fix:** For vertical (wall) surfaces, `ProjectOntoSurface()`, `SnapToGrid()`, and `ClampToSurface()` now detect which face the point is nearest to and project to that face, flipping the surface normal accordingly. Horizontal surfaces (tables/shelves) still always use the top face.
+
+**Files:** `PlacementSurface.cs`
+
+---
+
+### Bookcase Layout (After Refactor)
+
+| Row | Contents |
+|-----|----------|
+| 0 | Empty |
+| 1 | 15 normal books (upright, varying heights) |
+| 2 | 5 coffee table books (upright, varying sizes) |
+| 3 | 3 perfume bottles |
+| 4 | Empty |
+
+---
+
+### Files Changed (Summary)
+
+| File | Change |
+|------|--------|
+| `TrinketVolume.cs` | DELETED |
+| `TrinketDefinition.cs` | DELETED |
+| `BookInteractionManager.cs` | Removed trinket logic |
+| `BookVolume.cs` | Hide mesh/spine when reading |
+| `CoffeeTableBook.cs` | Upright shelf, stacking, serialized fields |
+| `CoffeeTableBookDefinition.cs` | Widened thickness range |
+| `PerfumeBottle.cs` | Re-spraying, deactivate others |
+| `BookcaseSceneBuilder.cs` | 15 books on row 1, 5 coffee books row 2, perfumes row 3, PPM spine titles |
+| `ApartmentSceneBuilder.cs` | Coffee table target wiring, ReactableTag cleanup, cleaning simplification |
+| `CleaningManager.cs` | Sponge only, removed spray/tool switching |
+| `CleanableSurface.cs` | Removed stubbornness gating |
+| `CleaningHUD.cs` | Removed tool UI |
+| `CleaningSceneBuilder.cs` | Removed spray wiring |
+| `PlacementSurface.cs` | Two-sided wall projection |
+
+---
+
 ## 2026-02-14 — Apartment Polish Batch + Camera Preset System
 
 ### Session Summary

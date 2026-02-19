@@ -69,7 +69,7 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 2 are
 | `Scripts/DynamicMeshCutter/` | Mesh cutting engine (DMC) |
 | `Scripts/Tags/` | Marker components (StemPieceMarker, LeafAttachmentMarker, etc.) |
 | `Scripts/Apartment/` | Hub system: ApartmentManager, StationRoot, ObjectGrabber, PlacementSurface, MoodMachine |
-| `Scripts/Bookcase/` | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController, ItemInspector |
+| `Scripts/Bookcase/` | BookInteractionManager, BookVolume, PerfumeBottle, CoffeeTableBook, DrawerController, ItemInspector |
 | `Scripts/Dating/` | Dating loop: DateSessionManager, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, NewspaperManager, DayManager |
 | `Scripts/Mechanics/` | 10 prototype minigames: DrinkMaking, Cleaning, Watering, MirrorMakeup, RecordPlayer, etc. |
 | `Scripts/Prototype_LivingRoom_Scripts/` | Legacy living room prototype (not active) |
@@ -203,12 +203,12 @@ After selecting a date, a timer starts. The apartment starts messy (bottles, win
 
 | Action | Station/System | Notes |
 |--------|---------------|-------|
-| Clean stains (wine, blood, trash, bottles) | CleaningManager | Sponge + spray tools |
+| Clean stains (wine, blood, trash, bottles) | CleaningManager | Sponge only (spray deferred) |
 | Water plants | WateringManager | One-shot perfect pour mechanic (click timing) |
 | Choose coffee table book | BookInteractionManager | Leave on coffee table for date to see |
 | Choose vinyl record | RecordPlayerManager | Playing during date affects reactions |
 | Spray perfume | PerfumeBottle | Changes hue, filter, weather, environment SFX via MoodMachine |
-| Leave out trinket/gundam | DrawerController → shelf | Shelf display for date to react to |
+| Leave out items | DrawerController → shelf | Shelf display for date to react to |
 | Choose outfit | **NEW: OutfitSelector** | Judged in date Phase 1 |
 
 **End of prep:** Player calls on phone to start date early, OR timer expires and doorbell rings.
@@ -233,7 +233,7 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 ### 8. Date Phase 3 — Living Room (Apartment Judging)
 - Date takes their drink to living room
 - Walks around, investigates key items (ReactableTags):
-  - Coffee table book, vinyl playing, perfume scent, trinket on shelf, cleanliness
+  - Coffee table book, vinyl playing, perfume scent, shelf items, cleanliness
 - Each item: thought bubble → reaction → affection ±
 - Phase ends after duration or all items investigated
 
@@ -255,7 +255,7 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Apartment hub (2 areas) | Working | ApartmentManager, ApartmentSceneBuilder |
 | Spline camera browsing | Working | CinemachineSplineDolly, 4-knot loop |
 | Newspaper (button selection) | Working | NewspaperManager, NewspaperAdSlot |
-| Cleaning (sponge + spray) | Working | CleaningManager, CleanableSurface |
+| Cleaning (sponge only) | Working | CleaningManager, CleanableSurface |
 | Object grab/place | Working | ObjectGrabber, PlacementSurface |
 | Bookcase interaction | Working | BookInteractionManager, BookVolume |
 | Record player | Working | RecordPlayerManager, RecordPlayerHUD |
