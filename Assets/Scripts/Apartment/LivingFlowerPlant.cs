@@ -29,7 +29,8 @@ public class LivingFlowerPlant : MonoBehaviour
     private const float MinScale = 0.8f;
     private const float MaxScale = 1.0f;
 
-    private Renderer _renderer;
+    private Renderer[] _renderers;
+    private Color[] _originalColors;
     private Vector3 _baseScale;
     private bool _isDead;
 
@@ -76,7 +77,12 @@ public class LivingFlowerPlant : MonoBehaviour
 
     private void Awake()
     {
-        _renderer = GetComponentInChildren<Renderer>();
+        _renderers = GetComponentsInChildren<Renderer>();
+        _originalColors = new Color[_renderers.Length];
+        for (int i = 0; i < _renderers.Length; i++)
+        {
+            _originalColors[i] = _renderers[i].material.color;
+        }
         _baseScale = transform.localScale;
     }
 
@@ -84,15 +90,22 @@ public class LivingFlowerPlant : MonoBehaviour
 
     private void UpdateVisuals()
     {
-        // Color lerp: healthy → wilting → dead
-        Color targetColor;
+        // Wilt tint: lerps from white (healthy) → yellowish → brown (dead)
+        Color wiltTint;
         if (_health > 0.5f)
-            targetColor = Color.Lerp(WiltingColor, HealthyColor, (_health - 0.5f) * 2f);
+            wiltTint = Color.Lerp(WiltingColor, HealthyColor, (_health - 0.5f) * 2f);
         else
-            targetColor = Color.Lerp(DeadColor, WiltingColor, _health * 2f);
+            wiltTint = Color.Lerp(DeadColor, WiltingColor, _health * 2f);
 
-        if (_renderer != null)
-            _renderer.material.color = targetColor;
+        // Apply tint to all child renderers, preserving each one's original color
+        if (_renderers != null)
+        {
+            for (int i = 0; i < _renderers.Length; i++)
+            {
+                if (_renderers[i] == null) continue;
+                _renderers[i].material.color = _originalColors[i] * wiltTint;
+            }
+        }
 
         // Scale shrinks as health drops
         float scale = Mathf.Lerp(MinScale, MaxScale, _health);

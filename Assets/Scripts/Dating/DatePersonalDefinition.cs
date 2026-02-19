@@ -77,6 +77,10 @@ public class DatePersonalDefinition : ScriptableObject
     [Tooltip("Flower prefab given on successful date.")]
     public GameObject flowerPrefab;
 
+    [Tooltip("Name of the flower trimming scene to load. Must be in Build Settings. " +
+             "If empty, uses FlowerTrimmingBridge's default scene.")]
+    public string flowerSceneName;
+
     // ──────────────────────────────────────────────────────────────
     // Availability
     // ──────────────────────────────────────────────────────────────

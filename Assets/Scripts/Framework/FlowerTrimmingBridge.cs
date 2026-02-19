@@ -61,13 +61,32 @@ public class FlowerTrimmingBridge : MonoBehaviour
         StartCoroutine(TrimmingSequence(flowerPrefab));
     }
 
+    /// <summary>
+    /// Resolve which flower scene to load: prefer the current date's flowerSceneName,
+    /// fall back to the serialized default.
+    /// </summary>
+    private string ResolveSceneName()
+    {
+        if (DateSessionManager.Instance != null &&
+            DateSessionManager.Instance.CurrentDate != null &&
+            !string.IsNullOrEmpty(DateSessionManager.Instance.CurrentDate.flowerSceneName))
+        {
+            return DateSessionManager.Instance.CurrentDate.flowerSceneName;
+        }
+
+        return _flowerSceneName;
+    }
+
     private IEnumerator TrimmingSequence(GameObject flowerPrefab)
     {
+        // Resolve per-date scene name, falling back to default
+        string sceneName = ResolveSceneName();
+
         // Load the flower trimming scene additively
-        var loadOp = SceneManager.LoadSceneAsync(_flowerSceneName, LoadSceneMode.Additive);
+        var loadOp = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
         if (loadOp == null)
         {
-            Debug.LogError($"[FlowerTrimmingBridge] Failed to load scene '{_flowerSceneName}'. " +
+            Debug.LogError($"[FlowerTrimmingBridge] Failed to load scene '{sceneName}'. " +
                            "Is it added to Build Settings?");
             _waitingForResult = false;
             _onComplete?.Invoke(0, 0, true);
@@ -76,7 +95,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         yield return loadOp;
 
-        var flowerScene = SceneManager.GetSceneByName(_flowerSceneName);
+        var flowerScene = SceneManager.GetSceneByName(sceneName);
         if (!flowerScene.IsValid())
         {
             Debug.LogError("[FlowerTrimmingBridge] Flower scene not valid after load.");
@@ -149,6 +168,16 @@ public class FlowerTrimmingBridge : MonoBehaviour
         // Brief pause so the player can see their result
         yield return new WaitForSeconds(2f);
 
+        // Snapshot the trimmed flower visuals BEFORE unloading the scene
+        GameObject trimmedVisual = null;
+        if (session.brain != null)
+        {
+            trimmedVisual = TrimmedFlowerSnapshot.Capture(session.brain);
+            // Move to DontDestroyOnLoad so it survives the scene unload
+            Object.DontDestroyOnLoad(trimmedVisual);
+            trimmedVisual.SetActive(false); // hide until placed
+        }
+
         // Capture results in data pipeline
         DateOutcomeCapture.CaptureFlowerResult(resultScore, resultDays, resultGameOver);
         string grade = DateOutcomeCapture.LastOutcome.flowerGrade;
@@ -158,7 +187,12 @@ public class FlowerTrimmingBridge : MonoBehaviour
         if (resultDays > 0 && LivingFlowerPlantManager.Instance != null)
         {
             string charName = DateOutcomeCapture.LastOutcome.characterName;
-            LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays);
+            LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays, trimmedVisual);
+        }
+        else if (trimmedVisual != null)
+        {
+            // No days alive — discard the snapshot
+            Object.Destroy(trimmedVisual);
         }
 
         // Clean up
@@ -174,7 +208,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
         if (unloadOp != null)
             yield return unloadOp;
 
-        Debug.Log($"[FlowerTrimmingBridge] Trimming complete. Score={resultScore}, " +
-                  $"Days={resultDays}, GameOver={resultGameOver}");
+        Debug.Log($"[FlowerTrimmingBridge] Trimming complete. Scene={sceneName}, " +
+                  $"Score={resultScore}, Days={resultDays}, GameOver={resultGameOver}");
     }
 }

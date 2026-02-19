@@ -41,17 +41,22 @@ public class LivingFlowerPlantManager : MonoBehaviour
     /// Spawn a new living plant at the next available slot.
     /// Called after flower trimming completes successfully.
     /// </summary>
-    public void SpawnPlant(string characterName, int daysAlive)
+    /// <param name="trimmedVisual">Optional cloned flower mesh from TrimmedFlowerSnapshot.
+    /// When provided, uses the actual trimmed flower visuals instead of procedural geometry.
+    /// Pass null to use the procedural fallback (e.g. when loading from save).</param>
+    public void SpawnPlant(string characterName, int daysAlive, GameObject trimmedVisual = null)
     {
         if (_plantSlots == null || _plantSlots.Length == 0)
         {
             Debug.LogWarning("[LivingFlowerPlantManager] No plant slots configured.");
+            if (trimmedVisual != null) Object.Destroy(trimmedVisual);
             return;
         }
 
         if (daysAlive <= 0)
         {
             Debug.Log("[LivingFlowerPlantManager] Plant has 0 days alive — not spawning.");
+            if (trimmedVisual != null) Object.Destroy(trimmedVisual);
             return;
         }
 
@@ -71,11 +76,23 @@ public class LivingFlowerPlantManager : MonoBehaviour
         if (slot == null)
         {
             Debug.LogWarning("[LivingFlowerPlantManager] All plant slots are null.");
+            if (trimmedVisual != null) Object.Destroy(trimmedVisual);
             return;
         }
 
-        // Create procedural plant GO
-        var plantGO = CreateProceduralPlant(characterName);
+        // Use cloned trimmed flower visuals if provided, otherwise procedural fallback
+        GameObject plantGO;
+        if (trimmedVisual != null)
+        {
+            plantGO = trimmedVisual;
+            plantGO.name = $"LivingPlant_{characterName}";
+            plantGO.SetActive(true);
+        }
+        else
+        {
+            plantGO = CreateProceduralPlant(characterName);
+        }
+
         plantGO.transform.position = slot.position;
         plantGO.transform.rotation = slot.rotation;
 
@@ -96,7 +113,8 @@ public class LivingFlowerPlantManager : MonoBehaviour
         UpdateMoodSource();
 
         Debug.Log($"[LivingFlowerPlantManager] Spawned plant from {characterName} " +
-                  $"({daysAlive} days) at {slot.position}");
+                  $"({daysAlive} days) at {slot.position}" +
+                  (trimmedVisual != null ? " [trimmed flower visual]" : " [procedural]"));
     }
 
     /// <summary>Called by GameClock.OnDayStarted event each morning.</summary>
