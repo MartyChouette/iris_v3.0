@@ -135,6 +135,14 @@ public class BookVolume : MonoBehaviour
     {
         CurrentState = State.Reading;
 
+        // Hide the book mesh so pages canvas renders in front
+        var rend = GetComponent<Renderer>();
+        if (rend != null) rend.enabled = false;
+
+        // Also hide the spine title canvas
+        var spineTitle = transform.Find("SpineTitle");
+        if (spineTitle != null) spineTitle.gameObject.SetActive(false);
+
         // Populate page text from definition
         if (definition != null && pageLabels != null)
         {
@@ -159,6 +167,14 @@ public class BookVolume : MonoBehaviour
 
         if (pagesRoot != null)
             pagesRoot.SetActive(false);
+
+        // Show the book mesh again
+        var rend = GetComponent<Renderer>();
+        if (rend != null) rend.enabled = true;
+
+        // Show the spine title
+        var spineTitle = transform.Find("SpineTitle");
+        if (spineTitle != null) spineTitle.gameObject.SetActive(true);
 
         // Unparent from reading anchor
         transform.SetParent(null, true);

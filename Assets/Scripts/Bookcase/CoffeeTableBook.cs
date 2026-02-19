@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// A flat book that toggles between its bookcase stack and a coffee table stack.
-/// Click to move. All instances auto-register in a static list; when any book
-/// moves, all stacks recalculate positions so books settle without overlap.
+/// A large book that stands upright on the bookcase shelf and lays flat on the
+/// coffee table. Click to toggle placement. All instances auto-register in a
+/// static list; when any book moves, all positions recalculate so books settle
+/// without overlap.
+///
+/// On bookcase: upright, side-by-side (X offset). Hover slides forward.
+/// On coffee table: flat-stacked (Y offset). Hover slides up.
 /// </summary>
 public class CoffeeTableBook : MonoBehaviour
 {
@@ -23,20 +27,21 @@ public class CoffeeTableBook : MonoBehaviour
     public State CurrentState { get; private set; } = State.OnBookcase;
     public bool IsMoving => CurrentState == State.Moving;
     public float Thickness => definition != null ? definition.thickness : 0.03f;
+    public float BookHeight => definition != null ? definition.size.y : 0.20f;
 
     /// <summary>Placement flag independent of animation state.</summary>
     public bool IsOnCoffeeTable { get; private set; }
 
-    /// <summary>Static base position for the bookcase stack (set by scene builder).</summary>
+    /// <summary>Static base position for the bookcase shelf (left edge). Books stand upright, side-by-side in X.</summary>
     public static Vector3 BookcaseStackBase { get; set; }
 
-    /// <summary>Static base rotation for the bookcase stack (set by scene builder).</summary>
+    /// <summary>Static base rotation for upright books on the bookcase shelf.</summary>
     public static Quaternion BookcaseStackRotation { get; set; } = Quaternion.identity;
 
-    /// <summary>Static base position for the coffee table stack (set by scene builder).</summary>
+    /// <summary>Static base position for the coffee table. Books lay flat, stacked in Y.</summary>
     public static Vector3 CoffeeTableStackBase { get; set; }
 
-    /// <summary>Static base rotation for the coffee table stack (set by scene builder).</summary>
+    /// <summary>Static base rotation for flat books on the coffee table.</summary>
     public static Quaternion CoffeeTableStackRotation { get; set; } = Quaternion.identity;
 
     /// <summary>All active CoffeeTableBook instances.</summary>
@@ -48,7 +53,7 @@ public class CoffeeTableBook : MonoBehaviour
     private Vector3 _hoverBasePos;
 
     private const float MoveDuration = 0.4f;
-    private const float HoverSlideUp = 0.02f;
+    private const float HoverSlideDistance = 0.03f; // forward on shelf, up on table
 
     private void Awake()
     {
@@ -66,13 +71,6 @@ public class CoffeeTableBook : MonoBehaviour
         {
             IsOnCoffeeTable = true;
             CurrentState = State.OnCoffeeTable;
-
-            var tag = GetComponent<ReactableTag>();
-            if (tag != null)
-            {
-                tag.IsActive = true;
-                tag.IsPrivate = false;
-            }
 
             if (definition != null && !string.IsNullOrEmpty(definition.itemID))
                 ItemStateRegistry.SetState(definition.itemID, ItemStateRegistry.ItemDisplayState.OnDisplay);
@@ -100,8 +98,16 @@ public class CoffeeTableBook : MonoBehaviour
         _isHovered = true;
         _hoverBasePos = transform.position;
 
-        // Slide up for flat-stacked books
-        transform.position = _hoverBasePos + Vector3.up * HoverSlideUp;
+        if (IsOnCoffeeTable)
+        {
+            // Flat on table — slide up
+            transform.position = _hoverBasePos + Vector3.up * HoverSlideDistance;
+        }
+        else
+        {
+            // Upright on shelf — slide toward camera (negative local Z)
+            transform.position = _hoverBasePos - transform.forward * HoverSlideDistance;
+        }
 
         if (_instanceMaterial != null)
             _instanceMaterial.color = _baseColor * 1.2f;
@@ -119,7 +125,7 @@ public class CoffeeTableBook : MonoBehaviour
     }
 
     /// <summary>
-    /// Toggle between bookcase stack and coffee table stack.
+    /// Toggle between bookcase shelf (upright) and coffee table (flat).
     /// </summary>
     public void TogglePlacement()
     {
@@ -139,12 +145,14 @@ public class CoffeeTableBook : MonoBehaviour
     }
 
     /// <summary>
-    /// Recalculates positions for all books in both stacks and animates them.
+    /// Recalculates positions for all books in both locations and animates them.
+    /// Bookcase: upright, side-by-side in local X (cumulative thickness offset).
+    /// Coffee table: flat, stacked in Y (cumulative thickness offset).
     /// </summary>
     public static void RecalculateAllStacks()
     {
-        int bookcaseIndex = 0;
-        int coffeeTableIndex = 0;
+        float bookcaseXOffset = 0f;
+        float coffeeTableYOffset = 0f;
 
         for (int i = 0; i < All.Count; i++)
         {
@@ -156,15 +164,19 @@ public class CoffeeTableBook : MonoBehaviour
 
             if (book.IsOnCoffeeTable)
             {
-                targetPos = CoffeeTableStackBase + Vector3.up * (coffeeTableIndex * book.Thickness);
+                // Flat on coffee table: stacked in Y
+                targetPos = CoffeeTableStackBase + Vector3.up * (coffeeTableYOffset + book.Thickness / 2f);
                 targetRot = CoffeeTableStackRotation;
-                coffeeTableIndex++;
+                coffeeTableYOffset += book.Thickness;
             }
             else
             {
-                targetPos = BookcaseStackBase + Vector3.up * (bookcaseIndex * book.Thickness);
+                // Upright on bookcase shelf: side-by-side in X
+                targetPos = BookcaseStackBase
+                    + BookcaseStackRotation * Vector3.right * (bookcaseXOffset + book.Thickness / 2f)
+                    + Vector3.up * (book.BookHeight / 2f);
                 targetRot = BookcaseStackRotation;
-                bookcaseIndex++;
+                bookcaseXOffset += book.Thickness + 0.003f; // small gap between books
             }
 
             book.StopAllCoroutines();
@@ -192,14 +204,6 @@ public class CoffeeTableBook : MonoBehaviour
         transform.position = targetPos;
         transform.rotation = targetRot;
         CurrentState = IsOnCoffeeTable ? State.OnCoffeeTable : State.OnBookcase;
-
-        // Toggle ReactableTag visibility based on placement
-        var tag = GetComponent<ReactableTag>();
-        if (tag != null)
-        {
-            tag.IsActive = IsOnCoffeeTable;
-            tag.IsPrivate = !IsOnCoffeeTable;
-        }
 
         // Update item state registry
         if (definition != null && !string.IsNullOrEmpty(definition.itemID))

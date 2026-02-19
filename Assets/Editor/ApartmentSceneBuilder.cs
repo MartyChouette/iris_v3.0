@@ -1025,8 +1025,8 @@ public static class ApartmentSceneBuilder
             drawersLayer, perfumesLayer, coffeeTableBooksLayer);
         bookManager.transform.SetParent(groupGO.transform);
 
-        // ReactableTag on bookcase
-        AddReactableTag(groupGO, new[] { "book", "reading" }, true);
+        // No ReactableTag on bookcase itself — only individual coffee table books
+        // have ReactableTags (set by BookcaseSceneBuilder.BuildCoffeeTableBooks)
 
         // Position and rotate the entire group
         groupGO.transform.position = BookcaseStationPos;

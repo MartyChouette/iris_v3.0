@@ -34,8 +34,8 @@ public static class BookcaseSceneBuilder
     private const float MaxBookThickness = 0.04f;
     private const float BookGap = 0.003f;
 
-    // Deterministic book distribution per row (rows 0–3)
-    private static readonly int[] BooksPerRow = { 5, 4, 3, 3 };
+    // All 15 books packed together on a single row
+    private const int BookRow = 1; // row 1 (second shelf from bottom)
 
     // Spine colors — 10 muted library tones
     private static readonly Color[] SpineColors =
@@ -416,9 +416,12 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Books (15 deterministic books across 4 rows: 5, 4, 3, 3)
-    // Row 0 left side only (right reserved for coffee table book stack)
-    // Row 4 (top shelf) reserved for perfumes
+    // Books (all 15 packed together on row 1)
+    // Row 0: empty display shelf
+    // Row 1: 15 normal books (packed)
+    // Row 2: 5 coffee table books (upright, varying sizes)
+    // Row 3: empty display shelf
+    // Row 4: 3 perfumes (top shelf)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildBooks(GameObject bookcaseRoot, int booksLayer)
@@ -436,81 +439,75 @@ public static class BookcaseSceneBuilder
         float rowHeight = CaseHeight / ShelfCount;
         float caseLeftX = -innerWidth / 2f;
 
+        float shelfTopY = BookRow * rowHeight + ShelfThickness / 2f;
+        float availableHeight = rowHeight - ShelfThickness;
+
         // Deterministic seed for visual variety that's reproducible
         Random.State savedState = Random.state;
         Random.InitState(42);
 
-        int bookIndex = 0;
+        float xCursor = caseLeftX + 0.01f;
 
-        for (int row = 0; row < BooksPerRow.Length; row++)
+        for (int bookIndex = 0; bookIndex < BookTitles.Length; bookIndex++)
         {
-            float shelfTopY = row * rowHeight + ShelfThickness / 2f;
-            float availableHeight = rowHeight - ShelfThickness;
-            int bookCount = BooksPerRow[row];
-            float xCursor = caseLeftX + 0.01f;
+            float thickness = Mathf.Lerp(MinBookThickness, MaxBookThickness,
+                Random.Range(0f, 1f));
+            float heightFrac = Random.Range(0.70f, 0.95f);
+            float bookHeight = availableHeight * heightFrac;
+            float depthFrac = Random.Range(0.70f, 0.95f);
+            float bookDepth = CaseDepth * depthFrac;
+            Color color = SpineColors[bookIndex % SpineColors.Length];
 
-            for (int b = 0; b < bookCount && bookIndex < BookTitles.Length; b++)
-            {
-                float thickness = Mathf.Lerp(MinBookThickness, MaxBookThickness,
-                    Random.Range(0f, 1f));
-                float heightFrac = Random.Range(0.70f, 0.95f);
-                float bookHeight = availableHeight * heightFrac;
-                float depthFrac = Random.Range(0.70f, 0.95f);
-                float bookDepth = CaseDepth * depthFrac;
-                Color color = SpineColors[bookIndex % SpineColors.Length];
+            string title = BookTitles[bookIndex];
+            string author = BookAuthors[bookIndex];
+            string[] pages = BookPages[bookIndex];
 
-                string title = BookTitles[bookIndex];
-                string author = BookAuthors[bookIndex];
-                string[] pages = BookPages[bookIndex];
+            var def = ScriptableObject.CreateInstance<BookDefinition>();
+            def.title = title;
+            def.author = author;
+            def.pageTexts = pages;
+            def.spineColor = color;
+            def.heightScale = heightFrac;
+            def.thicknessScale = thickness;
 
-                var def = ScriptableObject.CreateInstance<BookDefinition>();
-                def.title = title;
-                def.author = author;
-                def.pageTexts = pages;
-                def.spineColor = color;
-                def.heightScale = heightFrac;
-                def.thicknessScale = thickness;
+            string defPath = $"{defDir}/Book_{bookIndex:D3}_{title.Replace(" ", "_")}.asset";
+            AssetDatabase.CreateAsset(def, defPath);
 
-                string defPath = $"{defDir}/Book_{bookIndex:D3}_{title.Replace(" ", "_")}.asset";
-                AssetDatabase.CreateAsset(def, defPath);
+            float bookX = xCursor + thickness / 2f;
+            float bookY = shelfTopY + bookHeight / 2f;
+            float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
 
-                float bookX = xCursor + thickness / 2f;
-                float bookY = shelfTopY + bookHeight / 2f;
-                float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
+            var bookGO = CreateBox($"Book_{bookIndex}", booksParent.transform,
+                new Vector3(bookX, bookY, bookZ),
+                new Vector3(thickness, bookHeight, bookDepth),
+                color);
+            bookGO.isStatic = false;
+            bookGO.layer = booksLayer;
 
-                var bookGO = CreateBox($"Book_{bookIndex}", booksParent.transform,
-                    new Vector3(bookX, bookY, bookZ),
-                    new Vector3(thickness, bookHeight, bookDepth),
-                    color);
-                bookGO.isStatic = false;
-                bookGO.layer = booksLayer;
+            var volume = bookGO.AddComponent<BookVolume>();
+            var pagesRoot = BuildBookPages(bookGO.transform, thickness, bookHeight, bookDepth);
 
-                var volume = bookGO.AddComponent<BookVolume>();
-                var pagesRoot = BuildBookPages(bookGO.transform, thickness, bookHeight, bookDepth);
+            var so = new SerializedObject(volume);
+            so.FindProperty("definition").objectReferenceValue = def;
+            so.FindProperty("pagesRoot").objectReferenceValue = pagesRoot;
 
-                var so = new SerializedObject(volume);
-                so.FindProperty("definition").objectReferenceValue = def;
-                so.FindProperty("pagesRoot").objectReferenceValue = pagesRoot;
+            var pageLabels = pagesRoot.GetComponentsInChildren<TMP_Text>(true);
+            var labelsProperty = so.FindProperty("pageLabels");
+            labelsProperty.arraySize = Mathf.Min(pageLabels.Length, 3);
+            for (int p = 0; p < labelsProperty.arraySize; p++)
+                labelsProperty.GetArrayElementAtIndex(p).objectReferenceValue = pageLabels[p];
 
-                var pageLabels = pagesRoot.GetComponentsInChildren<TMP_Text>(true);
-                var labelsProperty = so.FindProperty("pageLabels");
-                labelsProperty.arraySize = Mathf.Min(pageLabels.Length, 3);
-                for (int p = 0; p < labelsProperty.arraySize; p++)
-                    labelsProperty.GetArrayElementAtIndex(p).objectReferenceValue = pageLabels[p];
+            so.ApplyModifiedPropertiesWithoutUndo();
 
-                so.ApplyModifiedPropertiesWithoutUndo();
+            bookGO.AddComponent<InteractableHighlight>();
 
-                bookGO.AddComponent<InteractableHighlight>();
+            BuildBookSpineTitle(bookGO.transform, title, thickness, bookHeight, bookDepth);
 
-                BuildBookSpineTitle(bookGO.transform, title, thickness, bookHeight, bookDepth);
-
-                xCursor += thickness + BookGap;
-                bookIndex++;
-            }
+            xCursor += thickness + BookGap;
         }
 
         Random.state = savedState;
-        Debug.Log($"[BookcaseSceneBuilder] Created {bookIndex} deterministic books across {BooksPerRow.Length} rows.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {BookTitles.Length} books packed on row {BookRow}.");
     }
 
     private static GameObject BuildBookPages(Transform bookTransform, float thickness, float height, float depth)
@@ -578,7 +575,10 @@ public static class BookcaseSceneBuilder
 
     private static void BuildBookSpineTitle(Transform bookTransform, string title, float thickness, float height, float depth)
     {
-        // Spine title on the front face (-Z), rotated 90° so text reads bottom-to-top
+        // Spine is the narrow front face (-Z direction). The visible face is thickness × height.
+        // We use a high PPM (pixels-per-meter) canvas so text is crisp on the tiny spine.
+        const float ppm = 2000f; // pixels per world-meter
+
         var spineCanvas = new GameObject("SpineTitle");
         spineCanvas.transform.SetParent(bookTransform);
         spineCanvas.transform.localPosition = new Vector3(0f, 0f, -depth / 2f - 0.0005f);
@@ -586,12 +586,15 @@ public static class BookcaseSceneBuilder
 
         var canvas = spineCanvas.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 5;
 
         var canvasRT = spineCanvas.GetComponent<RectTransform>();
-        // Canvas sized to the spine face (width = book thickness, height = book height)
-        canvasRT.sizeDelta = new Vector2(400f, 200f);
-        float canvasScale = height / 400f * 0.9f; // fit to spine height with padding
-        canvasRT.localScale = new Vector3(canvasScale, canvasScale, canvasScale);
+        // sizeDelta in canvas-pixels = world size × PPM
+        canvasRT.sizeDelta = new Vector2(thickness * ppm, height * ppm);
+        // localScale converts canvas-pixels back to world units
+        float worldScale = 1f / ppm;
+        canvasRT.localScale = new Vector3(worldScale, worldScale, worldScale);
 
         var textGO = new GameObject("Title");
         textGO.transform.SetParent(spineCanvas.transform);
@@ -599,19 +602,23 @@ public static class BookcaseSceneBuilder
         var textRT = textGO.AddComponent<RectTransform>();
         textRT.anchorMin = Vector2.zero;
         textRT.anchorMax = Vector2.one;
-        textRT.offsetMin = new Vector2(4f, 4f);
-        textRT.offsetMax = new Vector2(-4f, -4f);
+        textRT.offsetMin = new Vector2(2f, 4f);
+        textRT.offsetMax = new Vector2(-2f, -4f);
         textRT.localScale = Vector3.one;
-        textRT.localRotation = Quaternion.Euler(0f, 0f, 90f); // Rotate text to read bottom-to-top
+        // Rotate text 90° so it reads bottom-to-top along the height of the spine
+        textRT.localRotation = Quaternion.Euler(0f, 0f, 90f);
 
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.text = title;
-        tmp.fontSize = 32f;
+        tmp.fontSize = thickness * ppm * 0.65f; // font fills ~65% of the spine width
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = new Color(0.95f, 0.92f, 0.85f); // Light text on colored spine
+        tmp.color = new Color(0.95f, 0.92f, 0.85f);
         tmp.enableWordWrapping = false;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
+        tmp.enableAutoSizing = true;
+        tmp.fontSizeMin = 8f;
+        tmp.fontSizeMax = thickness * ppm * 0.65f;
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -791,8 +798,17 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Coffee Table Books (5 stacked flat on row 0, right side)
+    // Coffee Table Books (5 upright on row 2, varying large sizes)
+    // Stand upright on shelf like normal books but bigger/thicker.
+    // Click to send flat to coffee table.
     // ════════════════════════════════════════════════════════════════════
+
+    private const int CoffeeBookRow = 2; // row 2 (third shelf from bottom)
+
+    // Varying sizes — each coffee table book has unique dimensions
+    private static readonly float[] CoffeeBookThicknesses = { 0.04f, 0.055f, 0.035f, 0.06f, 0.045f };
+    private static readonly float[] CoffeeBookHeightFracs = { 0.90f, 0.85f, 0.80f, 0.92f, 0.88f };
+    private static readonly float[] CoffeeBookDepthFracs  = { 0.90f, 0.85f, 0.80f, 0.88f, 0.82f };
 
     private static void BuildCoffeeTableBooks(GameObject bookcaseRoot, int coffeeTableBooksLayer)
     {
@@ -803,43 +819,48 @@ public static class BookcaseSceneBuilder
         var parent = new GameObject("CoffeeTableBooks");
         parent.transform.SetParent(bookcaseRoot.transform);
 
-        // Row 0 — right side of shelf, stacked flat
         float rowHeight = CaseHeight / ShelfCount;
-        float row0ShelfTopY = 0f * rowHeight + ShelfThickness / 2f;
+        float shelfTopY = CoffeeBookRow * rowHeight + ShelfThickness / 2f;
+        float availableHeight = rowHeight - ShelfThickness;
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
+        float caseLeftX = -innerWidth / 2f;
 
-        // Stack base: right third of row 0, centered
-        float stackX = innerWidth / 2f - innerWidth / 6f;
-        Vector3 stackBase = new Vector3(stackX, row0ShelfTopY, CaseCenterZ);
-        Quaternion stackRot = Quaternion.identity;
-
-        // Set static bookcase stack base
+        // Bookcase stack base: left edge of the shelf, Y at shelf surface
+        Vector3 stackBase = new Vector3(caseLeftX + 0.01f, shelfTopY, CaseCenterZ);
         CoffeeTableBook.BookcaseStackBase = stackBase;
-        CoffeeTableBook.BookcaseStackRotation = stackRot;
-
-        float bookWidth = 0.25f;
-        float bookDepth = 0.18f;
-        float bookThickness = 0.03f;
+        CoffeeTableBook.BookcaseStackRotation = Quaternion.identity;
 
         for (int i = 0; i < CoffeeBookTitles.Length; i++)
         {
+            float thickness = CoffeeBookThicknesses[i];
+            float bookHeight = availableHeight * CoffeeBookHeightFracs[i];
+            float bookDepth = CaseDepth * CoffeeBookDepthFracs[i];
+
             var def = ScriptableObject.CreateInstance<CoffeeTableBookDefinition>();
             def.title = CoffeeBookTitles[i];
             def.description = CoffeeBookDescriptions[i];
             def.coverColor = CoffeeBookColors[i];
             def.itemID = $"coffeebook_{i}";
-            def.size = new Vector2(bookWidth, bookDepth);
-            def.thickness = bookThickness;
+            def.size = new Vector2(bookDepth, bookHeight); // x=depth, y=height
+            def.thickness = thickness;
 
             string defPath = $"{defDir}/CoffeeBook_{i:D2}_{CoffeeBookTitles[i].Replace(" ", "_")}.asset";
             AssetDatabase.CreateAsset(def, defPath);
 
-            // Stacked flat: each book at stackBase + (index * thickness) in Y
-            float bookY = stackBase.y + i * bookThickness + bookThickness / 2f;
+            // Upright on shelf: thickness is X, height is Y, depth is Z
+            // Position will be set by RecalculateAllStacks at runtime,
+            // but we need an initial position for the scene builder
+            float xCursor = caseLeftX + 0.01f;
+            for (int j = 0; j < i; j++)
+                xCursor += CoffeeBookThicknesses[j] + 0.003f;
+
+            float bookX = xCursor + thickness / 2f;
+            float bookY = shelfTopY + bookHeight / 2f;
+            float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
 
             var bookGO = CreateBox($"CoffeeBook_{i}", parent.transform,
-                new Vector3(stackBase.x, bookY, stackBase.z),
-                new Vector3(bookWidth, bookThickness, bookDepth),
+                new Vector3(bookX, bookY, bookZ),
+                new Vector3(thickness, bookHeight, bookDepth),
                 CoffeeBookColors[i]);
             bookGO.isStatic = false;
             bookGO.layer = coffeeTableBooksLayer;
@@ -847,15 +868,15 @@ public static class BookcaseSceneBuilder
             var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
             bookGO.AddComponent<InteractableHighlight>();
 
-            // ReactableTag — starts inactive/private on bookcase, toggled by CoffeeTableBook
+            // ReactableTag — always active and public (open shelves are public)
             var tag = bookGO.AddComponent<ReactableTag>();
             var tagSO = new SerializedObject(tag);
             var tagsProp = tagSO.FindProperty("tags");
             tagsProp.arraySize = 2;
             tagsProp.GetArrayElementAtIndex(0).stringValue = "coffee_book";
             tagsProp.GetArrayElementAtIndex(1).stringValue = def.title.ToLower().Replace(" ", "_");
-            tagSO.FindProperty("isActive").boolValue = false;
-            tagSO.FindProperty("isPrivate").boolValue = true;
+            tagSO.FindProperty("isActive").boolValue = true;
+            tagSO.FindProperty("isPrivate").boolValue = false;
             tagSO.ApplyModifiedPropertiesWithoutUndo();
 
             var cbSO = new SerializedObject(coffeeBook);
@@ -864,9 +885,12 @@ public static class BookcaseSceneBuilder
             if (i == 0)
                 cbSO.FindProperty("startsOnCoffeeTable").boolValue = true;
             cbSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // Spine title on the coffee table book
+            BuildBookSpineTitle(bookGO.transform, def.title, thickness, bookHeight, bookDepth);
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books stacked on row 0.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books upright on row {CoffeeBookRow}.");
     }
 
     // ════════════════════════════════════════════════════════════════════
