@@ -419,8 +419,8 @@ public static class BookcaseSceneBuilder
     // Row 0: empty display shelf
     // Row 1: 15 normal books (packed)
     // Row 2: 5 coffee table books (upright, varying sizes)
-    // Row 3: empty display shelf
-    // Row 4: 3 perfumes (top shelf)
+    // Row 3: 3 perfumes
+    // Row 4: empty display shelf (top)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildBooks(GameObject bookcaseRoot, int booksLayer)
@@ -621,7 +621,7 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Perfume Shelf (row 4, top shelf — dedicated perfume row)
+    // Perfume Shelf (row 3)
     // ════════════════════════════════════════════════════════════════════
 
     private static void BuildPerfumeShelf(GameObject bookcaseRoot, int perfumesLayer)
@@ -635,7 +635,7 @@ public static class BookcaseSceneBuilder
 
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float rowHeight = CaseHeight / ShelfCount;
-        float row4ShelfTopY = 4f * rowHeight + ShelfThickness / 2f;
+        float row3ShelfTopY = 3f * rowHeight + ShelfThickness / 2f;
         float bottleHeight = 0.15f;
         float bottleWidth = 0.05f;
         float bottleDepth = 0.05f;
@@ -660,7 +660,7 @@ public static class BookcaseSceneBuilder
             AssetDatabase.CreateAsset(def, defPath);
 
             float bottleX = startX + i * spacing;
-            float bottleY = row4ShelfTopY + bottleHeight / 2f;
+            float bottleY = row3ShelfTopY + bottleHeight / 2f;
 
             var bottleGO = CreateBox($"Perfume_{i}", parent.transform,
                 new Vector3(bottleX, bottleY, CaseCenterZ),
@@ -703,7 +703,7 @@ public static class BookcaseSceneBuilder
             bottleSO.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {PerfumeNames.Length} perfume bottles on row 4 (top shelf).");
+        Debug.Log($"[BookcaseSceneBuilder] Created {PerfumeNames.Length} perfume bottles on row 3.");
     }
 
     // ════════════════════════════════════════════════════════════════════

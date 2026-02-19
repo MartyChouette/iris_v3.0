@@ -67,11 +67,18 @@ public class PerfumeBottle : MonoBehaviour
     }
 
     /// <summary>
-    /// One-click spray: burst particles, set mood, mark complete. Bottle stays on shelf.
+    /// One-click spray: burst particles, set mood. Can be sprayed again to
+    /// re-select this perfume after spraying a different one.
     /// </summary>
     public void SprayOnce()
     {
-        if (SprayComplete) return;
+        // Deactivate all other perfumes first so only the latest spray is active
+        var allBottles = FindObjectsByType<PerfumeBottle>(FindObjectsSortMode.None);
+        for (int i = 0; i < allBottles.Length; i++)
+        {
+            if (allBottles[i] == this) continue;
+            allBottles[i].Deactivate();
+        }
 
         // Burst particles
         if (sprayParticles != null)
@@ -90,6 +97,15 @@ public class PerfumeBottle : MonoBehaviour
         if (reactable != null) reactable.IsActive = true;
 
         SprayComplete = true;
+    }
+
+    /// <summary>Deactivate this perfume (called when a different perfume is sprayed).</summary>
+    public void Deactivate()
+    {
+        SprayComplete = false;
+
+        var reactable = GetComponent<ReactableTag>();
+        if (reactable != null) reactable.IsActive = false;
     }
 
     private void OnDestroy()
