@@ -415,13 +415,17 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Books (all 15 packed together on row 1)
+    // Books (10 packed on row 1 shelf + 5 stacked flat on floor)
     // Row 0: empty display shelf
-    // Row 1: 15 normal books (packed)
-    // Row 2: 5 coffee table books (upright, varying sizes)
+    // Row 1: 10 normal books (packed upright)
+    // Row 2: 5 coffee table books (stacked flat, disheveled pile)
     // Row 3: 3 perfumes
     // Row 4: empty display shelf (top)
+    // Floor beside bookcase: 5 books stacked flat
     // ════════════════════════════════════════════════════════════════════
+
+    // Books 0-9 go on the shelf; books 10-14 go as a floor stack beside the bookcase
+    private const int ShelfBookCount = 10;
 
     private static void BuildBooks(GameObject bookcaseRoot, int booksLayer)
     {
@@ -446,6 +450,11 @@ public static class BookcaseSceneBuilder
         Random.InitState(42);
 
         float xCursor = caseLeftX + 0.01f;
+
+        // Floor stack tracking (books 10-14)
+        float floorStackX = CaseWidth / 2f + 0.15f; // right side of bookcase
+        float floorStackY = 0f; // floor level
+        float floorStackZ = CaseCenterZ;
 
         for (int bookIndex = 0; bookIndex < BookTitles.Length; bookIndex++)
         {
@@ -472,14 +481,38 @@ public static class BookcaseSceneBuilder
             string defPath = $"{defDir}/Book_{bookIndex:D3}_{title.Replace(" ", "_")}.asset";
             AssetDatabase.CreateAsset(def, defPath);
 
-            float bookX = xCursor + thickness / 2f;
-            float bookY = shelfTopY + bookHeight / 2f;
-            float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
+            Vector3 bookPos;
+            Vector3 bookScale;
+            Quaternion bookRot = Quaternion.identity;
+
+            if (bookIndex < ShelfBookCount)
+            {
+                // Shelf books: upright as before
+                float bookX = xCursor + thickness / 2f;
+                float bookY = shelfTopY + bookHeight / 2f;
+                float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
+
+                bookPos = new Vector3(bookX, bookY, bookZ);
+                bookScale = new Vector3(thickness, bookHeight, bookDepth);
+                xCursor += thickness + BookGap;
+            }
+            else
+            {
+                // Floor stack: laid flat, stacked by thickness
+                float bookY = floorStackY + thickness / 2f;
+                float xOffset = Random.Range(-0.008f, 0.008f);
+                float zOffset = Random.Range(-0.008f, 0.008f);
+                float yaw = Random.Range(-6f, 6f);
+
+                bookPos = new Vector3(floorStackX + xOffset, bookY, floorStackZ + zOffset);
+                bookScale = new Vector3(bookDepth, thickness, bookHeight);
+                bookRot = Quaternion.Euler(0f, yaw, 0f);
+                floorStackY += thickness;
+            }
 
             var bookGO = CreateBox($"Book_{bookIndex}", booksParent.transform,
-                new Vector3(bookX, bookY, bookZ),
-                new Vector3(thickness, bookHeight, bookDepth),
-                color);
+                bookPos, bookScale, color);
+            bookGO.transform.localRotation = bookRot;
             bookGO.isStatic = false;
             bookGO.layer = booksLayer;
 
@@ -501,12 +534,10 @@ public static class BookcaseSceneBuilder
             bookGO.AddComponent<InteractableHighlight>();
 
             BuildBookSpineTitle(bookGO.transform, title, thickness, bookHeight, bookDepth);
-
-            xCursor += thickness + BookGap;
         }
 
         Random.state = savedState;
-        Debug.Log($"[BookcaseSceneBuilder] Created {BookTitles.Length} books packed on row {BookRow}.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {ShelfBookCount} shelf books on row {BookRow} + {BookTitles.Length - ShelfBookCount} floor books.");
     }
 
     private static GameObject BuildBookPages(Transform bookTransform, float thickness, float height, float depth)
@@ -810,8 +841,8 @@ public static class BookcaseSceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // Coffee Table Books (5 upright on row 2, varying large sizes)
-    // Stand upright on shelf like normal books but bigger/thicker.
+    // Coffee Table Books (5 stacked flat on row 2, disheveled pile)
+    // Laid flat on shelf, stacked on top of each other with slight offsets.
     // Click to send flat to coffee table.
     // ════════════════════════════════════════════════════════════════════
 
@@ -835,10 +866,13 @@ public static class BookcaseSceneBuilder
         float rowHeight = CaseHeight / ShelfCount;
         float shelfTopY = CoffeeBookRow * rowHeight + ShelfThickness / 2f;
         float availableHeight = rowHeight - ShelfThickness;
-        float innerWidth = CaseWidth - SidePanelThickness * 2f;
-        float caseLeftX = -innerWidth / 2f;
 
-        // Books save their own shelf positions in Awake() — no static base needed
+        // Deterministic seed for disheveled offsets
+        Random.State savedState = Random.state;
+        Random.InitState(99);
+
+        // Stack books flat: Y cursor tracks the top of the pile
+        float yCursor = shelfTopY;
 
         for (int i = 0; i < CoffeeBookTitles.Length; i++)
         {
@@ -857,23 +891,29 @@ public static class BookcaseSceneBuilder
             string defPath = $"{defDir}/CoffeeBook_{i:D2}_{CoffeeBookTitles[i].Replace(" ", "_")}.asset";
             AssetDatabase.CreateAsset(def, defPath);
 
-            // Upright on shelf: thickness is X, height is Y, depth is Z
-            // Position will be set by RecalculateAllStacks at runtime,
-            // but we need an initial position for the scene builder
-            float xCursor = caseLeftX + 0.01f;
-            for (int j = 0; j < i; j++)
-                xCursor += CoffeeBookThicknesses[j] + 0.003f;
+            // Flat on shelf: depth=X, thickness=Y, height=Z
+            // Each book sits on top of the previous one
+            float bookY = yCursor + thickness / 2f;
 
-            float bookX = xCursor + thickness / 2f;
-            float bookY = shelfTopY + bookHeight / 2f;
-            float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
+            // Slight random XZ offset for disheveled look
+            float xOffset = Random.Range(-0.01f, 0.01f);
+            float zOffset = Random.Range(-0.01f, 0.01f);
+            float bookX = xOffset;
+            float bookZ = CaseCenterZ + zOffset;
+
+            // Random yaw and roll for natural crooked pile
+            float yaw = Random.Range(-8f, 8f);
+            float roll = Random.Range(-3f, 3f);
 
             var bookGO = CreateBox($"CoffeeBook_{i}", parent.transform,
                 new Vector3(bookX, bookY, bookZ),
-                new Vector3(thickness, bookHeight, bookDepth),
+                new Vector3(bookDepth, thickness, bookHeight),
                 CoffeeBookColors[i]);
+            bookGO.transform.localRotation = Quaternion.Euler(roll, yaw, 0f);
             bookGO.isStatic = false;
             bookGO.layer = coffeeTableBooksLayer;
+
+            yCursor += thickness;
 
             var coffeeBook = bookGO.AddComponent<CoffeeTableBook>();
             bookGO.AddComponent<InteractableHighlight>();
@@ -898,11 +938,12 @@ public static class BookcaseSceneBuilder
                 cbSO.FindProperty("startsOnCoffeeTable").boolValue = true;
             cbSO.ApplyModifiedPropertiesWithoutUndo();
 
-            // Spine title on the coffee table book
-            BuildBookSpineTitle(bookGO.transform, def.title, thickness, bookHeight, bookDepth);
+            // Spine title — use depth as the visible "spine" width when flat
+            BuildBookSpineTitle(bookGO.transform, def.title, bookDepth, thickness, bookHeight);
         }
 
-        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books upright on row {CoffeeBookRow}.");
+        Random.state = savedState;
+        Debug.Log($"[BookcaseSceneBuilder] Created {CoffeeBookTitles.Length} coffee table books stacked flat on row {CoffeeBookRow}.");
     }
 
     // ════════════════════════════════════════════════════════════════════
