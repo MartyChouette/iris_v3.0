@@ -14,8 +14,8 @@ public class EntranceJudgmentSequence : MonoBehaviour
     [Tooltip("Seconds to pause before the first judgment.")]
     [SerializeField] private float _preJudgmentPause = 1.0f;
 
-    [Tooltip("Seconds between judgments.")]
-    [SerializeField] private float _interJudgmentPause = 1.5f;
+    [Tooltip("Seconds between judgments (must accommodate 2.8s labeled bubble).")]
+    [SerializeField] private float _interJudgmentPause = 3.2f;
 
     [Header("Behavior")]
     [Tooltip("When true, all reactions are forced to Like (tutorial/early game).")]
@@ -41,7 +41,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         PlayJudgingSFX();
         var musicReaction = EvaluateMusic(date);
         if (_alwaysPositive) musicReaction = ReactionType.Like;
-        reactionUI?.ShowReaction(musicReaction);
+        reactionUI?.ShowLabeledReaction(musicReaction, "Your Music");
         DateSessionManager.Instance?.ApplyReaction(musicReaction);
         if (musicReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Music: {musicReaction}");
@@ -63,7 +63,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         }
 
         if (_alwaysPositive) moodReaction = ReactionType.Like;
-        reactionUI?.ShowReaction(moodReaction);
+        reactionUI?.ShowLabeledReaction(moodReaction, "The Perfume");
         DateSessionManager.Instance?.ApplyReaction(moodReaction);
         if (moodReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Perfume/Mood: {moodReaction}");
@@ -74,7 +74,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         PlayJudgingSFX();
         var outfitReaction = EvaluateOutfit(date);
         if (_alwaysPositive) outfitReaction = ReactionType.Like;
-        reactionUI?.ShowReaction(outfitReaction);
+        reactionUI?.ShowLabeledReaction(outfitReaction, "Your Outfit");
         DateSessionManager.Instance?.ApplyReaction(outfitReaction);
         if (outfitReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Outfit: {outfitReaction}");
@@ -85,7 +85,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         PlayJudgingSFX();
         var cleanReaction = EvaluateCleanliness();
         if (_alwaysPositive) cleanReaction = ReactionType.Like;
-        reactionUI?.ShowReaction(cleanReaction);
+        reactionUI?.ShowLabeledReaction(cleanReaction, "Apartment Cleanliness");
         DateSessionManager.Instance?.ApplyReaction(cleanReaction);
         if (cleanReaction == ReactionType.Dislike) PlaySneezeSFX();
         Debug.Log($"[EntranceJudgmentSequence] Cleanliness: {cleanReaction}");

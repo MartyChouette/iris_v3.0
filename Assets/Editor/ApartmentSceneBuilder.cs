@@ -667,14 +667,14 @@ public static class ApartmentSceneBuilder
             new Vector3(-2.2f, 1.127f, -2.1f), new Vector3(0.06f, 0.10f, 0.02f),
             new Color(0.55f, 0.62f, 0.45f), placeableLayer);
         SetItemDescription(gameKid, "A handheld game console.");
-        AddReactableTag(gameKid, new[] { "video_game", "gadget", "nostalgia" }, true);
+        AddReactableTag(gameKid, new[] { "video_game", "gadget", "nostalgia" }, true, displayName: "Handheld Game");
 
         // Tamagotchi on coffee table
         var tamagotchi = CreatePlaceable("Tamagotchi", parent.transform,
             new Vector3(-0.35f, 0.42f, 1.85f), new Vector3(0.04f, 0.05f, 0.02f),
             new Color(0.85f, 0.55f, 0.70f), placeableLayer);
         SetItemDescription(tamagotchi, "A virtual pet keychain.");
-        AddReactableTag(tamagotchi, new[] { "toy", "pet", "nostalgia" }, true);
+        AddReactableTag(tamagotchi, new[] { "toy", "pet", "nostalgia" }, true, displayName: "Tamagotchi");
 
         // Game cartridges (3) scattered near GameKid on sun ledge
         Color[] cartColors =
@@ -692,7 +692,7 @@ public static class ApartmentSceneBuilder
                 new Vector3(xOff, 1.117f, zOff), new Vector3(0.04f, 0.05f, 0.008f),
                 cartColors[i], placeableLayer);
             SetItemDescription(cart, cartNames[i]);
-            AddReactableTag(cart, new[] { "video_game", "collectible" }, true);
+            AddReactableTag(cart, new[] { "video_game", "collectible" }, true, displayName: "Game Cartridge");
         }
     }
 
@@ -795,7 +795,7 @@ public static class ApartmentSceneBuilder
             stackSO.ApplyModifiedPropertiesWithoutUndo();
 
             // ReactableTag for date reactions (dirty dishes have smell)
-            AddReactableTag(plate, new[] { "dirty_dish", "mess" }, true, smellAmount: 0.3f);
+            AddReactableTag(plate, new[] { "dirty_dish", "mess" }, true, smellAmount: 0.3f, displayName: "Dirty Dishes");
         }
 
         // ── Drop zone (near kitchen sink area) ──
@@ -952,27 +952,27 @@ public static class ApartmentSceneBuilder
             new Vector3(3.123f, 2.2f, -0.441f), new Vector3(0.5f, 0.35f, 0.03f),
             new Color(0.6f, 0.4f, 0.5f), placeableLayer,
             new Quaternion(0.0353f, -0.7171f, -0.0342f, 0.6952f),
-            "Painting");
+            "Painting", "Flower Painting");
 
         CreateWallPlaceable("Painting_Sunset", parent.transform,
             new Vector3(3.198f, 2.0f, 0.461f), new Vector3(0.4f, 0.3f, 0.03f),
             new Color(0.8f, 0.5f, 0.3f), placeableLayer,
             new Quaternion(0.0398f, -0.7169f, -0.0386f, 0.695f),
-            "Painting");
+            "Painting", "Sunset Painting");
 
         // ── Kitchen diploma (on east wall) ──
         CreateWallPlaceable("Diploma_Floristry", parent.transform,
             new Vector3(3.404f, 1.93f, -5.249f), new Vector3(0.3f, 0.22f, 0.02f),
             new Color(0.9f, 0.88f, 0.8f), placeableLayer,
             new Quaternion(-0.0097f, -0.7212f, 0.0093f, 0.6926f),
-            "Diploma");
+            "Diploma", "Floristry Diploma");
 
         Debug.Log("[ApartmentSceneBuilder] Built 3 wall placeables (2 paintings, 1 diploma).");
     }
 
     private static GameObject CreateWallPlaceable(string name, Transform parent,
         Vector3 position, Vector3 scale, Color color, int layer,
-        Quaternion wallRotation, string reactableTag)
+        Quaternion wallRotation, string reactableTag, string displayName = "")
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;
@@ -1015,6 +1015,7 @@ public static class ApartmentSceneBuilder
         // Add ReactableTag for date reactions
         var tag = go.AddComponent<ReactableTag>();
         var tagSO = new SerializedObject(tag);
+        tagSO.FindProperty("displayName").stringValue = displayName;
         var tagsProp = tagSO.FindProperty("tags");
         tagsProp.arraySize = 1;
         tagsProp.GetArrayElementAtIndex(0).stringValue = reactableTag;
@@ -1294,7 +1295,7 @@ public static class ApartmentSceneBuilder
         var hud = managersGO.AddComponent<RecordPlayerHUD>();
 
         // ReactableTag on managers GO (toggled by RecordPlayerManager during playback)
-        AddReactableTag(managersGO, new[] { "vinyl", "music" }, false);
+        AddReactableTag(managersGO, new[] { "vinyl", "music" }, false, displayName: "Vinyl Record");
 
         // ── Wire RecordPlayerManager ─────────────────────────────────
         var mgrSO = new SerializedObject(mgr);
@@ -1493,7 +1494,7 @@ public static class ApartmentSceneBuilder
         foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
             child.gameObject.layer = placeableLayer;
 
-        AddReactableTag(root, new[] { "figurine", "gunpla", "mecha", "hobby" }, true);
+        AddReactableTag(root, new[] { "figurine", "gunpla", "mecha", "hobby" }, true, displayName: "Model Figure");
 
         Debug.Log("[ApartmentSceneBuilder] Built Gunpla figure with poseable joints.");
     }
@@ -1537,10 +1538,11 @@ public static class ApartmentSceneBuilder
     // ══════════════════════════════════════════════════════════════════
 
     private static void AddReactableTag(GameObject go, string[] tags, bool isActive,
-        bool isPrivate = false, float smellAmount = 0f)
+        bool isPrivate = false, float smellAmount = 0f, string displayName = "")
     {
         var tag = go.AddComponent<ReactableTag>();
         var so = new SerializedObject(tag);
+        so.FindProperty("displayName").stringValue = displayName;
         var tagsProp = so.FindProperty("tags");
         tagsProp.arraySize = tags.Length;
         for (int i = 0; i < tags.Length; i++)
@@ -2941,7 +2943,7 @@ public static class ApartmentSceneBuilder
         fridgeCtrlSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ── ReactableTag on drink station (toggled when drink is delivered) ──
-        AddReactableTag(groupGO, new[] { "drink", "cocktail" }, false);
+        AddReactableTag(groupGO, new[] { "drink", "cocktail" }, false, displayName: "Your Drink");
 
         Debug.Log("[ApartmentSceneBuilder] Simple Drink Making station group built (with fridge door).");
     }
@@ -3073,7 +3075,7 @@ public static class ApartmentSceneBuilder
             cdSO.ApplyModifiedPropertiesWithoutUndo();
 
             // ReactableTag for date NPC drink reactions (toggled on delivery)
-            AddReactableTag(deliveryGO, new[] { "drink" }, false);
+            AddReactableTag(deliveryGO, new[] { "drink" }, false, displayName: "Your Drink");
         }
 
         // ── DateEndScreen ─────────────────────────────────────────────
@@ -3815,7 +3817,7 @@ public static class ApartmentSceneBuilder
             leafR.layer = plantsLayer;
 
             // ReactableTag for date reactions
-            AddReactableTag(plantRoot, new[] { "plant", "greenery" }, true);
+            AddReactableTag(plantRoot, new[] { "plant", "greenery" }, true, displayName: "Houseplant");
         }
 
         // ── PotController (hidden simulation) ──────────────────────────
@@ -4673,7 +4675,7 @@ public static class ApartmentSceneBuilder
         sneakersPOSO.FindProperty("_itemDescription").stringValue = "Nema's beat-up sneakers.";
         sneakersPOSO.ApplyModifiedPropertiesWithoutUndo();
         sneakers.AddComponent<InteractableHighlight>();
-        AddReactableTag(sneakers, new[] { "shoes", "mess" }, true);
+        AddReactableTag(sneakers, new[] { "shoes", "mess" }, true, displayName: "Sneakers");
 
         // Boots (tall, dark)
         var boots = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -4694,7 +4696,7 @@ public static class ApartmentSceneBuilder
         bootsPOSO.FindProperty("_itemDescription").stringValue = "Heavy black boots.";
         bootsPOSO.ApplyModifiedPropertiesWithoutUndo();
         boots.AddComponent<InteractableHighlight>();
-        AddReactableTag(boots, new[] { "shoes", "mess" }, true);
+        AddReactableTag(boots, new[] { "shoes", "mess" }, true, displayName: "Boots");
 
         // Slippers (soft, light)
         var slippers = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -4715,7 +4717,7 @@ public static class ApartmentSceneBuilder
         slippersPOSO.FindProperty("_itemDescription").stringValue = "Fuzzy house slippers.";
         slippersPOSO.ApplyModifiedPropertiesWithoutUndo();
         slippers.AddComponent<InteractableHighlight>();
-        AddReactableTag(slippers, new[] { "shoes", "mess" }, true);
+        AddReactableTag(slippers, new[] { "shoes", "mess" }, true, displayName: "Slippers");
 
         // Coat
         var coat = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -4735,7 +4737,7 @@ public static class ApartmentSceneBuilder
         coatPOSO.FindProperty("_homeZoneName").stringValue = "CoatRack";
         coatPOSO.ApplyModifiedPropertiesWithoutUndo();
         coat.AddComponent<InteractableHighlight>();
-        AddReactableTag(coat, new[] { "coat", "mess" }, true);
+        AddReactableTag(coat, new[] { "coat", "mess" }, true, displayName: "Coat");
 
         // Hat
         var hat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -4760,7 +4762,7 @@ public static class ApartmentSceneBuilder
         hatPOSO.FindProperty("_homeZoneName").stringValue = "CoatRack";
         hatPOSO.ApplyModifiedPropertiesWithoutUndo();
         hat.AddComponent<InteractableHighlight>();
-        AddReactableTag(hat, new[] { "hat", "mess" }, true);
+        AddReactableTag(hat, new[] { "hat", "mess" }, true, displayName: "Hat");
 
         // ── Entrance bench / mat for decoration ──
         CreateBox("EntranceMat", parent.transform,

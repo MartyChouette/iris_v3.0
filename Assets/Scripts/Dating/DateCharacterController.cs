@@ -40,8 +40,9 @@ public class DateCharacterController : MonoBehaviour
 
     /// <summary>
     /// Fired when the character reacts to a ReactableTag. DateSessionManager subscribes.
+    /// Args: (tag, reactionType, displayName)
     /// </summary>
-    public event Action<ReactableTag, ReactionType> OnReaction;
+    public event Action<ReactableTag, ReactionType, string> OnReaction;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state
@@ -214,8 +215,9 @@ public class DateCharacterController : MonoBehaviour
         if (reactionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(reactionSFX);
 
-        OnReaction?.Invoke(_currentTarget, reaction);
+        string itemDisplayName = _currentTarget.DisplayName;
+        OnReaction?.Invoke(_currentTarget, reaction, itemDisplayName);
 
-        Debug.Log($"[DateCharacterController] Reacted to {_currentTarget.gameObject.name}: {reaction}");
+        Debug.Log($"[DateCharacterController] Reacted to {itemDisplayName}: {reaction}");
     }
 }

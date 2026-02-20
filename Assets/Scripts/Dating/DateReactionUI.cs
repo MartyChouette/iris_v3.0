@@ -29,6 +29,11 @@ public class DateReactionUI : MonoBehaviour
     [Tooltip("Height above the character's origin for the bubble.")]
     [SerializeField] private float bubbleHeight = 2.2f;
 
+    // Sentiment text arrays for labeled reactions
+    private static readonly string[] s_likeTexts = { "Loves it!", "Really into this!", "Great taste!" };
+    private static readonly string[] s_neutralTexts = { "Hmm, okay.", "Not bad.", "Sure." };
+    private static readonly string[] s_dislikeTexts = { "Not a fan...", "Yikes.", "Hard pass." };
+
     private SpriteRenderer _iconRenderer;
     private GameObject _bubbleGO;
     private TextMeshPro _bubbleText;
@@ -145,21 +150,7 @@ public class DateReactionUI : MonoBehaviour
         _bubbleGO.SetActive(true);
         _iconRenderer.enabled = false;
 
-        // Create or reuse TextMeshPro child
-        if (_bubbleText == null)
-        {
-            var textGO = new GameObject("BubbleText");
-            textGO.transform.SetParent(_bubbleGO.transform, false);
-            textGO.transform.localPosition = Vector3.zero;
-            _bubbleText = textGO.AddComponent<TextMeshPro>();
-            _bubbleText.fontSize = 5f;
-            _bubbleText.alignment = TextAlignmentOptions.Center;
-            _bubbleText.color = Color.white;
-            _bubbleText.outlineWidth = 0.2f;
-            _bubbleText.outlineColor = new Color32(0, 0, 0, 200);
-            _bubbleText.rectTransform.sizeDelta = new Vector2(4f, 2f);
-            _bubbleText.enableWordWrapping = true;
-        }
+        EnsureBubbleText();
 
         _bubbleText.text = message;
         _bubbleText.gameObject.SetActive(true);
@@ -184,5 +175,117 @@ public class DateReactionUI : MonoBehaviour
         _iconRenderer.enabled = true;
         _bubbleGO.SetActive(false);
         _activeReaction = null;
+    }
+
+    /// <summary>Show a labeled reaction: topic label → reaction icon + sentiment text → fade out.</summary>
+    public void ShowLabeledReaction(ReactionType type, string topicLabel)
+    {
+        if (_activeReaction != null)
+            StopCoroutine(_activeReaction);
+
+        _activeReaction = StartCoroutine(LabeledReactionSequence(type, topicLabel));
+    }
+
+    private IEnumerator LabeledReactionSequence(ReactionType type, string topicLabel)
+    {
+        _bubbleGO.SetActive(true);
+        EnsureBubbleText();
+
+        // --- Phase 1: Topic label (0.7s) ---
+        _iconRenderer.sprite = questionSprite;
+        _iconRenderer.color = Color.white;
+        _iconRenderer.enabled = true;
+        _bubbleGO.transform.localScale = Vector3.one * 0.5f;
+
+        _bubbleText.text = topicLabel;
+        _bubbleText.color = Color.white;
+        _bubbleText.gameObject.SetActive(true);
+        // Position text above icon
+        _bubbleText.rectTransform.localPosition = new Vector3(0f, 0.4f, 0f);
+
+        yield return new WaitForSeconds(0.7f);
+
+        // --- Phase 2: Reaction icon + sentiment (1.8s) ---
+        _iconRenderer.sprite = type switch
+        {
+            ReactionType.Like => heartSprite,
+            ReactionType.Dislike => dislikeSprite,
+            _ => neutralSprite
+        };
+
+        _iconRenderer.color = type switch
+        {
+            ReactionType.Like => new Color(1f, 0.4f, 0.5f),
+            ReactionType.Dislike => new Color(0.5f, 0.5f, 1f),
+            _ => Color.white
+        };
+
+        // Play SFX
+        AudioClip clip = type switch
+        {
+            ReactionType.Like => likeSFX,
+            ReactionType.Dislike => dislikeSFX,
+            _ => null
+        };
+        if (clip != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(clip);
+
+        _bubbleText.text = GetRandomSentiment(type);
+        _bubbleText.color = _iconRenderer.color;
+        // Position text below icon
+        _bubbleText.rectTransform.localPosition = new Vector3(0f, -0.4f, 0f);
+
+        _bubbleGO.transform.localScale = Vector3.one * 0.7f;
+
+        yield return new WaitForSeconds(1.8f);
+
+        // --- Phase 3: Fade out (0.3s) ---
+        float fadeTime = 0.3f;
+        float elapsed = 0f;
+        Color iconStart = _iconRenderer.color;
+        Color textStart = _bubbleText.color;
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / fadeTime;
+            _iconRenderer.color = new Color(iconStart.r, iconStart.g, iconStart.b, 1f - t);
+            _bubbleText.color = new Color(textStart.r, textStart.g, textStart.b, 1f - t);
+            yield return null;
+        }
+
+        _bubbleText.gameObject.SetActive(false);
+        _bubbleText.rectTransform.localPosition = Vector3.zero;
+        _bubbleText.color = Color.white;
+        _iconRenderer.enabled = true;
+        _bubbleGO.SetActive(false);
+        _activeReaction = null;
+    }
+
+    private void EnsureBubbleText()
+    {
+        if (_bubbleText != null) return;
+
+        var textGO = new GameObject("BubbleText");
+        textGO.transform.SetParent(_bubbleGO.transform, false);
+        textGO.transform.localPosition = Vector3.zero;
+        _bubbleText = textGO.AddComponent<TextMeshPro>();
+        _bubbleText.fontSize = 5f;
+        _bubbleText.alignment = TextAlignmentOptions.Center;
+        _bubbleText.color = Color.white;
+        _bubbleText.outlineWidth = 0.2f;
+        _bubbleText.outlineColor = new Color32(0, 0, 0, 200);
+        _bubbleText.rectTransform.sizeDelta = new Vector2(4f, 2f);
+        _bubbleText.enableWordWrapping = true;
+    }
+
+    private static string GetRandomSentiment(ReactionType type)
+    {
+        var arr = type switch
+        {
+            ReactionType.Like => s_likeTexts,
+            ReactionType.Dislike => s_dislikeTexts,
+            _ => s_neutralTexts
+        };
+        return arr[UnityEngine.Random.Range(0, arr.Length)];
     }
 }

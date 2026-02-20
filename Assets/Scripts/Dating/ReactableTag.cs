@@ -8,6 +8,9 @@ using UnityEngine;
 /// </summary>
 public class ReactableTag : MonoBehaviour
 {
+    [Tooltip("Human-readable name shown in reaction bubbles (falls back to GameObject name).")]
+    [SerializeField] private string displayName = "";
+
     [Tooltip("Tags identifying what this is. E.g. 'vinyl', 'plant', 'perfume_floral'.")]
     [SerializeField] private string[] tags = { };
 
@@ -22,6 +25,7 @@ public class ReactableTag : MonoBehaviour
 
     private InteractableHighlight _highlight;
 
+    public string DisplayName => !string.IsNullOrEmpty(displayName) ? displayName : gameObject.name;
     public string[] Tags => tags;
     public bool IsActive
     {

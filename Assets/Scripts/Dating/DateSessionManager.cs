@@ -128,6 +128,14 @@ public class DateSessionManager : MonoBehaviour
     public event System.Action<AccumulatedReaction> OnRevealReaction;
 
     // ──────────────────────────────────────────────────────────────
+    // Phase transition dialogue
+    // ──────────────────────────────────────────────────────────────
+    private static readonly string[] s_prePhase2Lines = { "Why don't we go to the kitchen?", "I could use a drink..." };
+    private static readonly string[] s_postPhase2Lines = { "Make me something good!", "What are you pouring?" };
+    private static readonly string[] s_prePhase3Lines = { "Let's sit down for a bit.", "Show me the living room!" };
+    private static readonly string[] s_postPhase3Lines = { "Nice place you've got here...", "Let me look around." };
+
+    // ──────────────────────────────────────────────────────────────
     // Runtime state
     // ──────────────────────────────────────────────────────────────
     private SessionState _state = SessionState.Idle;
@@ -261,7 +269,7 @@ public class DateSessionManager : MonoBehaviour
             yield return ScreenFade.Instance.FadeOut(fadeDuration);
 
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Phase 1");
+            ScreenFade.Instance.ShowPhaseTitle("First Impressions");
 
         yield return new WaitForSeconds(phaseTitleHold);
 
@@ -306,11 +314,20 @@ public class DateSessionManager : MonoBehaviour
 
     private IEnumerator TransitionToPhase2()
     {
+        var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
+
+        // Pre-transition NPC dialogue
+        string preLine = s_prePhase2Lines[UnityEngine.Random.Range(0, s_prePhase2Lines.Length)];
+        reactionUI?.ShowText(preLine, 2.0f);
+        yield return new WaitForSeconds(2.5f);
+
+        // Fade out
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(fadeDuration);
 
+        // Phase title
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Phase 2");
+            ScreenFade.Instance.ShowPhaseTitle("Making Drinks");
 
         yield return new WaitForSeconds(phaseTitleHold);
 
@@ -332,19 +349,34 @@ public class DateSessionManager : MonoBehaviour
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(phaseTransitionSFX);
 
+        // Fade in
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        // Post-transition NPC dialogue
+        yield return new WaitForSeconds(0.5f);
+        string postLine = s_postPhase2Lines[UnityEngine.Random.Range(0, s_postPhase2Lines.Length)];
+        reactionUI?.ShowText(postLine, 2.0f);
 
         Debug.Log("[DateSessionManager] Phase 2: Kitchen — player makes drink, NPC watches.");
     }
 
     private IEnumerator TransitionToPhase3()
     {
+        var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
+
+        // Pre-transition NPC dialogue
+        string preLine = s_prePhase3Lines[UnityEngine.Random.Range(0, s_prePhase3Lines.Length)];
+        reactionUI?.ShowText(preLine, 2.0f);
+        yield return new WaitForSeconds(2.5f);
+
+        // Fade out
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(fadeDuration);
 
+        // Phase title
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Phase 3");
+            ScreenFade.Instance.ShowPhaseTitle("Getting Comfortable");
 
         yield return new WaitForSeconds(phaseTitleHold);
 
@@ -365,8 +397,14 @@ public class DateSessionManager : MonoBehaviour
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(phaseTransitionSFX);
 
+        // Fade in
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        // Post-transition NPC dialogue
+        yield return new WaitForSeconds(0.5f);
+        string postLine = s_postPhase3Lines[UnityEngine.Random.Range(0, s_postPhase3Lines.Length)];
+        reactionUI?.ShowText(postLine, 2.0f);
 
         Debug.Log("[DateSessionManager] Phase 3: Couch — NPC evaluating apartment items.");
 
@@ -629,20 +667,20 @@ public class DateSessionManager : MonoBehaviour
         _dateCharacter.OnReaction += HandleCharacterReaction;
     }
 
-    private void HandleCharacterReaction(ReactableTag tag, ReactionType type)
+    private void HandleCharacterReaction(ReactableTag tag, ReactionType type, string displayName)
     {
         ApplyReaction(type);
 
-        // Show reaction bubble on the character
+        // Show labeled reaction bubble on the character
         var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
-        reactionUI?.ShowReaction(type);
+        reactionUI?.ShowLabeledReaction(type, displayName);
 
         // Accumulate during all date phases (reactions shown live)
         if (tag != null)
         {
             var reaction = new AccumulatedReaction
             {
-                itemName = tag.gameObject.name,
+                itemName = displayName,
                 type = type
             };
             _accumulatedReactions.Add(reaction);
@@ -650,8 +688,7 @@ public class DateSessionManager : MonoBehaviour
         }
 
         // Debug overlay logging
-        string itemName = tag != null ? tag.gameObject.name : "unknown";
-        DateDebugOverlay.Instance?.LogReaction($"{itemName} → {type}");
+        DateDebugOverlay.Instance?.LogReaction($"{displayName} → {type}");
     }
 
     private void EvaluateAmbientMood()

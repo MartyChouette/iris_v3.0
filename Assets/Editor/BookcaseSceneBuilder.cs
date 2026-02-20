@@ -1058,6 +1058,7 @@ public static class BookcaseSceneBuilder
             // ReactableTag — always active and public (open shelves are public)
             var tag = bookGO.AddComponent<ReactableTag>();
             var tagSO = new SerializedObject(tag);
+            tagSO.FindProperty("displayName").stringValue = def.title;
             var tagsProp = tagSO.FindProperty("tags");
             tagsProp.arraySize = 2;
             tagsProp.GetArrayElementAtIndex(0).stringValue = "coffee_book";
