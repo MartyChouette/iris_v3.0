@@ -14,8 +14,21 @@ public class BookDefinition : ScriptableObject
     public string author = "Unknown";
 
     [TextArea(3, 8)]
-    [Tooltip("Text content for each page (exactly 3 entries).")]
-    public string[] pageTexts = new string[3];
+    [Tooltip("Text content for pages. Displayed as 2-page spreads (pairs of left+right).")]
+    public string[] pageTexts = new string[2];
+
+    // ──────────────────────────────────────────────────────────────
+    // Hidden Items
+    // ──────────────────────────────────────────────────────────────
+    [Header("Hidden Items")]
+    [Tooltip("Whether this book contains a hidden item (pressed flower, note, etc.).")]
+    public bool hasHiddenItem;
+
+    [Tooltip("Description of the hidden item displayed when found.")]
+    public string hiddenItemDescription = "";
+
+    [Tooltip("Which page spread the hidden item appears on (-1 = none, 0+ = spread index).")]
+    public int hiddenItemPage = -1;
 
     // ──────────────────────────────────────────────────────────────
     // Visuals

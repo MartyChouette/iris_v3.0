@@ -11,11 +11,25 @@ public class BookVolume : MonoBehaviour
     [SerializeField] private BookDefinition definition;
 
     [Header("Pages")]
-    [Tooltip("Parent GameObject containing the 3 page quads (activated during Reading).")]
+    [Tooltip("Parent GameObject containing the page quads (activated during Reading).")]
     [SerializeField] private GameObject pagesRoot;
 
-    [Tooltip("TMP_Text components for left, center, and right pages.")]
-    [SerializeField] private TMP_Text[] pageLabels = new TMP_Text[3];
+    [Tooltip("TMP_Text components for left and right pages.")]
+    [SerializeField] private TMP_Text[] pageLabels = new TMP_Text[2];
+
+    [Header("Navigation")]
+    [Tooltip("Page indicator text (e.g. '1/2') shown at bottom center.")]
+    [SerializeField] private TMP_Text pageIndicator;
+
+    [Tooltip("Left nav arrow text.")]
+    [SerializeField] private TMP_Text navLeft;
+
+    [Tooltip("Right nav arrow text.")]
+    [SerializeField] private TMP_Text navRight;
+
+    [Header("Hidden Items")]
+    [Tooltip("Hidden item overlay text (shown when on the correct spread).")]
+    [SerializeField] private TMP_Text hiddenItemLabel;
 
     public BookDefinition Definition => definition;
     public State CurrentState { get; private set; } = State.OnShelf;
@@ -25,6 +39,9 @@ public class BookVolume : MonoBehaviour
     private Material _instanceMaterial;
     private Color _baseColor;
     private bool _isHovered;
+
+    private int _currentSpread;
+    private int _totalSpreads;
 
     private const float HoverSlideDistance = 0.03f;
     private const float PullOutDuration = 0.25f;
@@ -103,6 +120,35 @@ public class BookVolume : MonoBehaviour
         StartCoroutine(PutBackRoutine());
     }
 
+    /// <summary>
+    /// Navigate to the next spread (called by click on right edge).
+    /// </summary>
+    public void NextSpread()
+    {
+        if (CurrentState != State.Reading) return;
+        if (_currentSpread < _totalSpreads - 1)
+        {
+            _currentSpread++;
+            PopulateSpread();
+        }
+    }
+
+    /// <summary>
+    /// Navigate to the previous spread (called by click on left edge).
+    /// </summary>
+    public void PrevSpread()
+    {
+        if (CurrentState != State.Reading) return;
+        if (_currentSpread > 0)
+        {
+            _currentSpread--;
+            PopulateSpread();
+        }
+    }
+
+    public int CurrentSpreadIndex => _currentSpread;
+    public int TotalSpreads => _totalSpreads;
+
     private IEnumerator PullOutRoutine(Transform readingAnchor)
     {
         CurrentState = State.PullingOut;
@@ -143,23 +189,75 @@ public class BookVolume : MonoBehaviour
         var spineTitle = transform.Find("SpineTitle");
         if (spineTitle != null) spineTitle.gameObject.SetActive(false);
 
-        // Populate page text from definition
-        if (definition != null && pageLabels != null)
-        {
-            for (int i = 0; i < pageLabels.Length && i < 3; i++)
-            {
-                if (pageLabels[i] == null) continue;
-
-                if (definition.pageTexts != null && i < definition.pageTexts.Length)
-                    pageLabels[i].text = definition.pageTexts[i] ?? "";
-                else
-                    pageLabels[i].text = "";
-            }
-        }
+        // Calculate total spreads (2 pages per spread)
+        int pageCount = (definition != null && definition.pageTexts != null)
+            ? definition.pageTexts.Length : 0;
+        _totalSpreads = Mathf.Max(1, Mathf.CeilToInt(pageCount / 2f));
+        _currentSpread = 0;
 
         if (pagesRoot != null)
             pagesRoot.SetActive(true);
+
+        PopulateSpread();
     }
+
+    private void PopulateSpread()
+    {
+        if (definition == null || pageLabels == null) return;
+
+        int leftIdx = _currentSpread * 2;
+        int rightIdx = leftIdx + 1;
+
+        // Left page
+        if (pageLabels.Length > 0 && pageLabels[0] != null)
+        {
+            pageLabels[0].text = (definition.pageTexts != null && leftIdx < definition.pageTexts.Length)
+                ? (definition.pageTexts[leftIdx] ?? "") : "";
+        }
+
+        // Right page
+        if (pageLabels.Length > 1 && pageLabels[1] != null)
+        {
+            pageLabels[1].text = (definition.pageTexts != null && rightIdx < definition.pageTexts.Length)
+                ? (definition.pageTexts[rightIdx] ?? "") : "";
+        }
+
+        // Page indicator
+        if (pageIndicator != null)
+        {
+            if (_totalSpreads > 1)
+            {
+                pageIndicator.gameObject.SetActive(true);
+                pageIndicator.text = $"{_currentSpread + 1}/{_totalSpreads}";
+            }
+            else
+            {
+                pageIndicator.gameObject.SetActive(false);
+            }
+        }
+
+        // Nav arrows
+        if (navLeft != null)
+            navLeft.gameObject.SetActive(_currentSpread > 0);
+        if (navRight != null)
+            navRight.gameObject.SetActive(_currentSpread < _totalSpreads - 1);
+
+        // Hidden item
+        if (hiddenItemLabel != null)
+        {
+            bool showHidden = definition.hasHiddenItem && definition.hiddenItemPage == _currentSpread;
+            hiddenItemLabel.gameObject.SetActive(showHidden);
+            if (showHidden && !string.IsNullOrEmpty(definition.hiddenItemDescription))
+                hiddenItemLabel.text = definition.hiddenItemDescription;
+        }
+
+        // Fire static event for collectible system
+        if (definition.hasHiddenItem && definition.hiddenItemPage == _currentSpread)
+            OnPageViewed?.Invoke(definition, _currentSpread);
+    }
+
+    /// <summary>Static event fired when a page with a hidden item is viewed.</summary>
+    public static event System.Action<BookDefinition, int> OnPageViewed;
 
     private IEnumerator PutBackRoutine()
     {

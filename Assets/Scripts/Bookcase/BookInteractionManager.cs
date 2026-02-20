@@ -509,8 +509,36 @@ public class BookInteractionManager : MonoBehaviour, IStationManager
 
     private void UpdateReading()
     {
-        if (_clickAction.WasPressedThisFrame() || _cancelAction.WasPressedThisFrame())
+        if (_cancelAction.WasPressedThisFrame())
+        {
             BeginPutBack();
+            return;
+        }
+
+        if (_clickAction.WasPressedThisFrame() && _activeBook != null)
+        {
+            // Check if click is on left/right edge for page navigation
+            float mouseX = UnityEngine.InputSystem.Mouse.current.position.ReadValue().x;
+            float screenWidth = Screen.width;
+            float normalizedX = mouseX / screenWidth;
+
+            if (_activeBook.TotalSpreads > 1)
+            {
+                if (normalizedX < 0.2f && _activeBook.CurrentSpreadIndex > 0)
+                {
+                    _activeBook.PrevSpread();
+                    return;
+                }
+                if (normalizedX > 0.8f && _activeBook.CurrentSpreadIndex < _activeBook.TotalSpreads - 1)
+                {
+                    _activeBook.NextSpread();
+                    return;
+                }
+            }
+
+            // Click in center area → put back
+            BeginPutBack();
+        }
     }
 
     private void BeginPutBack()

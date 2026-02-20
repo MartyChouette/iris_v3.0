@@ -93,80 +93,86 @@ public static class BookcaseSceneBuilder
 
     private static readonly string[][] BookPages =
     {
+        // Book 0 — Roots in Darkness (2 pages, 1 spread)
         new[] {
             "The roots do not ask permission. They push through clay and stone, searching for what they need in total darkness.",
-            "I have often wondered if the flower knows it is beautiful, or if beauty is simply a side effect of reaching toward light.",
-            "When the last petal falls, the stem stands bare — not empty, but unburdened."
+            "I have often wondered if the flower knows it is beautiful, or if beauty is simply a side effect of reaching toward light."
         },
+        // Book 1 — The Quiet Garden
         new[] {
             "A garden is never quiet. Listen closely: the earthworms turning, the slow exhale of opening buds, the patient drip.",
-            "She planted marigolds along the fence not for their color, but because they reminded her of someone she'd rather not forget.",
-            "By September the garden had its own ideas. She learned to stop arguing with it."
+            "She planted marigolds along the fence not for their color, but because they reminded her of someone she'd rather not forget."
         },
+        // Book 2 — Letters to Soil
         new[] {
             "Dear Soil, I am writing to apologize. I have taken so much from you and returned so little.",
-            "The compost heap is a love letter written in eggshells and coffee grounds. Decomposition as devotion.",
-            "Perhaps we are all just soil, waiting patiently for something to take root."
+            "The compost heap is a love letter written in eggshells and coffee grounds. Decomposition as devotion."
         },
+        // Book 3 — Pressing Petals (2 pages — has hidden pressed flower on spread 0)
         new[] {
             "To press a flower is to stop time — or at least, to press pause. The color fades, but the shape remembers.",
-            "Page 47 of her journal: a flattened daisy, brown at the edges, still holding its circular argument.",
-            "Some flowers are better preserved in memory than in books. But we press them anyway."
+            "Page 47 of her journal: a flattened daisy, brown at the edges, still holding its circular argument."
         },
+        // Book 4 — On Wilting
         new[] {
             "Wilting is not failure. It is the flower's way of saying: I have given everything I had to give.",
-            "The drooping head of a sunflower in October carries more dignity than any spring bloom.",
-            "We fear wilting because we see ourselves in it. But the plant does not fear. It simply returns."
+            "The drooping head of a sunflower in October carries more dignity than any spring bloom."
         },
+        // Book 5 — Stem Theory
         new[] {
             "Chapter 1: The stem is not merely a support structure. It is a highway, a messenger, a spine.",
-            "Consider the hollow stem of the dandelion — empty inside, yet strong enough to hold a wish.",
-            "All architecture aspires to the condition of the stem: vertical, purposeful, alive."
+            "Consider the hollow stem of the dandelion — empty inside, yet strong enough to hold a wish."
         },
+        // Book 6 — A Gentle Thorn
         new[] {
             "The thorn exists not out of cruelty but out of memory. Every wound the rose has received is recorded there.",
-            "To hold a thorned stem gently requires practice. Most people never bother to learn.",
-            "Gentleness, she decided, was not the absence of thorns but the willingness to reach past them."
+            "To hold a thorned stem gently requires practice. Most people never bother to learn."
         },
+        // Book 7 — Bloom & Fade
         new[] {
             "The bloom arrives without announcement. One morning the bud is closed; the next, it has made its decision.",
-            "Fading is the bloom's longest act. We celebrate the opening, but the slow close deserves its own ovation.",
-            "Between bloom and fade there is a single perfect day. The flower does not know which one it is."
+            "Fading is the bloom's longest act. We celebrate the opening, but the slow close deserves its own ovation."
         },
+        // Book 8 — The Potting Shed
         new[] {
             "The potting shed smelled of damp earth and turpentine. Tools hung on nails, each one a different kind of patience.",
-            "He repotted the fern for the third time that year. It kept outgrowing its container. He respected that.",
-            "In the corner of the shed, a spider had built a web between two terra cotta pots. He left it there."
+            "He repotted the fern for the third time that year. It kept outgrowing its container. He respected that."
         },
+        // Book 9 — Chlorophyll Dreams
         new[] {
             "Chlorophyll is the green dream of sunlight made solid. Every leaf is a sleeping solar panel.",
-            "The plant does not choose to photosynthesize. It simply faces the light and lets chemistry do the rest.",
-            "At night, the chloroplasts rest. Even the most dedicated workers need darkness to make sense of the day."
+            "The plant does not choose to photosynthesize. It simply faces the light and lets chemistry do the rest."
         },
+        // Book 10 — Under the Canopy (4 pages, 2 spreads — longer story)
         new[] {
             "The canopy is a ceiling made of arguments — each branch competing for its share of sky.",
             "Under the canopy, the light comes in fragments. The forest floor learns to make do with scraps.",
-            "She sat under the oak for an hour. When she stood, she understood something she could not put into words."
+            "She sat under the oak for an hour. When she stood, she understood something she could not put into words.",
+            "The tree did not care whether she understood. It had been speaking for centuries to anyone who would sit still."
         },
+        // Book 11 — Seed Catalog No. 7 (4 pages, 2 spreads — has hidden note on spread 1)
         new[] {
             "Item 7A: Moonflower seeds. Plant in evening. Do not expect results before midnight.",
             "Item 12C: Forget-me-nots. Self-explanatory. Plant near things you wish to remember.",
-            "Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway."
+            "Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway.",
+            "Item 31D: Venus flytrap. Feeds itself. Do not anthropomorphize. It does not love you back."
         },
+        // Book 12 — Still Life with Vase (4 pages, 2 spreads)
         new[] {
             "The vase held three stems: one straight, one curved, one broken. Together they made a sentence.",
             "Still life painters know: the flower in the painting will outlast the flower on the table.",
-            "She arranged the flowers not for beauty but for conversation. The lily had something to say to the rose."
+            "She arranged the flowers not for beauty but for conversation. The lily had something to say to the rose.",
+            "By the third day the petals had fallen. She painted them where they lay. It was a better composition."
         },
+        // Book 13 — Water & Light
         new[] {
             "Water finds the root the way memory finds the dreamer — without effort, by gravity, in the dark.",
-            "Too much light bleaches. Too little starves. The plant's whole life is a negotiation between extremes.",
-            "The best gardeners understand that water and light are not gifts. They are partnerships."
+            "Too much light bleaches. Too little starves. The plant's whole life is a negotiation between extremes."
         },
+        // Book 14 — The Pruner's Almanac
         new[] {
             "January: Sharpen the shears. A clean cut heals faster than a ragged one. This applies to most things.",
-            "June: The roses will try to take over. Let them think they're winning, then prune on the solstice.",
-            "October: Let the dead heads stand. The goldfinches need the seeds more than you need tidiness."
+            "June: The roses will try to take over. Let them think they're winning, then prune on the solstice."
         },
     };
 
@@ -478,6 +484,20 @@ public static class BookcaseSceneBuilder
             def.heightScale = heightFrac;
             def.thicknessScale = thickness;
 
+            // Hidden items in select books
+            if (bookIndex == 3) // "Pressing Petals" — pressed flower
+            {
+                def.hasHiddenItem = true;
+                def.hiddenItemDescription = "A pressed daisy, flattened between the pages.";
+                def.hiddenItemPage = 0;
+            }
+            else if (bookIndex == 11) // "Seed Catalog No. 7" — hidden note
+            {
+                def.hasHiddenItem = true;
+                def.hiddenItemDescription = "A handwritten note: \"Order #31D — she'll love this one.\"";
+                def.hiddenItemPage = 1;
+            }
+
             string defPath = $"{defDir}/Book_{bookIndex:D3}_{title.Replace(" ", "_")}.asset";
             AssetDatabase.CreateAsset(def, defPath);
 
@@ -523,11 +543,30 @@ public static class BookcaseSceneBuilder
             so.FindProperty("definition").objectReferenceValue = def;
             so.FindProperty("pagesRoot").objectReferenceValue = pagesRoot;
 
-            var pageLabels = pagesRoot.GetComponentsInChildren<TMP_Text>(true);
+            // Wire page labels (left + right — first 2 TMP_Text in page GOs)
+            var pageCanvas = pagesRoot.transform.GetChild(0); // PageCanvas
+            var leftText = pageCanvas.Find("PageLeft/Text");
+            var rightText = pageCanvas.Find("PageRight/Text");
             var labelsProperty = so.FindProperty("pageLabels");
-            labelsProperty.arraySize = Mathf.Min(pageLabels.Length, 3);
-            for (int p = 0; p < labelsProperty.arraySize; p++)
-                labelsProperty.GetArrayElementAtIndex(p).objectReferenceValue = pageLabels[p];
+            labelsProperty.arraySize = 2;
+            labelsProperty.GetArrayElementAtIndex(0).objectReferenceValue =
+                leftText != null ? leftText.GetComponent<TMP_Text>() : null;
+            labelsProperty.GetArrayElementAtIndex(1).objectReferenceValue =
+                rightText != null ? rightText.GetComponent<TMP_Text>() : null;
+
+            // Wire navigation elements
+            var indicatorT = pageCanvas.Find("PageIndicator");
+            var navLeftT = pageCanvas.Find("NavLeft");
+            var navRightT = pageCanvas.Find("NavRight");
+            var hiddenT = pageCanvas.Find("HiddenItemLabel");
+            so.FindProperty("pageIndicator").objectReferenceValue =
+                indicatorT != null ? indicatorT.GetComponent<TMP_Text>() : null;
+            so.FindProperty("navLeft").objectReferenceValue =
+                navLeftT != null ? navLeftT.GetComponent<TMP_Text>() : null;
+            so.FindProperty("navRight").objectReferenceValue =
+                navRightT != null ? navRightT.GetComponent<TMP_Text>() : null;
+            so.FindProperty("hiddenItemLabel").objectReferenceValue =
+                hiddenT != null ? hiddenT.GetComponent<TMP_Text>() : null;
 
             so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -561,11 +600,12 @@ public static class BookcaseSceneBuilder
         canvasRT.sizeDelta = new Vector2(900f, 400f);
         canvasRT.localScale = new Vector3(0.0005f, 0.0005f, 0.0005f);
 
-        string[] pageNames = { "PageLeft", "PageCenter", "PageRight" };
-        float pageWidth = 280f;
-        float[] xPositions = { -300f, 0f, 300f };
+        // Two-page spread: left + right (wider pages now)
+        string[] pageNames = { "PageLeft", "PageRight" };
+        float pageWidth = 380f;
+        float[] xPositions = { -200f, 200f };
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++)
         {
             var pageGO = new GameObject(pageNames[i]);
             pageGO.transform.SetParent(canvasGO.transform);
@@ -585,8 +625,8 @@ public static class BookcaseSceneBuilder
             var textRT = textGO.AddComponent<RectTransform>();
             textRT.anchorMin = Vector2.zero;
             textRT.anchorMax = Vector2.one;
-            textRT.offsetMin = new Vector2(8f, 8f);
-            textRT.offsetMax = new Vector2(-8f, -8f);
+            textRT.offsetMin = new Vector2(12f, 12f);
+            textRT.offsetMax = new Vector2(-12f, -12f);
             textRT.localScale = Vector3.one;
 
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
@@ -598,6 +638,62 @@ public static class BookcaseSceneBuilder
             tmp.enableWordWrapping = true;
             tmp.overflowMode = TextOverflowModes.Ellipsis;
         }
+
+        // Page indicator (bottom center, hidden when single spread)
+        var indicatorGO = new GameObject("PageIndicator");
+        indicatorGO.transform.SetParent(canvasGO.transform);
+        var indRT = indicatorGO.AddComponent<RectTransform>();
+        indRT.anchoredPosition = new Vector2(0f, -190f);
+        indRT.sizeDelta = new Vector2(100f, 30f);
+        indRT.localScale = Vector3.one;
+        var indTMP = indicatorGO.AddComponent<TextMeshProUGUI>();
+        indTMP.text = "";
+        indTMP.fontSize = 14f;
+        indTMP.alignment = TextAlignmentOptions.Center;
+        indTMP.color = new Color(0.4f, 0.38f, 0.35f);
+        indicatorGO.SetActive(false);
+
+        // Nav arrows (at page edges, hidden when not needed)
+        var navLeftGO = new GameObject("NavLeft");
+        navLeftGO.transform.SetParent(canvasGO.transform);
+        var nlRT = navLeftGO.AddComponent<RectTransform>();
+        nlRT.anchoredPosition = new Vector2(-420f, 0f);
+        nlRT.sizeDelta = new Vector2(40f, 60f);
+        nlRT.localScale = Vector3.one;
+        var nlTMP = navLeftGO.AddComponent<TextMeshProUGUI>();
+        nlTMP.text = "<";
+        nlTMP.fontSize = 28f;
+        nlTMP.alignment = TextAlignmentOptions.Center;
+        nlTMP.color = new Color(0.3f, 0.28f, 0.25f);
+        navLeftGO.SetActive(false);
+
+        var navRightGO = new GameObject("NavRight");
+        navRightGO.transform.SetParent(canvasGO.transform);
+        var nrRT = navRightGO.AddComponent<RectTransform>();
+        nrRT.anchoredPosition = new Vector2(420f, 0f);
+        nrRT.sizeDelta = new Vector2(40f, 60f);
+        nrRT.localScale = Vector3.one;
+        var nrTMP = navRightGO.AddComponent<TextMeshProUGUI>();
+        nrTMP.text = ">";
+        nrTMP.fontSize = 28f;
+        nrTMP.alignment = TextAlignmentOptions.Center;
+        nrTMP.color = new Color(0.3f, 0.28f, 0.25f);
+        navRightGO.SetActive(false);
+
+        // Hidden item overlay (shown on correct spread)
+        var hiddenGO = new GameObject("HiddenItemLabel");
+        hiddenGO.transform.SetParent(canvasGO.transform);
+        var hRT = hiddenGO.AddComponent<RectTransform>();
+        hRT.anchoredPosition = new Vector2(200f, -140f);
+        hRT.sizeDelta = new Vector2(300f, 50f);
+        hRT.localScale = Vector3.one;
+        var hTMP = hiddenGO.AddComponent<TextMeshProUGUI>();
+        hTMP.text = "";
+        hTMP.fontSize = 14f;
+        hTMP.fontStyle = FontStyles.Italic;
+        hTMP.alignment = TextAlignmentOptions.Center;
+        hTMP.color = new Color(0.5f, 0.35f, 0.2f);
+        hiddenGO.SetActive(false);
 
         pagesRoot.SetActive(false);
         return pagesRoot;
