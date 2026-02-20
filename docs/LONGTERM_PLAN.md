@@ -157,17 +157,17 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 - [ ] **Couch win scene** — Date succeeds → couch cuddling scene, Nema holding scissors behind her back. Separate camera angle.
 - [ ] **Flower trimming transition** — Hard cut from apartment to flower trimming scene. Load flower, get score. End of day.
 
-### VS-1b: Flower ↔ Apartment Integration (Not Yet Built)
+### VS-1b: Flower ↔ Apartment Integration (Done)
 
 Each date character brings a specific flower. The flower trimming score determines how long the plant lives in the apartment and affects next-day mess.
 
-- [ ] **Flower scene transition** — After date success + couch scene, hard cut to flower trimming scene. Load flower type from `DatePersonalDefinition.flowerPrefab`. Score and dismiss. Fade back to apartment Evening phase.
-- [ ] **DayPhaseManager flower phase** — New phase between DateInProgress and Evening: `FlowerTrimming`. Triggers scene load, waits for `FlowerSessionController.OnResult`, records score.
-- [ ] **Flower results → save data** — Pipe `OnResult(eval, score, days)` into `RichDateHistoryEntry` (flower score, days alive). Record in `IrisSaveData` for calendar display.
-- [ ] **Living plant in apartment** — Trimmed flower spawns as decoration in apartment. Persists for N days (from flower score). Wilts progressively, then dies/disappears. Feeds MoodMachine while alive ("LivingPlant" source, value decays as days pass).
-- [ ] **Flower score → mess intensity** — `AftermathMessGenerator` reads last flower score. Bad trim = heavy mess next morning, good trim = light mess. Threshold-based (e.g. score < 40 = extra stains, score > 80 = minimal mess).
-- [ ] **Flower score on calendar** — `ApartmentCalendar` shows flower grade alongside date grade per day. Visual indicator of plant health remaining.
-- [ ] **Per-character flower types** — Wire `DatePersonalDefinition.flowerPrefab` field on all 4 date characters (Livii, Sterling, Sage, Clover). Each brings a different species.
+- [x] **Flower scene transition** — `FlowerTrimmingBridge` loads flower trimming scene additively, instantiates flower prefab, captures `FlowerSessionController.OnResult`, spawns living plant, unloads scene. `DayPhaseManager` routes to flower trimming coroutine when `DateSessionManager.PendingFlowerPrefab != null`.
+- [x] **DayPhaseManager flower phase** — `DayPhase.FlowerTrimming` between DateInProgress and Evening. Triggers scene load, waits for result, records score.
+- [x] **Flower results → save data** — `DateOutcomeCapture` captures flower fields (hadFlowerTrim, flowerScore, flowerDaysAlive, flowerGrade, flowerWasGameOver). `DateHistory.UpdateFlowerResult()` retroactively updates most recent entry. `IrisSaveData.LivingPlantRecord` persists plant state.
+- [x] **Living plant in apartment** — `LivingFlowerPlant` (health decreases by 1/totalDaysAlive each day, color lerps green→yellow→brown, scale shrinks, ReactableTag with plant/flower/gift tags). `LivingFlowerPlantManager` (4 slots, `AdvanceAllPlants()` wired to `GameClock.OnDayStarted`, feeds MoodMachine "LivingPlants" source).
+- [x] **Flower score → mess intensity** — `MessBlueprint` flower conditions: `requireBadFlowerTrim` (score < 40), `requireGoodFlowerTrim` (score >= 80). SOs: Petal_Debris (bad trim), Stem_Clippings (any trim), Wilted_Leaves (day 3+).
+- [x] **Flower score on calendar** — `ApartmentCalendar` shows flower grade with ✂ icon alongside date grade in grid cells. Detail panel shows "Flower: B (62pts, 5 days)".
+- [x] **Per-character flower types** — `flowerSceneName` wired on all 4 date characters (Livii, Sterling, Sage, Clover) to `Daisy_Flower_Scene`.
 
 ### VS-2: Preparation Phase (Partially Built)
 
