@@ -37,11 +37,11 @@ public static class ApartmentSceneBuilder
     private static readonly Vector3 RecordPlayerStationPos = new Vector3(-2f, 0f, 5f);
     private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
-    // ─── Entrance Area Config ────────────────────────────────────
-    private static readonly Vector3 EntranceAreaPos     = new Vector3(-1f, 0f, 6.5f);
+    // ─── Entrance Area Config (near door at -3, 0, -5.5) ────────
+    private static readonly Vector3 EntranceAreaPos     = new Vector3(-3f, 0f, -5.5f);
     private static readonly Vector3 TrashCanPos         = new Vector3(-4.5f, 0f, -4.0f);
-    private static readonly Vector3 ShoeRackPos         = new Vector3(-0.5f, 0f, 7.0f);
-    private static readonly Vector3 CoatRackPos         = new Vector3(0.5f, 0f, 7.0f);
+    private static readonly Vector3 ShoeRackPos         = new Vector3(-2f, 0f, -5.3f);
+    private static readonly Vector3 CoatRackPos         = new Vector3(-4f, 0f, -5.3f);
 
     // Two-page newspaper spread dimensions
     private const int NewspaperCanvasWidth = 900;
@@ -419,9 +419,9 @@ public static class ApartmentSceneBuilder
     {
         var go = new GameObject("JudgmentStopPoint");
         go.transform.SetParent(parent);
-        // In front of the entrance area, visible from the entrance camera
-        go.transform.position = new Vector3(-1.0f, 0f, 5.5f);
-        go.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+        // In front of the door, between entrance and kitchen table
+        go.transform.position = new Vector3(-3f, 0f, -4f);
+        go.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
         return go.transform;
     }
 
@@ -1032,7 +1032,7 @@ public static class ApartmentSceneBuilder
         var entrance = CreateAreaDef("Entrance", soDir,
             "Entrance", "Shoe rack, coat rack, front door.",
             StationType.None,
-            new Vector3(-0.5f, 3.0f, 7.5f), new Vector3(35f, 180f, 0f), 50f);
+            new Vector3(-5f, 2f, -3f), new Vector3(15f, 125f, 0f), 55f);
 
         return new[] { kitchen, livingRoom, entrance };
     }
@@ -2320,7 +2320,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.0f, 3.5f, -3.5f), rotation = new Vector3(35f, 45f, 0f),  lens = MakeLens(48f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 3.5f, 2.0f),   rotation = new Vector3(30f, 60f, 0f),  lens = MakeLens(48f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 3.5f, 9.0f),  rotation = new Vector3(35f, 200f, 0f), lens = MakeLens(48f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-5f, 3.5f, -3f),     rotation = new Vector3(35f, 125f, 0f), lens = MakeLens(48f) },
             });
 
         var v2 = CreateCameraPreset("CameraPreset_V2", soDir, "V2 — Low & Wide",
@@ -2328,7 +2328,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 1.8f, -5.5f), rotation = new Vector3(15f, 30f, 0f),  lens = MakeLens(62f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-0.5f, 1.8f, 1.0f),  rotation = new Vector3(12f, 50f, 0f),  lens = MakeLens(62f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 1.8f, 9.5f),  rotation = new Vector3(12f, 195f, 0f), lens = MakeLens(62f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-5.5f, 1.8f, -3f),   rotation = new Vector3(10f, 125f, 0f), lens = MakeLens(62f) },
             });
 
         var v3 = CreateCameraPreset("CameraPreset_V3", soDir, "V3 — Isometric Ortho",
@@ -2336,7 +2336,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.5f, 6.0f, -4.5f), rotation = new Vector3(55f, 45f, 0f),  lens = MakeLensOrtho(3.5f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(1.0f, 6.0f, 2.5f),   rotation = new Vector3(55f, 45f, 0f),  lens = MakeLensOrtho(3.5f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 6.0f, 9.5f),  rotation = new Vector3(55f, 225f, 0f), lens = MakeLensOrtho(3.5f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-5f, 6f, -3.5f),     rotation = new Vector3(55f, 125f, 0f), lens = MakeLensOrtho(3.5f) },
             });
 
         var v4 = CreateCameraPreset("CameraPreset_V4", soDir, "V4 — Overhead",
@@ -2344,7 +2344,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 5.0f, -3.5f), rotation = new Vector3(75f, 0f, 0f),   lens = MakeLens(40f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 5.0f, 2.5f),   rotation = new Vector3(75f, 0f, 0f),   lens = MakeLens(40f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 5.0f, 7.5f),  rotation = new Vector3(75f, 180f, 0f), lens = MakeLens(40f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-3f, 5f, -5.5f),     rotation = new Vector3(75f, 0f, 0f),   lens = MakeLens(40f) },
             });
 
         var v5 = CreateCameraPreset("CameraPreset_V5", soDir, "V5 — Dutch Tilt",
@@ -2352,7 +2352,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-3.0f, 2.5f, -4.0f), rotation = new Vector3(20f, 40f, 0f),  lens = MakeLensDutch(52f, 12f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-1.0f, 2.5f, 1.5f),  rotation = new Vector3(18f, 55f, 0f),  lens = MakeLensDutch(52f, -10f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(1.0f, 2.5f, 9.0f),   rotation = new Vector3(18f, 210f, 0f), lens = MakeLensDutch(52f, 8f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-5f, 2.5f, -3f),     rotation = new Vector3(18f, 130f, 0f), lens = MakeLensDutch(52f, 8f) },
             });
 
         var v6 = CreateCameraPreset("CameraPreset_V6", soDir, "V6 — Tight Close-Up",
@@ -2360,7 +2360,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-2.0f, 1.5f, -3.0f), rotation = new Vector3(10f, 35f, 0f),  lens = MakeLens(32f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.0f, 1.5f, 2.0f),   rotation = new Vector3(8f, 50f, 0f),   lens = MakeLens(32f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 1.5f, 8.5f),  rotation = new Vector3(10f, 190f, 0f), lens = MakeLens(32f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-4.5f, 1.5f, -4f),   rotation = new Vector3(8f, 120f, 0f),  lens = MakeLens(32f) },
             });
 
         var v7 = CreateCameraPreset("CameraPreset_V7", soDir, "V7 — Ultra Wide",
@@ -2368,7 +2368,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-1.5f, 2.8f, -5.0f), rotation = new Vector3(25f, 35f, 0f),  lens = MakeLens(80f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(0.5f, 2.8f, 0.5f),   rotation = new Vector3(22f, 55f, 0f),  lens = MakeLens(80f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-0.5f, 2.8f, 9.5f),  rotation = new Vector3(22f, 200f, 0f), lens = MakeLens(80f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-5.5f, 2.8f, -2.5f), rotation = new Vector3(22f, 130f, 0f), lens = MakeLens(80f) },
             });
 
         var v8 = CreateCameraPreset("CameraPreset_V8", soDir, "V8 — Side Profile",
@@ -2376,7 +2376,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-5.0f, 2.0f, -3.5f), rotation = new Vector3(15f, 90f, 0f),  lens = MakeLens(50f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(-4.0f, 2.0f, 2.5f),  rotation = new Vector3(12f, 80f, 0f),  lens = MakeLens(50f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-3.0f, 2.0f, 7.5f),  rotation = new Vector3(12f, 160f, 0f), lens = MakeLens(50f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-1f, 2f, -5.5f),     rotation = new Vector3(12f, 200f, 0f), lens = MakeLens(50f) },
             });
 
         var v9 = CreateCameraPreset("CameraPreset_V9", soDir, "V9 — Surveillance",
@@ -2384,7 +2384,7 @@ public static class ApartmentSceneBuilder
             {
                 new AreaCameraConfig { areaLabel = "Kitchen",     position = new Vector3(-0.5f, 4.0f, -6.0f), rotation = new Vector3(40f, 20f, 0f),   lens = MakeLens(35f) },
                 new AreaCameraConfig { areaLabel = "Living Room", position = new Vector3(2.0f, 4.0f, 0.5f),   rotation = new Vector3(42f, -30f, 0f),  lens = MakeLens(35f) },
-                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(2.0f, 4.0f, 9.5f),   rotation = new Vector3(40f, 210f, 0f),  lens = MakeLens(35f) },
+                new AreaCameraConfig { areaLabel = "Entrance",    position = new Vector3(-5.5f, 4f, -2f),     rotation = new Vector3(40f, 130f, 0f),  lens = MakeLens(35f) },
             });
 
         var allPresets = new CameraPresetDefinition[] { v1, v2, v3, v4, v5, v6, v7, v8, v9 };
@@ -3861,7 +3861,7 @@ public static class ApartmentSceneBuilder
             new Vector3(-5.5f, 0.75f, 3.5f),   // Living room windowsill
             new Vector3(-3.8f, 0.75f, -3.0f),   // Kitchen counter
             new Vector3(-6.0f, 0.75f, 1.0f),    // Living room shelf
-            new Vector3(-1.0f, 0.75f, 5.5f),    // Entrance shelf
+            new Vector3(-2.0f, 0.75f, -5.0f),    // Near entrance door
         };
 
         var slots = new Transform[positions.Length];
@@ -4800,10 +4800,10 @@ public static class ApartmentSceneBuilder
             new Vector3(-1.5f, 0.1f, 0.5f),     // hallway floor
             new Vector3(1.0f, 0.1f, 3.0f),      // living room floor
             new Vector3(-5.0f, 0.1f, -4.0f),    // kitchen floor
-            new Vector3(-2.0f, 0.1f, 5.0f),     // near entrance
+            new Vector3(-2.0f, 0.1f, -5.0f),    // near entrance door
             new Vector3(0.3f, 0.1f, 1.0f),      // between rooms
             new Vector3(-4.2f, 0.1f, -2.0f),    // kitchen doorway
-            new Vector3(-0.8f, 0.1f, 4.5f),     // entrance floor
+            new Vector3(-1.5f, 0.1f, -4.5f),    // entrance floor
         };
 
         var wrongTransforms = new Transform[wrongPositions.Length];
