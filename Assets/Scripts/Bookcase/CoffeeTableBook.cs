@@ -84,9 +84,13 @@ public class CoffeeTableBook : MonoBehaviour
             if (definition != null && !string.IsNullOrEmpty(definition.itemID))
                 ItemStateRegistry.SetState(definition.itemID, ItemStateRegistry.ItemDisplayState.OnDisplay);
 
-            // Remove from shelf stack since we're going to coffee table
+            // Remove from shelf stack since we're going to coffee table.
+            // TriggerCollapse so remaining shelf books reposition.
             if (_shelfStack != null)
+            {
                 _shelfStack.Remove(transform);
+                _shelfStack.TriggerCollapse();
+            }
 
             // Move to coffee table immediately
             RecalculateCoffeeTableStack();

@@ -15,6 +15,8 @@ public class BookStack : MonoBehaviour
 
     private readonly List<StackEntry> _entries = new List<StackEntry>();
     private readonly Dictionary<Transform, Coroutine> _activeAnimations = new Dictionary<Transform, Coroutine>();
+    private bool _needsInitialSnap = true;
+    private Coroutine _deferredSnapRoutine;
 
     private const float CollapseDuration = 0.3f;
     private const float JitterXZ = 0.003f;
@@ -32,6 +34,10 @@ public class BookStack : MonoBehaviour
             if (_entries[i].book == book) return;
 
         _entries.Add(new StackEntry { book = book, thickness = thickness });
+
+        // Schedule a deferred snap at end of frame so all books register before positioning
+        if (_needsInitialSnap && _deferredSnapRoutine == null && gameObject.activeInHierarchy)
+            _deferredSnapRoutine = StartCoroutine(DeferredInitialSnap());
     }
 
     public void Remove(Transform book)
@@ -100,6 +106,28 @@ public class BookStack : MonoBehaviour
         Vector3 localPos = _stackBase + Vector3.up * (yOffset + halfThickness)
                            + new Vector3(xJitter, 0f, zJitter);
         return transform.TransformPoint(localPos);
+    }
+
+    /// <summary>
+    /// Force a collapse from external code (e.g. when a startsOnCoffeeTable book is removed).
+    /// </summary>
+    public void TriggerCollapse() => Collapse();
+
+    private IEnumerator DeferredInitialSnap()
+    {
+        // Wait one frame so all Start() registrations complete
+        yield return null;
+        _needsInitialSnap = false;
+        _deferredSnapRoutine = null;
+
+        // Snap all books to correct positions instantly (no animation on first frame)
+        for (int i = 0; i < _entries.Count; i++)
+        {
+            var entry = _entries[i];
+            if (entry.book == null) continue;
+            entry.book.position = GetTargetPosition(i);
+            entry.book.rotation = GetTargetRotation(i);
+        }
     }
 
     private void Collapse()
