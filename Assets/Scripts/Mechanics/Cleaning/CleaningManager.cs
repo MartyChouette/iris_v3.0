@@ -69,7 +69,11 @@ public class CleaningManager : MonoBehaviour
     public CleanableSurface[] Surfaces => _surfaces;
 
     /// <summary>Replace the surfaces array (used by ApartmentStainSpawner).</summary>
-    public void SetSurfaces(CleanableSurface[] surfaces) => _surfaces = surfaces;
+    public void SetSurfaces(CleanableSurface[] surfaces)
+    {
+        _surfaces = surfaces;
+        ReconcileLayers();
+    }
 
     /// <summary>Average clean percent for surfaces in a specific area.</summary>
     public float GetAreaCleanPercent(ApartmentArea area)
@@ -113,6 +117,62 @@ public class CleaningManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Ensure the layer mask includes whatever layers the actual surface GOs are on.
+    /// Fixes mismatches from scene rebuilds, layer renumbering, or missing layer assignment.
+    /// Also assigns surfaces to the expected layer if possible.
+    /// </summary>
+    private void ReconcileLayers()
+    {
+        if (_surfaces == null || _surfaces.Length == 0) return;
+
+        int expectedLayer = -1;
+        if (_cleanableLayer.value != 0)
+        {
+            // Find the single layer number from the mask
+            for (int i = 0; i < 32; i++)
+            {
+                if ((_cleanableLayer.value & (1 << i)) != 0)
+                {
+                    expectedLayer = i;
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < _surfaces.Length; i++)
+        {
+            if (_surfaces[i] == null) continue;
+            var go = _surfaces[i].gameObject;
+            int surfaceLayer = go.layer;
+
+            if (expectedLayer >= 0 && surfaceLayer != expectedLayer)
+            {
+                // Surface is on wrong layer — fix it (and its colliders' GO)
+                Debug.LogWarning($"[CleaningManager] Surface '{go.name}' on layer {surfaceLayer}, " +
+                                 $"expected {expectedLayer}. Reassigning.");
+                go.layer = expectedLayer;
+                // Also fix child layers
+                foreach (Transform child in go.transform)
+                    child.gameObject.layer = expectedLayer;
+            }
+            else if (expectedLayer < 0 && surfaceLayer != 0)
+            {
+                // No expected layer but surface is on a specific layer — adopt it
+                _cleanableLayer |= 1 << surfaceLayer;
+                expectedLayer = surfaceLayer;
+                Debug.LogWarning($"[CleaningManager] Adopted layer {surfaceLayer} from surface '{go.name}' (mask now={_cleanableLayer.value}).");
+            }
+        }
+
+        // Final fallback: if mask is still 0 but we have surfaces, use "Everything"
+        if (_cleanableLayer.value == 0 && _surfaces.Length > 0)
+        {
+            _cleanableLayer = ~0; // all layers
+            Debug.LogWarning("[CleaningManager] No layer detected — using all-layers mask as last resort.");
+        }
+    }
+
     // ── Singleton lifecycle ─────────────────────────────────────────
 
     void Awake()
@@ -145,19 +205,10 @@ public class CleaningManager : MonoBehaviour
             }
         }
 
-        // Log surface states for diagnosis
-        int activeSurfaces = 0;
-        if (_surfaces != null)
-        {
-            for (int i = 0; i < _surfaces.Length; i++)
-            {
-                if (_surfaces[i] != null && _surfaces[i].gameObject.activeInHierarchy)
-                    activeSurfaces++;
-            }
-        }
+        ReconcileLayers();
 
         Debug.Log($"[CleaningManager] Awake — camera={(_mainCamera != null ? _mainCamera.name : "NULL")}, " +
-                  $"surfaces={(_surfaces != null ? _surfaces.Length : 0)} (active={activeSurfaces}), " +
+                  $"surfaces={(_surfaces != null ? _surfaces.Length : 0)}, " +
                   $"sponge={(_spongeVisual != null ? "OK" : "NULL")}, " +
                   $"layer={_cleanableLayer.value}");
     }
@@ -221,6 +272,27 @@ public class CleaningManager : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(pointer);
 
         bool hit = Physics.Raycast(ray, out RaycastHit hitInfo, 100f, _cleanableLayer);
+
+        // Fallback: if layer-masked raycast missed, directly test each active surface's collider
+        if (!hit && _surfaces != null)
+        {
+            for (int i = 0; i < _surfaces.Length; i++)
+            {
+                if (_surfaces[i] == null || !_surfaces[i].gameObject.activeInHierarchy) continue;
+                var col = _surfaces[i].GetComponent<Collider>();
+                if (col != null && col.Raycast(ray, out hitInfo, 100f))
+                {
+                    hit = true;
+                    if (!_diagnosticFired)
+                    {
+                        Debug.LogWarning($"[CleaningManager] Layer raycast missed but direct collider hit on '{_surfaces[i].name}'. " +
+                                         $"Layer={_surfaces[i].gameObject.layer}, mask={_cleanableLayer.value}. Fixing layer.");
+                        _surfaces[i].gameObject.layer = LayerMaskToLayer(_cleanableLayer);
+                    }
+                    break;
+                }
+            }
+        }
 
         // One-time diagnostic on first click to help trace sponge issues
         if (!_diagnosticFired && _mouseClick.WasPressedThisFrame())
@@ -414,5 +486,14 @@ public class CleaningManager : MonoBehaviour
             AudioManager.Instance.PlaySFX(clip);
             _sfxCooldown = SFX_COOLDOWN;
         }
+    }
+
+    /// <summary>Extract the first set bit from a LayerMask value.</summary>
+    private static int LayerMaskToLayer(LayerMask mask)
+    {
+        int val = mask.value;
+        for (int i = 0; i < 32; i++)
+            if ((val & (1 << i)) != 0) return i;
+        return 0;
     }
 }
