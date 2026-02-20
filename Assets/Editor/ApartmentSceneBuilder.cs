@@ -631,36 +631,42 @@ public static class ApartmentSceneBuilder
         var parent = new GameObject("Placeables");
 
         // Cup on coffee table
-        CreatePlaceable("Cup", parent.transform,
+        var cup = CreatePlaceable("Cup", parent.transform,
             new Vector3(-0.672f, 0.45f, 1.984f), new Vector3(0.08f, 0.12f, 0.08f),
             new Color(0.85f, 0.82f, 0.75f), placeableLayer);
+        SetItemDescription(cup, "A ceramic mug, slightly chipped.");
 
         // Vase on kitchen counter
         var vase = CreatePlaceable("Vase", parent.transform,
             new Vector3(1.89f, 1.11f, -4.26f), new Vector3(0.1f, 0.2f, 0.1f),
             new Color(0.3f, 0.55f, 0.65f), placeableLayer);
         vase.transform.rotation = new Quaternion(0f, -0.7213f, 0f, 0.6927f);
+        SetItemDescription(vase, "A blue ceramic vase.");
 
         // Magazine on coffee table
-        CreatePlaceable("Magazine", parent.transform,
+        var magazine = CreatePlaceable("Magazine", parent.transform,
             new Vector3(-0.372f, 0.42f, 2.084f), new Vector3(0.18f, 0.02f, 0.25f),
             new Color(0.7f, 0.3f, 0.3f), placeableLayer);
+        SetItemDescription(magazine, "Last month's gardening magazine.");
 
         // Yoyo on coffee table
-        CreatePlaceable("Yoyo", parent.transform,
+        var yoyo = CreatePlaceable("Yoyo", parent.transform,
             new Vector3(-0.872f, 0.42f, 1.784f), new Vector3(0.06f, 0.06f, 0.06f),
             new Color(0.8f, 0.2f, 0.3f), placeableLayer);
+        SetItemDescription(yoyo, "A well-worn yoyo.");
 
         // GameKid (GameBoy-like handheld) on sun ledge
         var gameKid = CreatePlaceable("GameKid", parent.transform,
             new Vector3(-2.2f, 1.127f, -2.1f), new Vector3(0.06f, 0.10f, 0.02f),
             new Color(0.55f, 0.62f, 0.45f), placeableLayer);
+        SetItemDescription(gameKid, "A handheld game console.");
         AddReactableTag(gameKid, new[] { "video_game", "gadget", "nostalgia" }, true);
 
         // Tamagotchi on coffee table
         var tamagotchi = CreatePlaceable("Tamagotchi", parent.transform,
             new Vector3(-0.35f, 0.42f, 1.85f), new Vector3(0.04f, 0.05f, 0.02f),
             new Color(0.85f, 0.55f, 0.70f), placeableLayer);
+        SetItemDescription(tamagotchi, "A virtual pet keychain.");
         AddReactableTag(tamagotchi, new[] { "toy", "pet", "nostalgia" }, true);
 
         // Game cartridges (3) scattered near GameKid on sun ledge
@@ -670,6 +676,7 @@ public static class ApartmentSceneBuilder
             new Color(0.20f, 0.35f, 0.75f), // blue
             new Color(0.80f, 0.75f, 0.20f), // yellow
         };
+        string[] cartNames = { "Red cartridge.", "Blue cartridge.", "Yellow cartridge." };
         for (int i = 0; i < 3; i++)
         {
             float xOff = -2.35f + i * 0.06f;
@@ -677,8 +684,18 @@ public static class ApartmentSceneBuilder
             var cart = CreatePlaceable($"Cartridge_{i}", parent.transform,
                 new Vector3(xOff, 1.117f, zOff), new Vector3(0.04f, 0.05f, 0.008f),
                 cartColors[i], placeableLayer);
+            SetItemDescription(cart, cartNames[i]);
             AddReactableTag(cart, new[] { "video_game", "collectible" }, true);
         }
+    }
+
+    private static void SetItemDescription(GameObject go, string description)
+    {
+        var placeable = go.GetComponent<PlaceableObject>();
+        if (placeable == null) return;
+        var so = new SerializedObject(placeable);
+        so.FindProperty("_itemDescription").stringValue = description;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static GameObject CreatePlaceable(string name, Transform parent,
@@ -760,6 +777,7 @@ public static class ApartmentSceneBuilder
             var placeableSO = new SerializedObject(placeable);
             placeableSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Dish;
             placeableSO.FindProperty("_homeZoneName").stringValue = "DishDropZone";
+            placeableSO.FindProperty("_itemDescription").stringValue = "A dirty plate.";
             placeableSO.ApplyModifiedPropertiesWithoutUndo();
 
             plate.AddComponent<InteractableHighlight>();
@@ -1446,7 +1464,11 @@ public static class ApartmentSceneBuilder
             new Vector3(backpackS, backpackS * 1.2f, backpackS * 0.6f), grey, litShader);
 
         // Components on root
-        root.AddComponent<PlaceableObject>();
+        var gunplaPO = root.AddComponent<PlaceableObject>();
+        var gunplaPOSO = new SerializedObject(gunplaPO);
+        gunplaPOSO.FindProperty("_itemDescription").stringValue = "Hand-built Gunpla model.";
+        gunplaPOSO.ApplyModifiedPropertiesWithoutUndo();
+
         root.AddComponent<GunplaFigure>();
         root.AddComponent<InteractableHighlight>();
 
@@ -1459,6 +1481,10 @@ public static class ApartmentSceneBuilder
         rootCol.size = new Vector3(torsoW + armW * 2f + 0.02f,
             upperLegL + lowerLegL + torsoH + headS,
             torsoD + backpackS);
+
+        // Set ALL children to placeableLayer so child colliders don't intercept rays on wrong layer
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            child.gameObject.layer = placeableLayer;
 
         AddReactableTag(root, new[] { "figurine", "gunpla", "mecha", "hobby" }, true);
 
