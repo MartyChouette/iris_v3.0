@@ -493,29 +493,36 @@ public class DayPhaseManager : MonoBehaviour
         // 2. Show phase title
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.ShowPhaseTitle("Flower Trimming");
-        yield return new WaitForSeconds(1.0f);
-        if (ScreenFade.Instance != null)
-            ScreenFade.Instance.HidePhaseTitle();
 
-        // 3. Fade in — the flower scene camera (priority 40) will take over
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
-
-        // 4. Begin trimming and wait for completion
+        // 3. Begin scene load while still black — camera will activate off-screen
         bool trimmingComplete = false;
         bridge.BeginTrimming((score, days, gameOver) =>
         {
             trimmingComplete = true;
         });
 
+        // 4. Wait for the flower scene to finish loading
+        while (!bridge.IsSceneReady)
+            yield return null;
+
+        // 5. Hold title briefly so the player can read it
+        yield return new WaitForSeconds(0.6f);
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        // 6. Fade in — the flower scene camera (priority 40) is now active
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        // 7. Wait for the player to finish trimming
         while (!trimmingComplete)
             yield return null;
 
-        // 5. Fade to black, unload flower scene, transition to Evening
+        // 8. Fade to black, unload flower scene, transition to Evening
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
-        // 6. Enter Evening phase
+        // 9. Enter Evening phase
         _currentPhase = DayPhase.Evening;
         Debug.Log("[DayPhaseManager] Phase → Evening (after flower trimming)");
 
@@ -524,7 +531,7 @@ public class DayPhaseManager : MonoBehaviour
 
         OnPhaseChanged?.Invoke((int)DayPhase.Evening);
 
-        // 7. Fade in from black
+        // 10. Fade in from black
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
     }

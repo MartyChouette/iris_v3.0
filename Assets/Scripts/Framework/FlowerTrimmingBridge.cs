@@ -23,6 +23,12 @@ public class FlowerTrimmingBridge : MonoBehaviour
     private Action<int, int, bool> _onComplete;
     private bool _waitingForResult;
 
+    /// <summary>
+    /// True once the flower scene has been loaded, offset, and the session controller found.
+    /// DayPhaseManager polls this to know when it's safe to fade in from black.
+    /// </summary>
+    public bool IsSceneReady { get; private set; }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -54,6 +60,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         _onComplete = onComplete;
         _waitingForResult = true;
+        IsSceneReady = false;
         StartCoroutine(TrimmingSequence());
     }
 
@@ -143,6 +150,9 @@ public class FlowerTrimmingBridge : MonoBehaviour
         // Enable keyboard evaluate so player can press E to finish
         session.allowKeyboardEvaluate = true;
 
+        // Signal that the scene is loaded and ready for play
+        IsSceneReady = true;
+
         // Wait until the session produces a result
         while (!gotResult)
             yield return null;
@@ -180,6 +190,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
         // Clean up
         DateSessionManager.PendingFlowerTrim = false;
         _waitingForResult = false;
+        IsSceneReady = false;
 
         // Invoke callback before unloading
         _onComplete?.Invoke(resultScore, resultDays, resultGameOver);
