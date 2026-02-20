@@ -138,7 +138,7 @@ public static class ApartmentSceneBuilder
         var newspaperData = BuildNewspaperStation(camGO, newspaperLayer);
 
         // ── 5. Furniture (non-station items: couch, coffee table, kitchen table, etc.) ──
-        var furnitureRefs = BuildFurniture();
+        var furnitureRefs = BuildFurniture(placeableLayer);
 
         // ── 6. Placeable objects + ReactableTags ──
         BuildPlaceableObjects(placeableLayer);
@@ -311,7 +311,7 @@ public static class ApartmentSceneBuilder
         public Transform kitchenStandPoint;
     }
 
-    private static FurnitureRefs BuildFurniture()
+    private static FurnitureRefs BuildFurniture(int placeableLayer)
     {
         var parent = new GameObject("Furniture");
         var refs = new FurnitureRefs();
@@ -323,7 +323,7 @@ public static class ApartmentSceneBuilder
             out refs.dateSpawnPoint);
 
         // ═══ Living Room (west: X ~ -4, Z ~ 3) ═══
-        refs.coffeeTable = BuildLivingRoom(parent.transform,
+        refs.coffeeTable = BuildLivingRoom(parent.transform, placeableLayer,
             out refs.couchSeatTarget, out refs.coffeeTableDeliveryPoint);
 
         // ═══ Judgment Stop Point (between entrance and couch) ═══
@@ -435,7 +435,7 @@ public static class ApartmentSceneBuilder
         return go.transform;
     }
 
-    private static GameObject BuildLivingRoom(Transform parent,
+    private static GameObject BuildLivingRoom(Transform parent, int placeableLayer,
         out Transform couchSeatTarget, out Transform coffeeTableDeliveryPoint)
     {
         // Coffee table (legless)
@@ -451,19 +451,16 @@ public static class ApartmentSceneBuilder
             new Vector3(-6.3f, 1.7f, 5.3f), new Vector3(0.35f, 0.25f, 0.35f),
             new Color(0.92f, 0.85f, 0.65f));
 
-        // Sun ledge with mecha figurine
+        // Sun ledge with Gunpla figure (replaces old static MechaFigurine)
         CreateBox("SunLedge", parent,
             new Vector3(-1.834f, 1.067f, -2.15f), new Vector3(1.5f, 0.08f, 0.4f),
             new Color(0.50f, 0.45f, 0.38f));
-        CreateBox("MechaFigurine", parent,
-            new Vector3(-1.834f, 1.217f, -2.15f), new Vector3(0.1f, 0.2f, 0.1f),
-            new Color(0.3f, 0.4f, 0.6f));
 
         // Small plant on sun ledge (WaterablePlant wired by BuildAmbientWatering)
 
-        // ReactableTag on mecha figurine (decoration)
-        var mechaGO = GameObject.Find("MechaFigurine");
-        if (mechaGO != null) AddReactableTag(mechaGO, new[] { "figurine", "decoration" }, true);
+        // Gunpla figure on sun ledge (poseable articulated model)
+        BuildGunplaFigure(parent, placeableLayer,
+            new Vector3(-1.834f, 1.107f, -2.15f));
 
         // Couch seat target (where date character sits)
         var seatGO = new GameObject("CouchSeatTarget");
@@ -639,6 +636,35 @@ public static class ApartmentSceneBuilder
         CreatePlaceable("Yoyo", parent.transform,
             new Vector3(-0.872f, 0.42f, 1.784f), new Vector3(0.06f, 0.06f, 0.06f),
             new Color(0.8f, 0.2f, 0.3f), placeableLayer);
+
+        // GameKid (GameBoy-like handheld) on sun ledge
+        var gameKid = CreatePlaceable("GameKid", parent.transform,
+            new Vector3(-2.2f, 1.127f, -2.1f), new Vector3(0.06f, 0.10f, 0.02f),
+            new Color(0.55f, 0.62f, 0.45f), placeableLayer);
+        AddReactableTag(gameKid, new[] { "video_game", "gadget", "nostalgia" }, true);
+
+        // Tamagotchi on coffee table
+        var tamagotchi = CreatePlaceable("Tamagotchi", parent.transform,
+            new Vector3(-0.35f, 0.42f, 1.85f), new Vector3(0.04f, 0.05f, 0.02f),
+            new Color(0.85f, 0.55f, 0.70f), placeableLayer);
+        AddReactableTag(tamagotchi, new[] { "toy", "pet", "nostalgia" }, true);
+
+        // Game cartridges (3) scattered near GameKid on sun ledge
+        Color[] cartColors =
+        {
+            new Color(0.75f, 0.20f, 0.20f), // red
+            new Color(0.20f, 0.35f, 0.75f), // blue
+            new Color(0.80f, 0.75f, 0.20f), // yellow
+        };
+        for (int i = 0; i < 3; i++)
+        {
+            float xOff = -2.35f + i * 0.06f;
+            float zOff = -2.05f + (i % 2) * 0.04f;
+            var cart = CreatePlaceable($"Cartridge_{i}", parent.transform,
+                new Vector3(xOff, 1.117f, zOff), new Vector3(0.04f, 0.05f, 0.008f),
+                cartColors[i], placeableLayer);
+            AddReactableTag(cart, new[] { "video_game", "collectible" }, true);
+        }
     }
 
     private static GameObject CreatePlaceable(string name, Transform parent,
@@ -1287,6 +1313,184 @@ public static class ApartmentSceneBuilder
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log($"[ApartmentSceneBuilder] Record Player station group built ({records.Length} records, {sleeveTransforms.Length} sleeves).");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Gunpla Figure (poseable articulated mecha model)
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildGunplaFigure(Transform furnitureParent, int placeableLayer, Vector3 basePosition)
+    {
+        var litShader = Shader.Find("Universal Render Pipeline/Lit")
+                        ?? Shader.Find("Standard");
+
+        // Colors: classic Gundam RX-78 scheme
+        Color white = new Color(0.92f, 0.92f, 0.90f);
+        Color blue = new Color(0.15f, 0.25f, 0.55f);
+        Color red = new Color(0.75f, 0.18f, 0.15f);
+        Color yellow = new Color(0.85f, 0.75f, 0.20f);
+        Color grey = new Color(0.45f, 0.45f, 0.48f);
+
+        // Scale factor — total height ~0.2m
+        float torsoH = 0.06f, torsoW = 0.05f, torsoD = 0.03f;
+        float headS = 0.025f;
+        float upperArmL = 0.035f, armW = 0.018f;
+        float foreArmL = 0.03f;
+        float upperLegL = 0.04f, legW = 0.02f;
+        float lowerLegL = 0.04f;
+        float backpackS = 0.025f;
+
+        // Root GO
+        var root = new GameObject("Gunpla");
+        root.transform.SetParent(furnitureParent);
+        root.transform.position = basePosition;
+        root.layer = placeableLayer;
+        root.isStatic = false;
+
+        // Torso (main body — this gets the root Rigidbody)
+        var torso = CreateGunplaPart("Torso", root.transform,
+            new Vector3(0f, upperLegL + lowerLegL + torsoH / 2f, 0f),
+            new Vector3(torsoW, torsoH, torsoD), white, litShader);
+        var torsoRb = torso.AddComponent<Rigidbody>();
+        torsoRb.mass = 0.3f;
+        torsoRb.isKinematic = true;
+        torso.layer = placeableLayer;
+
+        // Head
+        var head = CreateGunplaPart("Head", root.transform,
+            new Vector3(0f, upperLegL + lowerLegL + torsoH + headS / 2f, 0f),
+            new Vector3(headS, headS, headS), white, litShader);
+        var headRb = head.AddComponent<Rigidbody>();
+        headRb.mass = 0.05f;
+        headRb.isKinematic = true;
+        head.layer = placeableLayer;
+        AddHingeJoint(head, torsoRb, new Vector3(0f, -headS / 2f, 0f), Vector3.up, -45f, 45f);
+
+        // V-fin on head (decorative — no joint)
+        var vfin = CreateGunplaPart("VFin", head.transform,
+            new Vector3(0f, headS * 0.4f, -headS * 0.3f),
+            new Vector3(headS * 0.8f, headS * 0.3f, 0.004f), yellow, litShader);
+        vfin.layer = placeableLayer;
+
+        // Arms (left/right)
+        for (int side = 0; side < 2; side++)
+        {
+            float sign = side == 0 ? -1f : 1f;
+            string lr = side == 0 ? "L" : "R";
+            Color shoulderColor = side == 0 ? red : red;
+
+            float shoulderX = sign * (torsoW / 2f + armW / 2f);
+            float shoulderY = upperLegL + lowerLegL + torsoH - armW / 2f;
+
+            var upperArm = CreateGunplaPart($"UpperArm_{lr}", root.transform,
+                new Vector3(shoulderX, shoulderY - upperArmL / 2f, 0f),
+                new Vector3(armW, upperArmL, armW), shoulderColor, litShader);
+            var uaRb = upperArm.AddComponent<Rigidbody>();
+            uaRb.mass = 0.05f;
+            uaRb.isKinematic = true;
+            upperArm.layer = placeableLayer;
+            AddHingeJoint(upperArm, torsoRb,
+                new Vector3(0f, upperArmL / 2f, 0f), Vector3.forward, -90f, 90f);
+
+            var foreArm = CreateGunplaPart($"ForeArm_{lr}", root.transform,
+                new Vector3(shoulderX, shoulderY - upperArmL - foreArmL / 2f, 0f),
+                new Vector3(armW * 0.9f, foreArmL, armW * 0.9f), white, litShader);
+            var faRb = foreArm.AddComponent<Rigidbody>();
+            faRb.mass = 0.03f;
+            faRb.isKinematic = true;
+            foreArm.layer = placeableLayer;
+            AddHingeJoint(foreArm, uaRb,
+                new Vector3(0f, foreArmL / 2f, 0f), Vector3.forward, 0f, 135f);
+        }
+
+        // Legs (left/right)
+        for (int side = 0; side < 2; side++)
+        {
+            float sign = side == 0 ? -1f : 1f;
+            string lr = side == 0 ? "L" : "R";
+
+            float hipX = sign * (torsoW / 2f - legW / 2f);
+            float hipY = upperLegL + lowerLegL;
+
+            var upperLeg = CreateGunplaPart($"UpperLeg_{lr}", root.transform,
+                new Vector3(hipX, hipY - upperLegL / 2f, 0f),
+                new Vector3(legW, upperLegL, legW), blue, litShader);
+            var ulRb = upperLeg.AddComponent<Rigidbody>();
+            ulRb.mass = 0.05f;
+            ulRb.isKinematic = true;
+            upperLeg.layer = placeableLayer;
+            AddHingeJoint(upperLeg, torsoRb,
+                new Vector3(0f, upperLegL / 2f, 0f), Vector3.right, -90f, 90f);
+
+            var lowerLeg = CreateGunplaPart($"LowerLeg_{lr}", root.transform,
+                new Vector3(hipX, hipY - upperLegL - lowerLegL / 2f, 0f),
+                new Vector3(legW * 0.9f, lowerLegL, legW * 1.1f), white, litShader);
+            var llRb = lowerLeg.AddComponent<Rigidbody>();
+            llRb.mass = 0.03f;
+            llRb.isKinematic = true;
+            lowerLeg.layer = placeableLayer;
+            AddHingeJoint(lowerLeg, ulRb,
+                new Vector3(0f, lowerLegL / 2f, 0f), Vector3.right, 0f, 135f);
+        }
+
+        // Backpack (decorative, fixed to torso)
+        var backpack = CreateGunplaPart("Backpack", torso.transform,
+            new Vector3(0f, 0f, torsoD / 2f + backpackS / 2f - 0.002f),
+            new Vector3(backpackS, backpackS * 1.2f, backpackS * 0.6f), grey, litShader);
+        backpack.layer = placeableLayer;
+
+        // Components on root
+        var placeable = root.AddComponent<PlaceableObject>();
+        root.AddComponent<GunplaFigure>();
+        root.AddComponent<InteractableHighlight>();
+
+        // Root needs a Rigidbody + Collider for ObjectGrabber pickup
+        var rootRb = root.AddComponent<Rigidbody>();
+        rootRb.mass = 0.5f;
+        rootRb.isKinematic = true;
+        var rootCol = root.AddComponent<BoxCollider>();
+        rootCol.center = new Vector3(0f, (upperLegL + lowerLegL + torsoH + headS) / 2f, 0f);
+        rootCol.size = new Vector3(torsoW + armW * 2f + 0.02f,
+            upperLegL + lowerLegL + torsoH + headS,
+            torsoD + backpackS);
+
+        AddReactableTag(root, new[] { "figurine", "gunpla", "mecha", "hobby" }, true);
+
+        Debug.Log("[ApartmentSceneBuilder] Built Gunpla figure with poseable joints.");
+    }
+
+    private static GameObject CreateGunplaPart(string name, Transform parent,
+        Vector3 localPos, Vector3 scale, Color color, Shader shader)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = name;
+        go.transform.SetParent(parent);
+        go.transform.localPosition = localPos;
+        go.transform.localScale = scale;
+        go.isStatic = false;
+
+        var rend = go.GetComponent<Renderer>();
+        if (rend != null)
+        {
+            var mat = new Material(shader);
+            mat.color = color;
+            rend.sharedMaterial = mat;
+        }
+        return go;
+    }
+
+    private static void AddHingeJoint(GameObject go, Rigidbody connectedBody,
+        Vector3 anchor, Vector3 axis, float minAngle, float maxAngle)
+    {
+        var joint = go.AddComponent<HingeJoint>();
+        joint.connectedBody = connectedBody;
+        joint.anchor = anchor;
+        joint.axis = axis;
+        joint.useLimits = true;
+        var limits = joint.limits;
+        limits.min = minAngle;
+        limits.max = maxAngle;
+        joint.limits = limits;
     }
 
     // ══════════════════════════════════════════════════════════════════
