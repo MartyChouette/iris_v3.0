@@ -16,7 +16,7 @@ public class GameClock : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
     [Header("Calendar")]
     [Tooltip("Total days in the game calendar. 0 = infinite (no cap).")]
-    [SerializeField] private int totalDays = 0;
+    [SerializeField] private int totalDays = 7;
 
     [Tooltip("Hour the player wakes up each morning.")]
     [SerializeField] private float startHour = 8f;
@@ -196,6 +196,7 @@ public class GameClock : MonoBehaviour
 
         if (totalDays > 0 && _currentDay > totalDays)
         {
+            _isSleeping = true; // block further ticking
             OnCalendarComplete?.Invoke();
             Debug.Log("[GameClock] Calendar complete!");
         }

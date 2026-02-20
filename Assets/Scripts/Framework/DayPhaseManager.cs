@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using Unity.Cinemachine;
 using TMPro;
 
@@ -146,6 +147,10 @@ public class DayPhaseManager : MonoBehaviour
         // Apply game mode prep duration if set from main menu
         if (MainMenuManager.ActiveConfig != null)
             _prepDuration = MainMenuManager.ActiveConfig.prepDuration;
+
+        // Subscribe to calendar completion
+        if (GameClock.Instance != null)
+            GameClock.Instance.OnCalendarComplete.AddListener(OnCalendarComplete);
     }
 
     private void OnDestroy()
@@ -155,6 +160,8 @@ public class DayPhaseManager : MonoBehaviour
             DateSessionManager.Instance.OnDateSessionStarted.RemoveListener(EnterDateInProgress);
             DateSessionManager.Instance.OnDateSessionEnded.RemoveListener(EnterEvening);
         }
+        if (GameClock.Instance != null)
+            GameClock.Instance.OnCalendarComplete.RemoveListener(OnCalendarComplete);
         if (Instance == this) Instance = null;
     }
 
@@ -541,6 +548,42 @@ public class DayPhaseManager : MonoBehaviour
         // 10. Fade in from black
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CALENDAR COMPLETE
+    // ═══════════════════════════════════════════════════════════════
+
+    private void OnCalendarComplete()
+    {
+        StartCoroutine(CalendarCompleteSequence());
+    }
+
+    private IEnumerator CalendarCompleteSequence()
+    {
+        Debug.Log("[DayPhaseManager] Calendar complete — showing end screen.");
+
+        // 1. Fade to black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+
+        // 2. Show end title
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("7 Days Complete");
+
+        // 3. Hold for the player to read
+        yield return new WaitForSeconds(4f);
+
+        // 4. Return to main menu if one exists, otherwise just stay on black
+        if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/MainMenu.unity") >= 0)
+        {
+            TimeScaleManager.ClearAll();
+            SceneManager.LoadScene("MainMenu");
+        }
+        else
+        {
+            Debug.Log("[DayPhaseManager] No MainMenu scene in build settings — staying on end screen.");
+        }
     }
 
     // ─── UI Cleanup ─────────────────────────────────────────────────
