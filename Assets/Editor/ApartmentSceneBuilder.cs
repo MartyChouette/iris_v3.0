@@ -1340,21 +1340,21 @@ public static class ApartmentSceneBuilder
         float lowerLegL = 0.04f;
         float backpackS = 0.025f;
 
-        // Root GO
+        // Root GO — ONLY the root is on placeableLayer so ObjectGrabber raycasts
+        // hit the root collider, not individual limb colliders.
         var root = new GameObject("Gunpla");
         root.transform.SetParent(furnitureParent);
         root.transform.position = basePosition;
         root.layer = placeableLayer;
         root.isStatic = false;
 
-        // Torso (main body — this gets the root Rigidbody)
+        // Torso (main body — child Rigidbody for HingeJoint chain)
         var torso = CreateGunplaPart("Torso", root.transform,
             new Vector3(0f, upperLegL + lowerLegL + torsoH / 2f, 0f),
             new Vector3(torsoW, torsoH, torsoD), white, litShader);
         var torsoRb = torso.AddComponent<Rigidbody>();
         torsoRb.mass = 0.3f;
         torsoRb.isKinematic = true;
-        torso.layer = placeableLayer;
 
         // Head
         var head = CreateGunplaPart("Head", root.transform,
@@ -1363,32 +1363,28 @@ public static class ApartmentSceneBuilder
         var headRb = head.AddComponent<Rigidbody>();
         headRb.mass = 0.05f;
         headRb.isKinematic = true;
-        head.layer = placeableLayer;
         AddHingeJoint(head, torsoRb, new Vector3(0f, -headS / 2f, 0f), Vector3.up, -45f, 45f);
 
         // V-fin on head (decorative — no joint)
-        var vfin = CreateGunplaPart("VFin", head.transform,
+        CreateGunplaPart("VFin", head.transform,
             new Vector3(0f, headS * 0.4f, -headS * 0.3f),
             new Vector3(headS * 0.8f, headS * 0.3f, 0.004f), yellow, litShader);
-        vfin.layer = placeableLayer;
 
         // Arms (left/right)
         for (int side = 0; side < 2; side++)
         {
             float sign = side == 0 ? -1f : 1f;
             string lr = side == 0 ? "L" : "R";
-            Color shoulderColor = side == 0 ? red : red;
 
             float shoulderX = sign * (torsoW / 2f + armW / 2f);
             float shoulderY = upperLegL + lowerLegL + torsoH - armW / 2f;
 
             var upperArm = CreateGunplaPart($"UpperArm_{lr}", root.transform,
                 new Vector3(shoulderX, shoulderY - upperArmL / 2f, 0f),
-                new Vector3(armW, upperArmL, armW), shoulderColor, litShader);
+                new Vector3(armW, upperArmL, armW), red, litShader);
             var uaRb = upperArm.AddComponent<Rigidbody>();
             uaRb.mass = 0.05f;
             uaRb.isKinematic = true;
-            upperArm.layer = placeableLayer;
             AddHingeJoint(upperArm, torsoRb,
                 new Vector3(0f, upperArmL / 2f, 0f), Vector3.forward, -90f, 90f);
 
@@ -1398,7 +1394,6 @@ public static class ApartmentSceneBuilder
             var faRb = foreArm.AddComponent<Rigidbody>();
             faRb.mass = 0.03f;
             faRb.isKinematic = true;
-            foreArm.layer = placeableLayer;
             AddHingeJoint(foreArm, uaRb,
                 new Vector3(0f, foreArmL / 2f, 0f), Vector3.forward, 0f, 135f);
         }
@@ -1418,7 +1413,6 @@ public static class ApartmentSceneBuilder
             var ulRb = upperLeg.AddComponent<Rigidbody>();
             ulRb.mass = 0.05f;
             ulRb.isKinematic = true;
-            upperLeg.layer = placeableLayer;
             AddHingeJoint(upperLeg, torsoRb,
                 new Vector3(0f, upperLegL / 2f, 0f), Vector3.right, -90f, 90f);
 
@@ -1428,19 +1422,17 @@ public static class ApartmentSceneBuilder
             var llRb = lowerLeg.AddComponent<Rigidbody>();
             llRb.mass = 0.03f;
             llRb.isKinematic = true;
-            lowerLeg.layer = placeableLayer;
             AddHingeJoint(lowerLeg, ulRb,
                 new Vector3(0f, lowerLegL / 2f, 0f), Vector3.right, 0f, 135f);
         }
 
         // Backpack (decorative, fixed to torso)
-        var backpack = CreateGunplaPart("Backpack", torso.transform,
+        CreateGunplaPart("Backpack", torso.transform,
             new Vector3(0f, 0f, torsoD / 2f + backpackS / 2f - 0.002f),
             new Vector3(backpackS, backpackS * 1.2f, backpackS * 0.6f), grey, litShader);
-        backpack.layer = placeableLayer;
 
         // Components on root
-        var placeable = root.AddComponent<PlaceableObject>();
+        root.AddComponent<PlaceableObject>();
         root.AddComponent<GunplaFigure>();
         root.AddComponent<InteractableHighlight>();
 

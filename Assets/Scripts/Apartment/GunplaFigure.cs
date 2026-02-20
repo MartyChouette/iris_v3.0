@@ -2,8 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// Poseable Gunpla model figure built from a hierarchy of cubes with HingeJoints.
-/// On pickup: all child Rigidbodies go kinematic so the figure moves as one unit.
-/// On place: child Rigidbodies restored to non-kinematic with HingeJoint limits.
+/// Monitors the sibling PlaceableObject for state changes:
+///   - On pickup: all child Rigidbodies go kinematic so the figure moves as one unit.
+///   - On place: child Rigidbodies restored to non-kinematic with HingeJoint limits.
 /// Click a limb segment while NOT holding it to cycle that joint through preset angles.
 /// </summary>
 public class GunplaFigure : MonoBehaviour
@@ -17,37 +18,43 @@ public class GunplaFigure : MonoBehaviour
     [Tooltip("Damper on the joint spring.")]
     [SerializeField] private float _jointDamper = 5f;
 
+    private PlaceableObject _placeable;
     private HingeJoint[] _joints;
     private Rigidbody[] _childBodies;
-    private int[] _angleIndices; // per-joint index into _presetAngles
+    private int[] _angleIndices;
     private bool _isHeld;
 
     private void Awake()
     {
+        _placeable = GetComponent<PlaceableObject>();
         _joints = GetComponentsInChildren<HingeJoint>();
         _childBodies = GetComponentsInChildren<Rigidbody>();
         _angleIndices = new int[_joints.Length];
     }
 
-    /// <summary>
-    /// Called by PlaceableObject.OnPickedUp (via SendMessage or manual wiring).
-    /// Sets all child Rigidbodies kinematic so the figure moves as one piece.
-    /// </summary>
-    public void OnFigurePickedUp()
+    private void Update()
+    {
+        if (_placeable == null) return;
+
+        bool shouldBeHeld = _placeable.CurrentState == PlaceableObject.State.Held;
+        if (shouldBeHeld != _isHeld)
+        {
+            if (shouldBeHeld) OnFigurePickedUp();
+            else OnFigurePlaced();
+        }
+    }
+
+    private void OnFigurePickedUp()
     {
         _isHeld = true;
         foreach (var rb in _childBodies)
         {
-            if (rb.gameObject == gameObject) continue; // root handled by ObjectGrabber
+            if (rb.gameObject == gameObject) continue;
             rb.isKinematic = true;
         }
     }
 
-    /// <summary>
-    /// Called by PlaceableObject.OnPlaced.
-    /// Restores child Rigidbodies to non-kinematic with HingeJoint limits.
-    /// </summary>
-    public void OnFigurePlaced()
+    private void OnFigurePlaced()
     {
         _isHeld = false;
         foreach (var rb in _childBodies)
