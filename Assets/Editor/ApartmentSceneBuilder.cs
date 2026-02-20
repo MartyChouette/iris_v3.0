@@ -453,9 +453,22 @@ public static class ApartmentSceneBuilder
             new Color(0.92f, 0.85f, 0.65f));
 
         // Sun ledge with Gunpla figure (replaces old static MechaFigurine)
-        CreateBox("SunLedge", parent,
+        var sunLedge = CreateBox("SunLedge", parent,
             new Vector3(-1.834f, 1.067f, -2.15f), new Vector3(1.5f, 0.08f, 0.4f),
             new Color(0.50f, 0.45f, 0.38f));
+        {
+            int surfLayer = BookcaseSceneBuilder.EnsureLayer("Surfaces");
+            sunLedge.layer = surfLayer;
+            sunLedge.isStatic = false;
+            var ledgeSurface = sunLedge.AddComponent<PlacementSurface>();
+            var ledgeSurfSO = new SerializedObject(ledgeSurface);
+            ledgeSurfSO.FindProperty("localBounds").boundsValue = new Bounds(
+                Vector3.zero,
+                new Vector3(1.5f, 0.05f, 0.4f));
+            ledgeSurfSO.FindProperty("normalAxis").enumValueIndex = (int)PlacementSurface.SurfaceAxis.Up;
+            ledgeSurfSO.FindProperty("surfaceLayerIndex").intValue = surfLayer;
+            ledgeSurfSO.ApplyModifiedPropertiesWithoutUndo();
+        }
 
         // Small plant on sun ledge (WaterablePlant wired by BuildAmbientWatering)
 

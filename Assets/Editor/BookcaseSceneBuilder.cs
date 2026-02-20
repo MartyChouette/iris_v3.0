@@ -410,13 +410,30 @@ public static class BookcaseSceneBuilder
         float innerWidth = CaseWidth - SidePanelThickness * 2f;
         float rowHeight = CaseHeight / ShelfCount;
 
+        int surfacesLayer = EnsureLayer("Surfaces");
+
         for (int i = 0; i <= ShelfCount - 1; i++)
         {
             float shelfY = caseBottomY + i * rowHeight;
-            CreateBox($"Shelf_{i}", frame.transform,
+            var shelfGO = CreateBox($"Shelf_{i}", frame.transform,
                 new Vector3(caseX, shelfY, CaseCenterZ),
                 new Vector3(innerWidth, ShelfThickness, CaseDepth),
                 darkBrown);
+
+            // Rows 0 and 4 are empty display shelves — add PlacementSurface
+            if (i == 0 || i == 4)
+            {
+                shelfGO.layer = surfacesLayer;
+                shelfGO.isStatic = false;
+                var surface = shelfGO.AddComponent<PlacementSurface>();
+                var surfSO = new SerializedObject(surface);
+                surfSO.FindProperty("localBounds").boundsValue = new Bounds(
+                    Vector3.zero,
+                    new Vector3(innerWidth, 0.05f, CaseDepth));
+                surfSO.FindProperty("normalAxis").enumValueIndex = (int)PlacementSurface.SurfaceAxis.Up;
+                surfSO.FindProperty("surfaceLayerIndex").intValue = surfacesLayer;
+                surfSO.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
     }
 
