@@ -191,7 +191,7 @@ public static class ApartmentSceneBuilder
         autoSaveGO.AddComponent<AutoSaveController>();
 
         // ── 13. Ambient cleaning (not a station) ──
-        var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer);
+        var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer, placeableLayer);
 
         // ── 13b. Ambient watering (not a station) ──
         BuildAmbientWatering(camGO, plantsLayer);
@@ -1062,6 +1062,7 @@ public static class ApartmentSceneBuilder
         tmp.fontSize = fontSize;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
+        tmp.raycastTarget = false;
 
         return tmp;
     }
@@ -1701,7 +1702,7 @@ public static class ApartmentSceneBuilder
 
         // Instruction label (bottom-center)
         var instrTMP = CreateHUDText("InstructionLabel", hudCanvasGO.transform,
-            new Vector2(0f, -200f), 18f, "Draw around a phone number to cut it out");
+            new Vector2(0f, -200f), 18f, "Hold a personal ad to select your date");
 
         // Calling UI panel
         var callingPanel = new GameObject("CallingUI");
@@ -3122,7 +3123,7 @@ public static class ApartmentSceneBuilder
         public AuthoredMessSpawner authoredMessSpawner;
     }
 
-    private static AmbientCleaningData BuildAmbientCleaning(GameObject camGO, int cleanableLayer)
+    private static AmbientCleaningData BuildAmbientCleaning(GameObject camGO, int cleanableLayer, int placeableLayer)
     {
         // ── SO folder ────────────────────────────────────────────────
         string soDir = "Assets/ScriptableObjects/Cleaning";
@@ -3325,6 +3326,7 @@ public static class ApartmentSceneBuilder
             bpProp.GetArrayElementAtIndex(i).objectReferenceValue = blueprints[i];
 
         spawnerSO.FindProperty("_cleaningManager").objectReferenceValue = cleanMgr;
+        spawnerSO.FindProperty("_objectLayer").intValue = placeableLayer;
         spawnerSO.ApplyModifiedPropertiesWithoutUndo();
 
         Debug.Log($"[ApartmentSceneBuilder] Ambient cleaning + authored mess system built ({blueprints.Length} blueprints loaded).");

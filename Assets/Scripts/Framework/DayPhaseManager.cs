@@ -446,7 +446,21 @@ public class DayPhaseManager : MonoBehaviour
         if (_explorationAmbienceClip != null && AudioManager.Instance != null)
             AudioManager.Instance.PlayAmbience(_explorationAmbienceClip, 0.5f);
 
-        // 10. Start preparation countdown
+        // 10. Safety: ensure ScreenFade is not blocking raycasts.
+        // MorningTransition's FadeIn should have already cleared this, but
+        // guard against edge cases (skipped morning, interrupted fade, etc.).
+        if (ScreenFade.Instance != null && ScreenFade.Instance.IsFading == false)
+        {
+            var cg = ScreenFade.Instance.GetComponentInChildren<CanvasGroup>();
+            if (cg != null && cg.blocksRaycasts)
+            {
+                cg.blocksRaycasts = false;
+                cg.alpha = 0f;
+                Debug.LogWarning("[DayPhaseManager] ScreenFade was still blocking — forced clear.");
+            }
+        }
+
+        // 11. Start preparation countdown
         StartPrepTimer();
     }
 
