@@ -510,7 +510,7 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.HidePhaseTitle();
 
-        // 6. Fade in — the flower scene camera (priority 40) is now active
+        // 6. Fade in — the flower scene's own Camera is now active (apartment camera disabled)
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
 
@@ -521,6 +521,10 @@ public class DayPhaseManager : MonoBehaviour
         // 8. Fade to black, unload flower scene, transition to Evening
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+
+        // 8b. Restore apartment camera now that screen is fully black
+        if (bridge != null)
+            bridge.RestoreApartmentCamera();
 
         // 9. Enter Evening phase
         _currentPhase = DayPhase.Evening;

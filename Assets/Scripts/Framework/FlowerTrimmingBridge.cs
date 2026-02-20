@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Cinemachine;
 
 /// <summary>
 /// Scene-scoped singleton that manages the transition into and out of a
@@ -22,6 +23,12 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
     private Action<int, int, bool> _onComplete;
     private bool _waitingForResult;
+
+    // Cached apartment camera references — disabled during trimming so
+    // the flower scene's own Camera takes over rendering.
+    private Camera _apartmentCamera;
+    private CinemachineBrain _apartmentBrain;
+    private AudioListener _apartmentListener;
 
     /// <summary>
     /// True once the flower scene has been loaded, offset, and the session controller found.
@@ -84,6 +91,16 @@ public class FlowerTrimmingBridge : MonoBehaviour
     {
         // Resolve per-date scene name, falling back to default
         string sceneName = ResolveSceneName();
+
+        // Cache the apartment camera BEFORE loading — the flower scene has its own
+        // MainCamera-tagged Camera (not Cinemachine), so we must disable the apartment's
+        // to avoid two cameras rendering simultaneously.
+        _apartmentCamera = Camera.main;
+        if (_apartmentCamera != null)
+        {
+            _apartmentBrain = _apartmentCamera.GetComponent<CinemachineBrain>();
+            _apartmentListener = _apartmentCamera.GetComponent<AudioListener>();
+        }
 
         // Load the flower trimming scene additively
         var loadOp = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
@@ -150,6 +167,10 @@ public class FlowerTrimmingBridge : MonoBehaviour
         // Enable keyboard evaluate so player can press E to finish
         session.allowKeyboardEvaluate = true;
 
+        // Disable apartment camera so the flower scene's Camera renders exclusively.
+        // ScreenFade is ScreenSpaceOverlay so it still works while apartment camera is off.
+        DisableApartmentCamera();
+
         // Signal that the scene is loaded and ready for play
         IsSceneReady = true;
 
@@ -187,6 +208,9 @@ public class FlowerTrimmingBridge : MonoBehaviour
             UnityEngine.Object.Destroy(trimmedVisual);
         }
 
+        // NOTE: Apartment camera is restored by DayPhaseManager after its fade-to-black,
+        // not here — restoring here would cause a brief flash before the DPM fade starts.
+
         // Clean up
         DateSessionManager.PendingFlowerTrim = false;
         _waitingForResult = false;
@@ -204,4 +228,45 @@ public class FlowerTrimmingBridge : MonoBehaviour
         Debug.Log($"[FlowerTrimmingBridge] Trimming complete. Scene={sceneName}, " +
                   $"Score={resultScore}, Days={resultDays}, GameOver={resultGameOver}");
     }
+
+    // ── Camera management ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Re-enable the apartment camera after flower trimming.
+    /// Called by DayPhaseManager after fade-to-black so there's no visual flash.
+    /// Safe to call multiple times (idempotent).
+    /// </summary>
+    public void RestoreApartmentCamera()
+    {
+        if (_apartmentBrain != null)
+            _apartmentBrain.enabled = true;
+        if (_apartmentListener != null)
+            _apartmentListener.enabled = true;
+        if (_apartmentCamera != null)
+        {
+            _apartmentCamera.enabled = true;
+            _apartmentCamera.gameObject.tag = "MainCamera";
+        }
+
+        _apartmentCamera = null;
+        _apartmentBrain = null;
+        _apartmentListener = null;
+        Debug.Log("[FlowerTrimmingBridge] Apartment camera restored.");
+    }
+
+    private void DisableApartmentCamera()
+    {
+        if (_apartmentCamera != null)
+        {
+            _apartmentCamera.enabled = false;
+            _apartmentCamera.gameObject.tag = "Untagged";
+        }
+        if (_apartmentBrain != null)
+            _apartmentBrain.enabled = false;
+        if (_apartmentListener != null)
+            _apartmentListener.enabled = false;
+
+        Debug.Log("[FlowerTrimmingBridge] Apartment camera disabled for flower scene.");
+    }
+
 }
