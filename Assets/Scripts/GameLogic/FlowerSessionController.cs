@@ -175,13 +175,11 @@ public class FlowerSessionController : MonoBehaviour
             }
         }
 
-        // 2) Debug evaluate key (editor-only + explicit toggle)
-#if UNITY_EDITOR
+        // 2) Evaluate key (E to finish trimming)
         if (allowKeyboardEvaluate && !sessionEnded && Input.GetKeyDown(KeyCode.E))
         {
             EvaluateCurrentFlower();
         }
-#endif
     }
 
     // ─────────────────────────────────────────────

@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Unity.Cinemachine;
+using TMPro;
 
 /// <summary>
 /// Scene-scoped singleton that manages the transition into and out of a
@@ -171,6 +173,9 @@ public class FlowerTrimmingBridge : MonoBehaviour
         // ScreenFade is ScreenSpaceOverlay so it still works while apartment camera is off.
         DisableApartmentCamera();
 
+        // Create a runtime "Done Trimming" button
+        var doneButtonCanvas = CreateDoneButton(session);
+
         // Force the cutter to re-discover the flower scene's stem/session objects.
         // Without this, the 2-second cache timer might prevent the first cut from finding targets.
         var cutter = UnityEngine.Object.FindFirstObjectByType<DynamicMeshCutter.PlaneBehaviour>();
@@ -184,8 +189,27 @@ public class FlowerTrimmingBridge : MonoBehaviour
         while (!gotResult)
             yield return null;
 
-        // Brief pause so the player can see their result
-        yield return new WaitForSeconds(2f);
+        // Remove the Done button now that we have a result
+        if (doneButtonCanvas != null)
+            Destroy(doneButtonCanvas);
+
+        // Show a Continue button so the player can read their score at their own pace
+        bool continueClicked = false;
+        var continueCanvas = CreateContinueButton(() => continueClicked = true);
+
+        // Minimum 1.5s so the player can read the score before Continue appears
+        yield return new WaitForSecondsRealtime(1.5f);
+        if (continueCanvas != null)
+        {
+            var btn = continueCanvas.GetComponentInChildren<Button>();
+            if (btn != null) btn.interactable = true;
+        }
+
+        while (!continueClicked)
+            yield return null;
+
+        if (continueCanvas != null)
+            Destroy(continueCanvas);
 
         // Snapshot the trimmed flower visuals BEFORE unloading the scene
         GameObject trimmedVisual = null;
@@ -233,6 +257,93 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         Debug.Log($"[FlowerTrimmingBridge] Trimming complete. Scene={sceneName}, " +
                   $"Score={resultScore}, Days={resultDays}, GameOver={resultGameOver}");
+    }
+
+    // ── Runtime UI helpers ─────────────────────────────────────────────
+
+    private GameObject CreateDoneButton(FlowerSessionController session)
+    {
+        var canvasGO = new GameObject("FlowerDoneButtonCanvas");
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 100;
+        canvasGO.AddComponent<CanvasScaler>();
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        // Button background
+        var btnGO = new GameObject("DoneButton");
+        btnGO.transform.SetParent(canvasGO.transform, false);
+        var btnImage = btnGO.AddComponent<Image>();
+        btnImage.color = new Color(0.1f, 0.1f, 0.1f, 0.75f);
+        var btn = btnGO.AddComponent<Button>();
+        btn.targetGraphic = btnImage;
+        btn.onClick.AddListener(() => session.EvaluateCurrentFlower());
+
+        var btnRect = btnGO.GetComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0.5f, 0f);
+        btnRect.anchorMax = new Vector2(0.5f, 0f);
+        btnRect.pivot = new Vector2(0.5f, 0f);
+        btnRect.anchoredPosition = new Vector2(0f, 40f);
+        btnRect.sizeDelta = new Vector2(260f, 50f);
+
+        // Button text
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(btnGO.transform, false);
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = "Done Trimming (E)";
+        tmp.fontSize = 24;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+        var textRect = textGO.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        return canvasGO;
+    }
+
+    private GameObject CreateContinueButton(Action onClick)
+    {
+        var canvasGO = new GameObject("FlowerContinueCanvas");
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 101;
+        canvasGO.AddComponent<CanvasScaler>();
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        // Button background
+        var btnGO = new GameObject("ContinueButton");
+        btnGO.transform.SetParent(canvasGO.transform, false);
+        var btnImage = btnGO.AddComponent<Image>();
+        btnImage.color = new Color(0.1f, 0.1f, 0.1f, 0.75f);
+        var btn = btnGO.AddComponent<Button>();
+        btn.targetGraphic = btnImage;
+        btn.interactable = false; // enabled after 1.5s delay
+        btn.onClick.AddListener(() => onClick?.Invoke());
+
+        var btnRect = btnGO.GetComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0.5f, 0f);
+        btnRect.anchorMax = new Vector2(0.5f, 0f);
+        btnRect.pivot = new Vector2(0.5f, 0f);
+        btnRect.anchoredPosition = new Vector2(0f, 40f);
+        btnRect.sizeDelta = new Vector2(200f, 50f);
+
+        // Button text
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(btnGO.transform, false);
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = "Continue";
+        tmp.fontSize = 24;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+        var textRect = textGO.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        return canvasGO;
     }
 
     // ── Camera management ─────────────────────────────────────────────
