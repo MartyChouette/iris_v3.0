@@ -111,9 +111,18 @@ public static class MainMenuSceneBuilder
         jitter.rotationStrength = 0.05f;
         jitter.scaleStrength = 0.01f;
 
-        // Sprite children (empty SpriteRenderers — assign real sprites by hand)
+        // Sprite children — auto-load from Assets/ArtAssets/Nema_Main/
         string[] layerNames = { "1", "2_bangs", "2_face", "3_face", "4_neck", "5_hair" };
         int[] sortOrders = { 3, 2, 1, 0, -1, -2 };
+        string[] spriteFiles =
+        {
+            "Assets/ArtAssets/Nema_Main/2025-12-10 203418.png",  // 1 (front hair)
+            "Assets/ArtAssets/Nema_Main/2025-12-10 203334.png",  // 2_bangs
+            "Assets/ArtAssets/Nema_Main/2025-12-10 203400.png",  // 2_face (detail)
+            "Assets/ArtAssets/Nema_Main/2025-12-10 203346.png",  // 3_face (base)
+            "Assets/ArtAssets/Nema_Main/2025-12-10 203409.png",  // 4_neck
+            "Assets/ArtAssets/Nema_Main/2025-12-10 203321.png",  // 5_hair (back)
+        };
         var layerTransforms = new Transform[layerNames.Length];
         for (int i = 0; i < layerNames.Length; i++)
         {
@@ -121,6 +130,11 @@ public static class MainMenuSceneBuilder
             layerGO.transform.SetParent(nemaHead.transform, false);
             var sr = layerGO.AddComponent<SpriteRenderer>();
             sr.sortingOrder = sortOrders[i];
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spriteFiles[i]);
+            if (sprite != null)
+                sr.sprite = sprite;
+            else
+                Debug.LogWarning($"[MainMenuSceneBuilder] Sprite not found: {spriteFiles[i]}");
             layerTransforms[i] = layerGO.transform;
         }
 
@@ -130,6 +144,11 @@ public static class MainMenuSceneBuilder
         bgGO.transform.localScale = BackgroundScale;
         var bgSR = bgGO.AddComponent<SpriteRenderer>();
         bgSR.sortingOrder = -3;
+        var bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/ArtAssets/Nema_Main/2025-12-10 203427.png");
+        if (bgSprite != null)
+            bgSR.sprite = bgSprite;
+        else
+            Debug.LogWarning("[MainMenuSceneBuilder] Background sprite not found.");
         var pulse = bgGO.AddComponent<BacklightPulse>();
         pulse.dimColor = new Color(1.149f, 2.742f, 3.291f, 1f);
         pulse.brightColor = new Color(2.920f, 6.716f, 8.041f, 1f);
