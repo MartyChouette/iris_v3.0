@@ -412,10 +412,21 @@ public class SapParticleController : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        // Wait until all particles are gone
-        while (ps != null && ps.particleCount > 0)
+        // Wait until all particles are gone, but cap at 3 extra seconds
+        // to prevent infinite loops from collision-bouncing particles.
+        float timeout = 3f;
+        float waited = 0f;
+        while (ps != null && ps.particleCount > 0 && waited < timeout)
         {
             yield return s_pollWait;
+            waited += 0.1f;
+        }
+
+        // Force-clear any lingering particles
+        if (ps != null && ps.particleCount > 0)
+        {
+            ps.Clear();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
         ReturnToPool(ps);

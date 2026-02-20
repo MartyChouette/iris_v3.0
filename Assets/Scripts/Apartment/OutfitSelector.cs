@@ -82,6 +82,7 @@ public class OutfitSelector : MonoBehaviour
 
     private void Update()
     {
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
         if (_isOpen) return;
         if (!_clickAction.WasPressedThisFrame()) return;
 

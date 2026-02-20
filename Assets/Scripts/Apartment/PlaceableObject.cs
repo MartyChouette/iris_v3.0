@@ -124,8 +124,27 @@ public class PlaceableObject : MonoBehaviour
 
     private void RecoverToNearestSurface()
     {
-        // Snap back to the last known-good position (preserves exact depth for wall items)
-        transform.position = _lastValidPosition;
+        // If last valid position is ALSO out of bounds, try to find any surface.
+        // Otherwise we'd loop forever respawning to an invalid spot.
+        Vector3 target = _lastValidPosition;
+        if (!s_worldBounds.Contains(target))
+        {
+            var nearest = FindNearestSurface(s_worldBounds.center);
+            if (nearest != null)
+            {
+                var hit = nearest.ProjectOntoSurface(s_worldBounds.center);
+                target = hit.worldPosition + hit.surfaceNormal * 0.1f;
+            }
+            else
+            {
+                // No surface found — park at world center and go kinematic to prevent falling
+                target = s_worldBounds.center;
+            }
+            _lastValidPosition = target;
+            Debug.LogWarning($"[PlaceableObject] {name} had invalid recovery pos — placed at {target}.");
+        }
+
+        transform.position = target;
         transform.rotation = _lastValidRotation;
         if (_rb != null)
         {
@@ -145,7 +164,7 @@ public class PlaceableObject : MonoBehaviour
         }
         CurrentState = State.Resting;
         StartFlash();
-        Debug.Log($"[PlaceableObject] {name} out of bounds — respawned at {_lastValidPosition}.");
+        Debug.Log($"[PlaceableObject] {name} out of bounds — respawned at {target}.");
     }
 
     private void OnDestroy()

@@ -88,6 +88,8 @@ public class ApartmentCalendar : MonoBehaviour
 
     private void Update()
     {
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
+
         if (_isOpen)
         {
             if (_escapeAction.WasPressedThisFrame())

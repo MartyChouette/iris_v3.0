@@ -505,14 +505,17 @@ public class DayPhaseManager : MonoBehaviour
         while (!bridge.IsSceneReady)
             yield return null;
 
-        // 5. Hold title briefly so the player can read it
-        yield return new WaitForSeconds(0.6f);
+        // 5. Hold title so the player can read it (2 seconds total)
+        yield return new WaitForSeconds(2.0f);
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.HidePhaseTitle();
 
-        // 6. Fade in — the flower scene's own Camera is now active (apartment camera disabled)
+        // 6. Brief pause after title fades before revealing the scene
+        yield return new WaitForSeconds(0.3f);
+
+        // 7. Fade in — the flower scene's own Camera is now active (apartment camera disabled)
         if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration * 2f);
 
         // 7. Wait for the player to finish trimming
         while (!trimmingComplete)

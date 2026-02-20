@@ -90,6 +90,7 @@ public class FridgeController : MonoBehaviour
 
     private void Update()
     {
+        if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
         if (_state != DoorState.Closed && _state != DoorState.Open) return;
         if (!_clickAction.WasPressedThisFrame()) return;
 
