@@ -31,8 +31,13 @@ public class BookVolume : MonoBehaviour
     [Tooltip("Hidden item overlay text (shown when on the correct spread).")]
     [SerializeField] private TMP_Text hiddenItemLabel;
 
+    [Header("Stack")]
+    [Tooltip("BookStack manager for flat-stacked books (null for shelf books).")]
+    [SerializeField] private BookStack _stack;
+
     public BookDefinition Definition => definition;
     public State CurrentState { get; private set; } = State.OnShelf;
+    public float Thickness => definition != null ? definition.thicknessScale : 0.03f;
 
     private Vector3 _shelfPosition;
     private Quaternion _shelfRotation;
@@ -61,6 +66,12 @@ public class BookVolume : MonoBehaviour
 
         if (pagesRoot != null)
             pagesRoot.SetActive(false);
+    }
+
+    private void Start()
+    {
+        if (_stack != null)
+            _stack.Register(transform, Thickness);
     }
 
     public void SetDefinition(BookDefinition def)
@@ -110,6 +121,9 @@ public class BookVolume : MonoBehaviour
         _isHovered = false;
         if (_instanceMaterial != null)
             _instanceMaterial.color = _baseColor;
+
+        if (_stack != null)
+            _stack.Remove(transform);
 
         StartCoroutine(PullOutRoutine(readingAnchor));
     }
@@ -277,6 +291,13 @@ public class BookVolume : MonoBehaviour
         // Unparent from reading anchor
         transform.SetParent(null, true);
 
+        // If part of a stack, return to top of pile
+        Vector3 targetPos = _shelfPosition;
+        Quaternion targetRot = _shelfRotation;
+
+        if (_stack != null)
+            _stack.AddToTop(transform, Thickness, out targetPos, out targetRot);
+
         Vector3 startPos = transform.position;
         Quaternion startRot = transform.rotation;
         float elapsed = 0f;
@@ -286,14 +307,18 @@ public class BookVolume : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = Smoothstep(elapsed / PutBackDuration);
 
-            transform.position = Vector3.Lerp(startPos, _shelfPosition, t);
-            transform.rotation = Quaternion.Slerp(startRot, _shelfRotation, t);
+            transform.position = Vector3.Lerp(startPos, targetPos, t);
+            transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
 
             yield return null;
         }
 
-        transform.position = _shelfPosition;
-        transform.rotation = _shelfRotation;
+        transform.position = targetPos;
+        transform.rotation = targetRot;
+
+        // Update shelf position so hover returns to the correct spot
+        _shelfPosition = targetPos;
+        _shelfRotation = targetRot;
 
         CurrentState = State.OnShelf;
     }

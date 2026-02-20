@@ -475,9 +475,19 @@ public static class BookcaseSceneBuilder
         float xCursor = caseLeftX + 0.01f;
 
         // Floor stack tracking (books 10-14)
-        float floorStackX = CaseWidth / 2f + 0.15f; // right side of bookcase
+        float floorStackX = -0.2f; // beside bookcase, left of center
         float floorStackY = 0f; // floor level
         float floorStackZ = CaseCenterZ;
+
+        // Create FloorBookStack GO with BookStack component
+        var floorStackGO = new GameObject("FloorBookStack");
+        floorStackGO.transform.SetParent(booksParent.transform);
+        floorStackGO.transform.localPosition = Vector3.zero;
+        var floorBookStack = floorStackGO.AddComponent<BookStack>();
+        var floorStackSO = new SerializedObject(floorBookStack);
+        floorStackSO.FindProperty("_stackBase").vector3Value = new Vector3(floorStackX, 0f, floorStackZ);
+        floorStackSO.FindProperty("_stackRotation").quaternionValue = Quaternion.identity;
+        floorStackSO.ApplyModifiedPropertiesWithoutUndo();
 
         for (int bookIndex = 0; bookIndex < BookTitles.Length; bookIndex++)
         {
@@ -584,6 +594,10 @@ public static class BookcaseSceneBuilder
                 navRightT != null ? navRightT.GetComponent<TMP_Text>() : null;
             so.FindProperty("hiddenItemLabel").objectReferenceValue =
                 hiddenT != null ? hiddenT.GetComponent<TMP_Text>() : null;
+
+            // Wire floor books to the floor BookStack
+            if (bookIndex >= ShelfBookCount)
+                so.FindProperty("_stack").objectReferenceValue = floorBookStack;
 
             so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -987,6 +1001,16 @@ public static class BookcaseSceneBuilder
         // Stack books flat: Y cursor tracks the top of the pile
         float yCursor = shelfTopY;
 
+        // Create ShelfBookStack GO with BookStack component for shelf pile collapse
+        var shelfStackGO = new GameObject("ShelfBookStack");
+        shelfStackGO.transform.SetParent(parent.transform);
+        shelfStackGO.transform.localPosition = Vector3.zero;
+        var shelfBookStack = shelfStackGO.AddComponent<BookStack>();
+        var shelfStackSO = new SerializedObject(shelfBookStack);
+        shelfStackSO.FindProperty("_stackBase").vector3Value = new Vector3(0f, shelfTopY, CaseCenterZ);
+        shelfStackSO.FindProperty("_stackRotation").quaternionValue = Quaternion.identity;
+        shelfStackSO.ApplyModifiedPropertiesWithoutUndo();
+
         for (int i = 0; i < CoffeeBookTitles.Length; i++)
         {
             float thickness = CoffeeBookThicknesses[i];
@@ -1046,6 +1070,7 @@ public static class BookcaseSceneBuilder
             cbSO.FindProperty("definition").objectReferenceValue = def;
             cbSO.FindProperty("coffeeTableBase").vector3Value = coffeeTableBase;
             cbSO.FindProperty("coffeeTableRotation").quaternionValue = coffeeTableRotation;
+            cbSO.FindProperty("_shelfStack").objectReferenceValue = shelfBookStack;
             // First book starts on coffee table
             if (i == 0)
                 cbSO.FindProperty("startsOnCoffeeTable").boolValue = true;

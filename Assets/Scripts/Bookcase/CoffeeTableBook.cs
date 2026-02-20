@@ -30,6 +30,10 @@ public class CoffeeTableBook : MonoBehaviour
     [Tooltip("World rotation for flat books on the coffee table (set by scene builder).")]
     [SerializeField] private Quaternion coffeeTableRotation = Quaternion.identity;
 
+    [Header("Shelf Stack")]
+    [Tooltip("BookStack manager for the bookcase shelf pile (collapse on remove, return to top).")]
+    [SerializeField] private BookStack _shelfStack;
+
     /// <summary>Fired when a coffee table book is moved between bookcase and coffee table.</summary>
     public static event System.Action OnBookMoved;
 
@@ -80,8 +84,16 @@ public class CoffeeTableBook : MonoBehaviour
             if (definition != null && !string.IsNullOrEmpty(definition.itemID))
                 ItemStateRegistry.SetState(definition.itemID, ItemStateRegistry.ItemDisplayState.OnDisplay);
 
+            // Remove from shelf stack since we're going to coffee table
+            if (_shelfStack != null)
+                _shelfStack.Remove(transform);
+
             // Move to coffee table immediately
             RecalculateCoffeeTableStack();
+        }
+        else if (_shelfStack != null)
+        {
+            _shelfStack.Register(transform, Thickness);
         }
     }
 
@@ -134,6 +146,14 @@ public class CoffeeTableBook : MonoBehaviour
         IsOnCoffeeTable = false;
         OnBookMoved?.Invoke();
 
+        // Return to top of shelf stack
+        if (_shelfStack != null)
+        {
+            _shelfStack.AddToTop(transform, Thickness, out var stackPos, out var stackRot);
+            _shelfPosition = stackPos;
+            _shelfRotation = stackRot;
+        }
+
         StopAllCoroutines();
         StartCoroutine(AnimateToPosition(_shelfPosition, _shelfRotation));
     }
@@ -158,6 +178,10 @@ public class CoffeeTableBook : MonoBehaviour
 
         if (IsOnCoffeeTable)
         {
+            // Remove from shelf stack (collapse remaining shelf books)
+            if (_shelfStack != null)
+                _shelfStack.Remove(transform);
+
             // Return any other book that's currently on the coffee table
             for (int i = 0; i < All.Count; i++)
             {
@@ -171,7 +195,14 @@ public class CoffeeTableBook : MonoBehaviour
         }
         else
         {
-            // Animate this book back to its shelf position
+            // Return to top of shelf stack instead of original position
+            if (_shelfStack != null)
+            {
+                _shelfStack.AddToTop(transform, Thickness, out var stackPos, out var stackRot);
+                _shelfPosition = stackPos;
+                _shelfRotation = stackRot;
+            }
+
             StopAllCoroutines();
             StartCoroutine(AnimateToPosition(_shelfPosition, _shelfRotation));
             // Recalculate remaining coffee table books to close gaps
