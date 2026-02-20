@@ -171,6 +171,12 @@ public class FlowerTrimmingBridge : MonoBehaviour
         // ScreenFade is ScreenSpaceOverlay so it still works while apartment camera is off.
         DisableApartmentCamera();
 
+        // Force the cutter to re-discover the flower scene's stem/session objects.
+        // Without this, the 2-second cache timer might prevent the first cut from finding targets.
+        var cutter = UnityEngine.Object.FindFirstObjectByType<DynamicMeshCutter.PlaneBehaviour>();
+        if (cutter != null)
+            cutter.InvalidateCache();
+
         // Signal that the scene is loaded and ready for play
         IsSceneReady = true;
 

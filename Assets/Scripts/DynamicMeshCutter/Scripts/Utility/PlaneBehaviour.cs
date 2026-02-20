@@ -56,6 +56,16 @@ namespace DynamicMeshCutter
             }
         }
 
+        /// <summary>
+        /// Force-refresh cached session/stem references immediately.
+        /// Call after loading an additive scene so the cutter picks up the new objects.
+        /// </summary>
+        public void InvalidateCache()
+        {
+            _lastCacheTime = -999f;
+            RefreshCachedReferencesIfNeeded();
+        }
+
         // ───────────────────── Unity ─────────────────────
 
         private void Update()
@@ -101,7 +111,7 @@ namespace DynamicMeshCutter
             if (debugLogs)
                 Debug.Log($"[PlaneBehaviour] Cutting with plane point:{_lastPlanePoint}, normal:{_lastPlaneNormal}", this);
 
-            var roots = SceneManager.GetActiveScene().GetRootGameObjects();
+            var roots = GetAllLoadedRoots();
 
             RefreshCachedReferencesIfNeeded();
             var sessions = _cachedSessions ?? System.Array.Empty<FlowerSessionController>();
@@ -345,6 +355,22 @@ namespace DynamicMeshCutter
         }
 
         // ───────────────────── Utility ─────────────────────
+
+        /// <summary>
+        /// Collect root GameObjects from ALL loaded scenes, not just the active one.
+        /// Required because the flower trimming scene loads additively.
+        /// </summary>
+        private static GameObject[] GetAllLoadedRoots()
+        {
+            var list = new System.Collections.Generic.List<GameObject>();
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (scene.isLoaded)
+                    list.AddRange(scene.GetRootGameObjects());
+            }
+            return list.ToArray();
+        }
 
         /// <summary>
         /// Delays game over check to allow physics to settle after a cut.
