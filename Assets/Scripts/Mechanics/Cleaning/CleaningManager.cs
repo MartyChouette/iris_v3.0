@@ -216,7 +216,7 @@ public class CleaningManager : MonoBehaviour
                         OnWipeStarted?.Invoke();
 
                     bool wasClean = _hoveredSurface.IsFullyClean;
-                    Vector2 uv = hitInfo.textureCoord;
+                    Vector2 uv = HitToUV(hitInfo, _hoveredSurface.transform);
                     _hoveredSurface.Wipe(uv, _wipeRadius);
                     PlaySFX(wipeSFX);
 
@@ -316,10 +316,44 @@ public class CleaningManager : MonoBehaviour
 
     // ── Helpers ──────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Convert world-space raycast hit to 0–1 UV on the stain surface.
+    /// Used instead of hitInfo.textureCoord because BoxColliders don't provide UVs.
+    /// The stain parent is rotated Euler(90,0,0) with local XY spanning -0.3..0.3 (scale 0.6).
+    /// </summary>
+    private static Vector2 HitToUV(RaycastHit hit, Transform surfaceTransform)
+    {
+        Vector3 local = surfaceTransform.InverseTransformPoint(hit.point);
+        // DirtQuad is 0.6 x 0.6 in local XY, centered at origin
+        return new Vector2(
+            Mathf.Clamp01((local.x / 0.6f) + 0.5f),
+            Mathf.Clamp01((local.y / 0.6f) + 0.5f)
+        );
+    }
+
     private bool _lastSpongeVisible;
+
+    private void EnsureSpongeVisual()
+    {
+        if (_spongeVisual != null) return;
+
+        // Auto-create a simple sponge cube at runtime
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = "SpongeVisual_Auto";
+        go.transform.localScale = new Vector3(0.06f, 0.03f, 0.08f);
+        var col = go.GetComponent<Collider>();
+        if (col != null) Destroy(col);
+        var rend = go.GetComponent<Renderer>();
+        if (rend != null)
+            rend.material.color = new Color(0.9f, 0.85f, 0.3f);
+        go.SetActive(false);
+        _spongeVisual = go.transform;
+        Debug.Log("[CleaningManager] Auto-created sponge visual at runtime.");
+    }
 
     private void SetSpongeVisual(Vector3 position, bool visible)
     {
+        EnsureSpongeVisual();
         if (_spongeVisual == null) return;
 
         if (visible != _lastSpongeVisible)

@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Events;
+using UnityEngine.Events;
 using Unity.Cinemachine;
 using TMPro;
 using UnityEngine.UI;
@@ -3378,6 +3379,12 @@ public static class ApartmentSceneBuilder
             slotGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             slotGO.layer = cleanableLayer;
 
+            // BoxCollider on parent for robust raycast hit detection
+            // (Quad MeshColliders are single-sided and can be missed)
+            var slotBox = slotGO.AddComponent<BoxCollider>();
+            slotBox.size = new Vector3(0.6f, 0.6f, 0.05f);
+            slotBox.center = Vector3.zero;
+
             // Dirt quad
             var dirtQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             dirtQuad.name = "DirtQuad";
@@ -3387,6 +3394,9 @@ public static class ApartmentSceneBuilder
             dirtQuad.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
             dirtQuad.layer = cleanableLayer;
             dirtQuad.isStatic = false;
+            // Remove Quad's MeshCollider — BoxCollider on parent handles raycasts
+            var dirtCol = dirtQuad.GetComponent<Collider>();
+            if (dirtCol != null) Object.DestroyImmediate(dirtCol);
 
             // Wet overlay quad (slightly above)
             var wetQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -4374,18 +4384,20 @@ public static class ApartmentSceneBuilder
             labelTMP.color = Color.white;
             labelTMP.raycastTarget = false;
 
-            // Wire button click via persistent listener
-            int idx = i; // capture for closure
-            switch (idx)
+            // Wire button click via persistent listener (survives scene save)
+            switch (i)
             {
                 case 0:
-                    btn.onClick.AddListener(() => SimplePauseMenu.Instance?.Resume());
+                    UnityEventTools.AddPersistentListener(btn.onClick,
+                        new UnityAction(pauseMenu.Resume));
                     break;
                 case 1:
-                    btn.onClick.AddListener(() => SimplePauseMenu.Instance?.QuitToMenu());
+                    UnityEventTools.AddPersistentListener(btn.onClick,
+                        new UnityAction(pauseMenu.QuitToMenu));
                     break;
                 case 2:
-                    btn.onClick.AddListener(() => SimplePauseMenu.Instance?.QuitToDesktop());
+                    UnityEventTools.AddPersistentListener(btn.onClick,
+                        new UnityAction(pauseMenu.QuitToDesktop));
                     break;
             }
         }
