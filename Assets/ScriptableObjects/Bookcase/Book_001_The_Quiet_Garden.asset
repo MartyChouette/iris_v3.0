@@ -19,7 +19,9 @@ MonoBehaviour:
     of opening buds, the patient drip.'
   - She planted marigolds along the fence not for their color, but because they reminded
     her of someone she'd rather not forget.
-  - By September the garden had its own ideas. She learned to stop arguing with it.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
   heightScale: 0.87691224
   thicknessScale: 0.031505976

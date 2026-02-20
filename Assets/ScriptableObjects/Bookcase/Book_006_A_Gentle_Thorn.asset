@@ -19,8 +19,9 @@ MonoBehaviour:
     received is recorded there.
   - To hold a thorned stem gently requires practice. Most people never bother to
     learn.
-  - Gentleness, she decided, was not the absence of thorns but the willingness to
-    reach past them.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
   heightScale: 0.8432604
   thicknessScale: 0.020088583

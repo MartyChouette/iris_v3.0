@@ -19,8 +19,9 @@ MonoBehaviour:
     applies to most things.'
   - 'June: The roses will try to take over. Let them think they''re winning, then
     prune on the solstice.'
-  - 'October: Let the dead heads stand. The goldfinches need the seeds more than
-    you need tidiness.'
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
   heightScale: 0.9010235
   thicknessScale: 0.020564731

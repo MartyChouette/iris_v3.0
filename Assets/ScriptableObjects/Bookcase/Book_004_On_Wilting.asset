@@ -19,8 +19,9 @@ MonoBehaviour:
     I had to give.'
   - The drooping head of a sunflower in October carries more dignity than any spring
     bloom.
-  - We fear wilting because we see ourselves in it. But the plant does not fear.
-    It simply returns.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
   heightScale: 0.8584999
   thicknessScale: 0.024229424

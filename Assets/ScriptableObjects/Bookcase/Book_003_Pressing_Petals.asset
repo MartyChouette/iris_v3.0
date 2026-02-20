@@ -19,8 +19,9 @@ MonoBehaviour:
     fades, but the shape remembers."
   - 'Page 47 of her journal: a flattened daisy, brown at the edges, still holding
     its circular argument.'
-  - Some flowers are better preserved in memory than in books. But we press them
-    anyway.
+  hasHiddenItem: 1
+  hiddenItemDescription: A pressed daisy, flattened between the pages.
+  hiddenItemPage: 0
   spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
   heightScale: 0.7162683
   thicknessScale: 0.027523044

@@ -19,8 +19,9 @@ MonoBehaviour:
     solar panel.
   - The plant does not choose to photosynthesize. It simply faces the light and lets
     chemistry do the rest.
-  - At night, the chloroplasts rest. Even the most dedicated workers need darkness
-    to make sense of the day.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.35, g: 0.38, b: 0.18, a: 1}
   heightScale: 0.9470413
   thicknessScale: 0.033583205

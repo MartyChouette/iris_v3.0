@@ -21,6 +21,11 @@ MonoBehaviour:
     on the table.'
   - She arranged the flowers not for beauty but for conversation. The lily had something
     to say to the rose.
+  - By the third day the petals had fallen. She painted them where they lay. It was
+    a better composition.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.12, g: 0.35, b: 0.15, a: 1}
   heightScale: 0.7829699
   thicknessScale: 0.028688312

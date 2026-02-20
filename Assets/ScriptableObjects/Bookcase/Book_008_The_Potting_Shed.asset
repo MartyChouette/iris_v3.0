@@ -19,8 +19,9 @@ MonoBehaviour:
     one a different kind of patience.
   - He repotted the fern for the third time that year. It kept outgrowing its container.
     He respected that.
-  - In the corner of the shed, a spider had built a web between two terra cotta pots.
-    He left it there.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.1, g: 0.1, b: 0.25, a: 1}
   heightScale: 0.8323664
   thicknessScale: 0.021904016

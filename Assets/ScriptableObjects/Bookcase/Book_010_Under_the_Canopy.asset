@@ -21,6 +21,11 @@ MonoBehaviour:
     do with scraps.
   - She sat under the oak for an hour. When she stood, she understood something she
     could not put into words.
+  - The tree did not care whether she understood. It had been speaking for centuries
+    to anyone who would sit still.
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
   heightScale: 0.8372422
   thicknessScale: 0.039031003

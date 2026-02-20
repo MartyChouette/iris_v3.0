@@ -18,6 +18,12 @@ MonoBehaviour:
   - 'Item 7A: Moonflower seeds. Plant in evening. Do not expect results before midnight.'
   - 'Item 12C: Forget-me-nots. Self-explanatory. Plant near things you wish to remember.'
   - 'Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway.'
+  - 'Item 31D: Venus flytrap. Feeds itself. Do not anthropomorphize. It does not
+    love you back.'
+  hasHiddenItem: 1
+  hiddenItemDescription: "A handwritten note: \"Order #31D \u2014 she'll love this
+    one.\""
+  hiddenItemPage: 1
   spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
   heightScale: 0.8617099
   thicknessScale: 0.030510608

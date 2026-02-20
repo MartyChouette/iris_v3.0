@@ -19,8 +19,9 @@ MonoBehaviour:
     a spine.'
   - "Consider the hollow stem of the dandelion \u2014 empty inside, yet strong enough
     to hold a wish."
-  - 'All architecture aspires to the condition of the stem: vertical, purposeful,
-    alive.'
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
   heightScale: 0.8681743
   thicknessScale: 0.039681844

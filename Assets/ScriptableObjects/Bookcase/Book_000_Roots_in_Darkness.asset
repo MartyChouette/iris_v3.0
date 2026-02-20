@@ -19,7 +19,9 @@ MonoBehaviour:
     for what they need in total darkness.
   - I have often wondered if the flower knows it is beautiful, or if beauty is simply
     a side effect of reaching toward light.
-  - "When the last petal falls, the stem stands bare \u2014 not empty, but unburdened."
+  hasHiddenItem: 0
+  hiddenItemDescription: 
+  hiddenItemPage: -1
   spineColor: {r: 0.55, g: 0.15, b: 0.15, a: 1}
   heightScale: 0.8455614
   thicknessScale: 0.039982844
