@@ -128,6 +128,11 @@ public class CleaningManager : MonoBehaviour
 
         if (_mainCamera == null)
             _mainCamera = Camera.main;
+
+        Debug.Log($"[CleaningManager] Awake — camera={(_mainCamera != null ? _mainCamera.name : "NULL")}, " +
+                  $"surfaces={(_surfaces != null ? _surfaces.Length : 0)}, " +
+                  $"sponge={(_spongeVisual != null ? "OK" : "NULL")}, " +
+                  $"layer={_cleanableLayer.value}");
     }
 
     void OnDestroy()
@@ -151,7 +156,13 @@ public class CleaningManager : MonoBehaviour
 
     void Update()
     {
-        if (_mainCamera == null) return;
+        // Retry Camera.main every frame if reference was lost (e.g. scene rebuild)
+        if (_mainCamera == null)
+        {
+            _mainCamera = Camera.main;
+            if (_mainCamera == null) return;
+            Debug.Log("[CleaningManager] Re-acquired main camera.");
+        }
 
         // Block cleaning outside interaction phases (name entry, newspaper, date end)
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)

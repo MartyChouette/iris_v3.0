@@ -3363,10 +3363,10 @@ public static class ApartmentSceneBuilder
         var slotsParent = new GameObject("StainSlots");
         Vector3[] slotPositions =
         {
-            new Vector3(-4f, 0.01f, -4f),         // Kitchen floor
-            new Vector3(-5f, 0.01f, 3f),           // Near couch
-            new Vector3(-3.5f, 0.01f, 2.5f),       // Near coffee table
-            new Vector3(-3f, 0.01f, -3f),           // Between rooms
+            new Vector3(-4f, 0.05f, -4f),         // Kitchen floor
+            new Vector3(-5f, 0.05f, 3f),           // Near couch
+            new Vector3(-3.5f, 0.05f, 2.5f),       // Near coffee table
+            new Vector3(-3f, 0.05f, -3f),           // Between rooms
         };
 
         var stainSlots = new CleanableSurface[slotPositions.Length];

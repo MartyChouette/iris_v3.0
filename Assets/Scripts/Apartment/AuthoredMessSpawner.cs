@@ -72,6 +72,10 @@ public class AuthoredMessSpawner : MonoBehaviour
             Debug.Log("[AuthoredMessSpawner] Auto-spawning mess (no DPM or already past morning).");
             SpawnDailyMess();
         }
+        else
+        {
+            Debug.Log($"[AuthoredMessSpawner] Waiting for DPM to trigger spawn (phase={DayPhaseManager.Instance.CurrentPhase}).");
+        }
     }
 
     /// <summary>
@@ -82,6 +86,10 @@ public class AuthoredMessSpawner : MonoBehaviour
     {
         _spawnedBlueprintNames.Clear();
         CleanUpPreviousObjects();
+
+        Debug.Log($"[AuthoredMessSpawner] SpawnDailyMess — blueprints={(_allBlueprints != null ? _allBlueprints.Length : 0)}, " +
+                  $"stainSlots={(_stainSlots != null ? _stainSlots.Length : 0)}, " +
+                  $"cleaningMgr={(_cleaningManager != null ? "OK" : "NULL")}");
 
         var outcome = DateOutcomeCapture.LastOutcome;
         int currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1;
