@@ -585,10 +585,11 @@ public static class MainMenuSceneBuilder
         ctrlRT.sizeDelta = new Vector2(700f, 360f);
         var ctrlTMP = controlsGO.AddComponent<TextMeshProUGUI>();
         ctrlTMP.text =
-            "<b>[A] [D]</b>              Browse rooms\n" +
+            "<b>[< >]</b>                Browse rooms\n" +
             "<b>[Click]</b>              Interact with objects\n" +
             "<b>[Esc / RMB]</b>     Back out / Cancel\n" +
-            "<b>[Scroll]</b>            Straighten hung items\n" +
+            "<b>[Scroll]</b>            Rotate held items\n" +
+            "<b>[MMB]</b>              Show item labels\n" +
             "\n" +
             "<b>Your Day</b>\n" +
             "Read the paper. Pick your date.\n" +
