@@ -56,6 +56,7 @@ public class CleaningManager : MonoBehaviour
     private float _sfxCooldown;
     private bool _allCleanFired;
     private bool _wasPressingLastFrame;
+    private bool _diagnosticFired;
 
     private const float SFX_COOLDOWN = 0.15f;
 
@@ -194,6 +195,21 @@ public class CleaningManager : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(pointer);
 
         bool hit = Physics.Raycast(ray, out RaycastHit hitInfo, 100f, _cleanableLayer);
+
+        // One-time diagnostic on first click to help trace sponge issues
+        if (!_diagnosticFired && _mouseClick.WasPressedThisFrame())
+        {
+            _diagnosticFired = true;
+            int activeSurfaces = 0;
+            if (_surfaces != null)
+                for (int i = 0; i < _surfaces.Length; i++)
+                    if (_surfaces[i] != null && _surfaces[i].gameObject.activeInHierarchy) activeSurfaces++;
+            Debug.Log($"[CleaningManager] Click diagnostic — hit={hit}, layer={_cleanableLayer.value}, " +
+                      $"surfaces={(_surfaces != null ? _surfaces.Length : 0)}, active={activeSurfaces}, " +
+                      $"cam={(_mainCamera != null ? _mainCamera.name : "NULL")}, " +
+                      $"rayOrigin={ray.origin}, rayDir={ray.direction}" +
+                      (hit ? $", hitObj={hitInfo.collider.gameObject.name}, hitLayer={hitInfo.collider.gameObject.layer}" : ""));
+        }
 
         if (hit)
         {

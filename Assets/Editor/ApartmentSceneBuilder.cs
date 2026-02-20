@@ -3414,6 +3414,8 @@ public static class ApartmentSceneBuilder
             new Vector3(-5f, 0.05f, 3f),           // Near couch
             new Vector3(-3.5f, 0.05f, 2.5f),       // Near coffee table
             new Vector3(-3f, 0.05f, -3f),           // Between rooms
+            new Vector3(-1.5f, 0.05f, 5.5f),       // Entrance floor near door
+            new Vector3(0.5f, 0.05f, 5f),          // Entrance floor near shoe rack
         };
 
         var stainSlots = new CleanableSurface[slotPositions.Length];
@@ -3463,8 +3465,9 @@ public static class ApartmentSceneBuilder
                 dirtQuad.GetComponent<Renderer>();
             surfSO.FindProperty("_wetRenderer").objectReferenceValue =
                 wetQuad.GetComponent<Renderer>();
-            // Assign area based on Z position: Z < 0 = Kitchen, Z >= 0 = LivingRoom
-            surfSO.FindProperty("_area").enumValueIndex = slotPositions[i].z < 0f ? 0 : 1;
+            // Assign area based on Z position: Z < 0 = Kitchen, Z > 4 = Entrance, else LivingRoom
+            int areaIndex = slotPositions[i].z < 0f ? 0 : slotPositions[i].z > 4f ? 2 : 1;
+            surfSO.FindProperty("_area").enumValueIndex = areaIndex;
             surfSO.ApplyModifiedPropertiesWithoutUndo();
 
             stainSlots[i] = surface;

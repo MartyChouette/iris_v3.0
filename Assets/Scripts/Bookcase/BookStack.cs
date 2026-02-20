@@ -75,7 +75,8 @@ public class BookStack : MonoBehaviour
         float yaw = Random.Range(-JitterYaw, JitterYaw);
         Random.state = saved;
 
-        return _stackRotation * Quaternion.Euler(0f, yaw, 0f);
+        // Apply parent rotation so local _stackRotation works in world space
+        return transform.rotation * _stackRotation * Quaternion.Euler(0f, yaw, 0f);
     }
 
     private Vector3 GetTargetPosition(int index)
@@ -94,8 +95,11 @@ public class BookStack : MonoBehaviour
         float zJitter = Random.Range(-JitterXZ, JitterXZ);
         Random.state = saved;
 
-        return _stackBase + Vector3.up * (yOffset + halfThickness)
-               + new Vector3(xJitter, 0f, zJitter);
+        // _stackBase is in local space (relative to parent bookcase).
+        // Convert to world space so book.position assignments are correct.
+        Vector3 localPos = _stackBase + Vector3.up * (yOffset + halfThickness)
+                           + new Vector3(xJitter, 0f, zJitter);
+        return transform.TransformPoint(localPos);
     }
 
     private void Collapse()
