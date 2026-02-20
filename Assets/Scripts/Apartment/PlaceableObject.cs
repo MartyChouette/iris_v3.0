@@ -228,6 +228,8 @@ public class PlaceableObject : MonoBehaviour
             {
                 _rb.isKinematic = false;
                 _rb.useGravity = true;
+                // Freeze X/Z rotation to prevent toppling; Y rotation preserved for scroll-rotate
+                _rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
             }
         }
 

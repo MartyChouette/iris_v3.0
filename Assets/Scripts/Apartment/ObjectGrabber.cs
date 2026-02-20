@@ -22,8 +22,8 @@ public class ObjectGrabber : MonoBehaviour
     [SerializeField] private float gridSize = 0.2f;
 
     [Header("Scroll Behavior")]
-    [Tooltip("World units moved per scroll tick on Y axis.")]
-    [SerializeField] private float scrollHeightStep = 0.05f;
+    [Tooltip("Degrees rotated per scroll tick around Y axis.")]
+    [SerializeField] private float scrollRotateStep = 15f;
 
     [Header("Raycast")]
     [Tooltip("Layer mask for placeable objects.")]
@@ -407,8 +407,19 @@ public class ObjectGrabber : MonoBehaviour
         float scroll = _scrollAction.ReadValue<float>();
         if (Mathf.Abs(scroll) < 0.01f) return;
 
-        // Scroll moves the grab target up/down on Y
-        _grabTarget.y += scrollHeightStep * Mathf.Sign(scroll);
+        float angle = scrollRotateStep * Mathf.Sign(scroll);
+
+        if (_isOnWall)
+        {
+            // Wall items: rotate around surface normal (forward axis)
+            _wallRotation += angle;
+        }
+        else
+        {
+            // Table items: rotate around Y axis
+            // Transform.Rotate bypasses FreezeRotation constraints
+            _held.transform.Rotate(0f, angle, 0f, Space.World);
+        }
     }
 
     // ── Helper: half-extent along a normal ────────────────────────────
