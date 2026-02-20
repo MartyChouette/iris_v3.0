@@ -175,6 +175,13 @@ public static class ApartmentSceneBuilder
         grabberSO.FindProperty("gridSize").floatValue = 0.2f;
         grabberSO.ApplyModifiedPropertiesWithoutUndo();
 
+        // ── 10d. ItemLabelOverlay (MMB to show item names) ──
+        var labelOverlayGO = new GameObject("ItemLabelOverlay");
+        var labelOverlay = labelOverlayGO.AddComponent<ItemLabelOverlay>();
+        var labelOverlaySO = new SerializedObject(labelOverlay);
+        labelOverlaySO.FindProperty("_placeableLayer").intValue = 1 << placeableLayer;
+        labelOverlaySO.ApplyModifiedPropertiesWithoutUndo();
+
         // ── 11. ApartmentManager + UI ──
         var apartmentUI = BuildApartmentManager(browseCam, grabber, areaDefs);
 
