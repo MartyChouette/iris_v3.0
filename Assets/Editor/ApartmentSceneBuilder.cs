@@ -3482,6 +3482,9 @@ public static class ApartmentSceneBuilder
             new Color(0.9f, 0.85f, 0.3f));
         spongeGO.isStatic = false;
         spongeGO.SetActive(false);
+        // Remove collider — sponge is visual-only, must not block physics raycasts
+        var spongeCol = spongeGO.GetComponent<Collider>();
+        if (spongeCol != null) Object.DestroyImmediate(spongeCol);
 
         // ── CleaningManager ───────────────────────────────────────────
         var managersGO = new GameObject("AmbientCleaningManagers");
@@ -3686,11 +3689,6 @@ public static class ApartmentSceneBuilder
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
             weight: 1.8f, objColor: new Color(0.15f, 0.3f, 0.12f), objScale: new Vector3(0.06f, 0.2f, 0.06f),
             areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
-
-        CreateMessBP(messDir, "Pizza_Box", "Pizza Box", "Cold pizza for breakfast? Tempting.",
-            MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Object,
-            weight: 1.4f, objColor: new Color(0.6f, 0.5f, 0.35f), objScale: new Vector3(0.18f, 0.03f, 0.18f),
-            areas: new[] { ApartmentArea.Kitchen });
 
         CreateMessBP(messDir, "Dirty_Mug", "Dirty Mug", "Rings of old coffee stain the inside.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,

@@ -445,8 +445,6 @@ public class CleaningManager : MonoBehaviour
         );
     }
 
-    private bool _lastSpongeVisible;
-
     private void EnsureSpongeVisual()
     {
         if (_spongeVisual != null) return;
@@ -455,6 +453,7 @@ public class CleaningManager : MonoBehaviour
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = "SpongeVisual_Auto";
         go.transform.localScale = new Vector3(0.06f, 0.03f, 0.08f);
+        // Remove collider — sponge is visual only, must not block raycasts
         var col = go.GetComponent<Collider>();
         if (col != null) Destroy(col);
         var rend = go.GetComponent<Renderer>();
@@ -465,16 +464,31 @@ public class CleaningManager : MonoBehaviour
         Debug.Log("[CleaningManager] Auto-created sponge visual at runtime.");
     }
 
+    /// <summary>Strip any collider from the sponge so it can't intercept physics raycasts.</summary>
+    private bool _spongeColliderStripped;
+
     private void SetSpongeVisual(Vector3 position, bool visible)
     {
         EnsureSpongeVisual();
         if (_spongeVisual == null) return;
 
-        if (visible != _lastSpongeVisible)
+        // One-time: strip collider from scene-builder sponge (CreateBox adds BoxCollider)
+        if (!_spongeColliderStripped)
         {
-            _spongeVisual.gameObject.SetActive(visible);
-            _lastSpongeVisible = visible;
+            _spongeColliderStripped = true;
+            var col = _spongeVisual.GetComponent<Collider>();
+            if (col != null)
+            {
+                Destroy(col);
+                Debug.Log("[CleaningManager] Stripped collider from sponge visual.");
+            }
         }
+
+        // Always sync with actual GO state to prevent desync
+        bool currentlyActive = _spongeVisual.gameObject.activeSelf;
+        if (visible != currentlyActive)
+            _spongeVisual.gameObject.SetActive(visible);
+
         if (visible) _spongeVisual.position = position;
     }
 
