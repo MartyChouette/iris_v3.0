@@ -1177,9 +1177,9 @@ public static class ApartmentSceneBuilder
         // Parent trigger collider for detecting hover over the general stack area
         var stackBox = stackParent.AddComponent<BoxCollider>();
         stackBox.isTrigger = true;
-        float stackWidth = Mathf.Max(records.Length * 0.012f + 0.05f, 0.15f);
+        float stackWidth = Mathf.Max(records.Length * 0.025f + 0.05f, 0.15f);
         stackBox.center = new Vector3(stackWidth * 0.5f, 0.125f, 0f);
-        stackBox.size = new Vector3(stackWidth + 0.08f, 0.26f, 0.26f);
+        stackBox.size = new Vector3(stackWidth + 0.08f, 0.30f, 0.30f);
 
         var sleeveTransforms = new Transform[records.Length];
 
@@ -1202,11 +1202,11 @@ public static class ApartmentSceneBuilder
             sleeveGO.layer = sleeveLayer;
 
             // Stacked leaning against table: base position + index offset
-            float xOff = v * 0.012f;
+            float xOff = v * 0.025f;
             float zJitter = (v % 3 - 1) * 0.005f;
             sleeveGO.transform.localPosition = new Vector3(xOff, 0.125f, zJitter);
-            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, 85f + v * 0.3f);
-            sleeveGO.transform.localScale = new Vector3(0.24f, 0.24f, 0.008f);
+            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, 95f - v * 0.3f);
+            sleeveGO.transform.localScale = new Vector3(0.24f, 0.24f, 0.02f);
             sleeveGO.isStatic = false;
 
             // Color from SO coverColor, fallback to defaults
