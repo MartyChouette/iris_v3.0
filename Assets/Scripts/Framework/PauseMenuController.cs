@@ -1,57 +1,12 @@
-﻿/**
- * @file PauseMenuController.cs
- * @brief PauseMenuController script.
- * @details
- * - Auto-generated Doxygen header. Expand @details with intent, invariants, and perf notes as needed.
-*
- * @ingroup ui
- */
-
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using TMPro;
 
 [DisallowMultipleComponent]
-/**
- * @class PauseMenuController
- * @brief PauseMenuController component.
- * @details
- * Responsibilities:
- * - (Documented) See fields and methods below.
- *
- * Unity lifecycle:
- * - Awake(): cache references / validate setup.
- * - OnEnable()/OnDisable(): hook/unhook events.
- * - Update(): per-frame behavior (if any).
- *
- * Gotchas:
- * - Keep hot paths allocation-free (Update/cuts/spawns).
- * - Prefer event-driven UI updates over per-frame string building.
- *
- * @ingroup ui
- */
 public class PauseMenuController : MonoBehaviour
 {
     [System.Serializable]
-    /**
-     * @class PausePage
-     * @brief PausePage component.
-     * @details
-     * Responsibilities:
-     * - (Documented) See fields and methods below.
-     *
-     * Unity lifecycle:
-     * - Awake(): cache references / validate setup.
-     * - OnEnable()/OnDisable(): hook/unhook events.
-     * - Update(): per-frame behavior (if any).
-     *
-     * Gotchas:
-     * - Keep hot paths allocation-free (Update/cuts/spawns).
-     * - Prefer event-driven UI updates over per-frame string building.
-     *
-     * @ingroup ui
-     */
     public class PausePage
     {
         [Tooltip("Internal ID for this page (e.g. 'Records', 'Items', 'System').")]
@@ -63,16 +18,6 @@ public class PauseMenuController : MonoBehaviour
         [Tooltip("Root GameObject for this page's UI.")]
         public GameObject root;
     }
-
-    [Header("Input (New Input System)")]
-    [Tooltip("Action that toggles the pause menu (e.g. Start / Esc).")]
-    public InputActionReference pauseAction;
-
-    [Tooltip("Action that moves to previous page (e.g. L shoulder).")]
-    public InputActionReference pageLeftAction;
-
-    [Tooltip("Action that moves to next page (e.g. R shoulder).")]
-    public InputActionReference pageRightAction;
 
     [Header("Root UI")]
     [Tooltip("Root object of the entire pause menu (usually a Canvas or panel).")]
@@ -91,17 +36,27 @@ public class PauseMenuController : MonoBehaviour
     [Tooltip("Optional options panel that can be shown from the System page.")]
     public GameObject optionsPanel;
 
-    [Header("Cursor Handling")]
-    [Tooltip("If true, show mouse cursor and unlock it while paused.")]
-    public bool manageCursor = true;
-
     [Header("Debug")]
     public bool debugLogs = false;
 
-    int _currentPageIndex = 0;
-    bool _isPaused = false;
+    // Inline InputActions — no InputActionAsset required
+    private InputAction _pauseAction;
+    private InputAction _pageLeftAction;
+    private InputAction _pageRightAction;
 
-    void Start()
+    private int _currentPageIndex;
+    private bool _isPaused;
+
+    public bool IsPaused => _isPaused;
+
+    private void Awake()
+    {
+        _pauseAction = new InputAction("Pause", InputActionType.Button, "<Keyboard>/escape");
+        _pageLeftAction = new InputAction("PageLeft", InputActionType.Button, "<Keyboard>/q");
+        _pageRightAction = new InputAction("PageRight", InputActionType.Button, "<Keyboard>/e");
+    }
+
+    private void Start()
     {
         if (pauseRoot != null)
             pauseRoot.SetActive(false);
@@ -110,75 +65,41 @@ public class PauseMenuController : MonoBehaviour
             optionsPanel.SetActive(false);
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        // Subscribe + enable actions
-        if (pauseAction != null && pauseAction.action != null)
-        {
-            pauseAction.action.performed += OnPausePerformed;
-            pauseAction.action.Enable();
-        }
-
-        if (pageLeftAction != null && pageLeftAction.action != null)
-        {
-            pageLeftAction.action.performed += OnPageLeftPerformed;
-            pageLeftAction.action.Enable();
-        }
-
-        if (pageRightAction != null && pageRightAction.action != null)
-        {
-            pageRightAction.action.performed += OnPageRightPerformed;
-            pageRightAction.action.Enable();
-        }
+        _pauseAction.Enable();
+        _pageLeftAction.Enable();
+        _pageRightAction.Enable();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        if (pauseAction != null && pauseAction.action != null)
-        {
-            pauseAction.action.performed -= OnPausePerformed;
-            pauseAction.action.Disable();
-        }
-
-        if (pageLeftAction != null && pageLeftAction.action != null)
-        {
-            pageLeftAction.action.performed -= OnPageLeftPerformed;
-            pageLeftAction.action.Disable();
-        }
-
-        if (pageRightAction != null && pageRightAction.action != null)
-        {
-            pageRightAction.action.performed -= OnPageRightPerformed;
-            pageRightAction.action.Disable();
-        }
+        _pauseAction.Disable();
+        _pageLeftAction.Disable();
+        _pageRightAction.Disable();
     }
 
-    // ─────────────────── Input callbacks ───────────────────
-
-    void OnPausePerformed(InputAction.CallbackContext ctx)
+    private void Update()
     {
-        if (!_isPaused) OpenPauseMenu();
-        else ClosePauseMenu();
-    }
+        if (_pauseAction.WasPressedThisFrame())
+        {
+            if (!_isPaused) OpenPauseMenu();
+            else ClosePauseMenu();
+        }
 
-    void OnPageLeftPerformed(InputAction.CallbackContext ctx)
-    {
         if (!_isPaused) return;
-        PreviousPage();
-    }
 
-    void OnPageRightPerformed(InputAction.CallbackContext ctx)
-    {
-        if (!_isPaused) return;
-        NextPage();
+        if (_pageLeftAction.WasPressedThisFrame())
+            PreviousPage();
+        if (_pageRightAction.WasPressedThisFrame())
+            NextPage();
     }
 
     // ─────────────────── Pause open/close ───────────────────
 
     public void OpenPauseMenu()
     {
-        if (_isPaused)
-            return;
+        if (_isPaused) return;
 
         _isPaused = true;
         TimeScaleManager.Set(TimeScaleManager.PRIORITY_PAUSE, 0f);
@@ -189,13 +110,7 @@ public class PauseMenuController : MonoBehaviour
         if (optionsPanel != null)
             optionsPanel.SetActive(false);
 
-        SetPage(0); // Start on Records page
-
-        if (manageCursor)
-        {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
+        SetPage(0);
 
         if (debugLogs)
             Debug.Log("[PauseMenuController] Pause menu opened.", this);
@@ -203,8 +118,7 @@ public class PauseMenuController : MonoBehaviour
 
     public void ClosePauseMenu()
     {
-        if (!_isPaused)
-            return;
+        if (!_isPaused) return;
 
         _isPaused = false;
         TimeScaleManager.Clear(TimeScaleManager.PRIORITY_PAUSE);
@@ -215,43 +129,29 @@ public class PauseMenuController : MonoBehaviour
         if (optionsPanel != null)
             optionsPanel.SetActive(false);
 
-        if (manageCursor)
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
-
         if (debugLogs)
             Debug.Log("[PauseMenuController] Pause menu closed.", this);
     }
 
-    // For UI button callbacks (e.g. Resume)
     public void UI_ClosePauseMenu() => ClosePauseMenu();
 
     // ─────────────────── Page switching ───────────────────
 
     public void NextPage()
     {
-        if (pages == null || pages.Length == 0)
-            return;
-
-        int newIndex = (_currentPageIndex + 1) % pages.Length;
-        SetPage(newIndex);
+        if (pages == null || pages.Length == 0) return;
+        SetPage((_currentPageIndex + 1) % pages.Length);
     }
 
     public void PreviousPage()
     {
-        if (pages == null || pages.Length == 0)
-            return;
-
-        int newIndex = (_currentPageIndex - 1 + pages.Length) % pages.Length;
-        SetPage(newIndex);
+        if (pages == null || pages.Length == 0) return;
+        SetPage((_currentPageIndex - 1 + pages.Length) % pages.Length);
     }
 
     public void SetPage(int index)
     {
-        if (pages == null || pages.Length == 0)
-            return;
+        if (pages == null || pages.Length == 0) return;
 
         index = Mathf.Clamp(index, 0, pages.Length - 1);
         _currentPageIndex = index;
@@ -275,7 +175,6 @@ public class PauseMenuController : MonoBehaviour
             Debug.Log($"[PauseMenuController] Switched to page '{current.pageId}' (index {_currentPageIndex}).", this);
     }
 
-    // UI hooks if you want arrow buttons on the header
     public void UI_NextPage() => NextPage();
     public void UI_PreviousPage() => PreviousPage();
 
@@ -287,8 +186,7 @@ public class PauseMenuController : MonoBehaviour
             Debug.Log("[PauseMenuController] RestartLevel called.", this);
 
         TimeScaleManager.ClearAll();
-        var current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void GoToMainMenu(string mainMenuSceneName)

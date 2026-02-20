@@ -60,10 +60,16 @@ public class AuthoredMessSpawner : MonoBehaviour
 
     private void Start()
     {
-        // Auto-spawn when DayPhaseManager isn't driving the flow
-        if (DayPhaseManager.Instance == null)
+        // Auto-spawn when DayPhaseManager isn't driving the flow, or when it
+        // exists but is already past Morning (editor play / jumped into scene).
+        // During normal flow, DPM calls SpawnDailyMess() in ExplorationTransition.
+        bool dpmPresent = DayPhaseManager.Instance != null;
+        bool dpmPastMorning = dpmPresent
+            && DayPhaseManager.Instance.CurrentPhase != DayPhaseManager.DayPhase.Morning;
+
+        if (!dpmPresent || dpmPastMorning)
         {
-            Debug.Log("[AuthoredMessSpawner] No DayPhaseManager — auto-spawning mess.");
+            Debug.Log("[AuthoredMessSpawner] Auto-spawning mess (no DPM or already past morning).");
             SpawnDailyMess();
         }
     }

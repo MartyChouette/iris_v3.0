@@ -43,8 +43,11 @@ public class FlowerGiftPresenter : MonoBehaviour
     [Tooltip("Bob oscillation speed.")]
     [SerializeField] private float _bobSpeed = 2.0f;
 
-    [Tooltip("Y-axis spin speed in degrees per second.")]
-    [SerializeField] private float _spinSpeed = 45.0f;
+    [Tooltip("Spin speed in degrees per second (tilted on local axis like Zelda).")]
+    [SerializeField] private float _spinSpeed = 60.0f;
+
+    [Tooltip("Forward tilt angle for the spin (degrees).")]
+    [SerializeField] private float _tiltAngle = 20f;
 
     [Tooltip("How long the flower is held on screen (seconds).")]
     [SerializeField] private float _holdDuration = 2.5f;
@@ -100,6 +103,12 @@ public class FlowerGiftPresenter : MonoBehaviour
         foreach (var col in flowerClone.GetComponentsInChildren<Collider>())
             col.enabled = false;
 
+        // Apply Zelda-style tilt (lean forward so spin looks dynamic)
+        flowerClone.transform.localRotation = Quaternion.Euler(_tiltAngle, 0f, 0f);
+
+        // Spawn sparkle particle ring around the flower
+        var sparkleGO = SpawnSparkleRing(flowerClone.transform);
+
         float baseLocalY = _spawnOffset.y;
 
         // Set up overlay and block input
@@ -144,8 +153,10 @@ public class FlowerGiftPresenter : MonoBehaviour
                 localPos.y = baseLocalY + Mathf.Sin(elapsed * _bobSpeed * Mathf.PI * 2f) * _bobAmplitude;
                 flowerClone.transform.localPosition = localPos;
 
-                // Spin around local up axis
-                flowerClone.transform.Rotate(Vector3.up, _spinSpeed * Time.deltaTime, Space.Self);
+                // Spin around tilted Y axis (Zelda-style)
+                flowerClone.transform.localRotation =
+                    Quaternion.Euler(_tiltAngle, 0f, 0f) *
+                    Quaternion.Euler(0f, _spinSpeed * elapsed, 0f);
             }
 
             yield return null;
@@ -167,10 +178,73 @@ public class FlowerGiftPresenter : MonoBehaviour
         }
 
         // Cleanup
+        if (sparkleGO != null)
+            Destroy(sparkleGO);
         if (flowerClone != null)
             Destroy(flowerClone);
 
         if (_overlayRoot != null)
             _overlayRoot.SetActive(false);
     }
+
+    /// <summary>
+    /// Creates a sparkle particle ring orbiting the flower (child of flower transform).
+    /// </summary>
+    private GameObject SpawnSparkleRing(Transform parent)
+    {
+        var go = new GameObject("GiftSparkle");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = Vector3.zero;
+
+        var ps = go.AddComponent<ParticleSystem>();
+
+        var main = ps.main;
+        main.duration = _holdDuration + _fadeDuration * 2f;
+        main.loop = true;
+        main.startLifetime = 0.8f;
+        main.startSpeed = 0f;
+        main.startSize = new ParticleSystem.MinMaxCurve(0.015f, 0.03f);
+        main.startColor = new Color(1f, 0.95f, 0.75f, 0.9f);
+        main.gravityModifier = -0.05f;
+        main.maxParticles = 40;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;
+
+        var emission = ps.emission;
+        emission.rateOverTime = 20f;
+
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = 0.3f;
+
+        var sizeOverLifetime = ps.sizeOverLifetime;
+        sizeOverLifetime.enabled = true;
+        sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f,
+            AnimationCurve.Linear(0f, 1f, 1f, 0f));
+
+        var colorOverLifetime = ps.colorOverLifetime;
+        colorOverLifetime.enabled = true;
+        var gradient = new Gradient();
+        gradient.SetKeys(
+            new[] { new GradientColorKey(new Color(1f, 0.95f, 0.75f), 0f), new GradientColorKey(Color.white, 1f) },
+            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.2f), new GradientAlphaKey(0f, 1f) }
+        );
+        colorOverLifetime.color = gradient;
+
+        // Material
+        var rend = go.GetComponent<ParticleSystemRenderer>();
+        rend.renderMode = ParticleSystemRenderMode.Billboard;
+        var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
+        if (shader != null)
+        {
+            var mat = new Material(shader);
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 1f); // Additive
+            mat.color = new Color(1f, 0.95f, 0.75f, 1f);
+            rend.material = mat;
+        }
+
+        return go;
+    }
 }
+

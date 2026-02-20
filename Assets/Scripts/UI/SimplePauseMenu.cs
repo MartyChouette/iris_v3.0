@@ -48,7 +48,13 @@ public class SimplePauseMenu : MonoBehaviour
 
     private void Update()
     {
-        if (_pauseAction.WasPressedThisFrame())
+        // Check both InputAction and legacy Input as fallback —
+        // InputAction.WasPressedThisFrame can fail at timeScale 0
+        // if Input System is in FixedUpdate processing mode.
+        bool pressed = _pauseAction.WasPressedThisFrame()
+                    || Input.GetKeyDown(KeyCode.Escape);
+
+        if (pressed)
         {
             if (_isPaused)
                 Resume();
@@ -65,8 +71,7 @@ public class SimplePauseMenu : MonoBehaviour
         if (_pauseRoot != null)
             _pauseRoot.SetActive(true);
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        Debug.Log("[SimplePauseMenu] Paused.");
     }
 
     public void Resume()

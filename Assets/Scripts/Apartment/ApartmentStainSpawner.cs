@@ -43,11 +43,15 @@ public class ApartmentStainSpawner : MonoBehaviour
 
     private void Start()
     {
-        // Auto-spawn when DayPhaseManager isn't driving the flow (e.g. jumping
-        // directly into the apartment scene from the editor).
-        if (DayPhaseManager.Instance == null)
+        // Auto-spawn when DayPhaseManager isn't driving the flow, or when it
+        // exists but is already past Morning (editor play / jumped into scene).
+        bool dpmPresent = DayPhaseManager.Instance != null;
+        bool dpmPastMorning = dpmPresent
+            && DayPhaseManager.Instance.CurrentPhase != DayPhaseManager.DayPhase.Morning;
+
+        if (!dpmPresent || dpmPastMorning)
         {
-            Debug.Log("[ApartmentStainSpawner] No DayPhaseManager — auto-spawning stains.");
+            Debug.Log("[ApartmentStainSpawner] Auto-spawning stains (no DPM or already past morning).");
             SpawnDailyStains();
         }
     }
