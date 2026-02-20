@@ -130,8 +130,34 @@ public class CleaningManager : MonoBehaviour
         if (_mainCamera == null)
             _mainCamera = Camera.main;
 
+        // Auto-detect Cleanable layer if mask wasn't wired (e.g. scene built before layer existed)
+        if (_cleanableLayer.value == 0)
+        {
+            int layer = LayerMask.NameToLayer("Cleanable");
+            if (layer >= 0)
+            {
+                _cleanableLayer = 1 << layer;
+                Debug.LogWarning($"[CleaningManager] _cleanableLayer was 0 — auto-detected 'Cleanable' layer {layer} (mask={_cleanableLayer.value}).");
+            }
+            else
+            {
+                Debug.LogError("[CleaningManager] _cleanableLayer is 0 and no 'Cleanable' layer found in Project Settings! Stain raycasts will fail.");
+            }
+        }
+
+        // Log surface states for diagnosis
+        int activeSurfaces = 0;
+        if (_surfaces != null)
+        {
+            for (int i = 0; i < _surfaces.Length; i++)
+            {
+                if (_surfaces[i] != null && _surfaces[i].gameObject.activeInHierarchy)
+                    activeSurfaces++;
+            }
+        }
+
         Debug.Log($"[CleaningManager] Awake — camera={(_mainCamera != null ? _mainCamera.name : "NULL")}, " +
-                  $"surfaces={(_surfaces != null ? _surfaces.Length : 0)}, " +
+                  $"surfaces={(_surfaces != null ? _surfaces.Length : 0)} (active={activeSurfaces}), " +
                   $"sponge={(_spongeVisual != null ? "OK" : "NULL")}, " +
                   $"layer={_cleanableLayer.value}");
     }
