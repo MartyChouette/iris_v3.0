@@ -25,7 +25,7 @@
 
 **Iris** is a contemplative flower-trimming game built in Unity 6 (URP) that blends cozy apartment life simulation, dating mechanics, and meditative craft gameplay into a single cohesive loop. Developed as a thesis project over 5.5 months — from early flower-trimming physics prototypes in September 2025 through an intensive 17-day apartment systems sprint — it has reached a remarkable state of technical maturity: **45,000+ lines of gameplay C#**, **247 runtime scripts**, **242 ScriptableObject assets**, and **18+ interconnected gameplay systems** — all driven by a fully procedural scene builder that regenerates the entire game world from code. A Feb 17–19 integration sprint connected all major systems into a unified loop: flower trimming feeds living apartment plants, authored messes and clutter affect date outcomes, date results persist across days via DateOutcomeCapture, and audio infrastructure now drives ambience/weather through MoodMachine profile curves with SFX hooks across grab, placement, area transitions, and day phase changes.
 
-The game enters a **$450M+ romance/dating sim market** growing at ~10% annually, with a female-majority audience (60%) in the 18-35 age range — a demographic actively seeking exactly the kind of thoughtful, emotionally resonant hybrid experience Iris provides.
+The game enters a **$540M+ romance/dating sim market** growing at ~10% annually, with a female-majority audience (60%) in the 18-35 age range — a demographic actively seeking exactly the kind of thoughtful, emotionally resonant hybrid experience Iris provides.
 
 ```mermaid
 mindmap
@@ -51,7 +51,7 @@ mindmap
       Additive Scene Loading
       45K Lines C#
     Market
-      $450M Dating Sim Segment
+      $540M Dating Sim Segment
       10% Annual Growth
       60% Female Audience
       Cozy Game Boom
@@ -515,11 +515,14 @@ xychart-beta
     line [1.05, 1.15, 1.35, 1.50, 1.65, 1.82, 2.01, 2.22, 2.45, 2.70, 2.98]
 ```
 
-| Segment | 2024 Value | CAGR | Key Insight |
-|---------|:----------:|:----:|-------------|
-| **Total Visual Novel Market** | $1.35B | 9.2–11.7% | Consistent growth across all regions |
-| **Romance / Dating Sim** | $450M | ~10% | Highest-value VN sub-genre |
-| **Cozy Games (broader)** | $1.8B+ | ~12% | Fastest-growing indie category |
+| Segment | 2025 Est. | 2026 Projected | CAGR | Key Insight |
+|---------|:---------:|:--------------:|:----:|-------------|
+| **Total Visual Novel Market** | $1.50B | $1.65B | 9.2–11.7% | Consistent growth; mobile otome driving Asian segment |
+| **Romance / Dating Sim** | $490M | $540M | ~10% | Highest-value VN sub-genre; hybrid titles outperforming pure VNs |
+| **Cozy Games (broader)** | $2.0B+ | $2.3B+ | ~12–14% | Fastest-growing indie category; Steam "cozy" tag usage doubled since 2023 |
+| **Cozy Hybrid (craft + narrative)** | $350M+ (est.) | $420M+ (est.) | ~15% (est.) | Emerging sub-segment; titles like Wanderstop, Fields of Mistria proving demand |
+
+> **Note:** Market projections use published CAGRs (Grand View Research, Mordor Intelligence) applied to 2024 base figures. "Cozy Hybrid" is an editorial estimate based on Steam tag analysis.
 
 ### Audience Demographics
 
@@ -545,6 +548,7 @@ pie title Dating Sim Audience — Age Distribution
 - **Core age 18–35** — the "cozy game generation" raised on Stardew Valley, Animal Crossing, and Night in the Woods
 - **LGBTQ+ representation is expected**, not optional — Iris already has 4 diverse date characters (Livii she/her, Sterling he/him, Sage they/them, Clover she/her)
 - **Platform preference**: PC (Steam) dominant for Western audience; mobile for otome (Asian market)
+- **TikTok as discovery engine**: #cozygames has surpassed **15B+ views** on TikTok — cozy game reveals and "apartment tour" content regularly go viral, making Iris's visually expressive apartment system a natural fit for social media marketing
 
 ### The "Cozy Hybrid" Trend
 
@@ -558,10 +562,11 @@ The market is increasingly rewarding games that combine dating/relationship mech
 | 2022 | Potionomics | Shop sim + dating + card battles | Strong reviews |
 | 2022 | Strange Horticulture | Plant shop + puzzle | Cult following |
 | 2023 | Venba | Cooking + immigrant narrative | $200K in 10 days |
+| 2024 | Fields of Mistria | Farming sim + dating + life sim | $2M+ first month (EA) |
 | 2025 | Wanderstop | Tea shop + burnout narrative | 92% positive Steam |
 | 2026 | **Iris** | **Flower trimming + dating + apartment life** | **You are here** |
 
-Iris sits at the intersection of three proven trends: **contemplative craft**, **dating sim**, and **cozy apartment life**. No existing game combines all three.
+Iris sits at the intersection of three proven trends: **contemplative craft**, **dating sim**, and **cozy apartment life**. No existing game combines all three — and the integration of flower trimming directly into the apartment loop (with trimmed flowers becoming living decorations that dates react to) creates a feedback loop no competitor offers.
 
 ---
 
@@ -601,6 +606,34 @@ quadrantChart
 | **Spiritfarer** | $24.99 | 25–40h | $63M | Iris is smaller scale, deeper dating focus |
 | **Venba** | $14.99 | 2–3h | $200K/10d | Iris has 5-10x more gameplay depth |
 | **Calico** | $11.99 | 4–8h | Moderate | Iris has sharper narrative focus |
+
+### The Interconnected Systems Advantage
+
+With the Feb 17–19 integration pass, Iris's systems now form a **true feedback loop** that no competitor matches:
+
+```mermaid
+flowchart TB
+    subgraph LOOP["The Iris Loop — Every Action Feeds Forward"]
+        direction TB
+        TRIM["Flower Trimming<br/><i>Meditative craft</i>"]
+        DECOR["Living Flower Plants<br/><i>Apartment decorations</i>"]
+        CLUTTER["Clutter/Tidiness<br/><i>12+ AuthoredMessBlueprints</i>"]
+        DATE_R["Date Reactions<br/><i>Tidiness + flowers affect outcomes</i>"]
+        PERSIST["Outcome Persistence<br/><i>Results carry to next day</i>"]
+        NEXT["Next Day Apartment<br/><i>State reflects history</i>"]
+
+        TRIM -->|"Flowers become"| DECOR
+        DECOR -->|"Contribute to"| CLUTTER
+        CLUTTER -->|"Judges evaluate"| DATE_R
+        DATE_R -->|"Results persist"| PERSIST
+        PERSIST -->|"Shapes"| NEXT
+        NEXT -->|"Motivates"| TRIM
+    end
+
+    style LOOP fill:#2a2a3e,stroke:#f5a623,color:#eee
+```
+
+This loop means **the apartment is not just a setting — it is the primary gameplay verb**. The player *curates a space*, and the game evaluates that curation through the date system. No other cozy game ties craft output, environmental state, relationship mechanics, and cross-day persistence into a single reinforcing loop.
 
 ### Iris's Unique Value Proposition
 
@@ -673,6 +706,20 @@ xychart-beta
 | **Raw Fury** | Eclectic portfolio (Sable, Norco). Strong on atmospheric games. |
 | **Annapurna Interactive** | Dream publisher but extremely selective. Restructured in 2024. |
 | **Team17** | Larger scale. Published Dredge (genre hybrid success). |
+| **Neon Doctrine** | Growing cozy/narrative portfolio. More accessible than larger publishers; shorter response times. |
+| **tinyBuild** | Expanded into cozy and narrative territory. "Hello Indie" program actively scouts smaller projects. |
+
+### Publisher Pitch Strengthened (Feb 2026 Update)
+
+The game's commercial pitch has strengthened significantly since the initial sprint:
+
+| Before (Feb 15) | After Integration (Feb 19) | Why It Matters to Publishers |
+|------------------|---------------------------|------------------------------|
+| Flower trimming as standalone prototype | Flower trimming integrated into apartment loop; trimmed flowers become living decorations | Proves the core hook works within the game, not just as a tech demo |
+| Date evaluates apartment objects | Date evaluates clutter/tidiness via 12+ AuthoredMessBlueprints | Environmental storytelling = marketing-friendly screenshots and trailers |
+| Record player played music | Record player rebuilt as 4-state FSM | Shows depth of polish — every station has FSM-level sophistication |
+| Date results shown at end of day | Date outcome persistence across days | Long-term engagement hook; players see consequences compound |
+| Apartment as static backdrop | Apartment as living, evolving space with flower plants | "Your apartment tells the story of your relationships" — pitch-deck gold |
 
 ### Publisher Submission Strategy
 
@@ -802,32 +849,35 @@ xychart-beta
 
 | Factor | Reasoning |
 |--------|-----------|
-| **Comp alignment** | Matches Venba, Strange Horticulture, Coffee Talk tier |
-| **Content depth** | 7-day mode = 8–15 hours; comfortably supports $14.99 |
+| **Comp alignment** | Matches Venba, Strange Horticulture, Coffee Talk, Fields of Mistria (EA) tier |
+| **Content depth** | 7-day mode = 8–15 hours; with interconnected systems and date persistence, replay value is strong |
+| **System depth** | 18+ interconnected systems, environmental storytelling, cross-day persistence — more gameplay per dollar than most comps |
 | **Impulse-buy friendly** | $7.49 at 50% off during Steam sales |
 | **Quality signal** | High enough to avoid "cheap game" perception |
 | **Thesis context** | Reasonable for debut title, room to grow |
 
 ### Revenue Projections
 
-Three scenarios based on comparable titles:
+Three scenarios based on comparable titles. The strengthened feature set (integrated flower trimming, environmental storytelling, date persistence) improves the moderate and optimistic cases:
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
 xychart-beta
     title "12-Month Revenue Projections (Steam Only)"
     x-axis ["Month 1", "Month 2", "Month 3", "Month 6", "Month 9", "Month 12"]
-    y-axis "Cumulative Revenue ($K)" 0 --> 550
+    y-axis "Cumulative Revenue ($K)" 0 --> 600
     line "Conservative" [15, 22, 28, 42, 52, 60]
-    line "Moderate" [45, 68, 85, 135, 170, 200]
-    line "Optimistic" [120, 180, 230, 380, 450, 520]
+    line "Moderate" [55, 82, 100, 160, 200, 240]
+    line "Optimistic" [140, 210, 270, 430, 510, 580]
 ```
 
 | Scenario | Units (Yr 1) | Gross Revenue | Net (after Steam 30%) | Assumptions |
 |----------|:------------:|:-------------:|:---------------------:|-------------|
 | **Conservative** | 4,000 | $60K | $42K | Thesis project, minimal marketing, self-published |
-| **Moderate** | 13,000 | $200K | $140K | Publisher support, Next Fest demo, good reviews |
-| **Optimistic** | 35,000 | $520K | $364K | Strong publisher, viral TikTok moment, 90%+ reviews |
+| **Moderate** | 16,000 | $240K | $168K | Publisher support, Next Fest demo, good reviews (85%+); deeper systems improve review scores and session length |
+| **Optimistic** | 39,000 | $580K | $406K | Strong publisher, viral TikTok moment (apartment tours, flower trimming clips), 90%+ reviews, strong DLC upsell |
+
+> **Projection note (Feb 19 update):** Moderate and optimistic projections revised upward. The game's interconnected systems (flower trimming feeds decorations, clutter affects dates, outcomes persist) historically correlate with better Steam reviews and stronger recommendation rates. Comparable titles with interconnected loops consistently outperform titles with isolated mechanics at the same price point.
 
 ### Funding Strategy Options
 

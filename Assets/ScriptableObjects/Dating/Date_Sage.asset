@@ -38,7 +38,7 @@ MonoBehaviour:
     commentary: Warm, attentive, and weirdly good at making people feel seen. May
       offer... substances.
   flowerPrefab: {fileID: 0}
-  flowerSceneName: Daisy_Flower_Scene
+  flowerSceneName: 
   forceAvailable: 0
   preferences:
     likedTags:

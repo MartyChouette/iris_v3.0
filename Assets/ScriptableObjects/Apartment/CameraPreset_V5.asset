@@ -64,3 +64,28 @@ MonoBehaviour:
     volumeProfile: {fileID: 0}
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
+  - areaLabel: Entrance
+    position: {x: -4.601932, y: 4.1898923, z: -1.6764345}
+    rotation: {x: 18, y: 55, z: 1.2690364}
+    lens:
+      FieldOfView: 60.000004
+      OrthographicSize: 10
+      NearClipPlane: 0.0450701
+      FarClipPlane: 9014.0205
+      Dutch: -10
+      ModeOverride: 0
+      PhysicalProperties:
+        GateFit: 2
+        SensorSize: {x: 21.946, y: 16.002}
+        LensShift: {x: 0, y: 0}
+        FocusDistance: 10
+        Iso: 200
+        ShutterSpeed: 0.005
+        Aperture: 16
+        BladeCount: 5
+        Curvature: {x: 2, y: 11}
+        BarrelClipping: 0.25
+        Anamorphism: 0
+    volumeProfile: {fileID: 0}
+    lightIntensityMultiplier: 0
+    lightColorTint: {r: 0, g: 0, b: 0, a: 0}
