@@ -1271,7 +1271,7 @@ public static class ApartmentSceneBuilder
             float xOff = v * 0.025f;
             float zJitter = (v % 3 - 1) * 0.005f;
             sleeveGO.transform.localPosition = new Vector3(xOff, 0.125f, zJitter);
-            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, 95f - v * 0.3f);
+            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, 85f + v * 0.3f);
             sleeveGO.transform.localScale = new Vector3(0.24f, 0.24f, 0.02f);
             sleeveGO.isStatic = false;
 
