@@ -483,6 +483,33 @@ public static class ApartmentSceneBuilder
         BuildGunplaFigure(parent, placeableLayer,
             new Vector3(-1.834f, 1.107f, -2.15f));
 
+        // Floating wall shelf (living room display shelf)
+        {
+            var shelfTop = CreateBox("WallShelf_Top", parent,
+                new Vector3(3.3f, 1.4f, 2.0f), new Vector3(1.2f, 0.04f, 0.3f),
+                new Color(0.50f, 0.38f, 0.25f));
+            // Shelf bracket left
+            CreateBox("WallShelf_BracketL", parent,
+                new Vector3(2.8f, 1.28f, 2.0f), new Vector3(0.04f, 0.2f, 0.25f),
+                new Color(0.30f, 0.28f, 0.25f));
+            // Shelf bracket right
+            CreateBox("WallShelf_BracketR", parent,
+                new Vector3(3.8f, 1.28f, 2.0f), new Vector3(0.04f, 0.2f, 0.25f),
+                new Color(0.30f, 0.28f, 0.25f));
+
+            int surfLayer = BookcaseSceneBuilder.EnsureLayer("Surfaces");
+            shelfTop.layer = surfLayer;
+            shelfTop.isStatic = false;
+            var shelfSurface = shelfTop.AddComponent<PlacementSurface>();
+            var shelfSurfSO = new SerializedObject(shelfSurface);
+            shelfSurfSO.FindProperty("localBounds").boundsValue = new Bounds(
+                Vector3.zero,
+                new Vector3(1.2f, 0.05f, 0.3f));
+            shelfSurfSO.FindProperty("normalAxis").enumValueIndex = (int)PlacementSurface.SurfaceAxis.Up;
+            shelfSurfSO.FindProperty("surfaceLayerIndex").intValue = surfLayer;
+            shelfSurfSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         // Couch seat target (where date character sits)
         var seatGO = new GameObject("CouchSeatTarget");
         seatGO.transform.SetParent(parent);
