@@ -198,6 +198,10 @@ public static class ApartmentSceneBuilder
         var autoSaveGO = new GameObject("AutoSaveController");
         autoSaveGO.AddComponent<AutoSaveController>();
 
+        // ── 12c. PSX render controller ──
+        var psxGO = new GameObject("PSXRenderController");
+        psxGO.AddComponent<PSXRenderController>();
+
         // ── 13. Ambient cleaning (not a station) ──
         var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer, placeableLayer);
 
