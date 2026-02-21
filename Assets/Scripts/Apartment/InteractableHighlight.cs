@@ -1,39 +1,38 @@
 using UnityEngine;
 
 /// <summary>
-/// Toggleable rim-light overlay material on the object's renderer.
-/// Supports three independent layers:
+/// Toggleable rim-light overlay material on the object's renderers.
+/// Supports compound objects (multiple child renderers) as well as single-renderer objects.
+/// Three independent layers:
 ///   1. Display (warm peach, "public item" indicator — always-on background glow)
 ///   2. Gaze (amber, NPC focus)
 ///   3. Hover (warm ivory, player mouse — strongest, on top)
 /// All can be active simultaneously — additive blend means stronger highlights overpower subtle ones.
-/// Attach to any clickable object (books, records, placeables, etc.).
+/// Attach to any clickable object (books, records, placeables, pots, etc.).
 /// </summary>
-[RequireComponent(typeof(Renderer))]
 public class InteractableHighlight : MonoBehaviour
 {
     private static Material s_sharedRimMat;
     private static Material s_sharedGazeMat;
     private static Material s_sharedDisplayMat;
 
-    private Renderer _renderer;
-    private Material[] _baseMaterials;
+    private Renderer[] _renderers;
+    private Material[][] _baseMaterialArrays;
     private bool _highlighted;
     private bool _gazeActive;
     private bool _displayActive;
 
     private void Awake()
     {
-        _renderer = GetComponent<Renderer>();
-        if (_renderer == null) return;
+        _renderers = GetComponentsInChildren<Renderer>();
+        if (_renderers.Length == 0) return;
 
         EnsureSharedMaterials();
 
-        // Cache base materials (no overlays)
-        _baseMaterials = _renderer.sharedMaterials;
-
-        // Start with all highlights OFF
-        _renderer.sharedMaterials = _baseMaterials;
+        // Cache base materials per renderer (no overlays)
+        _baseMaterialArrays = new Material[_renderers.Length][];
+        for (int i = 0; i < _renderers.Length; i++)
+            _baseMaterialArrays[i] = _renderers[i].sharedMaterials;
     }
 
     /// <summary>
@@ -41,7 +40,7 @@ public class InteractableHighlight : MonoBehaviour
     /// </summary>
     public void SetHighlighted(bool on)
     {
-        if (_renderer == null || _baseMaterials == null || on == _highlighted) return;
+        if (_renderers == null || _renderers.Length == 0 || on == _highlighted) return;
         _highlighted = on;
         RebuildMaterials();
     }
@@ -51,7 +50,7 @@ public class InteractableHighlight : MonoBehaviour
     /// </summary>
     public void SetGazeHighlighted(bool on)
     {
-        if (_renderer == null || _baseMaterials == null || on == _gazeActive) return;
+        if (_renderers == null || _renderers.Length == 0 || on == _gazeActive) return;
         _gazeActive = on;
         RebuildMaterials();
     }
@@ -63,7 +62,7 @@ public class InteractableHighlight : MonoBehaviour
     /// </summary>
     public void SetDisplayHighlighted(bool on)
     {
-        if (_renderer == null || _baseMaterials == null || on == _displayActive) return;
+        if (_renderers == null || _renderers.Length == 0 || on == _displayActive) return;
         _displayActive = on;
         RebuildMaterials();
     }
@@ -74,31 +73,37 @@ public class InteractableHighlight : MonoBehaviour
                        + (_gazeActive ? 1 : 0)
                        + (_highlighted ? 1 : 0);
 
-        if (extraCount == 0)
+        for (int r = 0; r < _renderers.Length; r++)
         {
-            _renderer.sharedMaterials = _baseMaterials;
-            return;
+            if (_renderers[r] == null) continue;
+            var baseMats = _baseMaterialArrays[r];
+
+            if (extraCount == 0)
+            {
+                _renderers[r].sharedMaterials = baseMats;
+                continue;
+            }
+
+            var mats = new Material[baseMats.Length + extraCount];
+            for (int i = 0; i < baseMats.Length; i++)
+                mats[i] = baseMats[i];
+
+            int slot = baseMats.Length;
+
+            // Display renders first (background — subtlest)
+            if (_displayActive && s_sharedDisplayMat != null)
+                mats[slot++] = s_sharedDisplayMat;
+
+            // Gaze renders second (middle)
+            if (_gazeActive && s_sharedGazeMat != null)
+                mats[slot++] = s_sharedGazeMat;
+
+            // Hover renders on top (player intent dominates)
+            if (_highlighted && s_sharedRimMat != null)
+                mats[slot++] = s_sharedRimMat;
+
+            _renderers[r].sharedMaterials = mats;
         }
-
-        var mats = new Material[_baseMaterials.Length + extraCount];
-        for (int i = 0; i < _baseMaterials.Length; i++)
-            mats[i] = _baseMaterials[i];
-
-        int slot = _baseMaterials.Length;
-
-        // Display renders first (background — subtlest)
-        if (_displayActive && s_sharedDisplayMat != null)
-            mats[slot++] = s_sharedDisplayMat;
-
-        // Gaze renders second (middle)
-        if (_gazeActive && s_sharedGazeMat != null)
-            mats[slot++] = s_sharedGazeMat;
-
-        // Hover renders on top (player intent dominates)
-        if (_highlighted && s_sharedRimMat != null)
-            mats[slot++] = s_sharedRimMat;
-
-        _renderer.sharedMaterials = mats;
     }
 
     private static void EnsureSharedMaterials()
