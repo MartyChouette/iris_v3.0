@@ -35,7 +35,7 @@ public static class ApartmentSceneBuilder
     // ─── Station Group Positions ─────────────────────────────────
     private static readonly Vector3 BookcaseStationPos  = new Vector3(2.933f, 0.421f, 2.095f);
     private static readonly Quaternion BookcaseStationRot = new Quaternion(0f, 0.9997f, 0f, -0.0227f);
-    private static readonly Vector3 RecordPlayerStationPos = new Vector3(-2f, 0f, 2f);
+    private static readonly Vector3 RecordPlayerStationPos = new Vector3(-4f, 0f, 4.5f);
     private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
     // ─── Entrance Area Config (near door at -3, 0, -5.5) ────────
@@ -1252,7 +1252,7 @@ public static class ApartmentSceneBuilder
             float xOff = v * 0.025f;
             float zJitter = (v % 3 - 1) * 0.005f;
             sleeveGO.transform.localPosition = new Vector3(xOff, 0.125f, zJitter);
-            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, 85f + v * 0.3f);
+            sleeveGO.transform.localRotation = Quaternion.Euler(0f, 0f, -8f + v * 0.3f);
             sleeveGO.transform.localScale = new Vector3(0.24f, 0.24f, 0.02f);
             sleeveGO.isStatic = false;
 
