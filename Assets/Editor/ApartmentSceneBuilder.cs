@@ -40,7 +40,7 @@ public static class ApartmentSceneBuilder
 
     // ─── Entrance Area Config (near door at -3, 0, -5.5) ────────
     private static readonly Vector3 EntranceAreaPos     = new Vector3(-3f, 0f, -5.5f);
-    private static readonly Vector3 TrashCanPos         = new Vector3(-4.5f, 0f, -4.0f);
+    private static readonly Vector3 TrashCanPos         = new Vector3(-3f, 0f, -3.5f);
     private static readonly Vector3 ShoeRackPos         = new Vector3(-2f, 0f, -5.3f);
     private static readonly Vector3 CoatRackPos         = new Vector3(-4f, 0f, -5.3f);
 
