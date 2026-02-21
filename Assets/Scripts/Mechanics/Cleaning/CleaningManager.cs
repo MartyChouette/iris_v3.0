@@ -56,9 +56,6 @@ public class CleaningManager : MonoBehaviour
     private float _sfxCooldown;
     private bool _allCleanFired;
     private bool _wasPressingLastFrame;
-    private bool _diagnosticFired;
-    private bool _hoverDiagnosticFired;
-
     private const float SFX_COOLDOWN = 0.15f;
 
     // ── Public API ──────────────────────────────────────────────────
@@ -284,49 +281,15 @@ public class CleaningManager : MonoBehaviour
                 if (col != null && col.Raycast(ray, out hitInfo, 100f))
                 {
                     hit = true;
-                    if (!_diagnosticFired)
-                    {
-                        Debug.LogWarning($"[CleaningManager] Layer raycast missed but direct collider hit on '{_surfaces[i].name}'. " +
-                                         $"Layer={_surfaces[i].gameObject.layer}, mask={_cleanableLayer.value}. Fixing layer.");
-                        _surfaces[i].gameObject.layer = LayerMaskToLayer(_cleanableLayer);
-                    }
+                    _surfaces[i].gameObject.layer = LayerMaskToLayer(_cleanableLayer);
                     break;
                 }
             }
         }
 
-        // One-time diagnostic on first click to help trace sponge issues
-        if (!_diagnosticFired && _mouseClick.WasPressedThisFrame())
-        {
-            _diagnosticFired = true;
-            int activeSurfaces = 0;
-            if (_surfaces != null)
-                for (int i = 0; i < _surfaces.Length; i++)
-                    if (_surfaces[i] != null && _surfaces[i].gameObject.activeInHierarchy) activeSurfaces++;
-            Debug.Log($"[CleaningManager] Click diagnostic — hit={hit}, layer={_cleanableLayer.value}, " +
-                      $"surfaces={(_surfaces != null ? _surfaces.Length : 0)}, active={activeSurfaces}, " +
-                      $"cam={(_mainCamera != null ? _mainCamera.name : "NULL")}, " +
-                      $"rayOrigin={ray.origin}, rayDir={ray.direction}" +
-                      (hit ? $", hitObj={hitInfo.collider.gameObject.name}, hitLayer={hitInfo.collider.gameObject.layer}" : ""));
-        }
-
         if (hit)
         {
             _hoveredSurface = hitInfo.collider.GetComponentInParent<CleanableSurface>();
-
-            // One-time hover diagnostic
-            if (!_hoverDiagnosticFired)
-            {
-                _hoverDiagnosticFired = true;
-                bool isNull = _hoveredSurface == null;
-                float cleanPct = isNull ? -1f : _hoveredSurface.CleanPercent;
-                bool fullyClean = !isNull && _hoveredSurface.IsFullyClean;
-                int totalDirt = isNull ? -1 : _hoveredSurface.TotalDirtPixels;
-                bool hasDirtAlpha = !isNull && _hoveredSurface.HasDirtAlpha;
-                Debug.Log($"[CleaningManager] Hover diagnostic — surface={(!isNull ? _hoveredSurface.name : "NULL")}, " +
-                          $"cleanPct={cleanPct:F3}, fullyClean={fullyClean}, totalDirt={totalDirt}, " +
-                          $"hasDirtAlpha={hasDirtAlpha}, sponge={(_spongeVisual != null ? "OK" : "NULL")}");
-            }
 
             // Skip already-clean stains — no sponge, no wipe
             if (_hoveredSurface != null && _hoveredSurface.IsFullyClean)

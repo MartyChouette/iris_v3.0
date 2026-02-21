@@ -101,11 +101,6 @@ public class CleanableSurface : MonoBehaviour
     /// <summary>True when >= 95% clean.</summary>
     public bool IsFullyClean => CleanPercent >= 0.95f;
 
-    /// <summary>Diagnostic: total dirty pixels at generation time.</summary>
-    public int TotalDirtPixels => _totalDirtPixels;
-
-    /// <summary>Diagnostic: whether _dirtAlpha array exists.</summary>
-    public bool HasDirtAlpha => _dirtAlpha != null && _dirtAlpha.Length > 0;
 
     /// <summary>
     /// Wipe dirt at UV position. Effectiveness depends on stubbornness and wetness.
