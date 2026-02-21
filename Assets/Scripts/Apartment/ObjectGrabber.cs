@@ -19,11 +19,11 @@ public class ObjectGrabber : MonoBehaviour
 
     [Header("Grid Snap")]
     [Tooltip("Grid cell size in world units.")]
-    [SerializeField] private float gridSize = 0.2f;
+    [SerializeField] private float gridSize = 0.3f;
 
     [Header("Scroll Behavior")]
     [Tooltip("Degrees rotated per scroll tick around Y axis.")]
-    [SerializeField] private float scrollRotateStep = 15f;
+    [SerializeField] private float scrollRotateStep = 45f;
 
     [Header("Raycast")]
     [Tooltip("Layer mask for placeable objects.")]
@@ -83,8 +83,8 @@ public class ObjectGrabber : MonoBehaviour
     private GameObject _shadowGO;
     private MeshRenderer _shadowRenderer;
     private Material _shadowMat;
-    private static readonly Color s_shadowValid = new Color(0.55f, 0.7f, 0.55f, 0.45f);
-    private static readonly Color s_shadowInvalid = new Color(0.72f, 0.45f, 0.48f, 0.45f);
+    private static readonly Color s_shadowValid = new Color(0.55f, 0.7f, 0.55f, 0.7f);
+    private static readonly Color s_shadowInvalid = new Color(0.72f, 0.45f, 0.48f, 0.7f);
 
     private void Awake()
     {
@@ -608,7 +608,8 @@ public class ObjectGrabber : MonoBehaviour
         _shadowMat.color = s_shadowValid;
         _shadowMat.SetFloat("_Surface", 1f);
         _shadowMat.SetFloat("_Blend", 0f);
-        _shadowMat.renderQueue = 3000;
+        _shadowMat.SetInt("_ZTest", (int)CompareFunction.Always);
+        _shadowMat.renderQueue = 3900;
         _shadowRenderer.sharedMaterial = _shadowMat;
         _shadowRenderer.shadowCastingMode = ShadowCastingMode.Off;
         _shadowRenderer.receiveShadows = false;
@@ -655,7 +656,7 @@ public class ObjectGrabber : MonoBehaviour
         if (col != null)
         {
             Vector3 ext = col.bounds.extents;
-            float diameter = Mathf.Max(ext.x, ext.z) * 2f;
+            float diameter = Mathf.Max(ext.x, ext.z) * 2f * 1.3f; // 30% larger than footprint
             _shadowGO.transform.localScale = new Vector3(diameter, 1f, diameter);
         }
     }
