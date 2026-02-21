@@ -5,6 +5,7 @@ using UnityEngine;
 /// Scene-scoped singleton tracking all living plants in the apartment.
 /// Spawns plants from flower trimming results, advances their health each day,
 /// and feeds MoodMachine with average plant health.
+/// Plants are wrapped in a pot+soil and made placeable via ObjectGrabber.
 /// </summary>
 public class LivingFlowerPlantManager : MonoBehaviour
 {
@@ -87,6 +88,7 @@ public class LivingFlowerPlantManager : MonoBehaviour
             plantGO = trimmedVisual;
             plantGO.name = $"LivingPlant_{characterName}";
             plantGO.SetActive(true);
+            CreatePotWithSoil(plantGO);
         }
         else
         {
@@ -106,6 +108,8 @@ public class LivingFlowerPlantManager : MonoBehaviour
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (tagsField != null)
             tagsField.SetValue(reactable, new[] { "plant", "flower", "gift" });
+
+        MakePlaceable(plantGO);
 
         _activePlants.Add(plant);
 
@@ -171,6 +175,8 @@ public class LivingFlowerPlantManager : MonoBehaviour
             if (tagsField != null)
                 tagsField.SetValue(reactable, new[] { "plant", "flower", "gift" });
 
+            MakePlaceable(plantGO);
+
             _activePlants.Add(plant);
         }
 
@@ -200,16 +206,19 @@ public class LivingFlowerPlantManager : MonoBehaviour
         MoodMachine.Instance.SetSource("LivingPlants", avgHealth);
     }
 
-    private static GameObject CreateProceduralPlant(string characterName)
+    /// <summary>
+    /// Add pot (brown cube) and soil (dark disc) as children of the given parent.
+    /// Strips auto-generated colliders from primitives so the root BoxCollider is authoritative.
+    /// </summary>
+    private static void CreatePotWithSoil(GameObject parent)
     {
-        var plantGO = new GameObject($"LivingPlant_{characterName}");
-
         // Pot (brown cube)
         var pot = GameObject.CreatePrimitive(PrimitiveType.Cube);
         pot.name = "Pot";
-        pot.transform.SetParent(plantGO.transform);
+        pot.transform.SetParent(parent.transform);
         pot.transform.localPosition = Vector3.zero;
         pot.transform.localScale = new Vector3(0.12f, 0.10f, 0.12f);
+        Object.Destroy(pot.GetComponent<Collider>());
         var potRend = pot.GetComponent<Renderer>();
         if (potRend != null)
         {
@@ -219,12 +228,71 @@ public class LivingFlowerPlantManager : MonoBehaviour
             potRend.sharedMaterial = mat;
         }
 
+        // Soil (dark brown disc sitting on top of pot)
+        var soil = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        soil.name = "Soil";
+        soil.transform.SetParent(parent.transform);
+        soil.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+        soil.transform.localScale = new Vector3(0.10f, 0.01f, 0.10f);
+        Object.Destroy(soil.GetComponent<Collider>());
+        var soilRend = soil.GetComponent<Renderer>();
+        if (soilRend != null)
+        {
+            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                   ?? Shader.Find("Standard"));
+            mat.color = new Color(0.25f, 0.15f, 0.08f);
+            soilRend.sharedMaterial = mat;
+        }
+    }
+
+    /// <summary>
+    /// Make a plant GO grabbable: kinematic Rigidbody + auto-sized BoxCollider + PlaceableObject.
+    /// Must be called AFTER all child visuals are parented.
+    /// </summary>
+    private static void MakePlaceable(GameObject go)
+    {
+        // Rigidbody first (PlaceableObject requires it)
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb == null) rb = go.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+
+        // BoxCollider sized to encapsulate all child renderers
+        var col = go.GetComponent<BoxCollider>();
+        if (col == null) col = go.AddComponent<BoxCollider>();
+
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers.Length > 0)
+        {
+            var bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+                bounds.Encapsulate(renderers[i].bounds);
+
+            col.center = go.transform.InverseTransformPoint(bounds.center);
+            col.size = bounds.size;
+        }
+        else
+        {
+            col.center = Vector3.zero;
+            col.size = new Vector3(0.12f, 0.12f, 0.12f);
+        }
+
+        // PlaceableObject — defaults: category=General, no home zone
+        go.AddComponent<PlaceableObject>();
+    }
+
+    private static GameObject CreateProceduralPlant(string characterName)
+    {
+        var plantGO = new GameObject($"LivingPlant_{characterName}");
+
+        CreatePotWithSoil(plantGO);
+
         // Stem (green cylinder)
         var stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         stem.name = "Stem";
         stem.transform.SetParent(plantGO.transform);
         stem.transform.localPosition = new Vector3(0f, 0.12f, 0f);
         stem.transform.localScale = new Vector3(0.02f, 0.10f, 0.02f);
+        Object.Destroy(stem.GetComponent<Collider>());
         var stemRend = stem.GetComponent<Renderer>();
         if (stemRend != null)
         {
@@ -240,6 +308,7 @@ public class LivingFlowerPlantManager : MonoBehaviour
         head.transform.SetParent(plantGO.transform);
         head.transform.localPosition = new Vector3(0f, 0.24f, 0f);
         head.transform.localScale = new Vector3(0.08f, 0.06f, 0.08f);
+        Object.Destroy(head.GetComponent<Collider>());
         var headRend = head.GetComponent<Renderer>();
         if (headRend != null)
         {
