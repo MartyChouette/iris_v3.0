@@ -19,6 +19,7 @@ public class CoffeeTableDelivery : MonoBehaviour
     [SerializeField] private AudioClip deliverSFX;
 
     private GameObject _currentDrink;
+    private Material _drinkMat;
 
     private void Awake()
     {
@@ -56,13 +57,13 @@ public class CoffeeTableDelivery : MonoBehaviour
             _currentDrink.transform.localScale = new Vector3(0.08f, 0.06f, 0.08f);
         }
 
-        // Tint the cup to liquid color
+        // Tint the cup to liquid color (track material to avoid leak)
         var rend = _currentDrink.GetComponent<Renderer>();
         if (rend != null)
         {
-            var mat = new Material(rend.sharedMaterial);
-            mat.color = liquidColor;
-            rend.material = mat;
+            _drinkMat = new Material(rend.sharedMaterial);
+            _drinkMat.color = liquidColor;
+            rend.material = _drinkMat;
         }
 
         if (deliverSFX != null && AudioManager.Instance != null)
@@ -77,6 +78,11 @@ public class CoffeeTableDelivery : MonoBehaviour
     /// <summary>Remove the current drink from the table.</summary>
     public void ClearDrink()
     {
+        if (_drinkMat != null)
+        {
+            Destroy(_drinkMat);
+            _drinkMat = null;
+        }
         if (_currentDrink != null)
         {
             Destroy(_currentDrink);

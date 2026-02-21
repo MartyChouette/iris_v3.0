@@ -225,7 +225,15 @@ private void Update()
 4. **StemPieceMarker static registry** - Self-registering `OnEnable`/`OnDisable` pattern eliminates `FindObjectsByType` in rebinder
 5. **AngleStagePlaneBehaviour caching** - Cached stem and session references with 2-second refresh interval
 
-### 4.3 Remaining Suggestions
+### 4.3 Phase 13 Optimizations (February 2026)
+
+1. **PlaceableObject static registry** — `s_all` List with OnEnable/OnDisable. Eliminates `FindObjectsByType` in TidyScorer (3 methods), DishDropZone (every Update), DropZone, ItemLabelOverlay, AutoSaveController.
+2. **PlacementSurface static registry** — Same pattern. `FindNearest()` iterates `s_all` instead of scene search.
+3. **ObjectGrabber.HeldObject** — Static property accessor. DishDropZone and DropZone use it instead of scanning all placeables.
+4. **Camera.main caching** — ApartmentManager, ItemLabelOverlay now cache with null-check fallback.
+5. **CoffeeTableDelivery material leak** — `_drinkMat` tracked and destroyed in `ClearDrink()`.
+
+### 4.4 Remaining Suggestions
 
 1. **String formatting in gated logs** - Wrap in `[System.Diagnostics.Conditional("UNITY_EDITOR")]` for release builds
 2. **Material instance auditing** - SapDecal, BacklightPulse use `.material` creating instances. Consider MaterialPropertyBlock.
@@ -243,21 +251,21 @@ private void Update()
 - [x] **Joint suppression safety:** Static reset on scene load, `WaitForSecondsRealtime`, `OnDisable` guard
 - [ ] **Memory profiling:** Run extended play sessions watching for leaks
 - [ ] **Error recovery:** Ensure game can recover from physics anomalies
-- [ ] **Save/Load system:** Currently sessions are ephemeral (OK for thesis, not for full game)
+- [x] **Save/Load system:** IrisSaveData + AutoSaveController (auto-save on quit/date end)
 
 ### 5.2 Should-Have
 
-- [ ] **Analytics hooks:** Add telemetry for player behavior research
-- [ ] **Accessibility:** Colorblind modes for grading UI
-- [ ] **Input rebinding:** Allow custom key/button mapping
-- [ ] **Performance settings:** Quality presets for particle counts, physics
+- [x] **Analytics hooks:** IrisAnalytics static utility (timestamped JSON-lines telemetry)
+- [x] **Accessibility:** Full settings suite — 15 settings across 5 categories (Visual, Motion, Audio, Timing, Performance). Tabbed SettingsPanel, CaptionDisplay, AccessibleText + IrisTextTheme for centralized text theming
+- [x] **Input rebinding:** InputRebindManager with JSON override persistence + InputRebindUI
+- [x] **Performance settings:** IrisQualityPreset SO + IrisQualityManager + resolution scaling
 
 ### 5.3 Nice-to-Have
 
-- [ ] **Unit tests:** Especially for `FlowerGameBrain.EvaluateFlower()` scoring logic
-- [ ] **Integration tests:** Automated scene validation
-- [ ] **Localization:** Prepare text systems for multi-language
-- [ ] **Crash reporting:** Remote error tracking
+- [x] **Unit tests:** 24 NUnit tests in `Assets/Editor/Tests/FlowerGameBrainTests.cs`
+- [x] **Integration tests:** SceneValidator editor tool (Window > Iris > Scene Validator)
+- [x] **Localization:** LocalizationTable SO + LocalizationManager with key-based lookup
+- [x] **Crash reporting:** CrashReporter static utility hooking Application.logMessageReceived
 
 ---
 
@@ -332,7 +340,9 @@ Iris v2.0 is a **well-architected thesis project** with:
 1. ~~Time scale management~~ - Centralized via `TimeScaleManager`
 2. ~~Scene reference validation~~ - `Debug.LogError` on all failures, static registries
 3. ~~Joint suppression safety~~ - Static reset, real-time coroutines, `OnDisable` guard
-4. ~~Performance hot paths~~ - Vertex caching, normal throttling, LINQ elimination, reference caching
+4. ~~Performance hot paths~~ - Vertex caching, normal throttling, LINQ elimination, reference caching, static registries (PlaceableObject.All, PlacementSurface.All), Camera.main caching, material leak fixes
+5. ~~Accessibility~~ - Full 15-setting suite with tabbed SettingsPanel, captions, text theme
+6. ~~Save/Load~~ - IrisSaveData + AutoSaveController
 
 **Remaining areas:**
 1. Memory leak auditing (historical concern)
@@ -340,7 +350,7 @@ Iris v2.0 is a **well-architected thesis project** with:
 3. Input gating depth (movement over UI)
 4. Target hardware profiling
 
-The codebase is **ready for thesis demonstration** with solid stability foundations. For a commercial release, the robustness checklist items should be addressed, particularly save/load, analytics, and automated testing.
+The codebase is **ready for thesis demonstration** with solid stability foundations.
 
 See [LONGTERM_PLAN.md](LONGTERM_PLAN.md) for the full project roadmap.
 

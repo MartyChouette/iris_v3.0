@@ -109,6 +109,7 @@ public class ApartmentManager : MonoBehaviour
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
+    private Camera _cachedMainCamera;
 
     private void Awake()
     {
@@ -436,7 +437,8 @@ public class ApartmentManager : MonoBehaviour
 
     private void UpdateHoverHighlight()
     {
-        var cam = UnityEngine.Camera.main;
+        if (_cachedMainCamera == null) _cachedMainCamera = UnityEngine.Camera.main;
+        var cam = _cachedMainCamera;
         if (cam == null) return;
 
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();

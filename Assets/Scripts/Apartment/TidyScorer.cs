@@ -7,6 +7,7 @@ using UnityEngine;
 ///   3. Smell (sum of ReactableTag.SmellAmount in area)
 ///
 /// Each area score ranges 0 (filthy) to 1 (spotless).
+/// Uses PlaceableObject.All static registry instead of FindObjectsByType.
 /// </summary>
 public class TidyScorer : MonoBehaviour
 {
@@ -107,14 +108,13 @@ public class TidyScorer : MonoBehaviour
     private float GetObjectClean(ApartmentArea area)
     {
         int messCount = 0;
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
-        foreach (var p in placeables)
+        var placeables = PlaceableObject.All;
+        for (int i = 0; i < placeables.Count; i++)
         {
+            var p = placeables[i];
             if (p.Category == ItemCategory.General) continue;
             if (p.IsAtHome) continue;
             if (p.CurrentState == PlaceableObject.State.Held) continue;
-
-            // Check if this object is in the target area
             if (ClassifyPosition(p.transform.position) == area)
                 messCount++;
         }
@@ -126,9 +126,10 @@ public class TidyScorer : MonoBehaviour
     public float GetClutterClean(ApartmentArea area)
     {
         int floorItems = 0;
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
-        foreach (var p in placeables)
+        var placeables = PlaceableObject.All;
+        for (int i = 0; i < placeables.Count; i++)
         {
+            var p = placeables[i];
             if (!p.IsOnFloor) continue;
             if (p.IsAtHome) continue;
             if (ClassifyPosition(p.transform.position) == area)
@@ -142,9 +143,10 @@ public class TidyScorer : MonoBehaviour
     public int GetFloorItemCount(ApartmentArea area)
     {
         int count = 0;
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
-        foreach (var p in placeables)
+        var placeables = PlaceableObject.All;
+        for (int i = 0; i < placeables.Count; i++)
         {
+            var p = placeables[i];
             if (!p.IsOnFloor) continue;
             if (p.IsAtHome) continue;
             if (ClassifyPosition(p.transform.position) == area)

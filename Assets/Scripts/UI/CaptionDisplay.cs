@@ -169,6 +169,9 @@ public class CaptionDisplay : MonoBehaviour
         tmp.color = Color.white;
         tmp.enableAutoSizing = false;
 
+        // Apply text theme (font, color, spacing)
+        textGO.AddComponent<AccessibleText>();
+
         return new CaptionEntry
         {
             root = go,

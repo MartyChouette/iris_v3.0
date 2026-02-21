@@ -2,6 +2,94 @@
 
 ---
 
+## 2026-02-21 — Performance Optimization, Text Theme, Accessibility Suite
+
+### Session Summary
+
+Three-part session: (1) performance audit and optimization pass eliminating hot-path `FindObjectsByType` calls and material leaks, (2) centralized text theme system for global font/color control, (3) full accessibility & settings suite with 15 settings across 5 categories.
+
+---
+
+### 1. Accessibility & Settings Suite
+
+Expanded `AccessibilitySettings` from colorblind-only into a full 15-setting hub:
+- **Visual**: Colorblind mode (4 palettes), High Contrast, Text Scale (0.8-1.5)
+- **Motion**: Reduce Motion (disables parallax, PSX vertex snap, text morphing, jitter), Screen Shake Scale
+- **Audio**: Master + Music + SFX + Ambience + UI volume sliders, Captions toggle
+- **Timing**: Timer multiplier (1x / 1.5x / 2x / unlimited)
+- **Performance**: Resolution Scale, Quality Preset, PSX Effect toggle
+
+Built `SettingsPanel` with 6 tabs (Visual/Audio/Motion/Timing/Controls/Performance), `SettingsPanelBuilder` editor tool, and wired into `SimplePauseMenu` (ESC → Settings → Back to Pause).
+
+**New files:** `SettingsPanel.cs`, `SettingsTabButton.cs`, `CaptionDisplay.cs`, `SettingsPanelBuilder.cs`
+**Modified:** `AccessibilitySettings.cs` (rewrite), `AudioManager.cs` (volume integration + caption param), `PSXRenderController.cs`, `ApartmentManager.cs`, `TMP_FocusBlur.cs`, `MotionJitter.cs`, `DayPhaseManager.cs`, `DateSessionManager.cs`, `SimplePauseMenu.cs`, `ApartmentSceneBuilder.cs`
+
+---
+
+### 2. Performance Optimization Pass
+
+Audited codebase for bottlenecks. Key findings and fixes:
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| `FindObjectsByType<PlaceableObject>` every Update frame | DishDropZone, DropZone | Added `PlaceableObject.All` static registry + `ObjectGrabber.HeldObject` static accessor |
+| `FindObjectsByType<PlaceableObject>` in getters | TidyScorer (3 methods) | Rewrote to use `PlaceableObject.All` with indexed for-loops |
+| `FindObjectsByType<PlacementSurface>` in FindNearest | PlacementSurface | Added `PlacementSurface.All` static registry |
+| `FindObjectsByType<PlaceableObject>` in labels overlay | ItemLabelOverlay | Switched to `PlaceableObject.All` |
+| `FindObjectsByType<PlaceableObject>` in save/load | AutoSaveController | Switched to `PlaceableObject.All` |
+| `Camera.main` called every frame without caching | ApartmentManager, ItemLabelOverlay | Added `_cachedMainCamera`/`_cachedCamera` fields |
+| Material leak in drink delivery | CoffeeTableDelivery | Track `_drinkMat`, destroy in `ClearDrink()` |
+
+---
+
+### 3. Centralized Text Theme System
+
+Created `IrisTextTheme` ScriptableObject for one-place font/color/spacing control. Place in `Assets/Resources/IrisTextTheme`. Controls:
+- Primary font + header font
+- Body/header/subtitle/accent colors
+- Global and header size multipliers
+- Character and line spacing
+
+Expanded `AccessibleText` to support TextRole (Body/Header/Subtitle/Accent), font overrides, and color application from theme. Created `IrisTextThemeApplier` component that auto-adds `AccessibleText` to all TMP_Text in scene at startup.
+
+**New files:** `IrisTextTheme.cs`, `IrisTextThemeApplier.cs`
+**Modified:** `AccessibleText.cs` (expanded with theme support), `CaptionDisplay.cs`, `ItemLabelOverlay.cs`, `ApartmentSceneBuilder.cs`
+
+---
+
+### Files Changed (Summary)
+
+| File | Change |
+|------|--------|
+| `AccessibilitySettings.cs` | Full rewrite — 15 settings, 5 categories, PlayerPrefs, events |
+| `AudioManager.cs` | Volume integration, caption param |
+| `PSXRenderController.cs` | ReduceMotion + PSXEnabled checks |
+| `ApartmentManager.cs` | Parallax guard, Camera.main cache |
+| `TMP_FocusBlur.cs` | ReduceMotion guard |
+| `MotionJitter.cs` | ReduceMotion guard |
+| `DayPhaseManager.cs` | Timer multiplier |
+| `DateSessionManager.cs` | Timer multiplier |
+| `SimplePauseMenu.cs` | Settings panel integration |
+| `PlaceableObject.cs` | Static registry (s_all) |
+| `PlacementSurface.cs` | Static registry (s_all) |
+| `TidyScorer.cs` | Use PlaceableObject.All |
+| `DishDropZone.cs` | Use ObjectGrabber.HeldObject |
+| `DropZone.cs` | Use ObjectGrabber.HeldObject, remove FindHeldPlaceable |
+| `ObjectGrabber.cs` | HeldObject static property |
+| `ItemLabelOverlay.cs` | PlaceableObject.All + Camera.main cache |
+| `AutoSaveController.cs` | PlaceableObject.All |
+| `CoffeeTableDelivery.cs` | Material leak fix |
+| `SettingsPanel.cs` | NEW — Tabbed settings UI |
+| `SettingsTabButton.cs` | NEW — Tab button helper |
+| `CaptionDisplay.cs` | NEW — Audio caption overlay |
+| `SettingsPanelBuilder.cs` | NEW — Editor panel builder |
+| `IrisTextTheme.cs` | NEW — Centralized text theme SO |
+| `IrisTextThemeApplier.cs` | NEW — Auto-applies theme to all text |
+| `AccessibleText.cs` | Expanded with theme roles + font/color |
+| `ApartmentSceneBuilder.cs` | Settings panel + caption + theme applier |
+
+---
+
 ## 2026-02-19 — Audio Hookups & SFX Infrastructure
 
 ### Session Summary

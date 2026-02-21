@@ -4,53 +4,31 @@ Contemplative flower trimming game. Thesis project built in Unity 6.0.3 with URP
 
 ## Overview
 
-Players tend to flowers by cutting stems, removing withered leaves, and arranging petals to achieve an ideal arrangement. The game evaluates stem length, cut angle, and part condition against an `IdealFlowerDefinition` to produce a score.
+Players live as Nema in a small apartment, dating strangers from newspaper personals ads, then trimming the flowers they leave behind. The game evaluates stem length, cut angle, and part condition against an `IdealFlowerDefinition` to produce a score. Between dates, players prepare the apartment — cleaning stains, arranging items, choosing music and perfume — and their choices shape how each date unfolds.
 
 ## System Architecture
 
 ```
 ┌────────────────────────────┐
-│        Player Input        │
-│ (Mouse, Scroll, Click)     │
+│     Apartment Hub          │
+│ 3 areas: Kitchen,          │
+│ Living Room, Entrance      │
+│ Direct pos/rot/FOV lerp    │
 └────────────┬───────────────┘
+             │
+    ┌────────┼────────┐
+    ▼        ▼        ▼
+ Cleaning  Bookcase  Dating
+ Watering  Records   Phone
+ Drinks    Perfumes  Greeting
+ Fridge    Drawers   Outfit
              │
              ▼
 ┌────────────────────────────┐
-│  CuttingPlaneController    │
-│ - Moves plane vertically   │
-│ - Triggers cut input       │
-│ - Gated by ScissorStation  │
-└────────────┬───────────────┘
-             │
-             ▼
-┌────────────────────────────┐
-│     PlaneBehaviour /       │
-│  AngleStagePlaneBehaviour  │
-│ - Virtual stem cut (fast)  │
-│ - DMC fallback (destructive│
-└────────────┬───────────────┘
-             │
-             ▼
-┌────────────────────────────┐
-│   FlowerGameBrain          │
-│ - Evaluates stem length    │
-│ - Evaluates cut angle      │
-│ - Tracks parts condition   │
-│ - Computes score           │
-└───────┬───────────┬────────┘
-        │           │
-        ▼           ▼
-┌─────────────┐  ┌────────────────────┐
-│ Gameplay HUD│  │ Debug Telemetry HUD│
-│(Qualitative)│  │ (Numeric, F3 key)  │
-└─────────────┘  └────────────────────┘
-        │
-        ▼
-┌────────────────────────────┐
-│   FlowerGradingUI          │
-│ - Final evaluation         │
-│ - Emotional framing        │
-│ - End-of-session snapshot  │
+│   Flower Trimming Scene    │
+│ (loaded additively)        │
+│ CuttingPlane → VirtualCut  │
+│ → FlowerGameBrain → Score  │
 └────────────────────────────┘
 ```
 
@@ -58,88 +36,70 @@ Players tend to flowers by cutting stems, removing withered leaves, and arrangin
 
 | Subsystem | Description |
 |-----------|-------------|
-| **Input/Control** | Mouse-driven cutting plane, scissor equip station, angle tilt |
-| **Mesh Cutting** | VirtualStemCutter (non-destructive) with DMC fallback |
-| **Game Logic** | Session lifecycle, scoring brain, stem runtime tracking |
-| **Physics/Joints** | XYTetherJoint custom tether, SquishMove jelly deformation |
-| **Fluids/VFX** | Particle-based sap system with pooled decals |
-| **UI** | Gameplay feedback HUD, grading screen, debug telemetry |
-| **Audio** | Singleton AudioManager with spatial SFX |
-| **Data** | ScriptableObject flower definitions for data-driven scoring |
-| **Apartment Hub** | Spline-dolly camera browsing 7 areas, station enter/exit FSM, hover highlights |
-| **Camera Presets** | A/B/C camera comparison: LensSettings, VolumeProfile, light overrides, editor gizmos |
-| **Bookcase Station** | 4-row bookcase with books, perfumes, drawers, trinkets, coffee table books |
-| **Dating Loop** | Full dating lifecycle: calendar, newspaper ads, phone, 3D date character, affection tracking, grading |
-| **Mechanic Prototypes** | 10 standalone minigame prototypes (drink making, cleaning, watering, etc.) |
+| **Apartment Hub** | 3-area browsing (Kitchen, Living Room, Entrance) with direct camera lerp, mouse parallax |
+| **Camera Presets** | A/B/C camera comparison: LensSettings, VolumeProfile, light overrides per area |
+| **Object Interaction** | Spring-damper grab, surface snap, wall mounting, cross-room dragging, tether safety |
+| **Tidiness System** | Per-area scoring (stains, mess, smell, floor clutter), DropZones, DailyMessSpawner |
+| **Bookcase Station** | 15 books, 5 coffee table books, 3 perfumes, 2 drawers, double-click inspection |
+| **Dating Loop** | 7-day calendar, newspaper ads, 3-phase dates (entrance/kitchen/living room), affection tracking |
+| **Flower Trimming** | Additive scene loading, virtual stem cutting, scoring brain, living plant persistence |
+| **Accessibility** | 15 settings across 5 categories, tabbed settings panel, captions, text scaling, reduce motion |
+| **Text Theme** | Centralized font/color/spacing via IrisTextTheme SO, auto-applied to all TMP text |
+| **PSX Rendering** | Retro shader suite: vertex snap, affine textures, pixelation, dithering (F2 toggle) |
+| **Audio** | 6-channel AudioManager (SFX, Music, Ambience, Weather, Environment, UI), MoodMachine-driven |
+| **Save System** | IrisSaveData with auto-save on quit/date end, plant records, date history |
+| **Mechanic Prototypes** | 10 standalone minigames (drink making, cleaning, watering, makeup, etc.) |
 
 ## Apartment Hub
 
-The apartment is the central hub connecting all stations. A Cinemachine spline-dolly camera pans along a closed-loop 7-knot spline. Press left/right to browse areas, Enter to select.
+The apartment is the central hub. A direct pos/rot/FOV lerp camera browses 3 areas. All station managers are always active (no station gating). Press A/D to browse, click to interact.
 
-```
-ApartmentManager FSM:
-  Browsing → Selecting → Selected → InStation
-                ↘ (if station has its own cameras) ↗
-                   direct skip to InStation
-```
-
-**7 Areas:** Entrance, Kitchen (NewspaperDating), Living Room (Bookcase), Watering Nook, Flower Room, Cozy Corner (RecordPlayer), Bathroom (MirrorMakeup)
-
-Stations with their own Cinemachine cameras skip the intermediate Selected state and transition directly from Browsing to InStation.
-
-## Camera Preset System
-
-Compare different visual directions per apartment area. Each preset stores per-area camera position, rotation, full Cinemachine `LensSettings`, a URP `VolumeProfile`, and light overrides.
-
-```
-Two-layer lighting stack:
-
-Player actions → MoodMachine → base light / ambient / fog / rain  (global mood)
-                                    ↓
-Camera preset  → VolumeProfile  → color grading, bloom, DoF, vignette  (per-camera look)
-               → light multipliers → intensity / color tint on top of mood
-```
-
-**Controls:** Press `1`/`2`/`3` to switch presets, backtick to clear. UI buttons in bottom-left corner.
-
-**Editor tools:**
-- Select a `CameraPresetDefinition` SO → frustum wireframes appear in Scene View
-- "Capture Scene View → [Area]" button grabs position, rotation, and full lens settings
-
-**LensSettings** includes physical camera properties (aperture, focus distance, ISO, shutter speed, sensor size, anamorphism). All properties lerp smoothly during transitions.
+**3 Areas:** Kitchen (DrinkMaking, Fridge, Newspaper), Living Room (Bookcase, Records, Coffee Table), Entrance (Shoe Rack, Coat Rack, Door)
 
 ## Dating Loop
 
-A full dating gameplay loop spans the 7-day calendar. Each day: wake up, read the newspaper, cut out a personal ad, call the date, prepare the apartment, host the date, then sleep.
-
 ```
-GameClock (7-day calendar, real-time hour ticking, feeds MoodMachine "TimeOfDay")
+GameClock (7-day calendar)
     │
     ▼
-NewspaperManager → cut ad → DateSessionManager.StartWaiting()
-    │                              │
-    ▼                              ▼
-PhoneController (rings) ──→ DateSessionManager.OnDateCharacterArrived()
-                                   │
-                                   ▼
-                           DateCharacterController (NavMesh NPC)
-                           - walks to couch, sits
-                           - periodic excursions to ReactableTag objects
-                           - reactions: Like / Neutral / Dislike → affection
-                                   │
-                                   ▼
-                           DateSessionManager.EndDate() → DateEndScreen (grade)
-                                   │
-                                   ▼
-                           GameClock.GoToBed() → next day
+NewspaperManager → select ad → DateSessionManager.ScheduleDate()
+    │                                │
+    ▼                                ▼
+PhoneController (rings) ──→ DateCharacterController arrives
+                                    │
+                            ┌───────┼───────┐
+                            ▼       ▼       ▼
+                         Phase 1  Phase 2  Phase 3
+                        Entrance  Kitchen  Living Room
+                        (judge)   (drinks) (investigate)
+                                    │
+                                    ▼
+                            DateEndScreen (grade)
+                                    │
+                                    ▼
+                            FlowerTrimmingBridge
+                            (additive scene load)
+                                    │
+                                    ▼
+                            LivingFlowerPlant spawned
 ```
 
-- **ReactableTag** marks apartment objects (books, plants, perfume, records) for date reactions
-- **DatePreferences** on each `DatePersonalDefinition` define liked/disliked tags, mood range, drinks
-- **MoodMachine** mood matching multiplies affection gains/losses
-- **CoffeeTableDelivery** auto-delivers drinks after `DrinkMakingManager` scores
-- **DateEndScreen** shows letter grade (S/A/B/C/D) and summary
-- **DateHistory** static registry tracks all dates across the calendar
+## Accessibility & Settings
+
+Full settings suite accessible via ESC > Settings with 6 tabs:
+
+| Tab | Controls |
+|-----|----------|
+| Visual | Colorblind mode (4), High contrast, Text scale |
+| Audio | Master, Music, SFX, Ambience, UI volume sliders + Captions toggle |
+| Motion | Reduce Motion (disables parallax, vertex snap, text morphing), Screen Shake |
+| Timing | Timer multiplier (Normal / Relaxed 1.5x / Extended 2x / No Timer) |
+| Controls | Input rebinding |
+| Performance | Resolution scale, Quality preset, PSX effect toggle |
+
+## Text Theme System
+
+Create a `IrisTextTheme` ScriptableObject (Create > Iris > Text Theme), place in `Assets/Resources/` named `IrisTextTheme`. Controls primary font, header font, body/header/subtitle/accent colors, size multipliers, and spacing — all applied globally to every TMP text component in the scene.
 
 ## Creating a New Flower Level
 
@@ -159,20 +119,25 @@ Assets/
 │   ├── FlowerAutoSetup     # Auto-wiring wizard for new flowers
 │   ├── ApartmentSceneBuilder # Generates full apartment hub scene
 │   ├── BookcaseSceneBuilder  # Generates bookcase station (shared builder)
+│   ├── SettingsPanelBuilder  # Generates settings panel prefab
 │   └── ...SceneBuilder     # 10+ scene builders for each mechanic
 ├── Scripts/
-│   ├── Framework/          # TimeScaleManager, VirtualStemCutter, AudioManager, GameClock
+│   ├── Framework/          # TimeScaleManager, AudioManager, GameClock, AccessibilitySettings
 │   ├── GameLogic/          # FlowerGameBrain, FlowerSessionController, scoring
 │   ├── InteractionAndFeel/ # XYTetherJoint, SquishMove, GrabPull
 │   ├── DynamicMeshCutter/  # Mesh cutting engine + plane behaviors
 │   ├── Fluids/             # Sap particle system, decal pooling
-│   ├── UI/                 # HUD, grading, debug telemetry
+│   ├── UI/                 # HUD, grading, SettingsPanel, CaptionDisplay, IrisTextTheme
 │   ├── Tags/               # Marker components (StemPieceMarker, etc.)
-│   ├── Apartment/          # Hub system: ApartmentManager, StationRoot, MoodMachine, CameraPresets
+│   ├── Apartment/          # Hub: ApartmentManager, ObjectGrabber, MoodMachine, TidyScorer
 │   ├── Bookcase/           # BookInteractionManager, BookVolume, PerfumeBottle, etc.
-│   ├── Dating/             # Dating loop: DateSessionManager, GameClock, PhoneController, etc.
-│   └── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
-├── ScriptableObjects/      # Flower defs, apartment areas, book/perfume/drink defs
+│   ├── Dating/             # DateSessionManager, GameClock, PhoneController, etc.
+│   ├── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
+│   ├── Rendering/          # PSX retro rendering (PSXRenderController, PSXPostProcessFeature)
+│   └── Camera/             # HorrorCameraManager, CameraZoneTrigger
+├── Shader/                 # PSXLit, PSXPost, RimLight
+├── ScriptableObjects/      # Flower defs, apartment areas, book/perfume/drink/date defs
+├── Resources/              # IrisTextTheme SO (auto-loaded)
 └── Scenes/                 # Game scenes
 ```
 

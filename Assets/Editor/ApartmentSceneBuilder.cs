@@ -247,6 +247,9 @@ public static class ApartmentSceneBuilder
         // ── 15h. Caption display ──
         BuildCaptionDisplay();
 
+        // ── 15i. Text theme applier ──
+        BuildTextThemeApplier();
+
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
@@ -4566,6 +4569,17 @@ public static class ApartmentSceneBuilder
         var go = new GameObject("CaptionDisplay");
         go.AddComponent<CaptionDisplay>();
         Debug.Log("[ApartmentSceneBuilder] Caption display built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Text Theme Applier
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildTextThemeApplier()
+    {
+        var go = new GameObject("TextThemeApplier");
+        go.AddComponent<IrisTextThemeApplier>();
+        Debug.Log("[ApartmentSceneBuilder] Text theme applier built.");
     }
 
     // ══════════════════════════════════════════════════════════════════

@@ -1,10 +1,15 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 [RequireComponent(typeof(Rigidbody), typeof(Collider))]
 public class PlaceableObject : MonoBehaviour
 {
+    // ── Static registry (avoids FindObjectsByType) ──────────────────
+    private static readonly List<PlaceableObject> s_all = new();
+    public static IReadOnlyList<PlaceableObject> All => s_all;
+
     public enum State { Resting, Held, Placed }
 
     [Header("Visual Feedback")]
@@ -76,6 +81,9 @@ public class PlaceableObject : MonoBehaviour
     private Collider[] _colliders;
     private Coroutine _validationCoroutine;
     private Coroutine _flashCoroutine;
+
+    private void OnEnable() => s_all.Add(this);
+    private void OnDisable() => s_all.Remove(this);
 
     private void Awake()
     {

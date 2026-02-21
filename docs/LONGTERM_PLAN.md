@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 18, 2026
+**Last Updated:** February 21, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -140,6 +140,30 @@
   - SOs preserved across rebuilds (only write defaults on first creation)
 - [x] **Two-layer lighting architecture** — MoodMachine (player actions → global mood) + preset system (per-camera VolumeProfile + light overrides)
 
+### Phase 12: Accessibility & Settings Suite (Done)
+- [x] **AccessibilitySettings rewrite** — Expanded from colorblind-only to full 15-setting hub across 5 categories (Visual, Motion, Audio, Timing, Performance). All PlayerPrefs-backed. `OnSettingsChanged` event. `BeginChanges()`/`EndChanges()` batching.
+- [x] **AudioManager volume integration** — Master + per-channel multipliers (`_masterVol`, `_sfxVol`, `_musicVol`, `_ambVol`, `_uiVol`). Applied in all Play methods. Optional `string caption` param.
+- [x] **ReduceMotion consumers** — PSXRenderController (snap→4096, affine→0), ApartmentManager (skip parallax), TMP_FocusBlur (skip morphing), MotionJitter (hold rest pose).
+- [x] **Timer multiplier** — DayPhaseManager `_prepDuration * multiplier`, DateSessionManager `phase3Duration * multiplier`. 0 = unlimited.
+- [x] **CaptionDisplay** — DDoL singleton, screen-space overlay, queue up to 3 captions, auto-fade. `CaptionDisplay.Show(caption, duration)` static API.
+- [x] **AccessibleText** — Component on TMP_Text, caches base fontSize, applies TextScale multiplier + theme font/color/spacing.
+- [x] **SettingsPanel** — Tabbed UI (Visual/Audio/Motion/Timing/Controls/Performance). `Open()`/`Close()`. Reads/writes AccessibilitySettings live.
+- [x] **SettingsPanelBuilder** — `Window > Iris > Build Settings Panel` procedural prefab builder.
+- [x] **SimplePauseMenu integration** — ESC → settings back → pause back → game. Settings button wired by ApartmentSceneBuilder.
+
+### Phase 13: Performance Optimization Pass (Done)
+- [x] **PlaceableObject static registry** — `s_all` List with OnEnable/OnDisable. Eliminates `FindObjectsByType` in TidyScorer, DishDropZone, DropZone, ItemLabelOverlay, AutoSaveController.
+- [x] **PlacementSurface static registry** — Same pattern. `FindNearest()` uses `s_all` instead of scene search.
+- [x] **ObjectGrabber.HeldObject** — Static property. DishDropZone and DropZone use it instead of scanning all placeables every frame.
+- [x] **Camera.main caching** — ApartmentManager, ItemLabelOverlay now cache Camera.main with null-check fallback.
+- [x] **CoffeeTableDelivery material leak** — `_drinkMat` tracked and destroyed in `ClearDrink()`.
+
+### Phase 14: Centralized Text Theme System (Done)
+- [x] **IrisTextTheme SO** — `[CreateAssetMenu(menuName = "Iris/Text Theme")]`. Loaded from `Resources/IrisTextTheme`. Controls: primaryFont, headerFont, body/header/subtitle/accent colors, globalSizeMultiplier, headerSizeMultiplier, characterSpacing, lineSpacing. `OnThemeChanged` event.
+- [x] **AccessibleText expanded** — TextRole enum (Body/Header/Subtitle/Accent), applies font + color + size + spacing from theme. Subscribes to both `OnSettingsChanged` and `OnThemeChanged`.
+- [x] **IrisTextThemeApplier** — Scene startup component, auto-adds AccessibleText to all TMP_Text on Awake. Built by ApartmentSceneBuilder.
+- [x] **CaptionDisplay + ItemLabelOverlay** — Dynamically created text now includes AccessibleText component.
+
 ---
 
 ## Vertical Slice Remaining Work
@@ -178,9 +202,9 @@ Each date character brings a specific flower. The flower trimming score determin
 - [x] **Coffee table books** — 5 upright books on shelf, click to toggle flat on coffee table (working)
 - [x] ~~**Trinkets on shelf**~~ — Trinket system removed; drawers still available for item storage
 - [x] **Preparation timer UI** — Countdown panel (top-right) wired to DayPhaseManager. Auto-shows/hides on prep start/end.
-- [ ] **Outfit selection** — New system. Player chooses outfit during prep. Date judges in Phase 1.
+- [x] **Outfit selection** — OutfitSelector system. Player chooses outfit during prep. Date judges in Phase 1 via EntranceJudgmentSequence.
 - [ ] **Perfect pour mechanic** — Shared one-shot click-timing game used by both plant watering and drink making. Single click at right moment for perfect pour.
-- [ ] **Pre-spawned mess** — Day 1 must start with bottles, wine stains, possible blood stains, trash from previous night. ApartmentStainSpawner needs "day 1 heavy" preset.
+- [x] **Pre-spawned mess** — DailyMessSpawner spawns trash subset + misplaces entrance items each morning. MessBlueprint SOs for flower-condition mess.
 - [ ] **Plant watering rework** — Convert WateringManager to use perfect-pour mechanic
 
 ### VS-3: Date Phase Rework
@@ -230,7 +254,7 @@ Each date character brings a specific flower. The flower trimming score determin
 
 - [x] **Unit tests** for `FlowerGameBrain.EvaluateFlower()` scoring logic — 24 NUnit tests in `Assets/Editor/Tests/FlowerGameBrainTests.cs` covering stem length, cut angle, parts, game-over conditions, weighted averages, and edge cases
 - [x] **Automated scene validation** — Editor tool (`Assets/Editor/SceneValidator.cs`) accessible via Window > Iris > Scene Validator. Checks singleton duplicates, required components, flower hierarchy wiring, UI references, cutting system, audio, and fluids.
-- [x] **Accessibility** — `AccessibilitySettings` static utility with 4 colorblind palettes (Normal, Protanopia, Deuteranopia, Tritanopia), PlayerPrefs persistence, `AccessibilityDropdownUI` for TMP_Dropdown binding
+- [x] **Accessibility** — Full settings suite: 15 settings across 5 categories (Visual, Motion, Audio, Timing, Performance). Tabbed SettingsPanel UI. CaptionDisplay, AccessibleText + IrisTextTheme for centralized font control
 - [x] **Input rebinding** — `InputRebindManager` static utility with JSON override persistence, `InputOverrideLoader` MonoBehaviour for wiring, `InputRebindUI` with interactive rebinding rows
 - [x] **Performance quality presets** — `IrisQualityPreset` ScriptableObject (sap, decals, physics, UI tuning), `IrisQualityManager` scene-scoped singleton, `QualityDropdownUI` for TMP_Dropdown binding
 - [x] **Save/Load system** — `SessionSaveData` serializable container, `SaveManager` static utility persisting rolling 50-session history to `iris_sessions.json`
@@ -247,7 +271,7 @@ Each date character brings a specific flower. The flower trimming score determin
 - **Data-driven:** ScriptableObjects for flower definitions (IdealFlowerDefinition)
 - **Singleton:** AudioManager (persistent across scenes)
 - **Object pooling:** SapDecalPool, SapParticleController
-- **Static registries:** StemPieceMarker.All, ReactableTag.All, DateHistory.Entries, TimeScaleManager priorities
+- **Static registries:** PlaceableObject.All, PlacementSurface.All, StemPieceMarker.All, ReactableTag.All, DateHistory.Entries, TimeScaleManager priorities
 
 ### Subsystems
 | Subsystem | Key Scripts |

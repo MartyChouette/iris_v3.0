@@ -57,14 +57,11 @@ public class DropZone : MonoBehaviour
 
     private void Update()
     {
-        // Check if player is holding an item that matches this zone
+        // Check if player is holding an item that matches this zone (static accessor — no scene scan)
         _playerHoldingMatch = false;
-        if (ObjectGrabber.IsHoldingObject)
-        {
-            var held = FindHeldPlaceable();
-            if (held != null && held.HomeZoneName == _zoneName)
-                _playerHoldingMatch = true;
-        }
+        var held = ObjectGrabber.HeldObject;
+        if (held != null && held.HomeZoneName == _zoneName)
+            _playerHoldingMatch = true;
 
         // Pulse color
         if (_instanceMat != null)
@@ -116,17 +113,6 @@ public class DropZone : MonoBehaviour
         }
 
         Destroy(go);
-    }
-
-    private PlaceableObject FindHeldPlaceable()
-    {
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
-        foreach (var p in placeables)
-        {
-            if (p.CurrentState == PlaceableObject.State.Held)
-                return p;
-        }
-        return null;
     }
 
     private void OnDestroy()

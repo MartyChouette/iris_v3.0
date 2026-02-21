@@ -22,12 +22,14 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | Window > Iris > Build Bookcase Browsing Scene | `Assets/Editor/BookcaseSceneBuilder.cs` | Generates standalone bookcase station scene |
 | Window > Iris > Build Dating Loop Scene | `Assets/Editor/DatingLoopSceneBuilder.cs` | Generates standalone dating loop test scene with full gameplay loop |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
+| Window > Iris > Build Settings Panel | `Assets/Editor/SettingsPanelBuilder.cs` | Generates settings panel prefab with all tabs/controls |
 
 ## Code Conventions
 
 - **No namespace** on most scripts. Exceptions: `Iris.Camera`, `Iris.Apartment`, `DynamicMeshCutter`
 - **Private fields:** `_camelCase`. **Static fields:** `s_camelCase`
-- **Singletons:** Scene-scoped pattern (no DontDestroyOnLoad) — see `HorrorCameraManager`. Exception: `AudioManager` uses DontDestroyOnLoad
+- **Singletons:** Scene-scoped pattern (no DontDestroyOnLoad) — see `HorrorCameraManager`. Exceptions: `AudioManager`, `CaptionDisplay` use DontDestroyOnLoad
+- **Static registries:** `private static readonly List<T> s_all = new(); public static IReadOnlyList<T> All => s_all;` with `OnEnable`/`OnDisable` add/remove. See `PlaceableObject`, `PlacementSurface`, `StemPieceMarker`, `ReactableTag`
 - **ScriptableObjects:** `[CreateAssetMenu]`, `[Header]`/`[Tooltip]` on all fields
 - **Input:** Inline `InputAction` fallback when scene builder can't wire InputActionReferences (see `SimpleTestCharacter.cs`)
 - **TMP text updates:** Use `TMP_Text.SetText()` with format args to avoid string allocation
@@ -54,16 +56,20 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | `FridgeController` | Scene-scoped | `Assets/Scripts/Apartment/FridgeController.cs` |
 | `CleaningManager` | Scene-scoped | `Assets/Scripts/Mechanics/Cleaning/CleaningManager.cs` |
 | `DayPhaseManager` | Scene-scoped | `Assets/Scripts/Framework/DayPhaseManager.cs` |
+| `AccessibilitySettings` | Static utility | `Assets/Scripts/Framework/AccessibilitySettings.cs` |
+| `CaptionDisplay` | Persistent (DDoL) | `Assets/Scripts/UI/CaptionDisplay.cs` |
+| `TidyScorer` | Scene-scoped | `Assets/Scripts/Apartment/TidyScorer.cs` |
+| `SimplePauseMenu` | Scene-scoped | `Assets/Scripts/UI/SimplePauseMenu.cs` |
 
 ## Script Directory Map
 
 | Directory | Purpose |
 |-----------|---------|
-| `Scripts/Framework/` | Core systems: AudioManager, TimeScaleManager, GameClock, CuttingPlaneController, VirtualStemCutter, ScissorStation |
+| `Scripts/Framework/` | Core systems: AudioManager, TimeScaleManager, GameClock, AccessibilitySettings, CuttingPlaneController, VirtualStemCutter, ScissorStation |
 | `Scripts/GameLogic/` | Scoring brain, session lifecycle, flower definitions, stem/part runtime |
 | `Scripts/InteractionAndFeel/` | Physics interactions: XYTetherJoint, SquishMove, JellyMesh, GrabPull |
 | `Scripts/Fluids/` | Sap particles, decal pooling |
-| `Scripts/UI/` | HUD, grading screen, debug telemetry |
+| `Scripts/UI/` | HUD, grading screen, debug telemetry, SettingsPanel, CaptionDisplay, IrisTextTheme, AccessibleText |
 | `Scripts/Camera/` | HorrorCameraManager, CameraZoneTrigger, SimpleTestCharacter |
 | `Scripts/DynamicMeshCutter/` | Mesh cutting engine (DMC) |
 | `Scripts/Tags/` | Marker components (StemPieceMarker, LeafAttachmentMarker, etc.) |
@@ -262,6 +268,10 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Name entry overlay | Working | NameEntryScreen (in-apartment overlay, calls DayManager.BeginDay1) |
 | Apartment calendar | Working | ApartmentCalendar (7-day grid with date history) |
 | Save system | Working | IrisSaveData, AutoSaveController |
+| Accessibility settings | Working | AccessibilitySettings (15 settings, 5 categories), SettingsPanel, CaptionDisplay |
+| Text theme | Working | IrisTextTheme SO (Resources/), AccessibleText, IrisTextThemeApplier |
+| PSX rendering | Working | PSXRenderController, PSXPostProcessFeature, PSXLit.shader, PSXPost.shader |
+| Pause menu | Working | SimplePauseMenu (ESC toggle, settings integration) |
 
 ## Not Yet Built
 

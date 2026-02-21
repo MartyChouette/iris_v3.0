@@ -82,7 +82,7 @@ public class AutoSaveController : MonoBehaviour
     private List<PlaceablePositionRecord> GatherObjectPositions()
     {
         var records = new List<PlaceablePositionRecord>();
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        var placeables = PlaceableObject.All;
         foreach (var p in placeables)
         {
             var t = p.transform;
@@ -141,7 +141,7 @@ public class AutoSaveController : MonoBehaviour
         if (records == null || records.Count == 0) return;
 
         // Build name→PlaceableObject lookup
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        var placeables = PlaceableObject.All;
         var lookup = new Dictionary<string, Transform>();
         foreach (var p in placeables)
         {

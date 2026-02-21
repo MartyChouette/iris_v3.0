@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +8,13 @@ using UnityEngine;
 /// </summary>
 public class PlacementSurface : MonoBehaviour
 {
+    // ── Static registry (avoids FindObjectsByType) ──────────────────
+    private static readonly List<PlacementSurface> s_all = new();
+    public static IReadOnlyList<PlacementSurface> All => s_all;
+
+    private void OnEnable() => s_all.Add(this);
+    private void OnDisable() => s_all.Remove(this);
+
     public enum SurfaceAxis { Up, Forward }
 
     public struct SurfaceHitResult
@@ -217,12 +225,12 @@ public class PlacementSurface : MonoBehaviour
     /// </summary>
     public static PlacementSurface FindNearest(Vector3 worldPos, bool skipVertical = false, bool skipHorizontal = false)
     {
-        var all = Object.FindObjectsByType<PlacementSurface>(FindObjectsSortMode.None);
         PlacementSurface best = null;
         float bestDist = float.MaxValue;
 
-        foreach (var surface in all)
+        for (int i = 0; i < s_all.Count; i++)
         {
+            var surface = s_all[i];
             if (surface == null) continue;
             if (skipVertical && surface.IsVertical) continue;
             if (skipHorizontal && !surface.IsVertical) continue;

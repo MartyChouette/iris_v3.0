@@ -63,6 +63,9 @@ public class ObjectGrabber : MonoBehaviour
     /// <summary>True when any ObjectGrabber is holding an object. Check this to block other interactions.</summary>
     public static bool IsHoldingObject => s_instance != null && s_instance._held != null;
 
+    /// <summary>The currently held PlaceableObject, or null if nothing is held.</summary>
+    public static PlaceableObject HeldObject => s_instance != null ? s_instance._held : null;
+
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;

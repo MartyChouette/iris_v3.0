@@ -22,6 +22,7 @@ public class ItemLabelOverlay : MonoBehaviour
     private readonly List<GameObject> _labelPool = new List<GameObject>();
     private int _activeCount;
     private bool _showing;
+    private Camera _cachedCamera;
 
     private void Awake()
     {
@@ -67,10 +68,11 @@ public class ItemLabelOverlay : MonoBehaviour
     private void ShowLabels()
     {
         _showing = true;
-        var cam = Camera.main;
+        if (_cachedCamera == null) _cachedCamera = Camera.main;
+        var cam = _cachedCamera;
         if (cam == null) return;
 
-        var placeables = Object.FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
+        var placeables = PlaceableObject.All;
         _activeCount = 0;
 
         Vector3 camForward = cam.transform.forward;
@@ -122,7 +124,8 @@ public class ItemLabelOverlay : MonoBehaviour
 
     private void UpdateLabelPositions()
     {
-        var cam = Camera.main;
+        if (_cachedCamera == null) _cachedCamera = Camera.main;
+        var cam = _cachedCamera;
         if (cam == null) return;
 
         Vector3 camPos = cam.transform.position;
@@ -183,6 +186,9 @@ public class ItemLabelOverlay : MonoBehaviour
         tmp.enableWordWrapping = false;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
         tmp.raycastTarget = false;
+
+        // Apply text theme
+        textGO.AddComponent<AccessibleText>();
 
         _labelPool.Add(go);
         return go;

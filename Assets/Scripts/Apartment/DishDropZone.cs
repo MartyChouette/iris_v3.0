@@ -42,18 +42,9 @@ public class DishDropZone : MonoBehaviour
 
     private void Update()
     {
-        // Check if any plate is currently held
-        _playerHoldingPlate = false;
-        var placeables = FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None);
-        foreach (var p in placeables)
-        {
-            if (p.CurrentState == PlaceableObject.State.Held &&
-                p.GetComponent<StackablePlate>() != null)
-            {
-                _playerHoldingPlate = true;
-                break;
-            }
-        }
+        // Check if the held object is a plate (uses static accessor — no scene scan)
+        var held = ObjectGrabber.HeldObject;
+        _playerHoldingPlate = held != null && held.GetComponent<StackablePlate>() != null;
 
         // Pulse color
         if (_instanceMat != null)
