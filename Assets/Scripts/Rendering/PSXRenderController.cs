@@ -122,16 +122,34 @@ public class PSXRenderController : MonoBehaviour
         FindFeature();
     }
 
+    private Vector2 _defaultSnapResolution;
+    private float _defaultAffineIntensity;
+
     private void OnEnable()
     {
         _toggleAction?.Enable();
+
+        // Check if PSX should be disabled via accessibility settings
+        if (!AccessibilitySettings.PSXEnabled)
+        {
+            enabled = false;
+            return;
+        }
+
+        _defaultSnapResolution = _vertexSnapResolution;
+        _defaultAffineIntensity = _affineIntensity;
+
         SwapShadersToRetro();
         ApplyAll();
+        ApplyReduceMotion();
+
+        AccessibilitySettings.OnSettingsChanged += OnAccessibilityChanged;
     }
 
     private void OnDisable()
     {
         _toggleAction?.Disable();
+        AccessibilitySettings.OnSettingsChanged -= OnAccessibilityChanged;
         RestoreOriginalShaders();
         ResetGlobals();
         SetFeatureActive(false);
@@ -142,8 +160,35 @@ public class PSXRenderController : MonoBehaviour
         if (Instance == this)
             Instance = null;
 
+        AccessibilitySettings.OnSettingsChanged -= OnAccessibilityChanged;
         _toggleAction?.Dispose();
         _toggleAction = null;
+    }
+
+    private void OnAccessibilityChanged()
+    {
+        if (!AccessibilitySettings.PSXEnabled && enabled)
+        {
+            enabled = false;
+            return;
+        }
+
+        ApplyReduceMotion();
+    }
+
+    private void ApplyReduceMotion()
+    {
+        if (AccessibilitySettings.ReduceMotion)
+        {
+            // Disable vertex snapping and affine warping for motion-sensitive users
+            Shader.SetGlobalVector(SnapResID, new Vector4(4096, 4096, 0, 0));
+            Shader.SetGlobalFloat(AffineID, 0f);
+        }
+        else
+        {
+            Shader.SetGlobalVector(SnapResID, new Vector4(_vertexSnapResolution.x, _vertexSnapResolution.y, 0, 0));
+            Shader.SetGlobalFloat(AffineID, _affineIntensity);
+        }
     }
 
     private void Update()

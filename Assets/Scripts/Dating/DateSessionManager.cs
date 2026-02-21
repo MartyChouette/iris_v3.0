@@ -414,7 +414,9 @@ public class DateSessionManager : MonoBehaviour
 
     private IEnumerator Phase3Timer()
     {
-        yield return new WaitForSeconds(phase3Duration);
+        float multiplier = AccessibilitySettings.TimerMultiplier;
+        float duration = multiplier > 0f ? phase3Duration * multiplier : float.MaxValue;
+        yield return new WaitForSeconds(duration);
 
         if (_state != SessionState.DateInProgress || _datePhase != DatePhase.Reveal)
             yield break;

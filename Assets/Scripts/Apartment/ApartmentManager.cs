@@ -394,7 +394,7 @@ public class ApartmentManager : MonoBehaviour
         // Always write base + offset to transform, even with parallax disabled
         var t = browseCamera.transform;
 
-        if (parallaxMaxOffset > 0f)
+        if (parallaxMaxOffset > 0f && !AccessibilitySettings.ReduceMotion)
         {
             Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
             float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
@@ -405,9 +405,15 @@ public class ApartmentManager : MonoBehaviour
             // Use base rotation for offset direction (never reads from transform)
             Vector3 right = _baseRotation * Vector3.right;
             Vector3 up = _baseRotation * Vector3.up;
-            Vector3 targetOffset = (right * -nx + up * -ny) * parallaxMaxOffset;
+            float effectiveOffset = parallaxMaxOffset * AccessibilitySettings.ScreenShakeScale;
+            Vector3 targetOffset = (right * -nx + up * -ny) * effectiveOffset;
 
             _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, targetOffset,
+                Time.deltaTime * parallaxSmoothing);
+        }
+        else if (AccessibilitySettings.ReduceMotion)
+        {
+            _currentParallaxOffset = Vector3.Lerp(_currentParallaxOffset, Vector3.zero,
                 Time.deltaTime * parallaxSmoothing);
         }
 

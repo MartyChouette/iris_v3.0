@@ -241,6 +241,12 @@ public static class ApartmentSceneBuilder
         // ── 15f. Pause menu ──
         BuildPauseMenu();
 
+        // ── 15g. Settings panel ──
+        BuildSettingsPanel();
+
+        // ── 15h. Caption display ──
+        BuildCaptionDisplay();
+
         // ── 16. NavMesh setup ──
         BuildNavMeshSetup();
 
@@ -4472,6 +4478,94 @@ public static class ApartmentSceneBuilder
         overlayGO.SetActive(false);
 
         Debug.Log("[ApartmentSceneBuilder] Pause menu built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Settings Panel
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildSettingsPanel()
+    {
+        var settingsGO = SettingsPanelBuilder.Build();
+        var settingsPanel = settingsGO.GetComponent<SettingsPanel>();
+
+        // Wire settings panel into SimplePauseMenu
+        var pauseMenu = Object.FindAnyObjectByType<SimplePauseMenu>();
+        if (pauseMenu != null && settingsPanel != null)
+        {
+            var pauseSO = new SerializedObject(pauseMenu);
+            pauseSO.FindProperty("_settingsPanel").objectReferenceValue = settingsPanel;
+            pauseSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Also add a Settings button to the pause menu panel
+        if (pauseMenu != null)
+        {
+            // Find the pause panel to add a button
+            var pauseRoot = pauseMenu.GetComponentInChildren<Canvas>(true);
+            if (pauseRoot != null)
+            {
+                var panels = pauseRoot.GetComponentsInChildren<UnityEngine.UI.Image>(true);
+                foreach (var p in panels)
+                {
+                    if (p.gameObject.name == "PausePanel")
+                    {
+                        // Add settings button between existing buttons
+                        var btnGO = new GameObject("Btn_Settings");
+                        btnGO.transform.SetParent(p.transform, false);
+                        var btnRT = btnGO.AddComponent<RectTransform>();
+                        btnRT.anchorMin = new Vector2(0.5f, 0.5f);
+                        btnRT.anchorMax = new Vector2(0.5f, 0.5f);
+                        btnRT.pivot = new Vector2(0.5f, 0.5f);
+                        btnRT.anchoredPosition = new Vector2(0f, -90f);
+                        btnRT.sizeDelta = new Vector2(300f, 50f);
+                        btnRT.localScale = Vector3.one;
+
+                        var btnImg = btnGO.AddComponent<UnityEngine.UI.Image>();
+                        btnImg.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+                        var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
+                        var colors = btn.colors;
+                        colors.highlightedColor = new Color(0.35f, 0.35f, 0.35f, 1f);
+                        colors.pressedColor = new Color(0.2f, 0.2f, 0.2f, 1f);
+                        btn.colors = colors;
+
+                        var labelGO = new GameObject("Label");
+                        labelGO.transform.SetParent(btnGO.transform, false);
+                        var labelRT = labelGO.AddComponent<RectTransform>();
+                        labelRT.anchorMin = Vector2.zero;
+                        labelRT.anchorMax = Vector2.one;
+                        labelRT.offsetMin = Vector2.zero;
+                        labelRT.offsetMax = Vector2.zero;
+                        labelRT.localScale = Vector3.one;
+                        var labelTMP = labelGO.AddComponent<TextMeshProUGUI>();
+                        labelTMP.text = "Settings";
+                        labelTMP.fontSize = 22f;
+                        labelTMP.alignment = TextAlignmentOptions.Center;
+                        labelTMP.color = Color.white;
+                        labelTMP.raycastTarget = false;
+
+                        UnityEventTools.AddPersistentListener(btn.onClick,
+                            new UnityAction(pauseMenu.OpenSettings));
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        Debug.Log("[ApartmentSceneBuilder] Settings panel built and wired to pause menu.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Caption Display
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildCaptionDisplay()
+    {
+        var go = new GameObject("CaptionDisplay");
+        go.AddComponent<CaptionDisplay>();
+        Debug.Log("[ApartmentSceneBuilder] Caption display built.");
     }
 
     // ══════════════════════════════════════════════════════════════════

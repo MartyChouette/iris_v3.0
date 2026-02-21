@@ -58,6 +58,9 @@ public class TMP_FocusBlur : MonoBehaviour
 
     void Update()
     {
+        // Skip vertex morphing when reduce motion is enabled
+        if (AccessibilitySettings.ReduceMotion) return;
+
         // PERF: Throttle updates - mesh deformation doesn't need to run every frame
         _timeSinceUpdate += Time.deltaTime;
         if (_timeSinceUpdate < updateInterval) return;

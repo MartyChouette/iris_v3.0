@@ -198,11 +198,22 @@ public class DayPhaseManager : MonoBehaviour
 
     private void StartPrepTimer()
     {
-        _prepTimer = _prepDuration;
+        float multiplier = AccessibilitySettings.TimerMultiplier;
+
+        // 0 = unlimited — no timer
+        if (multiplier <= 0f)
+        {
+            _prepTimerActive = false;
+            if (_prepTimerPanel != null) _prepTimerPanel.SetActive(false);
+            Debug.Log("[DayPhaseManager] Prep timer disabled (unlimited mode).");
+            return;
+        }
+
+        _prepTimer = _prepDuration * multiplier;
         _prepTimerActive = true;
         _timerWarningPlayed = false;
         if (_prepTimerPanel != null) _prepTimerPanel.SetActive(true);
-        Debug.Log($"[DayPhaseManager] Prep timer started: {_prepDuration}s.");
+        Debug.Log($"[DayPhaseManager] Prep timer started: {_prepTimer}s (base {_prepDuration} x {multiplier}).");
     }
 
     private void StopPrepTimer()

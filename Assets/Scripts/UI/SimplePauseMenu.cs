@@ -11,6 +11,7 @@ public class SimplePauseMenu : MonoBehaviour
     public static SimplePauseMenu Instance { get; private set; }
 
     [SerializeField] private GameObject _pauseRoot;
+    [SerializeField] private SettingsPanel _settingsPanel;
 
     private InputAction _pauseAction;
     private bool _isPaused;
@@ -56,6 +57,13 @@ public class SimplePauseMenu : MonoBehaviour
 
         if (pressed)
         {
+            // If settings panel is open, go back to pause menu first
+            if (_isPaused && _settingsPanel != null && _settingsPanel.IsOpen)
+            {
+                CloseSettings();
+                return;
+            }
+
             if (_isPaused)
                 Resume();
             else
@@ -79,8 +87,32 @@ public class SimplePauseMenu : MonoBehaviour
         _isPaused = false;
         TimeScaleManager.Clear(TimeScaleManager.PRIORITY_PAUSE);
 
+        // Close settings panel if it was open
+        if (_settingsPanel != null && _settingsPanel.IsOpen)
+            _settingsPanel.Close();
+
         if (_pauseRoot != null)
             _pauseRoot.SetActive(false);
+    }
+
+    /// <summary>Opens the settings panel and hides the pause menu buttons.</summary>
+    public void OpenSettings()
+    {
+        if (_settingsPanel == null) return;
+
+        _settingsPanel.Open();
+        if (_pauseRoot != null)
+            _pauseRoot.SetActive(false);
+    }
+
+    /// <summary>Called by SettingsPanel close button — returns to pause menu buttons.</summary>
+    public void CloseSettings()
+    {
+        if (_settingsPanel != null && _settingsPanel.IsOpen)
+            _settingsPanel.Close();
+
+        if (_pauseRoot != null)
+            _pauseRoot.SetActive(true);
     }
 
     public void QuitToMenu()

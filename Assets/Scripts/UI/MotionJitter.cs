@@ -72,6 +72,15 @@ public class MotionJitter : MonoBehaviour
 
     void Update()
     {
+        // Skip jitter when reduce motion is enabled — hold rest pose
+        if (AccessibilitySettings.ReduceMotion)
+        {
+            transform.localPosition = initialLocalPos;
+            transform.localRotation = initialLocalRot;
+            transform.localScale = initialScale;
+            return;
+        }
+
         // 1. Get the Driver Coordinate (The "Input")
         Vector2 coord = Vector2.zero;
 
