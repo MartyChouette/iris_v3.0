@@ -39,8 +39,8 @@ public class TidyScorer : MonoBehaviour
     [Tooltip("X boundary between Kitchen (lower) and LivingRoom (higher).")]
     [SerializeField] private float _kitchenLivingBoundaryX = -1f;
 
-    [Tooltip("Z boundary: Entrance is Z > this value.")]
-    [SerializeField] private float _entranceBoundaryZ = 4f;
+    [Tooltip("Z boundary: Entrance is Z < this value (entrance is at negative Z).")]
+    [SerializeField] private float _entranceBoundaryZ = -4.5f;
 
     private void Awake()
     {
@@ -91,7 +91,7 @@ public class TidyScorer : MonoBehaviour
     /// <summary>Assign an area based on an object's world position.</summary>
     public ApartmentArea ClassifyPosition(Vector3 worldPos)
     {
-        if (worldPos.z > _entranceBoundaryZ)
+        if (worldPos.z < _entranceBoundaryZ)
             return ApartmentArea.Entrance;
         if (worldPos.x < _kitchenLivingBoundaryX)
             return ApartmentArea.Kitchen;

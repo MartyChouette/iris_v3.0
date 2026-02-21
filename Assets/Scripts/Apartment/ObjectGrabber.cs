@@ -75,6 +75,10 @@ public class ObjectGrabber : MonoBehaviour
     private float _wallRotation;
     private bool _isOnWall;
 
+    // Double-click detection for plate unstacking
+    private float _lastClickTime;
+    private const float DoubleClickThreshold = 0.3f;
+
     // Shadow preview
     private GameObject _shadowGO;
     private MeshRenderer _shadowRenderer;
@@ -135,9 +139,25 @@ public class ObjectGrabber : MonoBehaviour
         if (_mouseClick.WasPressedThisFrame())
         {
             if (_held == null)
+            {
                 TryPickUp();
+            }
             else
+            {
+                // Double-click while holding a plate stack → unstack top plate
+                float now = Time.unscaledTime;
+                bool isDoubleClick = (now - _lastClickTime) < DoubleClickThreshold;
+                _lastClickTime = now;
+
+                if (isDoubleClick && TryUnstackHeldPlate())
+                    return;
+
+                // If holding a plate, check if clicking another plate → join stack
+                if (TryStackOntoClickedPlate())
+                    return;
+
                 Place();
+            }
         }
 
         if (_held != null)
@@ -330,6 +350,107 @@ public class ObjectGrabber : MonoBehaviour
         }
 
         ClearHeld();
+    }
+
+    // ── Plate stacking helpers ─────────────────────────────────────
+
+    /// <summary>
+    /// While holding a plate, raycast for another plate under the cursor.
+    /// If found, join the clicked plate onto the held stack (or vice versa).
+    /// </summary>
+    private bool TryStackOntoClickedPlate()
+    {
+        var heldStack = _held.GetComponent<StackablePlate>();
+        if (heldStack == null) return false;
+
+        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Ray ray = cam.ScreenPointToRay(screenPos);
+
+        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
+            return false;
+
+        var clickedPlate = hit.collider.GetComponent<StackablePlate>();
+        if (clickedPlate == null)
+            clickedPlate = hit.collider.GetComponentInParent<StackablePlate>();
+        if (clickedPlate == null || clickedPlate == heldStack) return false;
+        if (clickedPlate.transform.IsChildOf(_held.transform)) return false;
+
+        // Detach the clicked plate from its current context and parent to held plate
+        clickedPlate.PrepareForGrab();
+        clickedPlate.transform.SetParent(_held.transform);
+        clickedPlate.transform.localPosition = new Vector3(0f, 0.03f * GetStackCount(_held.transform), 0f);
+        clickedPlate.transform.localRotation = Quaternion.identity;
+
+        var clickedRb = clickedPlate.GetComponent<Rigidbody>();
+        if (clickedRb != null)
+        {
+            clickedRb.isKinematic = true;
+            clickedRb.linearVelocity = Vector3.zero;
+        }
+
+        var clickedPlaceable = clickedPlate.GetComponent<PlaceableObject>();
+        if (clickedPlaceable != null)
+            clickedPlaceable.OnPickedUp();
+
+        Debug.Log($"[ObjectGrabber] Stacked {clickedPlate.name} onto held {_held.name}");
+        return true;
+    }
+
+    /// <summary>
+    /// Double-click while holding a plate with children → detach the topmost child
+    /// and place/drop the remaining stack.
+    /// </summary>
+    private bool TryUnstackHeldPlate()
+    {
+        var heldStack = _held.GetComponent<StackablePlate>();
+        if (heldStack == null) return false;
+
+        // Find topmost child plate
+        StackablePlate topChild = null;
+        foreach (Transform child in _held.transform)
+        {
+            var sp = child.GetComponent<StackablePlate>();
+            if (sp != null)
+                topChild = sp;
+        }
+        if (topChild == null) return false;
+
+        // Detach the top plate — it becomes the new held object
+        topChild.PrepareForGrab();
+
+        // Drop the current stack onto the nearest surface
+        _heldRb.constraints = _originalConstraints;
+        _heldRb.linearVelocity = Vector3.zero;
+        _heldRb.useGravity = true;
+        _held.OnDropped();
+
+        // Pick up the detached top plate
+        var oldHeld = _held;
+        _held = topChild.GetComponent<PlaceableObject>();
+        _heldRb = topChild.GetComponent<Rigidbody>();
+        if (_heldRb != null)
+        {
+            _heldRb.useGravity = false;
+            _heldRb.isKinematic = false;
+            _grabTarget = _heldRb.worldCenterOfMass;
+            _originalConstraints = _heldRb.constraints;
+            _heldRb.constraints = _originalConstraints | RigidbodyConstraints.FreezeRotation;
+        }
+        _held.OnPickedUp();
+
+        Debug.Log($"[ObjectGrabber] Unstacked {topChild.name} from {oldHeld.name}");
+        return true;
+    }
+
+    private static int GetStackCount(Transform root)
+    {
+        int count = 0;
+        foreach (Transform child in root)
+        {
+            if (child.GetComponent<StackablePlate>() != null)
+                count++;
+        }
+        return count;
     }
 
     private void ClearHeld()

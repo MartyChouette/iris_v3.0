@@ -73,6 +73,7 @@ public class PlaceableObject : MonoBehaviour
     private Rigidbody _rb;
     private float _fallTimer;
 
+    private Collider[] _colliders;
     private Coroutine _validationCoroutine;
     private Coroutine _flashCoroutine;
 
@@ -101,6 +102,7 @@ public class PlaceableObject : MonoBehaviour
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
         _rb = GetComponent<Rigidbody>();
+        _colliders = GetComponents<Collider>();
     }
 
     private void Update()
@@ -194,6 +196,9 @@ public class PlaceableObject : MonoBehaviour
         if (_rb != null)
             _rb.isKinematic = false;
 
+        // Disable colliders so held object doesn't block raycasts
+        SetCollidersEnabled(false);
+
         // Brightness boost on main material
         if (_instanceMat != null)
             _instanceMat.color = _originalColor * heldBrightness;
@@ -231,6 +236,7 @@ public class PlaceableObject : MonoBehaviour
         transform.position = position;
         transform.rotation = rotation;
 
+        SetCollidersEnabled(true);
         RestoreMaterial();
 
         if (_rb != null)
@@ -267,12 +273,25 @@ public class PlaceableObject : MonoBehaviour
     public void OnDropped()
     {
         CurrentState = State.Resting;
+        SetCollidersEnabled(true);
         RestoreMaterial();
 
         // Check if we ended up somewhere the player can't see
         StartCoroutine(CheckVisibilityAfterDrop());
 
         Debug.Log($"[PlaceableObject] {name} dropped.");
+    }
+
+    // ── Collider toggle ──────────────────────────────────────────────
+
+    private void SetCollidersEnabled(bool enabled)
+    {
+        if (_colliders == null) return;
+        foreach (var col in _colliders)
+        {
+            if (col != null)
+                col.enabled = enabled;
+        }
     }
 
     // ── Wall alignment ────────────────────────────────────────────────

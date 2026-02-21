@@ -85,6 +85,11 @@ public class DishDropZone : MonoBehaviour
         if (tag != null)
             tag.SmellAmount = 0f;
 
+        // Clean the plate visually (dirty brown → clean white)
+        var plateRend = plate.GetComponent<Renderer>();
+        if (plateRend != null && plateRend.material != null)
+            plateRend.material.color = new Color(0.95f, 0.95f, 0.92f);
+
         var col = plate.GetComponent<Collider>();
         if (col != null)
             col.enabled = false;

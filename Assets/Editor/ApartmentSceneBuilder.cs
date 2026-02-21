@@ -620,7 +620,7 @@ public static class ApartmentSceneBuilder
 
         // Cup on coffee table
         var cup = CreatePlaceable("Cup", parent.transform,
-            new Vector3(-0.672f, 0.45f, 1.984f), new Vector3(0.08f, 0.12f, 0.08f),
+            new Vector3(-0.672f, 0.45f, 1.984f), new Vector3(0.12f, 0.15f, 0.12f),
             new Color(0.85f, 0.82f, 0.75f), placeableLayer);
         SetItemDescription(cup, "A ceramic mug, slightly chipped.");
 
@@ -633,26 +633,26 @@ public static class ApartmentSceneBuilder
 
         // Magazine on coffee table
         var magazine = CreatePlaceable("Magazine", parent.transform,
-            new Vector3(-0.372f, 0.42f, 2.084f), new Vector3(0.18f, 0.02f, 0.25f),
+            new Vector3(-0.372f, 0.42f, 2.084f), new Vector3(0.22f, 0.025f, 0.30f),
             new Color(0.7f, 0.3f, 0.3f), placeableLayer);
         SetItemDescription(magazine, "Last month's gardening magazine.");
 
         // Yoyo on coffee table
         var yoyo = CreatePlaceable("Yoyo", parent.transform,
-            new Vector3(-0.872f, 0.42f, 1.784f), new Vector3(0.06f, 0.06f, 0.06f),
+            new Vector3(-0.872f, 0.42f, 1.784f), new Vector3(0.10f, 0.10f, 0.10f),
             new Color(0.8f, 0.2f, 0.3f), placeableLayer);
         SetItemDescription(yoyo, "A well-worn yoyo.");
 
         // GameKid (GameBoy-like handheld) on sun ledge
         var gameKid = CreatePlaceable("GameKid", parent.transform,
-            new Vector3(-2.2f, 1.127f, -2.1f), new Vector3(0.06f, 0.10f, 0.02f),
+            new Vector3(-2.2f, 1.127f, -2.1f), new Vector3(0.09f, 0.15f, 0.03f),
             new Color(0.55f, 0.62f, 0.45f), placeableLayer);
         SetItemDescription(gameKid, "A handheld game console.");
         AddReactableTag(gameKid, new[] { "video_game", "gadget", "nostalgia" }, true, displayName: "Handheld Game");
 
         // Tamagotchi on coffee table
         var tamagotchi = CreatePlaceable("Tamagotchi", parent.transform,
-            new Vector3(-0.35f, 0.42f, 1.85f), new Vector3(0.04f, 0.05f, 0.02f),
+            new Vector3(-0.35f, 0.42f, 1.85f), new Vector3(0.06f, 0.075f, 0.03f),
             new Color(0.85f, 0.55f, 0.70f), placeableLayer);
         SetItemDescription(tamagotchi, "A virtual pet keychain.");
         AddReactableTag(tamagotchi, new[] { "toy", "pet", "nostalgia" }, true, displayName: "Tamagotchi");
@@ -670,7 +670,7 @@ public static class ApartmentSceneBuilder
             float xOff = -2.35f + i * 0.06f;
             float zOff = -2.05f + (i % 2) * 0.04f;
             var cart = CreatePlaceable($"Cartridge_{i}", parent.transform,
-                new Vector3(xOff, 1.117f, zOff), new Vector3(0.04f, 0.05f, 0.008f),
+                new Vector3(xOff, 1.117f, zOff), new Vector3(0.06f, 0.075f, 0.012f),
                 cartColors[i], placeableLayer);
             SetItemDescription(cart, cartNames[i]);
             AddReactableTag(cart, new[] { "video_game", "collectible" }, true, displayName: "Game Cartridge");
@@ -726,7 +726,7 @@ public static class ApartmentSceneBuilder
         var litShader = Shader.Find("Universal Render Pipeline/Lit")
                         ?? Shader.Find("Standard");
         var plateMat = new Material(litShader);
-        plateMat.color = new Color(0.92f, 0.90f, 0.85f); // off-white ceramic
+        plateMat.color = new Color(0.72f, 0.62f, 0.48f); // brownish dirty ceramic
 
         // ── Plate positions (kitchen table, counter, coffee table, side areas) ──
         Vector3[] positions =
@@ -745,7 +745,7 @@ public static class ApartmentSceneBuilder
             plate.name = $"DirtyPlate_{i:D2}";
             plate.transform.SetParent(parent.transform);
             plate.transform.position = positions[i];
-            plate.transform.localScale = new Vector3(0.18f, 0.015f, 0.18f);
+            plate.transform.localScale = new Vector3(0.24f, 0.012f, 0.24f);
             plate.layer = placeableLayer;
             plate.isStatic = false;
 
@@ -2770,7 +2770,7 @@ public static class ApartmentSceneBuilder
         glassGO.transform.SetParent(groupGO.transform);
         glassGO.transform.position = new Vector3(1.82f, 1.09f, -3.56f);
         glassGO.transform.rotation = new Quaternion(0f, -0.7219f, 0f, 0.692f);
-        glassGO.transform.localScale = new Vector3(0.08f, 0.10f, 0.08f);
+        glassGO.transform.localScale = new Vector3(0.10f, 0.12f, 0.10f);
         glassGO.isStatic = false;
         glassGO.layer = glassLayer;
         var glassRend = glassGO.GetComponent<Renderer>();
@@ -3615,13 +3615,13 @@ public static class ApartmentSceneBuilder
         CreateMessBP(messDir, "Broken_Glass", "Broken Glass", "Shattered glass — the date didn't end well.",
             MessBlueprint.MessCategory.DateAftermath, MessBlueprint.MessType.Object,
             requireFailure: true, objColor: new Color(0.7f, 0.75f, 0.8f, 0.6f),
-            objScale: new Vector3(0.08f, 0.02f, 0.08f),
+            objScale: new Vector3(0.12f, 0.03f, 0.12f),
             areas: new[] { ApartmentArea.Kitchen });
 
         CreateMessBP(messDir, "Tear_Stained_Tissue", "Tear-stained Tissue", "A crumpled tissue — someone cried.",
             MessBlueprint.MessCategory.DateAftermath, MessBlueprint.MessType.Object,
             requireFailure: true, maxAffection: 30f,
-            objColor: new Color(0.9f, 0.88f, 0.85f), objScale: new Vector3(0.06f, 0.04f, 0.06f),
+            objColor: new Color(0.9f, 0.88f, 0.85f), objScale: new Vector3(0.09f, 0.06f, 0.09f),
             areas: new[] { ApartmentArea.LivingRoom });
 
         CreateMessBP(messDir, "Muddy_Footprints", "Muddy Footprints", "Tracks from Nema's morning run.",
@@ -3631,7 +3631,7 @@ public static class ApartmentSceneBuilder
 
         CreateMessBP(messDir, "Empty_Takeout_Box", "Empty Takeout Box", "Last night's dinner — eaten alone.",
             MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Object,
-            minDay: 2, objColor: new Color(0.6f, 0.45f, 0.3f), objScale: new Vector3(0.12f, 0.04f, 0.12f),
+            minDay: 2, objColor: new Color(0.6f, 0.45f, 0.3f), objScale: new Vector3(0.18f, 0.06f, 0.18f),
             areas: new[] { ApartmentArea.Kitchen });
 
         CreateMessBP(messDir, "Spilled_Coffee", "Spilled Coffee", "Rushed morning — coffee everywhere.",
@@ -3641,12 +3641,12 @@ public static class ApartmentSceneBuilder
 
         CreateMessBP(messDir, "Crumpled_Note", "Crumpled Note", "A hastily written note, balled up and tossed.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
-            weight: 1.5f, objColor: new Color(0.9f, 0.88f, 0.82f), objScale: new Vector3(0.05f, 0.05f, 0.05f),
+            weight: 1.5f, objColor: new Color(0.9f, 0.88f, 0.82f), objScale: new Vector3(0.075f, 0.075f, 0.075f),
             areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
 
         CreateMessBP(messDir, "Wilted_Petals", "Wilted Petals", "Dried petals from a dying bouquet.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
-            minDay: 3, objColor: new Color(0.55f, 0.35f, 0.4f), objScale: new Vector3(0.07f, 0.01f, 0.07f),
+            minDay: 3, objColor: new Color(0.55f, 0.35f, 0.4f), objScale: new Vector3(0.105f, 0.015f, 0.105f),
             areas: new[] { ApartmentArea.LivingRoom });
 
         CreateMessBP(messDir, "Mystery_Stain", "Mystery Stain", "Best not to think about where this came from.",
@@ -3656,7 +3656,7 @@ public static class ApartmentSceneBuilder
 
         CreateMessBP(messDir, "Cat_Hair_Clump", "Cat Hair Clump", "Nema doesn't own a cat. Or does she?",
             MessBlueprint.MessCategory.OffScreen, MessBlueprint.MessType.Object,
-            minDay: 2, objColor: new Color(0.7f, 0.65f, 0.6f), objScale: new Vector3(0.04f, 0.02f, 0.04f),
+            minDay: 2, objColor: new Color(0.7f, 0.65f, 0.6f), objScale: new Vector3(0.06f, 0.03f, 0.06f),
             areas: new[] { ApartmentArea.LivingRoom, ApartmentArea.Entrance });
 
         CreateMessBP(messDir, "Nail_Polish_Drip", "Nail Polish Drip", "A bright drip of nail polish on the floor.",
@@ -3668,17 +3668,17 @@ public static class ApartmentSceneBuilder
 
         CreateMessBP(messDir, "Empty_Wine_Bottle", "Empty Wine Bottle", "Last night was... something.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
-            weight: 1.8f, objColor: new Color(0.15f, 0.3f, 0.12f), objScale: new Vector3(0.06f, 0.2f, 0.06f),
+            weight: 1.8f, objColor: new Color(0.15f, 0.3f, 0.12f), objScale: new Vector3(0.09f, 0.3f, 0.09f),
             areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
 
         CreateMessBP(messDir, "Dirty_Mug", "Dirty Mug", "Rings of old coffee stain the inside.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
-            weight: 1.3f, objColor: new Color(0.85f, 0.82f, 0.75f), objScale: new Vector3(0.06f, 0.08f, 0.06f),
+            weight: 1.3f, objColor: new Color(0.85f, 0.82f, 0.75f), objScale: new Vector3(0.09f, 0.12f, 0.09f),
             areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
 
         CreateMessBP(messDir, "Scattered_Magazine", "Scattered Magazine", "Open to a horoscope page.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
-            weight: 1.0f, objColor: new Color(0.8f, 0.3f, 0.35f), objScale: new Vector3(0.14f, 0.01f, 0.1f),
+            weight: 1.0f, objColor: new Color(0.8f, 0.3f, 0.35f), objScale: new Vector3(0.21f, 0.015f, 0.15f),
             areas: new[] { ApartmentArea.LivingRoom });
 
         AssetDatabase.SaveAssets();
