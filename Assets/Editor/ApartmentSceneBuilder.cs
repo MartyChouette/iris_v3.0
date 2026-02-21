@@ -35,7 +35,7 @@ public static class ApartmentSceneBuilder
     // ─── Station Group Positions ─────────────────────────────────
     private static readonly Vector3 BookcaseStationPos  = new Vector3(2.933f, 0.421f, 2.095f);
     private static readonly Quaternion BookcaseStationRot = new Quaternion(0f, 0.9997f, 0f, -0.0227f);
-    private static readonly Vector3 RecordPlayerStationPos = new Vector3(-2f, 0f, 5f);
+    private static readonly Vector3 RecordPlayerStationPos = new Vector3(-2f, 0f, 2f);
     private static readonly Vector3 DrinkMakingStationPos  = new Vector3(-4f, 0f, -5.2f);
 
     // ─── Entrance Area Config (near door at -3, 0, -5.5) ────────
@@ -516,63 +516,44 @@ public static class ApartmentSceneBuilder
         public PlaceableEntry[] entries;
     }
 
-    /// <summary>Collect all transforms that should be persisted across rebuilds.</summary>
+    /// <summary>
+    /// Collect all transforms that should be persisted across rebuilds.
+    /// Scans every root GameObject and its direct children, skipping system objects
+    /// (cameras, lights, EventSystem). This captures all positioned items automatically
+    /// without needing a curated component list.
+    /// </summary>
     private static System.Collections.Generic.List<Transform> GatherLayoutTransforms()
     {
         var list = new System.Collections.Generic.List<Transform>();
+        var seen = new System.Collections.Generic.HashSet<Transform>();
 
-        // 1. PlaceableObject components (includes wall placeables)
-        foreach (var p in Object.FindObjectsByType<PlaceableObject>(FindObjectsSortMode.None))
-            list.Add(p.transform);
+        var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        var roots = scene.GetRootGameObjects();
 
-        // 2. Furniture children
-        var furnitureRoot = GameObject.Find("Furniture");
-        if (furnitureRoot != null)
+        foreach (var root in roots)
         {
-            foreach (Transform child in furnitureRoot.transform)
-                list.Add(child);
-        }
+            if (IsSystemObject(root)) continue;
 
-        // 3. Station group roots (Station_Bookcase, Station_RecordPlayer, Station_DrinkMaking)
-        string[] stationNames = { "Station_Bookcase", "Station_RecordPlayer", "Station_DrinkMaking" };
-        foreach (var sn in stationNames)
-        {
-            var go = GameObject.Find(sn);
-            if (go != null) list.Add(go.transform);
-        }
+            if (seen.Add(root.transform))
+                list.Add(root.transform);
 
-        // 4. WallPlaceables root (so wall-mounted items restore even if PlaceableObject search missed them)
-        var wallRoot = GameObject.Find("WallPlaceables");
-        if (wallRoot != null)
-        {
-            foreach (Transform child in wallRoot.transform)
+            // Direct children (furniture pieces, placeables, wall items, etc.)
+            foreach (Transform child in root.transform)
             {
-                if (!list.Contains(child)) list.Add(child);
+                if (seen.Add(child))
+                    list.Add(child);
             }
         }
 
-        // 5. WaterablePlant objects
-        var plants = Object.FindObjectsByType<WaterablePlant>(FindObjectsSortMode.None);
-        foreach (var plant in plants)
-        {
-            if (!list.Contains(plant.transform)) list.Add(plant.transform);
-        }
-
-        // 6. ApartmentCalendar
-        var calendars = Object.FindObjectsByType<ApartmentCalendar>(FindObjectsSortMode.None);
-        foreach (var cal in calendars)
-        {
-            if (!list.Contains(cal.transform)) list.Add(cal.transform);
-        }
-
-        // 7. FridgeController (fridge body/pivot)
-        var fridges = Object.FindObjectsByType<FridgeController>(FindObjectsSortMode.None);
-        foreach (var fridge in fridges)
-        {
-            if (!list.Contains(fridge.transform)) list.Add(fridge.transform);
-        }
-
         return list;
+    }
+
+    private static bool IsSystemObject(GameObject go)
+    {
+        if (go.GetComponent<UnityEngine.Camera>() != null) return true;
+        if (go.GetComponent<Light>() != null) return true;
+        if (go.name == "EventSystem") return true;
+        return false;
     }
 
     private static void SaveLayout()
