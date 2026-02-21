@@ -4,7 +4,7 @@
 
 Iris v3.0 is a contemplative flower-trimming game (thesis project). Unity 6.0.3, URP, C#. Players cut stems with scissors, evaluated against ideal rules for score and "days alive."
 
-The game centers on an **apartment hub** — a spline-dolly camera browses 2 areas (Kitchen, Living Room), each with a station. Stations are entered via `StationRoot` and managed by `ApartmentManager`. The apartment model is imported from Blender (`aprtment blockout.obj`) at 0.1 scale.
+The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera browses 3 areas (Kitchen, Living Room, Entrance). Stations (bookcase, drink making, etc.) are always active — no StationRoot gating. Managed by `ApartmentManager` (Browsing state only). The apartment model is imported from Blender (`aprtment blockout.obj`) at 0.1 scale.
 
 ## Build & Run
 
@@ -21,7 +21,6 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 2 are
 | Window > Iris > Build Apartment Scene | `Assets/Editor/ApartmentSceneBuilder.cs` | Generates apartment hub with Kitchen + Living Room, modular station groups, dating loop |
 | Window > Iris > Build Bookcase Browsing Scene | `Assets/Editor/BookcaseSceneBuilder.cs` | Generates standalone bookcase station scene |
 | Window > Iris > Build Dating Loop Scene | `Assets/Editor/DatingLoopSceneBuilder.cs` | Generates standalone dating loop test scene with full gameplay loop |
-| Window > Iris > Build Camera Test Scene | `Assets/Editor/CameraTestSceneBuilder.cs` | Generates Cinemachine camera test room |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
 
 ## Code Conventions
@@ -34,7 +33,7 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 2 are
 - **TMP text updates:** Use `TMP_Text.SetText()` with format args to avoid string allocation
 - **Audio:** Always go through `AudioManager.Instance.PlaySFX(clip)` with null guards on both Instance and clip
 - **Debug logs:** Prefixed `[ClassName]` — e.g. `[NewspaperManager]`
-- **Editor scene builders:** Follow `CameraTestSceneBuilder.cs` pattern — `NewScene(EmptyScene)`, `CreateBox()` helper, URP Lit materials, `AssetDatabase.IsValidFolder()` checks
+- **Editor scene builders:** Follow `ApartmentSceneBuilder.cs` pattern — `NewScene(EmptyScene)`, `CreateBox()` helper, URP Lit materials, `AssetDatabase.IsValidFolder()` checks
 
 ## Key Singletons & Managers
 
@@ -77,46 +76,30 @@ The game centers on an **apartment hub** — a spline-dolly camera browses 2 are
 ## Apartment Hub Architecture
 
 ```
-ApartmentManager (Browsing → Selecting → Selected → InStation)
-       │ A/D input                                 ↑ Esc
-       ▼                                           │
-CinemachineSplineDolly (4-knot closed-loop spline)
-       │ Enter key                                 │
-       ▼                                           │
-Selected state (clean stains, pick up / place objects)
-       │ Enter key                                 │
-       ▼                                           │
-StationRoot.Activate() → raises station cameras to priority 30
-       │                                           │
-       ▼                                           │
-IStationManager (BookInteractionManager, DrinkMakingManager, RecordPlayerManager)
+ApartmentManager (Browsing only — single state)
+       │ A/D input or click arrows
+       ▼
+Direct pos/rot/FOV lerp between 3 areas
+       │
+       ▼
+All station managers always active (no StationRoot gating)
+ObjectGrabber + CleaningManager + WateringManager always enabled
 ```
 
-### Current Areas (2)
+### Current Areas (3)
 
-| Area | StationType | splinePosition | Notes |
-|------|-------------|----------------|-------|
-| Kitchen | DrinkMaking | 0.0 | Always accessible, fridge gates DrinkMaking entry |
-| Living Room | Bookcase | 0.5 | BookInteractionManager |
-
-### Modular Station Groups
-
-Each station is a self-contained parent GO. Moving the parent repositions everything:
-```
-Station_{Name}/
-  ├─ Cam_{Name}           ← CinemachineCamera (priority 0, raised to 30 on Activate)
-  ├─ {Furniture GOs}
-  ├─ {Manager GO}         ← XxxManager + XxxHUD components
-  ├─ StationRoot           ← stationType, stationManager, hudRoot, stationCameras
-  └─ ReactableTag          ← for date NPC reactions
-```
+| Area | StationType | Notes |
+|------|-------------|-------|
+| Kitchen | DrinkMaking | Fridge gates DrinkMaking entry, phase-gated to DateInProgress |
+| Living Room | Bookcase | BookInteractionManager |
+| Entrance | None | Shoe rack, coat rack, front door |
 
 ### Key Components
-- `ApartmentAreaDefinition` — ScriptableObject per area (splinePosition, stationType, camera settings)
-- `StationRoot` — Marker on each station root, manages activate/deactivate of manager + HUD + cameras
-- `FridgeController` — Click-to-open fridge door that gates DrinkMaking station via `ApartmentManager.ForceEnterStation()`
-- `CleaningManager` — Only responds in Selected apartment state (stain interaction gating)
-- `ObjectGrabber` — Spring-damper pick-and-place, active in Selected state
+- `ApartmentAreaDefinition` — ScriptableObject per area (cameraPosition, cameraRotation, cameraFOV, stationType)
+- `StationRoot` — Exists in code but NOT wired by builder; all managers are always active, no station cameras
+- `FridgeController` — Click-to-open fridge door that gates DrinkMaking station
+- `CleaningManager` — Always enabled, raycasts from Camera.main on cleanableLayer
+- `ObjectGrabber` — Spring-damper pick-and-place with surface raycast (no depth plane)
 - `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
 - `InteractableHighlight` — Toggle-based rim light on hover (off by default, driven by `ApartmentManager` hover raycast)
 
@@ -252,8 +235,8 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 
 | System | Status | Key Files |
 |--------|--------|-----------|
-| Apartment hub (2 areas) | Working | ApartmentManager, ApartmentSceneBuilder |
-| Spline camera browsing | Working | CinemachineSplineDolly, 4-knot loop |
+| Apartment hub (3 areas) | Working | ApartmentManager, ApartmentSceneBuilder |
+| Direct camera browsing | Working | ApartmentManager pos/rot/FOV lerp, 3 areas |
 | Newspaper (button selection) | Working | NewspaperManager, NewspaperAdSlot |
 | Cleaning (sponge only) | Working | CleaningManager, CleanableSurface |
 | Object grab/place | Working | ObjectGrabber, PlacementSurface |
@@ -271,23 +254,26 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | MoodMachine | Working | MoodMachine, MoodMachineProfile |
 | GameClock | Working | GameClock (7-day calendar) |
 | Flower ↔ apartment integration | Working | FlowerTrimmingBridge, LivingFlowerPlant, LivingFlowerPlantManager |
+| Entrance judgments | Working | EntranceJudgmentSequence (outfit, perfume, welcome, cleanliness) |
+| Outfit selection | Working | OutfitSelector |
+| Tidiness scoring | Working | TidyScorer, DailyMessSpawner, DropZone, ItemCategory |
+| Pre-spawned mess | Working | DailyMessSpawner (trash + misplaced entrance items each morning) |
+| Ambient watering | Working | WateringManager, WaterablePlant (not a station, always active) |
+| Name entry overlay | Working | NameEntryScreen (in-apartment overlay, calls DayManager.BeginDay1) |
+| Apartment calendar | Working | ApartmentCalendar (7-day grid with date history) |
+| Save system | Working | IrisSaveData, AutoSaveController |
 
 ## Not Yet Built
 
 | System | Notes |
 |--------|-------|
-| Main menu | Scene + UI |
-| Tutorial card | Overlay between menu and gameplay |
-| Name entry (mirror scene) | Deferred — separate scene, hard cut, added later |
+| Main menu | Scene + UI (MainMenuSceneBuilder exists in `_Parked/`) |
+| Tutorial card | Overlay between menu and gameplay (TutorialCard exists in `_Parked/`) |
+| Name entry (mirror scene) | Deferred — separate scene, hard cut, added later. NameEntryScreen overlay exists as placeholder |
 | Photo intro sequence | Camera pose → B&W photo → newspaper transition |
 | Half-folded newspaper visual | Rework newspaper mesh/canvas to folded look |
-| Outfit selection | New system — choose outfit, date judges in Phase 1 |
 | Perfect pour mechanic | One-shot click-timing (shared by watering + drink making) |
-| Date Phase 1 rework | Entrance judgments: outfit, perfume, welcome |
-| Date Phase 2 rework | Kitchen counter, recipe selection, bottle pick, perfect pour |
 | Couch win scene | Cuddling + scissors behind back |
-| Pre-spawned mess | Day 1 starting state with stains, bottles, trash |
-| Profanity filter | Block bad words in name entry |
 
 ## Roadmap Reference
 
