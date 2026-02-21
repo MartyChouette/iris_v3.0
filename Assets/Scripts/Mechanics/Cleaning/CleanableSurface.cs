@@ -91,16 +91,21 @@ public class CleanableSurface : MonoBehaviour
         get
         {
             if (_totalDirtPixels == 0) return 1f;
-            int cleaned = 0;
+            int stillDirty = 0;
             for (int i = 0; i < _dirtAlpha.Length; i++)
-                if (_dirtAlpha[i] == 0) cleaned++;
-            int dirtyAtStart = _totalDirtPixels;
-            return Mathf.Clamp01((float)cleaned / dirtyAtStart);
+                if (_dirtAlpha[i] > 0) stillDirty++;
+            return Mathf.Clamp01(1f - (float)stillDirty / _totalDirtPixels);
         }
     }
 
     /// <summary>True when >= 95% clean.</summary>
     public bool IsFullyClean => CleanPercent >= 0.95f;
+
+    /// <summary>Diagnostic: total dirty pixels at generation time.</summary>
+    public int TotalDirtPixels => _totalDirtPixels;
+
+    /// <summary>Diagnostic: whether _dirtAlpha array exists.</summary>
+    public bool HasDirtAlpha => _dirtAlpha != null && _dirtAlpha.Length > 0;
 
     /// <summary>
     /// Wipe dirt at UV position. Effectiveness depends on stubbornness and wetness.

@@ -280,6 +280,7 @@ public class AuthoredMessSpawner : MonoBehaviour
         var rb = go.GetComponent<Rigidbody>();
         if (rb == null) rb = go.AddComponent<Rigidbody>();
         rb.mass = 0.05f;
+        rb.isKinematic = true;
 
         // Add PlaceableObject as Trash
         var po = go.GetComponent<PlaceableObject>();

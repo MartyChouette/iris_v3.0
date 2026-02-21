@@ -57,6 +57,7 @@ public class CleaningManager : MonoBehaviour
     private bool _allCleanFired;
     private bool _wasPressingLastFrame;
     private bool _diagnosticFired;
+    private bool _hoverDiagnosticFired;
 
     private const float SFX_COOLDOWN = 0.15f;
 
@@ -312,6 +313,20 @@ public class CleaningManager : MonoBehaviour
         if (hit)
         {
             _hoveredSurface = hitInfo.collider.GetComponentInParent<CleanableSurface>();
+
+            // One-time hover diagnostic
+            if (!_hoverDiagnosticFired)
+            {
+                _hoverDiagnosticFired = true;
+                bool isNull = _hoveredSurface == null;
+                float cleanPct = isNull ? -1f : _hoveredSurface.CleanPercent;
+                bool fullyClean = !isNull && _hoveredSurface.IsFullyClean;
+                int totalDirt = isNull ? -1 : _hoveredSurface.TotalDirtPixels;
+                bool hasDirtAlpha = !isNull && _hoveredSurface.HasDirtAlpha;
+                Debug.Log($"[CleaningManager] Hover diagnostic — surface={(!isNull ? _hoveredSurface.name : "NULL")}, " +
+                          $"cleanPct={cleanPct:F3}, fullyClean={fullyClean}, totalDirt={totalDirt}, " +
+                          $"hasDirtAlpha={hasDirtAlpha}, sponge={(_spongeVisual != null ? "OK" : "NULL")}");
+            }
 
             // Skip already-clean stains — no sponge, no wipe
             if (_hoveredSurface != null && _hoveredSurface.IsFullyClean)
