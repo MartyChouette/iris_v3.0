@@ -1471,16 +1471,7 @@ public static class ApartmentSceneBuilder
             new Vector3(0f, 0f, torsoD / 2f + backpackS / 2f - 0.002f),
             new Vector3(backpackS, backpackS * 1.2f, backpackS * 0.6f), grey, litShader);
 
-        // Components on root
-        var gunplaPO = root.AddComponent<PlaceableObject>();
-        var gunplaPOSO = new SerializedObject(gunplaPO);
-        gunplaPOSO.FindProperty("_itemDescription").stringValue = "Hand-built Gunpla model.";
-        gunplaPOSO.ApplyModifiedPropertiesWithoutUndo();
-
-        root.AddComponent<GunplaFigure>();
-        root.AddComponent<InteractableHighlight>();
-
-        // Root needs a Rigidbody + Collider for ObjectGrabber pickup
+        // Rigidbody + Collider MUST come before PlaceableObject (RequireComponent)
         var rootRb = root.AddComponent<Rigidbody>();
         rootRb.mass = 0.5f;
         rootRb.isKinematic = true;
@@ -1489,6 +1480,15 @@ public static class ApartmentSceneBuilder
         rootCol.size = new Vector3(torsoW + armW * 2f + 0.02f,
             upperLegL + lowerLegL + torsoH + headS,
             torsoD + backpackS);
+
+        // Components on root
+        var gunplaPO = root.AddComponent<PlaceableObject>();
+        var gunplaPOSO = new SerializedObject(gunplaPO);
+        gunplaPOSO.FindProperty("_itemDescription").stringValue = "Hand-built Gunpla model.";
+        gunplaPOSO.ApplyModifiedPropertiesWithoutUndo();
+
+        root.AddComponent<GunplaFigure>();
+        root.AddComponent<InteractableHighlight>();
 
         // Set ALL children to placeableLayer so child colliders don't intercept rays on wrong layer
         foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
