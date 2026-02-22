@@ -20,7 +20,7 @@ public static class MainMenuSceneBuilder
 
     // ── Layout constants (matching L_Main_Menu) ──────────────────
     private static readonly Vector2 ButtonSize = new Vector2(400f, 100f);
-    private static readonly float ButtonX = 800f;
+    private static readonly float ButtonX = 775f;
 
     // Mode select buttons (right side, stacked — matching L_Main_Menu Y spacing)
     private static readonly float ModeBtn0Y = -140f;
@@ -46,8 +46,8 @@ public static class MainMenuSceneBuilder
     private static readonly Vector2 TitleSize = new Vector2(500f, 300f);
 
     // Game panel labels (right side, above buttons)
-    private static readonly Vector2 ModeNamePos = new Vector2(800f, 120f);
-    private static readonly Vector2 ModeDescPos = new Vector2(800f, 50f);
+    private static readonly Vector2 ModeNamePos = new Vector2(775f, 120f);
+    private static readonly Vector2 ModeDescPos = new Vector2(775f, 50f);
 
     // Nema head (matching L_Main_Menu)
     private static readonly Vector3 NemaHeadPos = new Vector3(-1.02f, 1.28f, 0f);
