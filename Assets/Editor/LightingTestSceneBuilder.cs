@@ -75,7 +75,7 @@ public static class LightingTestSceneBuilder
         BuildLightingRig();
 
         // ── 5. Furniture & Props ──
-        var sofaGO = BuildSofa(placeableLayer);
+        var sofaGO = BuildSofa(placeableLayer, surfacesLayer);
         var bookGO = BuildBook(placeableLayer);
         var testCubes = BuildTestCubes(placeableLayer);
 
@@ -307,7 +307,7 @@ public static class LightingTestSceneBuilder
     // Furniture & Props
     // ══════════════════════════════════════════════════════════════
 
-    private static GameObject BuildSofa(int placeableLayer)
+    private static GameObject BuildSofa(int placeableLayer, int surfacesLayer)
     {
         var sofaPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ArtAssets/sofa_resized_MAT.fbx");
         GameObject sofaGO;
@@ -331,12 +331,26 @@ public static class LightingTestSceneBuilder
         if (rb == null) rb = sofaGO.AddComponent<Rigidbody>();
         rb.isKinematic = true;
 
-        // Ensure collider
+        // Ensure collider — use fitted collider for FBX imports
         if (sofaGO.GetComponent<Collider>() == null && sofaGO.GetComponentInChildren<Collider>() == null)
-            sofaGO.AddComponent<BoxCollider>();
+            AddFittedBoxCollider(sofaGO);
 
         // InteractableHighlight
         sofaGO.AddComponent<InteractableHighlight>();
+
+        // PlacementSurface on top of sofa so items can be placed on it
+        var sofaCol = sofaGO.GetComponent<BoxCollider>();
+        if (sofaCol != null)
+        {
+            float topY = sofaGO.transform.position.y +
+                (sofaCol.center.y + sofaCol.size.y * 0.5f) * sofaGO.transform.lossyScale.y;
+            float sofaW = sofaCol.size.x * Mathf.Abs(sofaGO.transform.lossyScale.x);
+            float sofaD = sofaCol.size.z * Mathf.Abs(sofaGO.transform.lossyScale.z);
+            BuildSurface("SofaSurface", null,
+                new Vector3(sofaGO.transform.position.x, topY + 0.01f, sofaGO.transform.position.z),
+                new Bounds(Vector3.zero, new Vector3(sofaW - 0.1f, 0.1f, sofaD - 0.1f)),
+                PlacementSurface.SurfaceAxis.Up, surfacesLayer);
+        }
 
         Debug.Log("[LightingTestSceneBuilder] Sofa built.");
         return sofaGO;
@@ -367,9 +381,9 @@ public static class LightingTestSceneBuilder
         if (rb == null) rb = bookGO.AddComponent<Rigidbody>();
         rb.isKinematic = true;
 
-        // Collider
+        // Collider — use fitted collider for FBX imports (default 1x1x1 on root without MeshFilter)
         if (bookGO.GetComponent<Collider>() == null && bookGO.GetComponentInChildren<Collider>() == null)
-            bookGO.AddComponent<BoxCollider>();
+            AddFittedBoxCollider(bookGO);
 
         // PlaceableObject
         var placeable = bookGO.AddComponent<PlaceableObject>();
@@ -783,6 +797,31 @@ public static class LightingTestSceneBuilder
     // ══════════════════════════════════════════════════════════════
     // Shared Helpers
     // ══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Add a BoxCollider fitted to actual renderer bounds.
+    /// AddComponent&lt;BoxCollider&gt;() on a parent without MeshFilter gives a default 1x1x1 box —
+    /// this method computes bounds from child renderers and fits the collider properly.
+    /// </summary>
+    private static BoxCollider AddFittedBoxCollider(GameObject go)
+    {
+        var bc = go.AddComponent<BoxCollider>();
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return bc;
+
+        var bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
+
+        // Convert world-space bounds to local space
+        bc.center = go.transform.InverseTransformPoint(bounds.center);
+        var scale = go.transform.lossyScale;
+        bc.size = new Vector3(
+            bounds.size.x / Mathf.Max(Mathf.Abs(scale.x), 0.001f),
+            bounds.size.y / Mathf.Max(Mathf.Abs(scale.y), 0.001f),
+            bounds.size.z / Mathf.Max(Mathf.Abs(scale.z), 0.001f));
+        return bc;
+    }
 
     private static GameObject CreateBox(string name, Transform parent,
         Vector3 position, Vector3 scale, Color color, bool isStatic)
