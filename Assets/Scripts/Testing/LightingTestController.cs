@@ -51,6 +51,7 @@ public class LightingTestController : MonoBehaviour
     private int _activeCameraIndex;
     private bool _hudVisible = true;
     private bool _manualTimeMode;
+    private bool _manualNatureMode;
 
     // Shader property IDs
     private static readonly int TimeOfDayId = Shader.PropertyToID("_TimeOfDay");
@@ -264,10 +265,10 @@ public class LightingTestController : MonoBehaviour
         MakeLabel(content, "── Nature Params ──", 11, FontStyles.Bold, ref y);
 
         _cloudDensitySlider = MakeSliderRow(content, "CloudDensity", 0f, 1f, 0.45f, ref y);
-        _cloudSpeedSlider = MakeSliderRow(content, "CloudSpeed", 0f, 2f, 0.5f, ref y);
+        _cloudSpeedSlider = MakeSliderRow(content, "CloudSpeed", 0f, 0.1f, 0.015f, ref y);
         _horizonFogSlider = MakeSliderRow(content, "HorizonFog", 0f, 1f, 0.35f, ref y);
-        _sunSizeSlider = MakeSliderRow(content, "SunSize", 0f, 1f, 0.15f, ref y);
-        _starDensitySlider = MakeSliderRow(content, "StarDensity", 0f, 1f, 0.5f, ref y);
+        _sunSizeSlider = MakeSliderRow(content, "SunSize", 0.90f, 1f, 0.97f, ref y);
+        _starDensitySlider = MakeSliderRow(content, "StarDensity", 0.95f, 1f, 0.985f, ref y);
         _rainIntensitySlider = MakeSliderRow(content, "RainIntensity", 0f, 1f, 0f, ref y);
         _snowIntensitySlider = MakeSliderRow(content, "SnowIntensity", 0f, 1f, 0f, ref y);
         _leafIntensitySlider = MakeSliderRow(content, "LeafIntensity", 0f, 1f, 0f, ref y);
@@ -519,6 +520,14 @@ public class LightingTestController : MonoBehaviour
 
     private void ApplyNature()
     {
+        // Disable NatureBoxController so it stops overwriting weather-driven properties each frame.
+        // Weather buttons re-enable it via ForceWeather().
+        if (NatureBoxController.Instance != null && NatureBoxController.Instance.enabled)
+        {
+            NatureBoxController.Instance.enabled = false;
+            _manualNatureMode = true;
+        }
+
         var mat = GetNatureBoxMaterial();
         if (mat == null) return;
 
@@ -563,6 +572,13 @@ public class LightingTestController : MonoBehaviour
 
     private void ForceWeather(WeatherSystem.WeatherState state)
     {
+        // Re-enable NatureBoxController so WeatherSystem can drive it normally
+        if (_manualNatureMode && NatureBoxController.Instance != null)
+        {
+            NatureBoxController.Instance.enabled = true;
+            _manualNatureMode = false;
+        }
+
         if (WeatherSystem.Instance != null)
             WeatherSystem.Instance.ForceWeather(state);
     }
