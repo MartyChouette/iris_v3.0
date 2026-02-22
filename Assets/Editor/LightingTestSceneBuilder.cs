@@ -19,27 +19,27 @@ public static class LightingTestSceneBuilder
     private const string DrawersLayerName = "Drawers";
 
     // ── Room dimensions ──────────────────────────────────────────
-    private const float RoomW = 10f;
-    private const float RoomH = 4f;
-    private const float RoomD = 10f;
+    private const float RoomW = 20f;
+    private const float RoomH = 5f;
+    private const float RoomD = 20f;
     private const float WallThick = 0.15f;
 
     // ── Window config (3 windows in +Z wall) ─────────────────────
     private const float WindowY = 1.5f;
-    private const float WindowW = 1.6f;
-    private const float WindowH = 1.8f;
-    private const float WindowSpacing = 3.0f;
+    private const float WindowW = 2.4f;
+    private const float WindowH = 2.2f;
+    private const float WindowSpacing = 5.0f;
 
     // ── Furniture positions ──────────────────────────────────────
-    private static readonly Vector3 SofaPos = new Vector3(-2f, 0f, 3f);
-    private static readonly Vector3 BedPos = new Vector3(3f, 0.25f, 3f);
-    private static readonly Vector3 BedSize = new Vector3(2.5f, 0.5f, 2f);
-    private static readonly Vector3 BookPos = new Vector3(3f, 0.55f, 3f);
-    private static readonly Vector3 DividerPos = new Vector3(0f, 1.5f, 0f);
-    private static readonly Vector3 DividerSize = new Vector3(5f, 3f, 0.2f);
+    private static readonly Vector3 SofaPos = new Vector3(-4f, 0f, 5f);
+    private static readonly Vector3 BedPos = new Vector3(5f, 0.25f, 5f);
+    private static readonly Vector3 BedSize = new Vector3(3f, 0.5f, 2.5f);
+    private static readonly Vector3 BookPos = new Vector3(5f, 0.55f, 5f);
+    private static readonly Vector3 DividerPos = new Vector3(0f, 2f, 0f);
+    private static readonly Vector3 DividerSize = new Vector3(6f, 4f, 0.2f);
 
     // ── Cubby config ─────────────────────────────────────────────
-    private static readonly Vector3 CubbyPos = new Vector3(-4f, 0.4f, -4f);
+    private static readonly Vector3 CubbyPos = new Vector3(-7f, 0.4f, -7f);
     private static readonly Vector3 CubbySize = new Vector3(1.2f, 0.8f, 0.6f);
     private const float CubbyDoorThick = 0.05f;
     private const float CubbySlideDistance = 0.6f;
@@ -399,15 +399,15 @@ public static class LightingTestSceneBuilder
     {
         var cubes = new GameObject[3];
         Color[] colors = {
-            new Color(0.8f, 0.25f, 0.2f),  // red
-            new Color(0.2f, 0.7f, 0.3f),   // green
-            new Color(0.2f, 0.35f, 0.85f)  // blue
+            new Color(0.95f, 0.15f, 0.1f),  // vivid red
+            new Color(0.1f, 0.85f, 0.2f),   // vivid green
+            new Color(0.1f, 0.25f, 0.95f)   // vivid blue
         };
         string[] names = { "TestCube_Red", "TestCube_Green", "TestCube_Blue" };
         Vector3[] positions = {
-            new Vector3(-1f, 0.2f, -2f),
-            new Vector3(0f, 0.2f, -2f),
-            new Vector3(1f, 0.2f, -2f)
+            new Vector3(-3f, 0.25f, -4f),
+            new Vector3(0f, 0.25f, -4f),
+            new Vector3(3f, 0.25f, -4f)
         };
 
         for (int i = 0; i < 3; i++)
@@ -441,10 +441,10 @@ public static class LightingTestSceneBuilder
 
     private static void BuildPlacementSurfaces(Transform roomParent, int surfacesLayer)
     {
-        // Floor surface
+        // Floor surface (covers the whole room)
         BuildSurface("FloorSurface", null,
             new Vector3(0f, WallThick * 0.5f + 0.01f, 0f),
-            new Bounds(Vector3.zero, new Vector3(RoomW - 0.5f, 0.1f, RoomD - 0.5f)),
+            new Bounds(Vector3.zero, new Vector3(RoomW - 1f, 0.1f, RoomD - 1f)),
             PlacementSurface.SurfaceAxis.Up, surfacesLayer);
 
         // Bed top surface
@@ -584,40 +584,40 @@ public static class LightingTestSceneBuilder
         var cameras = new CinemachineCamera[8];
         var cameraParent = new GameObject("Cameras");
 
-        // Room spans x:[-5,5] y:[0,4] z:[-5,5]. All perspective cams inside room.
+        // Room spans x:[-10,10] y:[0,5] z:[-10,10]. Perspective cams inside room.
         // 4 Perspective cameras
         cameras[0] = BuildCinemachineCamera("Cam1_FrontOverview", cameraParent.transform,
-            new Vector3(0f, 2.5f, -4f), Quaternion.LookRotation(new Vector3(0f, -0.15f, 1f)),
+            new Vector3(0f, 3f, -8f), Quaternion.LookRotation(new Vector3(0f, -0.15f, 1f)),
             60f, false, 20);
 
         cameras[1] = BuildCinemachineCamera("Cam2_WindowBacklight", cameraParent.transform,
-            new Vector3(-3.5f, 2f, 0f), Quaternion.LookRotation(new Vector3(1f, -0.1f, 0.5f)),
+            new Vector3(-7f, 2.5f, 2f), Quaternion.LookRotation(new Vector3(1f, -0.1f, 0.4f)),
             55f, false, 0);
 
         cameras[2] = BuildCinemachineCamera("Cam3_CloseInterior", cameraParent.transform,
-            new Vector3(2f, 1.5f, 1.5f), Quaternion.LookRotation(new Vector3(0.3f, -0.2f, 0.5f)),
+            new Vector3(3f, 1.5f, 3f), Quaternion.LookRotation(new Vector3(0.5f, -0.2f, 0.5f)),
             45f, false, 0);
 
         cameras[3] = BuildCinemachineCamera("Cam4_HighAngle", cameraParent.transform,
-            new Vector3(0f, 3.8f, 0f), Quaternion.LookRotation(new Vector3(0f, -1f, 0.15f)),
+            new Vector3(0f, 4.5f, 0f), Quaternion.LookRotation(new Vector3(0.05f, -1f, 0.15f)),
             70f, false, 0);
 
-        // 4 Orthographic cameras (outside room — elevation/plan views looking inward)
+        // 4 Orthographic cameras (outside room — elevation/plan views)
         cameras[4] = BuildCinemachineCamera("Cam5_OrthoFront", cameraParent.transform,
-            new Vector3(0f, 2f, -8f), Quaternion.LookRotation(Vector3.forward),
-            6f, true, 0);
+            new Vector3(0f, 2.5f, -15f), Quaternion.LookRotation(Vector3.forward),
+            10f, true, 0);
 
         cameras[5] = BuildCinemachineCamera("Cam6_OrthoSide", cameraParent.transform,
-            new Vector3(-8f, 2f, 0f), Quaternion.LookRotation(Vector3.right),
-            6f, true, 0);
+            new Vector3(-15f, 2.5f, 0f), Quaternion.LookRotation(Vector3.right),
+            10f, true, 0);
 
         cameras[6] = BuildCinemachineCamera("Cam7_OrthoTop", cameraParent.transform,
-            new Vector3(0f, 10f, 0f), Quaternion.LookRotation(Vector3.down),
-            8f, true, 0);
+            new Vector3(0f, 15f, 0f), Quaternion.LookRotation(Vector3.down),
+            12f, true, 0);
 
         cameras[7] = BuildCinemachineCamera("Cam8_OrthoClose", cameraParent.transform,
-            new Vector3(2f, 1.5f, -2f), Quaternion.LookRotation(Vector3.forward),
-            2.5f, true, 0);
+            new Vector3(4f, 1.5f, 2f), Quaternion.LookRotation(Vector3.forward),
+            3f, true, 0);
 
         Debug.Log("[LightingTestSceneBuilder] 8 cameras built.");
         return cameras;
@@ -744,6 +744,38 @@ public static class LightingTestSceneBuilder
             new Vector2(10f, yOffset), 12, FontStyles.Normal);
         controllerSO.FindProperty("_cameraLabel").objectReferenceValue = camLabel;
         yOffset -= lineHeight;
+
+        // ── Camera switch buttons (two rows of 4) ──
+        string[] camNames = { "1", "2", "3", "4", "5", "6", "7", "8" };
+        string[] camMethods = {
+            "SetCamera1", "SetCamera2", "SetCamera3", "SetCamera4",
+            "SetCamera5", "SetCamera6", "SetCamera7", "SetCamera8"
+        };
+        for (int row = 0; row < 2; row++)
+        {
+            for (int col = 0; col < 4; col++)
+            {
+                int idx = row * 4 + col;
+                var camBtn = CreateButton(panelGO.transform, $"Btn_Cam{camNames[idx]}",
+                    $"Cam {camNames[idx]}",
+                    new Vector2(10f + col * 72f, yOffset),
+                    new Vector2(68f, buttonHeight));
+
+                var button = camBtn.GetComponent<Button>();
+                var camBtnSO = new SerializedObject(button);
+                var camCallsProp = camBtnSO.FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
+                camCallsProp.arraySize = 1;
+                var camCallProp = camCallsProp.GetArrayElementAtIndex(0);
+                camCallProp.FindPropertyRelative("m_Target").objectReferenceValue = controller;
+                camCallProp.FindPropertyRelative("m_MethodName").stringValue = camMethods[idx];
+                camCallProp.FindPropertyRelative("m_Mode").enumValueIndex = 1; // Void
+                camCallProp.FindPropertyRelative("m_CallState").enumValueIndex = 2; // RuntimeOnly
+                camBtnSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+            yOffset -= buttonHeight + 4f;
+        }
+
+        yOffset -= 2f;
 
         // ── PSX label ──
         var psxLabel = CreateLabel(panelGO.transform, "PSXLabel", "PSX: OFF (F4)",

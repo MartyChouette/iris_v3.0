@@ -42,6 +42,11 @@ public class PSXRenderController : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float _ditherIntensity = 0.5f;
 
+    [Header("Shadow Dithering")]
+    [Tooltip("PSX-style dithered shadows. 0 = smooth shadows, 1 = fully stippled.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _shadowDitherIntensity = 1f;
+
     // ──────────────────────────────────────────────────────────────
     // Public accessors
     // ──────────────────────────────────────────────────────────────
@@ -75,11 +80,18 @@ public class PSXRenderController : MonoBehaviour
         set { _ditherIntensity = Mathf.Clamp01(value); ApplyFeatureSettings(); }
     }
 
+    public float ShadowDitherIntensity
+    {
+        get => _shadowDitherIntensity;
+        set { _shadowDitherIntensity = Mathf.Clamp01(value); ApplyGlobals(); }
+    }
+
     // ──────────────────────────────────────────────────────────────
     // Shader property IDs
     // ──────────────────────────────────────────────────────────────
     private static readonly int SnapResID = Shader.PropertyToID("_VertexSnapResolution");
     private static readonly int AffineID = Shader.PropertyToID("_AffineIntensity");
+    private static readonly int ShadowDitherID = Shader.PropertyToID("_ShadowDitherIntensity");
 
     // ──────────────────────────────────────────────────────────────
     // Input
@@ -231,6 +243,7 @@ public class PSXRenderController : MonoBehaviour
     {
         Shader.SetGlobalVector(SnapResID, new Vector4(_vertexSnapResolution.x, _vertexSnapResolution.y, 0, 0));
         Shader.SetGlobalFloat(AffineID, _affineIntensity);
+        Shader.SetGlobalFloat(ShadowDitherID, _shadowDitherIntensity);
     }
 
     private void ResetGlobals()
@@ -238,6 +251,7 @@ public class PSXRenderController : MonoBehaviour
         // High snap resolution = effectively no snapping; affine 0 = perspective-correct
         Shader.SetGlobalVector(SnapResID, new Vector4(4096, 4096, 0, 0));
         Shader.SetGlobalFloat(AffineID, 0f);
+        Shader.SetGlobalFloat(ShadowDitherID, 0f);
     }
 
     private void ApplyFeatureSettings()

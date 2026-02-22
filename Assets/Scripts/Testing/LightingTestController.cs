@@ -202,6 +202,16 @@ public class LightingTestController : MonoBehaviour
         Debug.Log($"[LightingTestController] Camera {index + 1}: {GetCameraName(index)}");
     }
 
+    // Public methods for UI button wiring (one per camera)
+    public void SetCamera1() => SetActiveCamera(0);
+    public void SetCamera2() => SetActiveCamera(1);
+    public void SetCamera3() => SetActiveCamera(2);
+    public void SetCamera4() => SetActiveCamera(3);
+    public void SetCamera5() => SetActiveCamera(4);
+    public void SetCamera6() => SetActiveCamera(5);
+    public void SetCamera7() => SetActiveCamera(6);
+    public void SetCamera8() => SetActiveCamera(7);
+
     private string GetCameraName(int index)
     {
         if (_cameras == null || index < 0 || index >= _cameras.Length || _cameras[index] == null)
