@@ -32,6 +32,7 @@ Shader "Iris/Fullscreen/PSXPost"
             CBUFFER_START(UnityPerMaterial)
                 float _ColorDepth;
                 half  _DitherIntensity;
+                float2 _DitherResolution; // low-res pixel grid size for dither alignment
             CBUFFER_END
 
             // ── Bayer 4×4 ordered dither matrix (normalized to 0–1) ──
@@ -50,8 +51,10 @@ Shader "Iris/Fullscreen/PSXPost"
                 float levels = max(_ColorDepth, 2.0);
 
                 // ── Ordered dithering ──
-                // Screen-space pixel coords mod 4 index into Bayer matrix
-                float2 pixelPos = input.texcoord * _ScreenParams.xy;
+                // Use low-res pixel grid so dither pattern stays constant
+                // regardless of resolution divisor
+                float2 ditherRes = _DitherResolution.x > 0 ? _DitherResolution : _ScreenParams.xy;
+                float2 pixelPos = input.texcoord * ditherRes;
                 int2 ditherCoord = int2(fmod(pixelPos, 4.0));
                 int idx = ditherCoord.y * 4 + ditherCoord.x;
                 float threshold = BayerMatrix[idx] - 0.5; // center around 0

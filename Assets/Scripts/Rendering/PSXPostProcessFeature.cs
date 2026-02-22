@@ -75,6 +75,7 @@ public class PSXPostProcessFeature : ScriptableRendererFeature
 
         private static readonly int ColorDepthID = Shader.PropertyToID("_ColorDepth");
         private static readonly int DitherIntensityID = Shader.PropertyToID("_DitherIntensity");
+        private static readonly int DitherResolutionID = Shader.PropertyToID("_DitherResolution");
 
         public PSXPostProcessPass(Material material, Settings settings)
         {
@@ -106,6 +107,9 @@ public class PSXPostProcessFeature : ScriptableRendererFeature
             _material.SetFloat(DitherIntensityID, _settings.ditherIntensity);
 
             int div = Mathf.Max(_settings.resolutionDivisor, 1);
+            int lowW = Mathf.Max(1, sourceDesc.width / div);
+            int lowH = Mathf.Max(1, sourceDesc.height / div);
+            _material.SetVector(DitherResolutionID, new Vector4(lowW, lowH, 0f, 0f));
 
             // ── Step 1: Downscale camera → low-res (plain copy) ──
             var lowResDesc = new TextureDesc(
