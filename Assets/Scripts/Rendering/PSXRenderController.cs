@@ -94,6 +94,9 @@ public class PSXRenderController : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
     // Runtime shader swap (URP Lit → PSXLit on all scene renderers)
     // ──────────────────────────────────────────────────────────────
+    [Header("Shader Reference")]
+    [Tooltip("Drag PSXLit shader here. Shader.Find does not work in builds.")]
+    [SerializeField] private Shader _psxLitShaderRef;
     private Shader _psxLitShader;
     private readonly Dictionary<Material, Shader> _originalShaders = new Dictionary<Material, Shader>();
     private static readonly HashSet<string> s_swappableShaders = new HashSet<string>
@@ -117,7 +120,7 @@ public class PSXRenderController : MonoBehaviour
         Instance = this;
 
         _toggleAction = new InputAction("PSXToggle", InputActionType.Button, "<Keyboard>/f2");
-        _psxLitShader = Shader.Find("Iris/PSXLit");
+        _psxLitShader = _psxLitShaderRef != null ? _psxLitShaderRef : Shader.Find("Iris/PSXLit");
 
         FindFeature();
     }

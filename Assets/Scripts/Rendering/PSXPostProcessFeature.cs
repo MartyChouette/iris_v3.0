@@ -28,15 +28,20 @@ public class PSXPostProcessFeature : ScriptableRendererFeature
 
     public Settings settings = new Settings();
 
+    [Header("Shader Reference")]
+    [Tooltip("Drag PSXPost shader here. Shader.Find does not work in builds.")]
+    [SerializeField] private Shader _postShader;
+
     private PSXPostProcessPass _pass;
     private Material _material;
 
     public override void Create()
     {
-        var shader = Shader.Find("Iris/Fullscreen/PSXPost");
+        var shader = _postShader != null ? _postShader : Shader.Find("Iris/Fullscreen/PSXPost");
         if (shader == null)
         {
-            Debug.LogWarning("[PSXPostProcessFeature] Shader 'Iris/Fullscreen/PSXPost' not found.");
+            Debug.LogWarning("[PSXPostProcessFeature] Shader 'Iris/Fullscreen/PSXPost' not found. " +
+                             "Assign it in the Renderer asset's feature settings.");
             return;
         }
 
