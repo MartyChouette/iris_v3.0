@@ -361,6 +361,7 @@ public class CleaningManager : MonoBehaviour
         go.transform.position = position;
 
         var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
         var main = ps.main;
         main.duration = 0.5f;
@@ -397,6 +398,8 @@ public class CleaningManager : MonoBehaviour
             mat.color = new Color(1f, 0.95f, 0.8f, 1f);
             renderer.material = mat;
         }
+
+        ps.Play();
     }
 
     private IEnumerator DeactivateAfterDelay(GameObject stainGO, float delay)

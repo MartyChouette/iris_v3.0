@@ -32,16 +32,16 @@ TagManager:
   - Plants
   - Drawers
   - Perfumes
-  - Trinkets
+  -
   - CoffeeTableBooks
-  - NewspaperBaker
+  -
   - Phone
   - Fridge
   - Glass
   - Surfaces
   - VinylStack
   - Turntable
-  - FridgeHandle
+  -
   m_SortingLayers:
   - name: Default
     uniqueID: 0
