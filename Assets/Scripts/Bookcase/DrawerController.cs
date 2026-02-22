@@ -12,8 +12,19 @@ public class DrawerController : MonoBehaviour
 {
     public enum State { Closed, Opening, Open, Closing }
 
+    /// <summary>
+    /// Which local axis the drawer/door slides along.
+    /// Forward = local -Z (pull out), Right = local X, Up = local Y.
+    /// Positive slideDistance moves in the negative axis direction (pull).
+    /// Negative slideDistance moves in the positive axis direction (push/slide).
+    /// </summary>
+    public enum SlideAxis { Forward, Right, Up }
+
     [Header("Settings")]
-    [Tooltip("Distance the drawer slides forward (local -Z).")]
+    [Tooltip("Which local axis the drawer slides along.")]
+    [SerializeField] private SlideAxis _slideAxis = SlideAxis.Forward;
+
+    [Tooltip("Distance the drawer slides. Positive = pull (negative axis dir), Negative = push (positive axis dir).")]
     [SerializeField] private float slideDistance = 0.3f;
 
     [Tooltip("Time to open/close in seconds.")]
@@ -102,7 +113,13 @@ public class DrawerController : MonoBehaviour
         if (_instanceMaterial != null)
             _instanceMaterial.color = _baseColor;
 
-        Vector3 openPosition = _closedPosition - transform.parent.InverseTransformDirection(transform.forward) * slideDistance;
+        Vector3 slideDir = _slideAxis switch
+        {
+            SlideAxis.Right => transform.right,
+            SlideAxis.Up    => transform.up,
+            _               => transform.forward
+        };
+        Vector3 openPosition = _closedPosition - transform.parent.InverseTransformDirection(slideDir) * slideDistance;
         Vector3 startPos = transform.localPosition;
         Vector3 endPos = opening ? openPosition : _closedPosition;
         float elapsed = 0f;

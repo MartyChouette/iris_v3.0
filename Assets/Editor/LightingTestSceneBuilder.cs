@@ -613,10 +613,11 @@ public static class LightingTestSceneBuilder
         contentsGO.transform.SetParent(cubbyParent.transform);
         contentsGO.transform.position = CubbyPos;
 
-        // DrawerController on door
+        // DrawerController on door — slide Right axis, negative distance = slides rightward (+X)
         var drawer = doorGO.AddComponent<DrawerController>();
         var drawerSO = new SerializedObject(drawer);
-        drawerSO.FindProperty("slideDistance").floatValue = CubbySlideDistance;
+        drawerSO.FindProperty("_slideAxis").enumValueIndex = (int)DrawerController.SlideAxis.Right;
+        drawerSO.FindProperty("slideDistance").floatValue = -CubbySlideDistance;
         drawerSO.FindProperty("slideDuration").floatValue = 0.4f;
         drawerSO.FindProperty("contentsRoot").objectReferenceValue = contentsGO;
         drawerSO.FindProperty("_maxCapacity").intValue = 3;
