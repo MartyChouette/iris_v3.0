@@ -4247,7 +4247,10 @@ public static class ApartmentSceneBuilder
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 200;
-        go.AddComponent<CanvasScaler>();
+        var debugScaler = go.AddComponent<CanvasScaler>();
+        debugScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        debugScaler.referenceResolution = new Vector2(1920, 1080);
+        debugScaler.matchWidthOrHeight = 0.5f;
         go.AddComponent<GraphicRaycaster>();
 
         // Semi-transparent background panel (left-aligned)
@@ -4255,7 +4258,7 @@ public static class ApartmentSceneBuilder
         panelGO.transform.SetParent(go.transform, false);
         var panelRT = panelGO.AddComponent<RectTransform>();
         panelRT.anchorMin = new Vector2(0f, 0f);
-        panelRT.anchorMax = new Vector2(0.45f, 1f);
+        panelRT.anchorMax = new Vector2(0.5f, 1f);
         panelRT.offsetMin = Vector2.zero;
         panelRT.offsetMax = Vector2.zero;
         panelRT.localScale = Vector3.one;
@@ -4263,17 +4266,17 @@ public static class ApartmentSceneBuilder
         panelImg.color = new Color(0f, 0f, 0f, 0.7f);
         panelImg.raycastTarget = false;
 
-        // Debug text (monospace, left-aligned)
+        // Debug text (left-aligned, large readable font)
         var textGO = new GameObject("DebugText");
         textGO.transform.SetParent(panelGO.transform, false);
         var textRT = textGO.AddComponent<RectTransform>();
         textRT.anchorMin = Vector2.zero;
         textRT.anchorMax = Vector2.one;
-        textRT.offsetMin = new Vector2(8f, 8f);
-        textRT.offsetMax = new Vector2(-8f, -8f);
+        textRT.offsetMin = new Vector2(12f, 12f);
+        textRT.offsetMax = new Vector2(-12f, -12f);
         textRT.localScale = Vector3.one;
         var debugTMP = textGO.AddComponent<TextMeshProUGUI>();
-        debugTMP.fontSize = 18f;
+        debugTMP.fontSize = 36f;
         debugTMP.alignment = TextAlignmentOptions.TopLeft;
         debugTMP.color = new Color(0.8f, 1f, 0.8f, 1f);
         debugTMP.richText = true;
