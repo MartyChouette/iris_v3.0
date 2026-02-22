@@ -23,6 +23,7 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | Window > Iris > Build Dating Loop Scene | `Assets/Editor/DatingLoopSceneBuilder.cs` | Generates standalone dating loop test scene with full gameplay loop |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
 | Window > Iris > Build Settings Panel | `Assets/Editor/SettingsPanelBuilder.cs` | Generates settings panel prefab with all tabs/controls |
+| Window > Iris > Build Lighting Test Scene | `Assets/Editor/LightingTestSceneBuilder.cs` | Generates lighting/shader test scene with 8 cameras, debug HUD, PSX controls, weather/nature sliders |
 
 ## Code Conventions
 
@@ -77,6 +78,8 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | `Scripts/Bookcase/` | BookInteractionManager, BookVolume, PerfumeBottle, CoffeeTableBook, DrawerController, ItemInspector |
 | `Scripts/Dating/` | Dating loop: DateSessionManager, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, NewspaperManager, DayManager |
 | `Scripts/Mechanics/` | 10 prototype minigames: DrinkMaking, Cleaning, Watering, MirrorMakeup, RecordPlayer, etc. |
+| `Scripts/Testing/` | Test scene controllers: LightingTestController, ObjectGrabberAutoEnabler |
+| `Scripts/Rendering/` | PSX rendering: PSXRenderController, PSXPostProcessFeature |
 | `Scripts/Prototype_LivingRoom_Scripts/` | Legacy living room prototype (not active) |
 
 ## Apartment Hub Architecture
