@@ -67,7 +67,7 @@ public class WeatherSystem : MonoBehaviour
         // F3 debug key
         _debugCycleAction = new InputAction("DebugCycleWeather",
             UnityEngine.InputSystem.InputActionType.Button,
-            "<Keyboard>/f3");
+            "<Keyboard>/f2");
     }
 
     private void OnEnable()

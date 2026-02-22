@@ -31,6 +31,7 @@ public static class SettingsPanelBuilder
         var scaler = canvasGO.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
@@ -465,18 +466,18 @@ public static class SettingsPanelBuilder
         captionTmp.color = LabelColor;
         captionTmp.alignment = TextAlignmentOptions.MidlineLeft;
 
-        // Template (minimal — TMP_Dropdown needs one)
+        // Template
         var templateGO = CreatePanel(ddGO.transform, "Template", new Color(0.15f, 0.15f, 0.2f, 1f));
         var templateRT = templateGO.GetComponent<RectTransform>();
         templateRT.anchorMin = new Vector2(0, 0);
         templateRT.anchorMax = new Vector2(1, 0);
         templateRT.pivot = new Vector2(0.5f, 1);
         templateRT.anchoredPosition = Vector2.zero;
-        templateRT.sizeDelta = new Vector2(0, 120);
+        templateRT.sizeDelta = new Vector2(0, 250);
 
         var viewport = CreatePanel(templateGO.transform, "Viewport", new Color(0, 0, 0, 0));
         Stretch(viewport);
-        viewport.AddComponent<Mask>().showMaskGraphic = false;
+        viewport.AddComponent<RectMask2D>();
 
         var content = new GameObject("Content");
         content.transform.SetParent(viewport.transform, false);
@@ -484,26 +485,53 @@ public static class SettingsPanelBuilder
         contentRT2.anchorMin = new Vector2(0, 1);
         contentRT2.anchorMax = new Vector2(1, 1);
         contentRT2.pivot = new Vector2(0.5f, 1);
-        contentRT2.sizeDelta = new Vector2(0, 28);
+        contentRT2.sizeDelta = new Vector2(0, 0);
+
+        // Auto-size content to fit all items
+        var contentVLG = content.AddComponent<VerticalLayoutGroup>();
+        contentVLG.childForceExpandWidth = true;
+        contentVLG.childForceExpandHeight = false;
+        contentVLG.childControlWidth = true;
+        contentVLG.childControlHeight = true;
+
+        var contentFitter = content.AddComponent<ContentSizeFitter>();
+        contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         // Item template
         var itemGO = new GameObject("Item");
         itemGO.transform.SetParent(content.transform, false);
         var itemRT = itemGO.AddComponent<RectTransform>();
-        itemRT.anchorMin = new Vector2(0, 0.5f);
-        itemRT.anchorMax = new Vector2(1, 0.5f);
-        itemRT.sizeDelta = new Vector2(0, 28);
+        itemRT.anchorMin = new Vector2(0, 1);
+        itemRT.anchorMax = new Vector2(1, 1);
+        itemRT.pivot = new Vector2(0.5f, 1);
+        itemRT.sizeDelta = new Vector2(0, 32);
         var itemToggle = itemGO.AddComponent<Toggle>();
+
+        var itemBG = itemGO.AddComponent<Image>();
+        itemBG.color = new Color(0.15f, 0.15f, 0.2f, 1f);
+        itemToggle.targetGraphic = itemBG;
+
+        var itemLE = itemGO.AddComponent<LayoutElement>();
+        itemLE.preferredHeight = 32;
 
         var itemLabelGO = new GameObject("Item Label");
         itemLabelGO.transform.SetParent(itemGO.transform, false);
-        Stretch(itemLabelGO);
+        var itemLabelRT = itemLabelGO.AddComponent<RectTransform>();
+        itemLabelRT.anchorMin = Vector2.zero;
+        itemLabelRT.anchorMax = Vector2.one;
+        itemLabelRT.offsetMin = new Vector2(10, 2);
+        itemLabelRT.offsetMax = new Vector2(-10, -2);
         var itemTmp = itemLabelGO.AddComponent<TextMeshProUGUI>();
         itemTmp.fontSize = 16;
         itemTmp.color = LabelColor;
         itemTmp.alignment = TextAlignmentOptions.MidlineLeft;
 
-        templateGO.AddComponent<ScrollRect>();
+        var scrollRect = templateGO.AddComponent<ScrollRect>();
+        scrollRect.viewport = viewport.GetComponent<RectTransform>();
+        scrollRect.content = contentRT2;
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
         templateGO.SetActive(false);
 
         var dropdown = ddGO.AddComponent<TMP_Dropdown>();

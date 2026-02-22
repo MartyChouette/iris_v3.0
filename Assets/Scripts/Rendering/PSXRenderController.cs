@@ -119,7 +119,9 @@ public class PSXRenderController : MonoBehaviour
         }
         Instance = this;
 
-        _toggleAction = new InputAction("PSXToggle", InputActionType.Button, "<Keyboard>/f2");
+        _toggleAction = new InputAction("PSXToggle", InputActionType.Button, "<Keyboard>/f4");
+        _toggleAction.performed += OnTogglePerformed;
+        _toggleAction.Enable();
         _psxLitShader = _psxLitShaderRef != null ? _psxLitShaderRef : Shader.Find("Iris/PSXLit");
 
         FindFeature();
@@ -130,8 +132,6 @@ public class PSXRenderController : MonoBehaviour
 
     private void OnEnable()
     {
-        _toggleAction?.Enable();
-
         // Check if PSX should be disabled via accessibility settings
         if (!AccessibilitySettings.PSXEnabled)
         {
@@ -151,7 +151,6 @@ public class PSXRenderController : MonoBehaviour
 
     private void OnDisable()
     {
-        _toggleAction?.Disable();
         AccessibilitySettings.OnSettingsChanged -= OnAccessibilityChanged;
         RestoreOriginalShaders();
         ResetGlobals();
@@ -164,8 +163,21 @@ public class PSXRenderController : MonoBehaviour
             Instance = null;
 
         AccessibilitySettings.OnSettingsChanged -= OnAccessibilityChanged;
-        _toggleAction?.Dispose();
-        _toggleAction = null;
+
+        if (_toggleAction != null)
+        {
+            _toggleAction.performed -= OnTogglePerformed;
+            _toggleAction.Disable();
+            _toggleAction.Dispose();
+            _toggleAction = null;
+        }
+    }
+
+    private void OnTogglePerformed(InputAction.CallbackContext ctx)
+    {
+        if (!AccessibilitySettings.PSXEnabled) return;
+        enabled = !enabled;
+        Debug.Log($"[PSXRenderController] PSX effect {(enabled ? "ON" : "OFF")}");
     }
 
     private void OnAccessibilityChanged()
@@ -196,11 +208,7 @@ public class PSXRenderController : MonoBehaviour
 
     private void Update()
     {
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame())
-        {
-            enabled = !enabled;
-            Debug.Log($"[PSXRenderController] PSX effect {(enabled ? "ON" : "OFF")}");
-        }
+        // PSX toggle is handled via InputAction callback (OnTogglePerformed)
     }
 
     private void OnValidate()
