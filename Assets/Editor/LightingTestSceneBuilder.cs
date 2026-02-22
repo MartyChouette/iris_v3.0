@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Events;
 using Unity.Cinemachine;
 using TMPro;
 
@@ -726,165 +728,180 @@ public static class LightingTestSceneBuilder
 
         // Panel background
         var panelGO = CreateUIPanel(canvasGO.transform, "HUDPanel",
-            new Vector2(320f, 620f), new Vector2(170f, -20f),
+            new Vector2(320f, 900f), new Vector2(170f, -10f),
             new Color(0.05f, 0.05f, 0.08f, 0.85f));
 
-        float yOffset = -10f;
-        const float lineHeight = 22f;
-        const float sliderHeight = 28f;
-        const float buttonHeight = 26f;
+        float y = -8f;
+        const float LH = 18f;   // line height
+        const float SH = 24f;   // slider row height
+        const float BH = 24f;   // button height
 
         // ── Title ──
-        var titleLabel = CreateLabel(panelGO.transform, "Title", "Lighting Test HUD",
-            new Vector2(10f, yOffset), 16, FontStyles.Bold);
-        yOffset -= lineHeight + 4f;
+        CreateLabel(panelGO.transform, "Title", "Lighting Test HUD",
+            new Vector2(10f, y), 14, FontStyles.Bold);
+        y -= LH + 2f;
 
         // ── Camera label ──
-        var camLabel = CreateLabel(panelGO.transform, "CameraLabel", "Camera 1: FrontOverview (Perspective)",
-            new Vector2(10f, yOffset), 12, FontStyles.Normal);
+        var camLabel = CreateLabel(panelGO.transform, "CameraLabel", "Camera 1 (Perspective)",
+            new Vector2(10f, y), 11, FontStyles.Normal);
         controllerSO.FindProperty("_cameraLabel").objectReferenceValue = camLabel;
-        yOffset -= lineHeight;
+        y -= LH;
 
         // ── Camera switch buttons (two rows of 4) ──
-        string[] camNames = { "1", "2", "3", "4", "5", "6", "7", "8" };
-        string[] camMethods = {
-            "SetCamera1", "SetCamera2", "SetCamera3", "SetCamera4",
-            "SetCamera5", "SetCamera6", "SetCamera7", "SetCamera8"
+        // UnityEventTools.AddPersistentListener is the proven wiring pattern
+        System.Action<Button, UnityEngine.Events.UnityAction> wireBtn = (btn, action) =>
+        {
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, action);
+        };
+
+        var camActions = new UnityEngine.Events.UnityAction[]
+        {
+            controller.SetCamera1, controller.SetCamera2,
+            controller.SetCamera3, controller.SetCamera4,
+            controller.SetCamera5, controller.SetCamera6,
+            controller.SetCamera7, controller.SetCamera8
         };
         for (int row = 0; row < 2; row++)
         {
             for (int col = 0; col < 4; col++)
             {
                 int idx = row * 4 + col;
-                var camBtn = CreateButton(panelGO.transform, $"Btn_Cam{camNames[idx]}",
-                    $"Cam {camNames[idx]}",
-                    new Vector2(10f + col * 72f, yOffset),
-                    new Vector2(68f, buttonHeight));
-
-                var button = camBtn.GetComponent<Button>();
-                var camBtnSO = new SerializedObject(button);
-                var camCallsProp = camBtnSO.FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
-                camCallsProp.arraySize = 1;
-                var camCallProp = camCallsProp.GetArrayElementAtIndex(0);
-                camCallProp.FindPropertyRelative("m_Target").objectReferenceValue = controller;
-                camCallProp.FindPropertyRelative("m_MethodName").stringValue = camMethods[idx];
-                camCallProp.FindPropertyRelative("m_Mode").enumValueIndex = 1; // Void
-                camCallProp.FindPropertyRelative("m_CallState").enumValueIndex = 2; // RuntimeOnly
-                camBtnSO.ApplyModifiedPropertiesWithoutUndo();
+                var go = CreateButton(panelGO.transform, $"Btn_Cam{idx + 1}",
+                    $"Cam {idx + 1}",
+                    new Vector2(10f + col * 72f, y),
+                    new Vector2(68f, BH));
+                wireBtn(go.GetComponent<Button>(), camActions[idx]);
             }
-            yOffset -= buttonHeight + 4f;
+            y -= BH + 3f;
         }
+        y -= 2f;
 
-        yOffset -= 2f;
-
-        // ── PSX label ──
+        // ── PSX label + toggle button ──
         var psxLabel = CreateLabel(panelGO.transform, "PSXLabel", "PSX: OFF (F4)",
-            new Vector2(10f, yOffset), 12, FontStyles.Normal);
+            new Vector2(10f, y), 11, FontStyles.Normal);
         controllerSO.FindProperty("_psxLabel").objectReferenceValue = psxLabel;
-        yOffset -= lineHeight;
+        {
+            var psxBtn = CreateButton(panelGO.transform, "Btn_PSXToggle", "Toggle PSX",
+                new Vector2(200f, y), new Vector2(100f, BH));
+            wireBtn(psxBtn.GetComponent<Button>(),
+                new UnityEngine.Events.UnityAction(controller.TogglePSX));
+        }
+        y -= LH + 2f;
 
         // ── Grid label ──
         var gridLabel = CreateLabel(panelGO.transform, "GridLabel", "Grid: G toggle",
-            new Vector2(10f, yOffset), 12, FontStyles.Normal);
+            new Vector2(10f, y), 11, FontStyles.Normal);
         controllerSO.FindProperty("_gridLabel").objectReferenceValue = gridLabel;
-        yOffset -= lineHeight + 6f;
+        y -= LH + 4f;
 
-        // ── Separator ──
-        CreateLabel(panelGO.transform, "Sep1", "── Time & Weather ──",
-            new Vector2(10f, yOffset), 11, FontStyles.Bold);
-        yOffset -= lineHeight;
+        // ══════════════════════════════════════════════════════════
+        // PSX Settings
+        // ══════════════════════════════════════════════════════════
+        CreateLabel(panelGO.transform, "Sep_PSX", "── PSX Rendering ──",
+            new Vector2(10f, y), 11, FontStyles.Bold);
+        y -= LH;
+
+        string[] psxSliderNames = {
+            "Vertex Snap", "Affine Warp", "Res Divisor",
+            "Color Depth", "Dither", "Shadow Dither"
+        };
+        string[] psxSliderProps = {
+            "_vertexSnapSlider", "_affineSlider", "_resolutionDivisorSlider",
+            "_colorDepthSlider", "_ditherIntensitySlider", "_shadowDitherSlider"
+        };
+        for (int i = 0; i < psxSliderNames.Length; i++)
+        {
+            CreateLabel(panelGO.transform, $"PSX_{psxSliderNames[i]}", psxSliderNames[i],
+                new Vector2(10f, y), 10, FontStyles.Normal);
+            y -= 12f;
+            var slider = CreateSlider(panelGO.transform, $"PSXSlider_{i}",
+                new Vector2(10f, y), new Vector2(280f, 14f));
+            controllerSO.FindProperty(psxSliderProps[i]).objectReferenceValue = slider;
+            y -= SH;
+        }
+
+        y -= 2f;
+
+        // ══════════════════════════════════════════════════════════
+        // Time & Weather
+        // ══════════════════════════════════════════════════════════
+        CreateLabel(panelGO.transform, "Sep_TW", "── Time & Weather ──",
+            new Vector2(10f, y), 11, FontStyles.Bold);
+        y -= LH;
 
         // ── Time slider ──
         CreateLabel(panelGO.transform, "TimeLabel", "Time of Day",
-            new Vector2(10f, yOffset), 11, FontStyles.Normal);
-        yOffset -= 14f;
+            new Vector2(10f, y), 10, FontStyles.Normal);
+        y -= 12f;
         var timeSlider = CreateSlider(panelGO.transform, "TimeSlider",
-            new Vector2(10f, yOffset), new Vector2(280f, 16f));
+            new Vector2(10f, y), new Vector2(280f, 14f));
         controllerSO.FindProperty("_timeSlider").objectReferenceValue = timeSlider;
-        yOffset -= sliderHeight;
+        y -= SH;
 
         // ── Weather buttons ──
         CreateLabel(panelGO.transform, "WeatherLabel", "Weather",
-            new Vector2(10f, yOffset), 11, FontStyles.Normal);
-        yOffset -= 16f;
+            new Vector2(10f, y), 10, FontStyles.Normal);
+        y -= 14f;
 
-        string[] weatherNames = { "Clear", "Overcast", "Rainy", "Stormy", "Snowy", "Leaves" };
-        string[] weatherMethods = {
-            "ForceWeatherClear", "ForceWeatherOvercast", "ForceWeatherRainy",
-            "ForceWeatherStormy", "ForceWeatherSnowy", "ForceWeatherLeaves"
+        var weatherActions = new UnityEngine.Events.UnityAction[]
+        {
+            controller.ForceWeatherClear, controller.ForceWeatherOvercast,
+            controller.ForceWeatherRainy, controller.ForceWeatherStormy,
+            controller.ForceWeatherSnowy, controller.ForceWeatherLeaves
         };
-
-        // Two rows of 3 buttons
+        string[] weatherLabels = { "Clear", "Overcast", "Rainy", "Stormy", "Snowy", "Leaves" };
         for (int row = 0; row < 2; row++)
         {
             for (int col = 0; col < 3; col++)
             {
                 int idx = row * 3 + col;
-                var btn = CreateButton(panelGO.transform, $"Btn_{weatherNames[idx]}",
-                    weatherNames[idx],
-                    new Vector2(10f + col * 95f, yOffset),
-                    new Vector2(90f, buttonHeight));
-
-                // Wire button to controller method
-                var button = btn.GetComponent<Button>();
-                var targetMethod = weatherMethods[idx];
-                UnityEditor.Events.UnityEventTools.AddPersistentListener(
-                    button.onClick,
-                    new UnityEngine.Events.UnityAction(
-                        () => { } // placeholder — runtime wiring below
-                    ));
-                // Clear the placeholder and wire properly via SerializedObject
-                var btnSO = new SerializedObject(button);
-                var callsProp = btnSO.FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
-                callsProp.arraySize = 1;
-                var callProp = callsProp.GetArrayElementAtIndex(0);
-                callProp.FindPropertyRelative("m_Target").objectReferenceValue = controller;
-                callProp.FindPropertyRelative("m_MethodName").stringValue = targetMethod;
-                callProp.FindPropertyRelative("m_Mode").enumValueIndex = 1; // Void
-                callProp.FindPropertyRelative("m_CallState").enumValueIndex = 2; // RuntimeOnly
-                btnSO.ApplyModifiedPropertiesWithoutUndo();
+                var go = CreateButton(panelGO.transform, $"Btn_{weatherLabels[idx]}",
+                    weatherLabels[idx],
+                    new Vector2(10f + col * 95f, y),
+                    new Vector2(90f, BH));
+                wireBtn(go.GetComponent<Button>(), weatherActions[idx]);
             }
-            yOffset -= buttonHeight + 4f;
+            y -= BH + 3f;
         }
+        y -= 2f;
 
-        yOffset -= 4f;
+        // ══════════════════════════════════════════════════════════
+        // Nature Params
+        // ══════════════════════════════════════════════════════════
+        CreateLabel(panelGO.transform, "Sep_Nature", "── Nature Params ──",
+            new Vector2(10f, y), 11, FontStyles.Bold);
+        y -= LH;
 
-        // ── Separator ──
-        CreateLabel(panelGO.transform, "Sep2", "── Nature Params ──",
-            new Vector2(10f, yOffset), 11, FontStyles.Bold);
-        yOffset -= lineHeight;
-
-        // ── Nature sliders ──
-        string[] sliderNames = {
+        string[] natureNames = {
             "CloudDensity", "CloudSpeed", "HorizonFog", "SunSize", "StarDensity",
             "RainIntensity", "SnowIntensity", "LeafIntensity", "OvercastDarken", "SnowCap"
         };
-        string[] sliderProps = {
+        string[] natureProps = {
             "_cloudDensitySlider", "_cloudSpeedSlider", "_horizonFogSlider",
             "_sunSizeSlider", "_starDensitySlider", "_rainIntensitySlider",
             "_snowIntensitySlider", "_leafIntensitySlider", "_overcastDarkenSlider",
             "_snowCapSlider"
         };
-
-        for (int i = 0; i < sliderNames.Length; i++)
+        for (int i = 0; i < natureNames.Length; i++)
         {
-            CreateLabel(panelGO.transform, $"Label_{sliderNames[i]}", sliderNames[i],
-                new Vector2(10f, yOffset), 10, FontStyles.Normal);
-            yOffset -= 12f;
-            var slider = CreateSlider(panelGO.transform, $"Slider_{sliderNames[i]}",
-                new Vector2(10f, yOffset), new Vector2(280f, 14f));
-            controllerSO.FindProperty(sliderProps[i]).objectReferenceValue = slider;
-            yOffset -= 22f;
+            CreateLabel(panelGO.transform, $"Nat_{natureNames[i]}", natureNames[i],
+                new Vector2(10f, y), 10, FontStyles.Normal);
+            y -= 12f;
+            var slider = CreateSlider(panelGO.transform, $"NatSlider_{i}",
+                new Vector2(10f, y), new Vector2(280f, 14f));
+            controllerSO.FindProperty(natureProps[i]).objectReferenceValue = slider;
+            y -= SH;
         }
 
-        // ── Controls hint at bottom ──
-        yOffset -= 4f;
-        CreateLabel(panelGO.transform, "Controls", "Keys: 1-8 cam | F1 HUD | F2 weather | F4 PSX | G grid",
-            new Vector2(10f, yOffset), 9, FontStyles.Italic);
+        // ── Controls hint ──
+        y -= 4f;
+        CreateLabel(panelGO.transform, "Controls",
+            "1-8 cam | F1 HUD | F2 weather | F4 PSX | G grid",
+            new Vector2(10f, y), 9, FontStyles.Italic);
 
-        // Resize panel to fit content
+        // Resize panel to fit
         var panelRect = panelGO.GetComponent<RectTransform>();
-        float panelHeight = Mathf.Abs(yOffset) + 30f;
+        float panelHeight = Mathf.Abs(y) + 30f;
         panelRect.sizeDelta = new Vector2(320f, panelHeight);
 
         controllerSO.ApplyModifiedPropertiesWithoutUndo();

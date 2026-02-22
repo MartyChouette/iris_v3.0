@@ -7,7 +7,8 @@ using UnityEngine.UI;
 /// <summary>
 /// Runtime controller for the lighting test scene.
 /// Handles 8-camera switching (keys 1-8), debug HUD toggle (F1),
-/// time-of-day slider, weather buttons, and NatureBox parameter sliders.
+/// time-of-day slider, weather buttons, NatureBox parameter sliders,
+/// and PSX rendering controls.
 /// </summary>
 public class LightingTestController : MonoBehaviour
 {
@@ -42,6 +43,14 @@ public class LightingTestController : MonoBehaviour
     [SerializeField] private Slider _leafIntensitySlider;
     [SerializeField] private Slider _overcastDarkenSlider;
     [SerializeField] private Slider _snowCapSlider;
+
+    [Header("PSX Sliders")]
+    [SerializeField] private Slider _vertexSnapSlider;
+    [SerializeField] private Slider _affineSlider;
+    [SerializeField] private Slider _resolutionDivisorSlider;
+    [SerializeField] private Slider _colorDepthSlider;
+    [SerializeField] private Slider _ditherIntensitySlider;
+    [SerializeField] private Slider _shadowDitherSlider;
 
     // Inline InputActions
     private InputAction _hudToggleAction;
@@ -143,6 +152,14 @@ public class LightingTestController : MonoBehaviour
         WireSlider(_leafIntensitySlider, 0f, 1f, 0f, OnNatureSliderChanged);
         WireSlider(_overcastDarkenSlider, 0f, 1f, 0f, OnNatureSliderChanged);
         WireSlider(_snowCapSlider, 0f, 1f, 0f, OnNatureSliderChanged);
+
+        // Wire PSX sliders
+        WireSlider(_vertexSnapSlider, 32f, 320f, 160f, OnPSXSliderChanged);
+        WireSlider(_affineSlider, 0f, 1f, 1f, OnPSXSliderChanged);
+        WireSlider(_resolutionDivisorSlider, 1f, 6f, 3f, OnPSXSliderChanged);
+        WireSlider(_colorDepthSlider, 4f, 256f, 32f, OnPSXSliderChanged);
+        WireSlider(_ditherIntensitySlider, 0f, 1f, 0.5f, OnPSXSliderChanged);
+        WireSlider(_shadowDitherSlider, 0f, 1f, 1f, OnPSXSliderChanged);
 
         if (_hudRoot != null)
             _hudRoot.SetActive(_hudVisible);
@@ -263,6 +280,29 @@ public class LightingTestController : MonoBehaviour
             mat.SetFloat(SnowCapId, _snowCapSlider.value);
     }
 
+    // ── PSX sliders ──────────────────────────────────────────────
+
+    private void OnPSXSliderChanged(float _)
+    {
+        if (PSXRenderController.Instance == null || !PSXRenderController.Instance.enabled) return;
+
+        if (_vertexSnapSlider != null)
+        {
+            float v = _vertexSnapSlider.value;
+            PSXRenderController.Instance.VertexSnapResolution = new Vector2(v, v * 0.75f);
+        }
+        if (_affineSlider != null)
+            PSXRenderController.Instance.AffineIntensity = _affineSlider.value;
+        if (_resolutionDivisorSlider != null)
+            PSXRenderController.Instance.ResolutionDivisor = Mathf.RoundToInt(_resolutionDivisorSlider.value);
+        if (_colorDepthSlider != null)
+            PSXRenderController.Instance.ColorDepth = _colorDepthSlider.value;
+        if (_ditherIntensitySlider != null)
+            PSXRenderController.Instance.DitherIntensity = _ditherIntensitySlider.value;
+        if (_shadowDitherSlider != null)
+            PSXRenderController.Instance.ShadowDitherIntensity = _shadowDitherSlider.value;
+    }
+
     // ── Weather buttons (called from UI) ────────────────────────
 
     public void ForceWeatherClear() => ForceWeather(WeatherSystem.WeatherState.Clear);
@@ -276,6 +316,14 @@ public class LightingTestController : MonoBehaviour
     {
         if (WeatherSystem.Instance != null)
             WeatherSystem.Instance.ForceWeather(state);
+    }
+
+    // ── PSX toggle (called from UI) ─────────────────────────────
+
+    public void TogglePSX()
+    {
+        if (PSXRenderController.Instance != null)
+            PSXRenderController.Instance.enabled = !PSXRenderController.Instance.enabled;
     }
 
     // ── Drawer click toggle ─────────────────────────────────────
