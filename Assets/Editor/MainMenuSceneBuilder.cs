@@ -567,16 +567,16 @@ public static class MainMenuSceneBuilder
         bdImg.color = new Color(0f, 0f, 0f, 0.7f);
         bdImg.raycastTarget = true;
 
-        // Card panel
+        // Card panel — large, eggshell white, bloomy
         var panel = new GameObject("CardPanel");
         panel.transform.SetParent(cardCanvasGO.transform, false);
         var panelRT = panel.AddComponent<RectTransform>();
         panelRT.anchorMin = new Vector2(0.5f, 0.5f);
         panelRT.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRT.sizeDelta = new Vector2(900f, 600f);
+        panelRT.sizeDelta = new Vector2(1600f, 1000f);
         panelRT.anchoredPosition = Vector2.zero;
         var panelImg = panel.AddComponent<Image>();
-        panelImg.color = new Color(0.95f, 0.93f, 0.88f);
+        panelImg.color = new Color(0.97f, 0.96f, 0.93f); // warm eggshell white
 
         // Title
         var titleGO = new GameObject("Title");
@@ -584,14 +584,14 @@ public static class MainMenuSceneBuilder
         var titleRT = titleGO.AddComponent<RectTransform>();
         titleRT.anchorMin = new Vector2(0.5f, 1f);
         titleRT.anchorMax = new Vector2(0.5f, 1f);
-        titleRT.anchoredPosition = new Vector2(0f, -50f);
-        titleRT.sizeDelta = new Vector2(800f, 60f);
+        titleRT.anchoredPosition = new Vector2(0f, -70f);
+        titleRT.sizeDelta = new Vector2(1400f, 80f);
         var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
         titleTMP.text = "HOW TO PLAY";
-        titleTMP.fontSize = 36f;
+        titleTMP.fontSize = 50f;
         titleTMP.fontStyle = FontStyles.Bold;
         titleTMP.alignment = TextAlignmentOptions.Center;
-        titleTMP.color = new Color(0.15f, 0.15f, 0.15f);
+        titleTMP.color = new Color(0.12f, 0.12f, 0.12f);
         titleTMP.raycastTarget = false;
 
         // Controls text
@@ -601,35 +601,37 @@ public static class MainMenuSceneBuilder
         ctrlRT.anchorMin = new Vector2(0.5f, 0.5f);
         ctrlRT.anchorMax = new Vector2(0.5f, 0.5f);
         ctrlRT.anchoredPosition = new Vector2(0f, 30f);
-        ctrlRT.sizeDelta = new Vector2(700f, 360f);
+        ctrlRT.sizeDelta = new Vector2(1300f, 650f);
         var ctrlTMP = controlsGO.AddComponent<TextMeshProUGUI>();
         ctrlTMP.text =
-            "<b>[< >]</b>                Browse rooms\n" +
-            "<b>[Click]</b>              Interact with objects\n" +
-            "<b>[Esc / RMB]</b>     Back out / Cancel\n" +
-            "<b>[Scroll]</b>            Rotate held items\n" +
-            "<b>[MMB]</b>              Show item labels\n" +
+            "<b>[Mouse / Click Buttons]</b>     Browse rooms\n" +
+            "<b>[Click]</b>                                    Interact\n" +
+            "<b>[Click + Hold]</b>                        Pour\n" +
+            "<b>[RMB]</b>                                    Back out / Cancel\n" +
+            "<b>[Esc]</b>                                      Pause\n" +
+            "<b>[Scroll]</b>                                   Rotate held items\n" +
+            "<b>[MMB]</b>                                    Show labels momentarily\n" +
             "\n" +
             "<b>Your Day</b>\n" +
-            "Read the paper. Pick your date.\n" +
-            "Prep your apartment. Host your guest.\n" +
-            "Then... tend to your flowers.";
-        ctrlTMP.fontSize = 22f;
+            "Read the paper, pick a date for that evening.\n" +
+            "Prep your apartment. Host your date.\n" +
+            "If you impress them enough, you may trim their flower.";
+        ctrlTMP.fontSize = 40f;
         ctrlTMP.fontStyle = FontStyles.Normal;
         ctrlTMP.alignment = TextAlignmentOptions.Left;
-        ctrlTMP.color = new Color(0.2f, 0.2f, 0.2f);
+        ctrlTMP.color = new Color(0.15f, 0.15f, 0.15f);
         ctrlTMP.raycastTarget = false;
         ctrlTMP.richText = true;
-        ctrlTMP.lineSpacing = 10f;
+        ctrlTMP.lineSpacing = 12f;
 
-        // Start button
+        // Start button — larger, dark
         var startBtnGO = new GameObject("StartButton");
         startBtnGO.transform.SetParent(panel.transform, false);
         var sBtnRT = startBtnGO.AddComponent<RectTransform>();
         sBtnRT.anchorMin = new Vector2(0.5f, 0f);
         sBtnRT.anchorMax = new Vector2(0.5f, 0f);
-        sBtnRT.anchoredPosition = new Vector2(0f, 60f);
-        sBtnRT.sizeDelta = new Vector2(200f, 50f);
+        sBtnRT.anchoredPosition = new Vector2(0f, 70f);
+        sBtnRT.sizeDelta = new Vector2(300f, 70f);
         var sBtnImg = startBtnGO.AddComponent<Image>();
         sBtnImg.color = new Color(0.12f, 0.12f, 0.14f);
 
@@ -650,10 +652,10 @@ public static class MainMenuSceneBuilder
         sBtnLabelRT.offsetMax = Vector2.zero;
         var sBtnTMP = sBtnLabelGO.AddComponent<TextMeshProUGUI>();
         sBtnTMP.text = "START";
-        sBtnTMP.fontSize = 22f;
+        sBtnTMP.fontSize = 32f;
         sBtnTMP.fontStyle = FontStyles.Bold;
         sBtnTMP.alignment = TextAlignmentOptions.Center;
-        sBtnTMP.color = new Color(0.9f, 0.88f, 0.82f);
+        sBtnTMP.color = new Color(0.95f, 0.93f, 0.88f);
         sBtnTMP.raycastTarget = false;
 
         // Card starts hidden
