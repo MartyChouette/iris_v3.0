@@ -21,6 +21,12 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Grid cell size in world units.")]
     [SerializeField] private float gridSize = 0.3f;
 
+    public float GridSize
+    {
+        get => gridSize;
+        set => gridSize = Mathf.Max(0.01f, value);
+    }
+
     [Header("Scroll Behavior")]
     [Tooltip("Degrees rotated per scroll tick around Y axis.")]
     [SerializeField] private float scrollRotateStep = 45f;

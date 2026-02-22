@@ -159,6 +159,18 @@ public class NatureBoxController : MonoBehaviour
         _targetHorizonFog   = horizonFog;
     }
 
+    /// <summary>
+    /// Override time of day manually (disables GameClock driving).
+    /// Used by test controllers for direct slider control.
+    /// </summary>
+    public void SetManualTime(float normalizedTime)
+    {
+        _manualTimeOfDay = Mathf.Repeat(normalizedTime, 1f);
+        // Disable GameClock so it doesn't fight with the manual value
+        if (GameClock.Instance != null)
+            GameClock.Instance.enabled = false;
+    }
+
     /// <summary>Called when component is added in editor — auto-configures the box.</summary>
     private void Reset()
     {

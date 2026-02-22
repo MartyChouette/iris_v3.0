@@ -79,6 +79,9 @@ public static class LightingTestSceneBuilder
         var bookGO = BuildBook(placeableLayer);
         var testCubes = BuildTestCubes(placeableLayer);
 
+        // ── 5b. Picture frame (wall-mountable) ──
+        BuildPictureFrame(placeableLayer);
+
         // ── 6. Placement surfaces ──
         BuildPlacementSurfaces(roomParent.transform, surfacesLayer);
 
@@ -434,6 +437,44 @@ public static class LightingTestSceneBuilder
     }
 
     // ══════════════════════════════════════════════════════════════
+    // Picture Frame (wall-mountable)
+    // ══════════════════════════════════════════════════════════════
+
+    private static void BuildPictureFrame(int placeableLayer)
+    {
+        // Flat box representing a framed picture
+        var frameGO = CreateBox("PictureFrame", null,
+            new Vector3(0f, 2.5f, -9.8f),  // near back wall
+            new Vector3(0.8f, 0.6f, 0.04f),
+            MakeColor(0.25f, 0.20f, 0.15f), false);
+        frameGO.layer = placeableLayer;
+
+        var rb = frameGO.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+
+        var placeable = frameGO.AddComponent<PlaceableObject>();
+        var so = new SerializedObject(placeable);
+        so.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.General;
+        so.FindProperty("canWallMount").boolValue = true;
+        so.FindProperty("_itemDescription").stringValue = "A picture frame";
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        frameGO.AddComponent<InteractableHighlight>();
+
+        // Small colored "canvas" inset to make it look like a picture
+        var canvasInset = CreateBox("Canvas", frameGO.transform,
+            new Vector3(0f, 2.5f, -9.78f),
+            new Vector3(0.65f, 0.45f, 0.02f),
+            MakeColor(0.55f, 0.40f, 0.35f), false);
+        canvasInset.layer = placeableLayer;
+        // Remove collider from inset so it doesn't interfere
+        var insetCol = canvasInset.GetComponent<Collider>();
+        if (insetCol != null) Object.DestroyImmediate(insetCol);
+
+        Debug.Log("[LightingTestSceneBuilder] Picture frame built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // Placement Surfaces
     // ══════════════════════════════════════════════════════════════
 
@@ -462,6 +503,28 @@ public static class LightingTestSceneBuilder
             DividerPos - new Vector3(0f, 0f, DividerSize.z * 0.5f + 0.01f),
             new Bounds(Vector3.zero, new Vector3(DividerSize.x - 0.3f, DividerSize.y - 0.3f, 0.1f)),
             PlacementSurface.SurfaceAxis.Forward, surfacesLayer);
+
+        // Back wall surface (for picture frames)
+        float hw = RoomW * 0.5f;
+        float hd = RoomD * 0.5f;
+        BuildSurface("BackWallSurface", null,
+            new Vector3(0f, RoomH * 0.5f, -hd + WallThick * 0.5f + 0.01f),
+            new Bounds(Vector3.zero, new Vector3(RoomW - 1f, RoomH - 0.5f, 0.1f)),
+            PlacementSurface.SurfaceAxis.Forward, surfacesLayer);
+
+        // Left wall surface — rotate so Forward points +X (inward)
+        BuildSurface("LeftWallSurface", null,
+            new Vector3(-hw + WallThick * 0.5f + 0.01f, RoomH * 0.5f, 0f),
+            new Bounds(Vector3.zero, new Vector3(RoomD - 1f, RoomH - 0.5f, 0.1f)),
+            PlacementSurface.SurfaceAxis.Forward, surfacesLayer);
+        GameObject.Find("LeftWallSurface").transform.rotation = Quaternion.Euler(0f, -90f, 0f);
+
+        // Right wall surface — rotate so Forward points -X (inward)
+        BuildSurface("RightWallSurface", null,
+            new Vector3(hw - WallThick * 0.5f - 0.01f, RoomH * 0.5f, 0f),
+            new Bounds(Vector3.zero, new Vector3(RoomD - 1f, RoomH - 0.5f, 0.1f)),
+            PlacementSurface.SurfaceAxis.Forward, surfacesLayer);
+        GameObject.Find("RightWallSurface").transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
         Debug.Log("[LightingTestSceneBuilder] Placement surfaces built.");
     }

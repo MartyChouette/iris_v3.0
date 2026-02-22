@@ -21,6 +21,7 @@ public class LightingTestController : MonoBehaviour
     private TMP_Text _psxLabel;
     private TMP_Text _gridLabel;
     private Slider _timeSlider;
+    private Slider _gridSizeSlider;
 
     // NatureBox sliders
     private Slider _cloudDensitySlider;
@@ -50,11 +51,9 @@ public class LightingTestController : MonoBehaviour
 
     private int _activeCameraIndex;
     private bool _hudVisible = true;
-    private bool _manualTimeMode;
     private bool _manualNatureMode;
 
     // Shader property IDs
-    private static readonly int TimeOfDayId = Shader.PropertyToID("_TimeOfDay");
     private static readonly int CloudDensityId = Shader.PropertyToID("_CloudDensity");
     private static readonly int CloudSpeedId = Shader.PropertyToID("_CloudSpeed");
     private static readonly int HorizonFogId = Shader.PropertyToID("_HorizonFog");
@@ -67,6 +66,7 @@ public class LightingTestController : MonoBehaviour
     private static readonly int SnowCapId = Shader.PropertyToID("_SnowCapIntensity");
 
     private DrawerController[] _drawers;
+    private ObjectGrabber _grabber;
     private Camera _cachedCamera;
 
     // ── HUD layout constants ──
@@ -120,6 +120,7 @@ public class LightingTestController : MonoBehaviour
     private void Start()
     {
         _drawers = FindObjectsByType<DrawerController>(FindObjectsSortMode.None);
+        _grabber = FindFirstObjectByType<ObjectGrabber>();
         _cachedCamera = Camera.main;
 
         SetActiveCamera(0);
@@ -145,13 +146,6 @@ public class LightingTestController : MonoBehaviour
 
         if (_drawerClickAction.WasPressedThisFrame() && !ObjectGrabber.IsHoldingObject)
             TryToggleDrawer();
-
-        if (_manualTimeMode && NatureBoxController.Instance != null)
-        {
-            var mat = GetNatureBoxMaterial();
-            if (mat != null && _timeSlider != null)
-                mat.SetFloat(TimeOfDayId, _timeSlider.value);
-        }
 
         UpdateStatusLabels();
     }
@@ -204,6 +198,8 @@ public class LightingTestController : MonoBehaviour
         y -= BH + 2f;
 
         _gridLabel = MakeLabel(content, "Grid: G toggle", 11, FontStyles.Normal, ref y);
+        _gridSizeSlider = MakeSliderRow(content, "Grid Size", 0.05f, 1f, 0.3f, ref y);
+        _gridSizeSlider.onValueChanged.AddListener(OnGridSizeChanged);
         y -= 4f;
 
         // ══════════════════════════════════════════════════════════
@@ -510,12 +506,10 @@ public class LightingTestController : MonoBehaviour
 
     private void OnTimeSliderChanged(float value)
     {
-        _manualTimeMode = true;
-        if (GameClock.Instance != null)
-            GameClock.Instance.enabled = false;
-        var mat = GetNatureBoxMaterial();
-        if (mat != null)
-            mat.SetFloat(TimeOfDayId, value);
+        // Route through NatureBoxController so it sets _TimeOfDay in its own Update
+        // (avoids the overwrite race where NatureBoxController writes after us)
+        if (NatureBoxController.Instance != null)
+            NatureBoxController.Instance.SetManualTime(value);
     }
 
     private void ApplyNature()
@@ -562,6 +556,12 @@ public class LightingTestController : MonoBehaviour
             PSXRenderController.Instance.DitherIntensity = _ditherIntensitySlider.value;
         if (_shadowDitherSlider)
             PSXRenderController.Instance.ShadowDitherIntensity = _shadowDitherSlider.value;
+    }
+
+    private void OnGridSizeChanged(float value)
+    {
+        if (_grabber != null)
+            _grabber.GridSize = value;
     }
 
     private void TogglePSX()
@@ -625,7 +625,10 @@ public class LightingTestController : MonoBehaviour
         }
 
         if (_gridLabel != null)
-            _gridLabel.text = $"Grid: {(ObjectGrabber.IsHoldingObject ? "—" : "G toggle")}";
+        {
+            float gs = _grabber != null ? _grabber.GridSize : 0.3f;
+            _gridLabel.text = $"Grid: G toggle | {gs:F2}m";
+        }
     }
 
     private Material GetNatureBoxMaterial()
