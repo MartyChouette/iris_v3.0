@@ -338,16 +338,19 @@ public static class LightingTestSceneBuilder
         // InteractableHighlight
         sofaGO.AddComponent<InteractableHighlight>();
 
-        // PlacementSurface on top of sofa so items can be placed on it
+        // PlacementSurface at seat cushion height (~halfway up the sofa)
         var sofaCol = sofaGO.GetComponent<BoxCollider>();
         if (sofaCol != null)
         {
-            float topY = sofaGO.transform.position.y +
-                (sofaCol.center.y + sofaCol.size.y * 0.5f) * sofaGO.transform.lossyScale.y;
-            float sofaW = sofaCol.size.x * Mathf.Abs(sofaGO.transform.lossyScale.x);
-            float sofaD = sofaCol.size.z * Mathf.Abs(sofaGO.transform.lossyScale.z);
-            BuildSurface("SofaSurface", null,
-                new Vector3(sofaGO.transform.position.x, topY + 0.01f, sofaGO.transform.position.z),
+            var scale = sofaGO.transform.lossyScale;
+            float bottomY = sofaGO.transform.position.y +
+                (sofaCol.center.y - sofaCol.size.y * 0.5f) * scale.y;
+            float totalH = sofaCol.size.y * Mathf.Abs(scale.y);
+            float seatY = bottomY + totalH * 0.45f; // seat cushion ~45% up
+            float sofaW = sofaCol.size.x * Mathf.Abs(scale.x);
+            float sofaD = sofaCol.size.z * Mathf.Abs(scale.z);
+            BuildSurface("SofaSeatSurface", null,
+                new Vector3(sofaGO.transform.position.x, seatY, sofaGO.transform.position.z),
                 new Bounds(Vector3.zero, new Vector3(sofaW - 0.1f, 0.1f, sofaD - 0.1f)),
                 PlacementSurface.SurfaceAxis.Up, surfacesLayer);
         }
