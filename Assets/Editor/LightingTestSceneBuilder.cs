@@ -633,14 +633,17 @@ public static class LightingTestSceneBuilder
         var vcam = go.AddComponent<CinemachineCamera>();
         vcam.Priority = priority;
 
-        vcam.Lens = new LensSettings
+        var lens = new LensSettings
         {
             FieldOfView = orthographic ? 60f : fovOrSize,
             OrthographicSize = orthographic ? fovOrSize : 5f,
             NearClipPlane = 0.1f,
             FarClipPlane = 300f,
-            Orthographic = orthographic
+            ModeOverride = orthographic
+                ? LensSettings.OverrideModes.Orthographic
+                : LensSettings.OverrideModes.None
         };
+        vcam.Lens = lens;
 
         return vcam;
     }
