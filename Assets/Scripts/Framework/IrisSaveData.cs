@@ -33,6 +33,9 @@ public class IrisSaveData
 
     // ── Living Plants (flower trimming results → apartment decorations) ──
     public List<LivingPlantRecord> livingPlants = new List<LivingPlantRecord>();
+
+    // ── Weather ─────────────────────────────────────────────────────
+    public int weatherState;
 }
 
 /// <summary>Serializable record of an item's display state.</summary>

@@ -24,6 +24,19 @@ Shader "Iris/NatureBox"
         _HorizonFog ("Horizon Fog", Range(0, 1)) = 0.35
         _StarDensity ("Star Density", Range(0.95, 1.0)) = 0.985
 
+        [Header(Weather)]
+        _RainIntensity ("Rain Intensity", Range(0, 1)) = 0
+        _SnowIntensity ("Snow Intensity", Range(0, 1)) = 0
+        _LeafIntensity ("Falling Leaf Intensity", Range(0, 1)) = 0
+        _OvercastDarken ("Overcast Darkening", Range(0, 1)) = 0
+        _SnowCapIntensity ("Mountain Snow Caps", Range(0, 1)) = 0
+        _RainSpeed ("Rain Speed", Float) = 1.5
+        _RainScale ("Rain Scale", Float) = 80.0
+        _SnowSpeed ("Snow Speed", Float) = 0.3
+        _SnowScale ("Snow Scale", Float) = 60.0
+        _LeafSpeed ("Leaf Speed", Float) = 0.4
+        _LeafScale ("Leaf Scale", Float) = 25.0
+
         [Header(Retro)]
         _PixelDensity ("Pixel Density (0 off, 240 N64, 480 PS2)", Float) = 0
         _ColorDepth ("Color Depth per channel (0 off, 16 N64, 32 PS1)", Float) = 0
@@ -65,6 +78,17 @@ Shader "Iris/NatureBox"
                 float _TreelineHeight;
                 float _HorizonFog;
                 float _StarDensity;
+                float _RainIntensity;
+                float _SnowIntensity;
+                float _LeafIntensity;
+                float _OvercastDarken;
+                float _SnowCapIntensity;
+                float _RainSpeed;
+                float _RainScale;
+                float _SnowSpeed;
+                float _SnowScale;
+                float _LeafSpeed;
+                float _LeafScale;
                 float _PixelDensity;
                 float _ColorDepth;
             CBUFFER_END
@@ -241,6 +265,14 @@ Shader "Iris/NatureBox"
                 float3 hCol = horizColor(t);
                 float3 col = lerp(hCol, zenith, skyBlend);
 
+                // ── 1b. Overcast darkening (desaturate + darken sky) ──
+                if (_OvercastDarken > 0.01)
+                {
+                    float lum = dot(col, float3(0.299, 0.587, 0.114));
+                    float3 grey = float3(lum, lum, lum);
+                    col = lerp(col, grey * 0.6, _OvercastDarken * 0.7);
+                }
+
                 // ── 2. Sun / moon ──
                 float disc = smoothstep(_SunSize, _SunSize + 0.008, sunDot);
                 float glow = pow(saturate(sunDot), 6.0) * _SunGlow;
@@ -287,6 +319,16 @@ Shader "Iris/NatureBox"
                 mountainCol = mountainCol * lerp(1.0, 0.25, nightFade);
                 col = lerp(col, mountainCol, mountainMask);
 
+                // ── 5b. Mountain snow caps ──
+                if (_SnowCapIntensity > 0.01 && mountainMask > 0.01)
+                {
+                    float peakBlend = smoothstep(mountainLine * 0.5, mountainLine, elevation);
+                    float snowNoise = noise2D(horiz * _MountainScale * 4.0 + float2(7.7, 3.1));
+                    float snowMask = peakBlend * smoothstep(0.3, 0.6, snowNoise) * mountainMask;
+                    float3 snowCol = float3(0.85, 0.88, 0.92) * lerp(1.0, 0.3, nightFade);
+                    col = lerp(col, snowCol, snowMask * _SnowCapIntensity);
+                }
+
                 // ── 6. Near treeline ──
                 float treeN = fbm4(horiz * _MountainScale * 3.5 + float2(17.3, 42.1));
                 float treeLine = treeN * _TreelineHeight;
@@ -306,9 +348,108 @@ Shader "Iris/NatureBox"
                 float3 fogCol = lerp(hCol, sCol, 0.25) * lerp(1.0, 0.3, nightFade);
                 col = lerp(col, fogCol, fogBand);
 
+                // ── 9. Rain streaks ──
+                if (_RainIntensity > 0.01)
+                {
+                    float skyMask = smoothstep(-0.05, 0.05, elevation);
+                    float2 rainUV = float2(horiz.x * _RainScale, elevation * _RainScale * 2.0);
+                    float t_rain = _Time.y * _RainSpeed;
+
+                    // Three overlapping column layers at different speeds
+                    float r1 = hash21(floor(float2(rainUV.x * 1.0, 0.0)));
+                    float streak1 = step(0.92, r1) * step(0.97,
+                        frac(rainUV.y * 0.5 - t_rain * (0.8 + r1 * 0.4)));
+
+                    float r2 = hash21(floor(float2(rainUV.x * 1.3 + 50.0, 0.0)));
+                    float streak2 = step(0.90, r2) * step(0.96,
+                        frac(rainUV.y * 0.4 - t_rain * (1.0 + r2 * 0.3) + 0.5));
+
+                    float r3 = hash21(floor(float2(rainUV.x * 0.7 + 100.0, 0.0)));
+                    float streak3 = step(0.93, r3) * step(0.97,
+                        frac(rainUV.y * 0.6 - t_rain * (0.6 + r3 * 0.5) + 0.3));
+
+                    float rain = saturate(streak1 + streak2 + streak3) * skyMask;
+                    float3 rainCol = lerp(float3(0.7, 0.75, 0.85), float3(0.2, 0.22, 0.3), nightFade);
+                    col = lerp(col, rainCol, rain * _RainIntensity * 0.6);
+                }
+
+                // ── 10. Snow flakes (two parallax layers) ──
+                if (_SnowIntensity > 0.01)
+                {
+                    float skyMask = smoothstep(-0.1, 0.05, elevation);
+
+                    // Layer 1 — near, larger
+                    float2 snowUV1 = float2(horiz.x, elevation) * _SnowScale;
+                    snowUV1.y -= _Time.y * _SnowSpeed;
+                    snowUV1.x += sin(_Time.y * 0.3 + elevation * 4.0) * 0.8;
+                    float2 snowCell1 = floor(snowUV1);
+                    float2 snowF1 = frac(snowUV1) - 0.5;
+                    float h1 = hash21(snowCell1);
+                    float2 offset1 = float2(h1 - 0.5, frac(h1 * 17.3) - 0.5) * 0.6;
+                    float d1 = length(snowF1 - offset1);
+                    float flake1 = smoothstep(0.08, 0.03, d1) * step(0.75, h1);
+
+                    // Layer 2 — far, smaller, slower
+                    float2 snowUV2 = float2(horiz.x, elevation) * _SnowScale * 1.6;
+                    snowUV2.y -= _Time.y * _SnowSpeed * 0.7;
+                    snowUV2.x += sin(_Time.y * 0.2 + elevation * 3.0 + 2.0) * 0.6;
+                    float2 snowCell2 = floor(snowUV2);
+                    float2 snowF2 = frac(snowUV2) - 0.5;
+                    float h2 = hash21(snowCell2 + float2(99.0, 77.0));
+                    float2 offset2 = float2(h2 - 0.5, frac(h2 * 13.7) - 0.5) * 0.5;
+                    float d2 = length(snowF2 - offset2);
+                    float flake2 = smoothstep(0.06, 0.02, d2) * step(0.80, h2);
+
+                    float snow = saturate(flake1 + flake2 * 0.6) * skyMask;
+                    float3 snowCol = lerp(float3(0.9, 0.92, 0.95), float3(0.5, 0.52, 0.6), nightFade);
+                    col = lerp(col, snowCol, snow * _SnowIntensity * 0.8);
+                }
+
+                // ── 11. Falling leaves ──
+                if (_LeafIntensity > 0.01)
+                {
+                    float skyMask = smoothstep(-0.05, 0.08, elevation);
+
+                    float2 leafUV = float2(horiz.x, elevation) * _LeafScale;
+                    leafUV.y -= _Time.y * _LeafSpeed;
+                    leafUV.x += _Time.y * _LeafSpeed * 0.5
+                              + sin(_Time.y * 0.8 + elevation * 5.0) * 1.2;
+
+                    float2 leafCell = floor(leafUV);
+                    float2 leafF = frac(leafUV) - 0.5;
+                    float lh = hash21(leafCell + float2(33.0, 55.0));
+
+                    // Only sparse cells get a leaf
+                    if (lh > 0.85)
+                    {
+                        float2 leafOff = float2(lh - 0.5, frac(lh * 23.7) - 0.5) * 0.4;
+                        float2 lp = leafF - leafOff;
+
+                        // Rotate the leaf
+                        float angle = lh * 6.28 + _Time.y * (0.5 + lh);
+                        float ca = cos(angle); float sa = sin(angle);
+                        float2 rl = float2(lp.x * ca - lp.y * sa, lp.x * sa + lp.y * ca);
+
+                        // Elliptical leaf shape
+                        float leafShape = length(rl * float2(1.0, 2.5));
+                        float leafMask = smoothstep(0.12, 0.06, leafShape) * skyMask;
+
+                        // Color: orange / red / brown selection
+                        float cSel = frac(lh * 30.0);
+                        float3 leafCol = cSel < 0.33
+                            ? float3(0.85, 0.45, 0.12)
+                            : (cSel < 0.66
+                                ? float3(0.75, 0.20, 0.10)
+                                : float3(0.50, 0.30, 0.10));
+                        leafCol *= lerp(1.0, 0.3, nightFade);
+
+                        col = lerp(col, leafCol, leafMask * _LeafIntensity * 0.7);
+                    }
+                }
+
                 col = saturate(col);
 
-                // ── 9. Color quantization ──
+                // ── 12. Color quantization ──
                 if (_ColorDepth > 0.0)
                 {
                     col = floor(col * _ColorDepth + 0.5) / _ColorDepth;

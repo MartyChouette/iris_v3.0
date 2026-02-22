@@ -202,6 +202,12 @@ public static class ApartmentSceneBuilder
         var psxGO = new GameObject("PSXRenderController");
         psxGO.AddComponent<PSXRenderController>();
 
+        // ── 12d. NatureBox (procedural sky environment) ──
+        BuildNatureBox();
+
+        // ── 12e. WeatherSystem (daily weather + NatureBox integration) ──
+        BuildWeatherSystem();
+
         // ── 13. Ambient cleaning (not a station) ──
         var cleaningData = BuildAmbientCleaning(camGO, cleanableLayer, placeableLayer);
 
@@ -5093,6 +5099,50 @@ public static class ApartmentSceneBuilder
         tmp.color = Color.white;
 
         return panel;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // NatureBox (procedural sky environment)
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildNatureBox()
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = "NatureBox";
+        go.transform.position = Vector3.zero;
+        go.transform.localScale = Vector3.one * 200f;
+
+        // Remove collider — it's a visual-only skybox
+        var col = go.GetComponent<Collider>();
+        if (col != null) Object.DestroyImmediate(col);
+
+        // Assign NatureBox material
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/nature.mat");
+        if (mat != null)
+        {
+            go.GetComponent<Renderer>().sharedMaterial = mat;
+        }
+        else
+        {
+            Debug.LogWarning("[ApartmentSceneBuilder] nature.mat not found at Assets/nature.mat — " +
+                             "NatureBox will use default material.");
+        }
+
+        // Add controller
+        go.AddComponent<NatureBoxController>();
+
+        Debug.Log("[ApartmentSceneBuilder] NatureBox built.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // WeatherSystem
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildWeatherSystem()
+    {
+        var go = new GameObject("WeatherSystem");
+        go.AddComponent<WeatherSystem>();
+        Debug.Log("[ApartmentSceneBuilder] WeatherSystem built.");
     }
 
     // ══════════════════════════════════════════════════════════════════

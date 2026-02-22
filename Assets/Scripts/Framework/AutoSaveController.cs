@@ -75,7 +75,9 @@ public class AutoSaveController : MonoBehaviour
                 : 0,
             dateHistory = DateHistory.GetAllForSave(),
             itemDisplayStates = ItemStateRegistry.GetAllForSave(),
-            objectPositions = GatherObjectPositions()
+            objectPositions = GatherObjectPositions(),
+            weatherState = WeatherSystem.Instance != null
+                ? WeatherSystem.Instance.GetStateForSave() : 0
         };
     }
 
@@ -126,6 +128,9 @@ public class AutoSaveController : MonoBehaviour
         DateHistory.LoadFrom(data.dateHistory);
         ItemStateRegistry.LoadFrom(data.itemDisplayStates);
         RestoreObjectPositions(data.objectPositions);
+
+        if (WeatherSystem.Instance != null)
+            WeatherSystem.Instance.LoadFromSave(data.weatherState);
 
         RestoredDayPhase = data.dayPhase;
         RestoredDay = data.currentDay;
