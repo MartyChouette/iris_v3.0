@@ -259,7 +259,7 @@ public static class LightingTestSceneBuilder
         var warmGO = new GameObject("Point_WarmFill");
         var warmLight = warmGO.AddComponent<Light>();
         warmLight.type = LightType.Point;
-        warmLight.intensity = 2f;
+        warmLight.intensity = 0.8f;
         warmLight.range = 8f;
         warmLight.color = new Color(1f, 0.75f, 0.45f);
         warmLight.shadows = LightShadows.Soft;
@@ -269,7 +269,7 @@ public static class LightingTestSceneBuilder
         var coolGO = new GameObject("Point_CoolFill");
         var coolLight = coolGO.AddComponent<Light>();
         coolLight.type = LightType.Point;
-        coolLight.intensity = 1.5f;
+        coolLight.intensity = 0.6f;
         coolLight.range = 7f;
         coolLight.color = new Color(0.45f, 0.65f, 1f);
         coolLight.shadows = LightShadows.Soft;
@@ -279,7 +279,7 @@ public static class LightingTestSceneBuilder
         var backlightGO = new GameObject("Spot_WindowBacklight");
         var backlight = backlightGO.AddComponent<Light>();
         backlight.type = LightType.Spot;
-        backlight.intensity = 5f;
+        backlight.intensity = 1.5f;
         backlight.range = 15f;
         backlight.spotAngle = 50f;
         backlight.color = new Color(1f, 0.92f, 0.8f);
@@ -291,7 +291,7 @@ public static class LightingTestSceneBuilder
         var readGO = new GameObject("Spot_ReadingLight");
         var readLight = readGO.AddComponent<Light>();
         readLight.type = LightType.Spot;
-        readLight.intensity = 4f;
+        readLight.intensity = 1.2f;
         readLight.range = 6f;
         readLight.spotAngle = 40f;
         readLight.color = new Color(1f, 0.95f, 0.85f);
@@ -584,39 +584,40 @@ public static class LightingTestSceneBuilder
         var cameras = new CinemachineCamera[8];
         var cameraParent = new GameObject("Cameras");
 
+        // Room spans x:[-5,5] y:[0,4] z:[-5,5]. All perspective cams inside room.
         // 4 Perspective cameras
         cameras[0] = BuildCinemachineCamera("Cam1_FrontOverview", cameraParent.transform,
-            new Vector3(0f, 3f, -6f), Quaternion.LookRotation(new Vector3(0f, -0.3f, 1f)),
+            new Vector3(0f, 2.5f, -4f), Quaternion.LookRotation(new Vector3(0f, -0.15f, 1f)),
             60f, false, 20);
 
         cameras[1] = BuildCinemachineCamera("Cam2_WindowBacklight", cameraParent.transform,
-            new Vector3(-5f, 2f, 0f), Quaternion.LookRotation(new Vector3(1f, -0.1f, 0.3f)),
+            new Vector3(-3.5f, 2f, 0f), Quaternion.LookRotation(new Vector3(1f, -0.1f, 0.5f)),
             55f, false, 0);
 
         cameras[2] = BuildCinemachineCamera("Cam3_CloseInterior", cameraParent.transform,
-            new Vector3(2f, 1.5f, 1f), Quaternion.LookRotation(new Vector3(0.3f, -0.1f, 0.5f)),
+            new Vector3(2f, 1.5f, 1.5f), Quaternion.LookRotation(new Vector3(0.3f, -0.2f, 0.5f)),
             45f, false, 0);
 
         cameras[3] = BuildCinemachineCamera("Cam4_HighAngle", cameraParent.transform,
-            new Vector3(0f, 8f, 0f), Quaternion.LookRotation(Vector3.down),
-            50f, false, 0);
+            new Vector3(0f, 3.8f, 0f), Quaternion.LookRotation(new Vector3(0f, -1f, 0.15f)),
+            70f, false, 0);
 
-        // 4 Orthographic cameras
+        // 4 Orthographic cameras (outside room — elevation/plan views looking inward)
         cameras[4] = BuildCinemachineCamera("Cam5_OrthoFront", cameraParent.transform,
             new Vector3(0f, 2f, -8f), Quaternion.LookRotation(Vector3.forward),
-            5f, true, 0);
+            6f, true, 0);
 
         cameras[5] = BuildCinemachineCamera("Cam6_OrthoSide", cameraParent.transform,
             new Vector3(-8f, 2f, 0f), Quaternion.LookRotation(Vector3.right),
-            5f, true, 0);
+            6f, true, 0);
 
         cameras[6] = BuildCinemachineCamera("Cam7_OrthoTop", cameraParent.transform,
             new Vector3(0f, 10f, 0f), Quaternion.LookRotation(Vector3.down),
-            6f, true, 0);
+            8f, true, 0);
 
         cameras[7] = BuildCinemachineCamera("Cam8_OrthoClose", cameraParent.transform,
-            new Vector3(1f, 1.5f, -3f), Quaternion.LookRotation(Vector3.forward),
-            3f, true, 0);
+            new Vector3(2f, 1.5f, -2f), Quaternion.LookRotation(Vector3.forward),
+            2.5f, true, 0);
 
         Debug.Log("[LightingTestSceneBuilder] 8 cameras built.");
         return cameras;
