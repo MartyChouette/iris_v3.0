@@ -47,6 +47,16 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Angle threshold (degrees) — tilted beyond this from upright = dishelved.")]
     [SerializeField] private float _dishevelAngle = 25f;
 
+    [Header("Home Position")]
+    [Tooltip("If true, captures spawn position as home on Awake (when _homePosition is unset).")]
+    [SerializeField] private bool _useSpawnAsHome;
+
+    [Tooltip("World-space home position. Set manually or auto-captured via _useSpawnAsHome.")]
+    [SerializeField] private Vector3 _homePosition;
+
+    [Tooltip("Distance threshold — object counts as 'at home' when within this range.")]
+    [SerializeField] private float _homeTolerance = 0.2f;
+
     // ── Static world bounds (set by ApartmentManager) ─────────────────
     private static Bounds s_worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
     private static bool s_boundsSet;
@@ -58,7 +68,20 @@ public class PlaceableObject : MonoBehaviour
     public ItemCategory Category => _itemCategory;
     public string HomeZoneName => _homeZoneName;
     public string ItemDescription => !string.IsNullOrEmpty(_itemDescription) ? _itemDescription : name;
-    public bool IsAtHome { get; set; }
+    private bool _isAtHomeOverride;
+    public bool IsAtHome
+    {
+        get => _isAtHomeOverride || IsNearHome;
+        set => _isAtHomeOverride = value;
+    }
+
+    /// <summary>
+    /// True when this object is near its home position (within tolerance).
+    /// Excludes held objects and requires a non-zero home position.
+    /// </summary>
+    public bool IsNearHome => _homePosition != Vector3.zero
+        && CurrentState != State.Held
+        && Vector3.Distance(transform.position, _homePosition) <= _homeTolerance;
     public bool CanWallMount => canWallMount;
     public bool WallOnly => wallOnly;
     public bool CanBeDishelved => _canBeDishelved;
@@ -136,6 +159,10 @@ public class PlaceableObject : MonoBehaviour
         _lastValidRotation = transform.rotation;
         _rb = GetComponent<Rigidbody>();
         _colliders = GetComponents<Collider>();
+
+        // Auto-capture spawn position as home
+        if (_useSpawnAsHome && _homePosition == Vector3.zero)
+            _homePosition = transform.position;
     }
 
     private void Update()
