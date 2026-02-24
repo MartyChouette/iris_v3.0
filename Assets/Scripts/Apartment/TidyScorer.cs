@@ -24,7 +24,10 @@ public class TidyScorer : MonoBehaviour
     [SerializeField] private float _smellWeight = 0.15f;
 
     [Tooltip("Weight for floor clutter in the tidiness formula.")]
-    [SerializeField] private float _clutterWeight = 0.15f;
+    [SerializeField] private float _clutterWeight = 0.10f;
+
+    [Tooltip("Weight for dishelved items (tilted books, magazines, etc).")]
+    [SerializeField] private float _dishevelWeight = 0.05f;
 
     [Header("Thresholds")]
     [Tooltip("Maximum expected mess items per area before objectClean = 0.")]
@@ -35,6 +38,9 @@ public class TidyScorer : MonoBehaviour
 
     [Tooltip("Smell amount per area above which smellClean = 0.")]
     [SerializeField] private float _smellThreshold = 1.5f;
+
+    [Tooltip("Maximum expected dishelved items per area before dishevelClean = 0.")]
+    [SerializeField] private int _maxExpectedDishelved = 3;
 
     [Header("Area Bounds (world-space X)")]
     [Tooltip("X boundary between Kitchen (lower) and LivingRoom (higher).")]
@@ -66,11 +72,13 @@ public class TidyScorer : MonoBehaviour
         float objectClean = GetObjectClean(area);
         float smellClean = GetSmellClean(area);
         float clutterClean = GetClutterClean(area);
+        float dishevelClean = GetDishevelClean(area);
 
         return stainClean * _stainWeight
              + objectClean * _objectWeight
              + smellClean * _smellWeight
-             + clutterClean * _clutterWeight;
+             + clutterClean * _clutterWeight
+             + dishevelClean * _dishevelWeight;
     }
 
     /// <summary>Average tidiness across all areas.</summary>
@@ -153,6 +161,23 @@ public class TidyScorer : MonoBehaviour
                 count++;
         }
         return count;
+    }
+
+    /// <summary>Dishelved cleanliness: tilted books, magazines, papers count as messy.</summary>
+    private float GetDishevelClean(ApartmentArea area)
+    {
+        int dishelvedCount = 0;
+        var placeables = PlaceableObject.All;
+        for (int i = 0; i < placeables.Count; i++)
+        {
+            var p = placeables[i];
+            if (!p.IsDishelved) continue;
+            if (p.CurrentState == PlaceableObject.State.Held) continue;
+            if (ClassifyPosition(p.transform.position) == area)
+                dishelvedCount++;
+        }
+
+        return 1f - Mathf.Clamp01((float)dishelvedCount / _maxExpectedDishelved);
     }
 
     private float GetSmellClean(ApartmentArea area)

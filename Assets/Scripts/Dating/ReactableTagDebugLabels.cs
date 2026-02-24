@@ -57,7 +57,7 @@ public class ReactableTagDebugLabels : MonoBehaviour
 
         foreach (var tag in ReactableTag.All)
         {
-            if (tag == null || !tag.IsActive || tag.IsPrivate) continue;
+            if (tag == null) continue;
 
             var labelGO = CreateWorldLabel(tag, prefs);
             _labelGOs.Add(labelGO);
@@ -93,8 +93,10 @@ public class ReactableTagDebugLabels : MonoBehaviour
 
     private GameObject CreateWorldLabel(ReactableTag tag, DatePreferences prefs)
     {
-        string text = string.Join(", ", tag.Tags);
-        Color color = GetTagColor(tag, prefs);
+        string privacy = tag.IsPrivate ? "[Private]" : "[Public]";
+        string activeStr = tag.IsActive ? "" : " (Inactive)";
+        string text = $"{privacy}{activeStr} {string.Join(", ", tag.Tags)}";
+        Color color = tag.IsPrivate ? new Color(0.6f, 0.6f, 0.6f) : GetTagColor(tag, prefs);
 
         var pivot = new GameObject($"DebugLabel_{tag.gameObject.name}");
         pivot.transform.position = tag.transform.position + Vector3.up * 0.3f;
@@ -104,14 +106,14 @@ public class ReactableTagDebugLabels : MonoBehaviour
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         var rt = canvasGO.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(200f, 40f);
+        rt.sizeDelta = new Vector2(400f, 50f);
         canvasGO.transform.localScale = Vector3.one * 0.005f;
 
         var textGO = new GameObject("Text");
         textGO.transform.SetParent(canvasGO.transform, false);
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.text = text;
-        tmp.fontSize = 16f;
+        tmp.fontSize = 22f;
         tmp.color = color;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.enableWordWrapping = false;

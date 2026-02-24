@@ -40,6 +40,13 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Random rotation range (degrees) applied when spawned on a wall.")]
     [SerializeField] private float crookedAngleRange = 12f;
 
+    [Header("Dishelved Detection")]
+    [Tooltip("If true, this item counts as messy when tilted (books, magazines, papers).")]
+    [SerializeField] private bool _canBeDishelved;
+
+    [Tooltip("Angle threshold (degrees) — tilted beyond this from upright = dishelved.")]
+    [SerializeField] private float _dishevelAngle = 25f;
+
     // ── Static world bounds (set by ApartmentManager) ─────────────────
     private static Bounds s_worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
     private static bool s_boundsSet;
@@ -54,7 +61,25 @@ public class PlaceableObject : MonoBehaviour
     public bool IsAtHome { get; set; }
     public bool CanWallMount => canWallMount;
     public bool WallOnly => wallOnly;
+    public bool CanBeDishelved => _canBeDishelved;
     public PlacementSurface LastPlacedSurface => _lastPlacedSurface;
+
+    /// <summary>
+    /// True when a dishelvable item is tilted beyond its angle threshold.
+    /// Books, magazines, papers on surfaces at an angle signal mess.
+    /// Wall-mounted items are excluded.
+    /// </summary>
+    public bool IsDishelved
+    {
+        get
+        {
+            if (!_canBeDishelved) return false;
+            if (CurrentState == State.Held) return false;
+            if (canWallMount) return false;
+            float angle = Vector3.Angle(transform.up, Vector3.up);
+            return angle > _dishevelAngle;
+        }
+    }
 
     /// <summary>
     /// True when the object is resting on the floor (not held, not on a surface/DropZone).

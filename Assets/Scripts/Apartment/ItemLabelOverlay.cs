@@ -104,7 +104,13 @@ public class ItemLabelOverlay : MonoBehaviour
 
             var tmp = labelGO.GetComponentInChildren<TMP_Text>();
             if (tmp != null)
-                tmp.text = p.ItemDescription;
+            {
+                var reactable = p.GetComponent<ReactableTag>();
+                string privacy = reactable != null
+                    ? (reactable.IsPrivate ? " [Private]" : " [Public]")
+                    : "";
+                tmp.text = $"{p.ItemDescription}{privacy}";
+            }
 
             _activeCount++;
         }
@@ -153,7 +159,7 @@ public class ItemLabelOverlay : MonoBehaviour
         canvas.sortingOrder = 20;
 
         var canvasRT = go.GetComponent<RectTransform>();
-        canvasRT.sizeDelta = new Vector2(200f, 40f);
+        canvasRT.sizeDelta = new Vector2(300f, 50f);
         canvasRT.localScale = new Vector3(0.002f, 0.002f, 0.002f);
 
         // Background pill
@@ -180,7 +186,7 @@ public class ItemLabelOverlay : MonoBehaviour
         textRT.localScale = Vector3.one;
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.text = "";
-        tmp.fontSize = 14f;
+        tmp.fontSize = 22f;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.enableWordWrapping = false;

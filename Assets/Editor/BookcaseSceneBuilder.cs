@@ -52,127 +52,51 @@ public static class BookcaseSceneBuilder
         new Color(0.35f, 0.38f, 0.18f),    // olive
     };
 
-    // Sample book data
+    // 5 books — content is placeholder, replace with real copy
     private static readonly string[] BookTitles =
     {
-        "Roots in Darkness",
-        "The Quiet Garden",
-        "Letters to Soil",
-        "Pressing Petals",
-        "On Wilting",
-        "Stem Theory",
-        "A Gentle Thorn",
-        "Bloom & Fade",
-        "The Potting Shed",
-        "Chlorophyll Dreams",
-        "Under the Canopy",
-        "Seed Catalog No. 7",
+        "The Flower Encyclopedia",
         "Still Life with Vase",
-        "Water & Light",
-        "The Pruner's Almanac",
+        "Roots in Darkness",
+        "Phantom Garden Vol. 1",
+        "Book Five",
     };
 
     private static readonly string[] BookAuthors =
     {
-        "Eleanor Moss",
-        "H. Fernwood",
-        "Clara Rootley",
-        "Jasper Thorn",
-        "Wren Dewdrop",
-        "P.L. Greenshaw",
-        "Ivy Ashcroft",
-        "Basil Harrow",
-        "Rose Underhill",
-        "Silas Compost",
-        "Hazel Canopy",
-        "Dahlia Greer",
+        "Dr. Iris Greenleaf",
         "Olive Stillman",
-        "Linden Clearwell",
-        "Sage Draper",
+        "Eleanor Moss",
+        "Hana Sakurai",
+        "TBD",
     };
 
     private static readonly string[][] BookPages =
     {
-        // Book 0 — Roots in Darkness (2 pages, 1 spread)
+        // Book 0 — The Flower Encyclopedia (flower encyclopedia)
         new[] {
-            "The roots do not ask permission. They push through clay and stone, searching for what they need in total darkness.",
-            "I have often wondered if the flower knows it is beautiful, or if beauty is simply a side effect of reaching toward light."
+            "(Flower encyclopedia content — page 1)",
+            "(Flower encyclopedia content — page 2)",
         },
-        // Book 1 — The Quiet Garden
+        // Book 1 — Still Life with Vase (coffee table book)
         new[] {
-            "A garden is never quiet. Listen closely: the earthworms turning, the slow exhale of opening buds, the patient drip.",
-            "She planted marigolds along the fence not for their color, but because they reminded her of someone she'd rather not forget."
+            "(Coffee table book content — page 1)",
+            "(Coffee table book content — page 2)",
         },
-        // Book 2 — Letters to Soil
+        // Book 2 — Roots in Darkness (novel)
         new[] {
-            "Dear Soil, I am writing to apologize. I have taken so much from you and returned so little.",
-            "The compost heap is a love letter written in eggshells and coffee grounds. Decomposition as devotion."
+            "(Novel content — page 1)",
+            "(Novel content — page 2)",
         },
-        // Book 3 — Pressing Petals (2 pages — has hidden pressed flower on spread 0)
+        // Book 3 — Phantom Garden Vol. 1 (manga)
         new[] {
-            "To press a flower is to stop time — or at least, to press pause. The color fades, but the shape remembers.",
-            "Page 47 of her journal: a flattened daisy, brown at the edges, still holding its circular argument."
+            "(Manga content — page 1)",
+            "(Manga content — page 2)",
         },
-        // Book 4 — On Wilting
+        // Book 4 — Book Five (TBD)
         new[] {
-            "Wilting is not failure. It is the flower's way of saying: I have given everything I had to give.",
-            "The drooping head of a sunflower in October carries more dignity than any spring bloom."
-        },
-        // Book 5 — Stem Theory
-        new[] {
-            "Chapter 1: The stem is not merely a support structure. It is a highway, a messenger, a spine.",
-            "Consider the hollow stem of the dandelion — empty inside, yet strong enough to hold a wish."
-        },
-        // Book 6 — A Gentle Thorn
-        new[] {
-            "The thorn exists not out of cruelty but out of memory. Every wound the rose has received is recorded there.",
-            "To hold a thorned stem gently requires practice. Most people never bother to learn."
-        },
-        // Book 7 — Bloom & Fade
-        new[] {
-            "The bloom arrives without announcement. One morning the bud is closed; the next, it has made its decision.",
-            "Fading is the bloom's longest act. We celebrate the opening, but the slow close deserves its own ovation."
-        },
-        // Book 8 — The Potting Shed
-        new[] {
-            "The potting shed smelled of damp earth and turpentine. Tools hung on nails, each one a different kind of patience.",
-            "He repotted the fern for the third time that year. It kept outgrowing its container. He respected that."
-        },
-        // Book 9 — Chlorophyll Dreams
-        new[] {
-            "Chlorophyll is the green dream of sunlight made solid. Every leaf is a sleeping solar panel.",
-            "The plant does not choose to photosynthesize. It simply faces the light and lets chemistry do the rest."
-        },
-        // Book 10 — Under the Canopy (4 pages, 2 spreads — longer story)
-        new[] {
-            "The canopy is a ceiling made of arguments — each branch competing for its share of sky.",
-            "Under the canopy, the light comes in fragments. The forest floor learns to make do with scraps.",
-            "She sat under the oak for an hour. When she stood, she understood something she could not put into words.",
-            "The tree did not care whether she understood. It had been speaking for centuries to anyone who would sit still."
-        },
-        // Book 11 — Seed Catalog No. 7 (4 pages, 2 spreads — has hidden note on spread 1)
-        new[] {
-            "Item 7A: Moonflower seeds. Plant in evening. Do not expect results before midnight.",
-            "Item 12C: Forget-me-nots. Self-explanatory. Plant near things you wish to remember.",
-            "Item 23F: Ghost orchid. Availability uncertain. May not exist. Order anyway.",
-            "Item 31D: Venus flytrap. Feeds itself. Do not anthropomorphize. It does not love you back."
-        },
-        // Book 12 — Still Life with Vase (4 pages, 2 spreads)
-        new[] {
-            "The vase held three stems: one straight, one curved, one broken. Together they made a sentence.",
-            "Still life painters know: the flower in the painting will outlast the flower on the table.",
-            "She arranged the flowers not for beauty but for conversation. The lily had something to say to the rose.",
-            "By the third day the petals had fallen. She painted them where they lay. It was a better composition."
-        },
-        // Book 13 — Water & Light
-        new[] {
-            "Water finds the root the way memory finds the dreamer — without effort, by gravity, in the dark.",
-            "Too much light bleaches. Too little starves. The plant's whole life is a negotiation between extremes."
-        },
-        // Book 14 — The Pruner's Almanac
-        new[] {
-            "January: Sharpen the shears. A clean cut heals faster than a ragged one. This applies to most things.",
-            "June: The roses will try to take over. Let them think they're winning, then prune on the solstice."
+            "(TBD content — page 1)",
+            "(TBD content — page 2)",
         },
     };
 
@@ -447,8 +371,8 @@ public static class BookcaseSceneBuilder
     // Floor beside bookcase: 5 books stacked flat
     // ════════════════════════════════════════════════════════════════════
 
-    // Books 0-9 go on the shelf; books 10-14 go as a floor stack beside the bookcase
-    private const int ShelfBookCount = 10;
+    // All books go on the shelf (no floor stack)
+    private const int ShelfBookCount = 5;
 
     private static void BuildBooks(GameObject bookcaseRoot, int booksLayer)
     {
@@ -474,21 +398,6 @@ public static class BookcaseSceneBuilder
 
         float xCursor = caseLeftX + 0.01f;
 
-        // Floor stack tracking (books 10-14)
-        float floorStackX = -0.2f; // beside bookcase, left of center
-        float floorStackY = 0f; // floor level
-        float floorStackZ = CaseCenterZ;
-
-        // Create FloorBookStack GO with BookStack component
-        var floorStackGO = new GameObject("FloorBookStack");
-        floorStackGO.transform.SetParent(booksParent.transform);
-        floorStackGO.transform.localPosition = Vector3.zero;
-        var floorBookStack = floorStackGO.AddComponent<BookStack>();
-        var floorStackSO = new SerializedObject(floorBookStack);
-        floorStackSO.FindProperty("_stackBase").vector3Value = new Vector3(floorStackX, 0f, floorStackZ);
-        floorStackSO.FindProperty("_stackRotation").quaternionValue = Quaternion.identity;
-        floorStackSO.ApplyModifiedPropertiesWithoutUndo();
-
         for (int bookIndex = 0; bookIndex < BookTitles.Length; bookIndex++)
         {
             float thickness = Mathf.Lerp(MinBookThickness, MaxBookThickness,
@@ -512,17 +421,11 @@ public static class BookcaseSceneBuilder
             def.thicknessScale = thickness;
 
             // Hidden items in select books
-            if (bookIndex == 3) // "Pressing Petals" — pressed flower
+            if (bookIndex == 0) // "The Flower Encyclopedia" — pressed flower
             {
                 def.hasHiddenItem = true;
                 def.hiddenItemDescription = "A pressed daisy, flattened between the pages.";
                 def.hiddenItemPage = 0;
-            }
-            else if (bookIndex == 11) // "Seed Catalog No. 7" — hidden note
-            {
-                def.hasHiddenItem = true;
-                def.hiddenItemDescription = "A handwritten note: \"Order #31D — she'll love this one.\"";
-                def.hiddenItemPage = 1;
             }
 
             string defPath = $"{defDir}/Book_{bookIndex:D3}_{title.Replace(" ", "_")}.asset";
@@ -532,9 +435,8 @@ public static class BookcaseSceneBuilder
             Vector3 bookScale;
             Quaternion bookRot = Quaternion.identity;
 
-            if (bookIndex < ShelfBookCount)
+            // All books on shelf, upright
             {
-                // Shelf books: upright as before
                 float bookX = xCursor + thickness / 2f;
                 float bookY = shelfTopY + bookHeight / 2f;
                 float bookZ = CaseCenterZ - (CaseDepth - bookDepth) / 2f * 0.5f;
@@ -542,19 +444,6 @@ public static class BookcaseSceneBuilder
                 bookPos = new Vector3(bookX, bookY, bookZ);
                 bookScale = new Vector3(thickness, bookHeight, bookDepth);
                 xCursor += thickness + BookGap;
-            }
-            else
-            {
-                // Floor stack: laid flat, stacked by thickness
-                float bookY = floorStackY + thickness / 2f;
-                float xOffset = Random.Range(-0.008f, 0.008f);
-                float zOffset = Random.Range(-0.008f, 0.008f);
-                float yaw = Random.Range(-6f, 6f);
-
-                bookPos = new Vector3(floorStackX + xOffset, bookY, floorStackZ + zOffset);
-                bookScale = new Vector3(bookDepth, thickness, bookHeight);
-                bookRot = Quaternion.Euler(0f, yaw, 0f);
-                floorStackY += thickness;
             }
 
             var bookGO = CreateBox($"Book_{bookIndex}", booksParent.transform,
@@ -595,10 +484,6 @@ public static class BookcaseSceneBuilder
             so.FindProperty("hiddenItemLabel").objectReferenceValue =
                 hiddenT != null ? hiddenT.GetComponent<TMP_Text>() : null;
 
-            // Wire floor books to the floor BookStack
-            if (bookIndex >= ShelfBookCount)
-                so.FindProperty("_stack").objectReferenceValue = floorBookStack;
-
             so.ApplyModifiedPropertiesWithoutUndo();
 
             bookGO.AddComponent<InteractableHighlight>();
@@ -607,7 +492,7 @@ public static class BookcaseSceneBuilder
         }
 
         Random.state = savedState;
-        Debug.Log($"[BookcaseSceneBuilder] Created {ShelfBookCount} shelf books on row {BookRow} + {BookTitles.Length - ShelfBookCount} floor books.");
+        Debug.Log($"[BookcaseSceneBuilder] Created {BookTitles.Length} books on row {BookRow}.");
     }
 
     private static GameObject BuildBookPages(Transform bookTransform, float thickness, float height, float depth)

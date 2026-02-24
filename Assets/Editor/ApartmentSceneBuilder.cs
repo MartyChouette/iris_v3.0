@@ -182,6 +182,10 @@ public static class ApartmentSceneBuilder
         labelOverlaySO.FindProperty("_placeableLayer").intValue = 1 << placeableLayer;
         labelOverlaySO.ApplyModifiedPropertiesWithoutUndo();
 
+        // ── 10e. ApartmentDebugPanel (F3 toggle) ──
+        var debugPanelGO = new GameObject("ApartmentDebugPanel");
+        debugPanelGO.AddComponent<ApartmentDebugPanel>();
+
         // ── 11. ApartmentManager + UI ──
         var apartmentUI = BuildApartmentManager(browseCam, grabber, areaDefs);
 
