@@ -122,7 +122,7 @@ public class AuthoredMessSpawner : MonoBehaviour
             }
         }
 
-        // Spawn stains
+        // Spawn stains at their authored positions
         var selectedStains = WeightedSelect(eligibleStains, _maxStainsPerDay);
         var activeSlots = new List<CleanableSurface>();
         int stainSlotIdx = 0;
@@ -133,6 +133,10 @@ public class AuthoredMessSpawner : MonoBehaviour
             var slot = _stainSlots[stainSlotIdx++];
             if (slot == null) continue;
             if (bp.spillDefinition == null) continue;
+
+            // Move slot to blueprint's authored position
+            if (bp.spawnPosition != Vector3.zero)
+                slot.transform.position = bp.spawnPosition;
 
             slot.SetDefinition(bp.spillDefinition);
             slot.gameObject.SetActive(true);
@@ -145,19 +149,15 @@ public class AuthoredMessSpawner : MonoBehaviour
         if (_cleaningManager != null)
             _cleaningManager.SetSurfaces(activeSlots.ToArray());
 
-        // Spawn objects
+        // Spawn objects at their authored positions
         var selectedObjects = WeightedSelect(eligibleObjects, _maxObjectsPerDay);
-        int objSlotIdx = 0;
 
         foreach (var bp in selectedObjects)
         {
-            if (_objectSlots == null || objSlotIdx >= _objectSlots.Length) break;
-            var slotTransform = _objectSlots[objSlotIdx++];
-            if (slotTransform == null) continue;
-
-            var go = SpawnMessObject(bp, slotTransform.position);
+            var go = SpawnMessObject(bp, bp.spawnPosition);
             if (go != null)
             {
+                go.transform.rotation = Quaternion.Euler(bp.spawnRotation);
                 _spawnedObjects.Add(go);
                 _spawnedBlueprintNames.Add(bp.messName);
             }

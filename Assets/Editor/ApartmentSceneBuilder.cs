@@ -3730,17 +3730,20 @@ public static class ApartmentSceneBuilder
         CreateMessBP(messDir, "Empty_Wine_Bottle", "Empty Wine Bottle", "Last night was... something.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
             weight: 1.8f, objColor: new Color(0.15f, 0.3f, 0.12f), objScale: new Vector3(0.09f, 0.3f, 0.09f),
-            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+            areas: new[] { ApartmentArea.LivingRoom },
+            spawnPos: new Vector3(-0.6f, 0.46f, 2.0f)); // coffee table
 
         CreateMessBP(messDir, "Dirty_Mug", "Dirty Mug", "Rings of old coffee stain the inside.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
             weight: 1.3f, objColor: new Color(0.85f, 0.82f, 0.75f), objScale: new Vector3(0.09f, 0.12f, 0.09f),
-            areas: new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom });
+            areas: new[] { ApartmentArea.Kitchen },
+            spawnPos: new Vector3(-3.8f, 0.82f, -3.5f)); // kitchen table
 
         CreateMessBP(messDir, "Scattered_Magazine", "Scattered Magazine", "Open to a horoscope page.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
             weight: 1.0f, objColor: new Color(0.8f, 0.3f, 0.35f), objScale: new Vector3(0.21f, 0.015f, 0.15f),
-            areas: new[] { ApartmentArea.LivingRoom }, canBeDishelved: true);
+            areas: new[] { ApartmentArea.LivingRoom }, canBeDishelved: true,
+            spawnPos: new Vector3(-0.4f, 0.46f, 1.8f), spawnRot: new Vector3(0f, 15f, 8f)); // coffee table, tilted
 
         AssetDatabase.SaveAssets();
         Debug.Log("[ApartmentSceneBuilder] MessBlueprint SOs ensured.");
@@ -3751,7 +3754,8 @@ public static class ApartmentSceneBuilder
         SpillDefinition spillDef = null, bool requireSuccess = false, bool requireFailure = false,
         float minAffection = 0f, float maxAffection = 100f, string requireTag = "",
         int minDay = 1, float weight = 1f, Color? objColor = null, Vector3? objScale = null,
-        ApartmentArea[] areas = null, bool canBeDishelved = false)
+        ApartmentArea[] areas = null, bool canBeDishelved = false,
+        Vector3? spawnPos = null, Vector3? spawnRot = null)
     {
         string path = $"{dir}/Mess_{fileName}.asset";
         if (AssetDatabase.LoadAssetAtPath<MessBlueprint>(path) != null) return;
@@ -3773,6 +3777,8 @@ public static class ApartmentSceneBuilder
         bp.objectScale = objScale ?? Vector3.one * 0.1f;
         bp.allowedAreas = areas ?? new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom };
         bp.canBeDishelved = canBeDishelved;
+        bp.spawnPosition = spawnPos ?? Vector3.zero;
+        bp.spawnRotation = spawnRot ?? Vector3.zero;
 
         AssetDatabase.CreateAsset(bp, path);
     }

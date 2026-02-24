@@ -69,7 +69,13 @@ public class MessBlueprint : ScriptableObject
     public int minDay = 1;
 
     [Header("Placement")]
-    [Tooltip("Which area(s) this mess can spawn in.")]
+    [Tooltip("Exact world position to spawn this mess. Each blueprint owns its location.")]
+    public Vector3 spawnPosition;
+
+    [Tooltip("Spawn rotation (Euler angles).")]
+    public Vector3 spawnRotation;
+
+    [Tooltip("Which area(s) this mess can spawn in (used by TidyScorer, not placement).")]
     public ApartmentArea[] allowedAreas;
 
     [Tooltip("Weight for random selection within the eligible pool.")]
