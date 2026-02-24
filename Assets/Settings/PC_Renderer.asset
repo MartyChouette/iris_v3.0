@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b544912b166aba4f86a5a51d3a196a1, type: 3}
   m_Name: PSXPostProcessFeature
   m_EditorClassIdentifier: Assembly-CSharp::PSXPostProcessFeature
-  m_Active: 1
+  m_Active: 0
   settings:
-    resolutionDivisor: 5
-    colorDepth: 18
+    resolutionDivisor: 1
+    colorDepth: 9
     ditherIntensity: 1
+  _postShader: {fileID: 0}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
