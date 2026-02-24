@@ -144,8 +144,8 @@ public static class ApartmentSceneBuilder
         // ── 6. Placeable objects + ReactableTags ──
         BuildPlaceableObjects(placeableLayer);
 
-        // ── 6b. Dirty dishes + drop zone ──
-        BuildDirtyDishes(placeableLayer, surfacesLayer);
+        // ── 6b. Dirty dishes + drop zone (disabled — all mess via AuthoredMessSpawner) ──
+        // BuildDirtyDishes(placeableLayer, surfacesLayer);
 
         // ── 6c. Entrance area (shoe rack, coat rack, entrance furniture) ──
         BuildEntranceArea(placeableLayer, surfacesLayer);
@@ -221,8 +221,8 @@ public static class ApartmentSceneBuilder
         // ── 13c. TidyScorer (apartment tidiness aggregation) ──
         BuildTidyScorer();
 
-        // ── 13d. DailyMessSpawner (trash + misplaced items each morning) ──
-        BuildDailyMessSpawner();
+        // ── 13d. DailyMessSpawner (disabled — all mess via AuthoredMessSpawner) ──
+        // BuildDailyMessSpawner();
 
         // ── 13e. FlowerTrimmingBridge (date → flower scene transition) ──
         BuildFlowerTrimmingBridge();
@@ -4862,58 +4862,13 @@ public static class ApartmentSceneBuilder
         slippers.AddComponent<InteractableHighlight>();
         AddReactableTag(slippers, new[] { "shoes", "mess" }, true, displayName: "Slippers");
 
-        // Coat
-        var coat = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        coat.name = "Coat";
-        coat.transform.SetParent(parent.transform);
-        coat.transform.position = CoatRackPos + new Vector3(0f, 1.6f, 0f);
-        coat.transform.localScale = new Vector3(0.3f, 0.4f, 0.08f);
-        coat.layer = placeableLayer;
-        coat.isStatic = false;
-        SetMaterial(coat, new Color(0.15f, 0.2f, 0.3f));
-
-        var coatRB = coat.AddComponent<Rigidbody>();
-        coatRB.mass = 0.4f;
-        var coatPO = coat.AddComponent<PlaceableObject>();
-        var coatPOSO = new SerializedObject(coatPO);
-        coatPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Coat;
-        coatPOSO.FindProperty("_homeZoneName").stringValue = "CoatRack";
-        coatPOSO.ApplyModifiedPropertiesWithoutUndo();
-        coat.AddComponent<InteractableHighlight>();
-        AddReactableTag(coat, new[] { "coat", "mess" }, true, displayName: "Coat");
-
-        // Hat
-        var hat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        hat.name = "Hat";
-        hat.transform.SetParent(parent.transform);
-        hat.transform.position = CoatRackPos + new Vector3(0.15f, 1.6f, 0f);
-        hat.transform.localScale = new Vector3(0.2f, 0.05f, 0.2f);
-        hat.layer = placeableLayer;
-        hat.isStatic = false;
-        SetMaterial(hat, new Color(0.6f, 0.5f, 0.35f));
-
-        // Replace CapsuleCollider with BoxCollider
-        var hatCapsule = hat.GetComponent<CapsuleCollider>();
-        if (hatCapsule != null) Object.DestroyImmediate(hatCapsule);
-        hat.AddComponent<BoxCollider>();
-
-        var hatRB = hat.AddComponent<Rigidbody>();
-        hatRB.mass = 0.15f;
-        var hatPO = hat.AddComponent<PlaceableObject>();
-        var hatPOSO = new SerializedObject(hatPO);
-        hatPOSO.FindProperty("_itemCategory").enumValueIndex = (int)ItemCategory.Hat;
-        hatPOSO.FindProperty("_homeZoneName").stringValue = "CoatRack";
-        hatPOSO.ApplyModifiedPropertiesWithoutUndo();
-        hat.AddComponent<InteractableHighlight>();
-        AddReactableTag(hat, new[] { "hat", "mess" }, true, displayName: "Hat");
-
         // ── Entrance bench / mat for decoration ──
         CreateBox("EntranceMat", parent.transform,
             EntranceAreaPos + new Vector3(0f, 0.01f, 0f),
             new Vector3(1.0f, 0.02f, 0.5f),
             new Color(0.4f, 0.35f, 0.3f));
 
-        Debug.Log("[ApartmentSceneBuilder] Entrance area built (shoe rack, coat rack, shoes, coat, hat).");
+        Debug.Log("[ApartmentSceneBuilder] Entrance area built (shoe rack, shoes).");
     }
 
     // ══════════════════════════════════════════════════════════════════
