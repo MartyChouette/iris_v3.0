@@ -246,6 +246,11 @@ public class ObjectGrabber : MonoBehaviour
         _isOnWall = false;
 
         placeable.OnPickedUp();
+
+        // Book hidden item check
+        var bookItem = placeable.GetComponent<BookItem>();
+        if (bookItem != null) bookItem.OnBookPickedUp();
+
         AudioManager.Instance?.PlaySFX(_pickupSFX);
         ShowShadow(true);
 
