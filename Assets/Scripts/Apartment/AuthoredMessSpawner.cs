@@ -291,6 +291,8 @@ public class AuthoredMessSpawner : MonoBehaviour
         poSO.SetEnum("_itemCategory", (int)ItemCategory.Trash);
         poSO.SetString("_homeZoneName", "TrashCan");
         poSO.SetString("_itemDescription", !string.IsNullOrEmpty(bp.description) ? bp.description : bp.messName);
+        if (bp.canBeDishelved)
+            poSO.SetBool("_canBeDishelved", true);
 
         // Add InteractableHighlight
         if (go.GetComponent<InteractableHighlight>() == null)
@@ -340,6 +342,13 @@ public class AuthoredMessSpawner : MonoBehaviour
         }
 
         public void SetString(string fieldName, string value)
+        {
+            var field = _target.GetType().GetField(fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null) field.SetValue(_target, value);
+        }
+
+        public void SetBool(string fieldName, bool value)
         {
             var field = _target.GetType().GetField(fieldName,
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

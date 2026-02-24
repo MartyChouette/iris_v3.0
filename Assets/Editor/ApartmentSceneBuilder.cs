@@ -686,6 +686,7 @@ public static class ApartmentSceneBuilder
             new Vector3(-0.372f, 0.42f, 2.084f), new Vector3(0.22f, 0.025f, 0.30f),
             new Color(0.7f, 0.3f, 0.3f), placeableLayer);
         SetItemDescription(magazine, "Last month's gardening magazine.");
+        SetDishelved(magazine, true);
 
         // Yoyo on coffee table
         var yoyo = CreatePlaceable("Yoyo", parent.transform,
@@ -733,6 +734,16 @@ public static class ApartmentSceneBuilder
         if (placeable == null) return;
         var so = new SerializedObject(placeable);
         so.FindProperty("_itemDescription").stringValue = description;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void SetDishelved(GameObject go, bool canBeDishelved, float angle = 25f)
+    {
+        var placeable = go.GetComponent<PlaceableObject>();
+        if (placeable == null) return;
+        var so = new SerializedObject(placeable);
+        so.FindProperty("_canBeDishelved").boolValue = canBeDishelved;
+        so.FindProperty("_dishevelAngle").floatValue = angle;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -3729,7 +3740,7 @@ public static class ApartmentSceneBuilder
         CreateMessBP(messDir, "Scattered_Magazine", "Scattered Magazine", "Open to a horoscope page.",
             MessBlueprint.MessCategory.General, MessBlueprint.MessType.Object,
             weight: 1.0f, objColor: new Color(0.8f, 0.3f, 0.35f), objScale: new Vector3(0.21f, 0.015f, 0.15f),
-            areas: new[] { ApartmentArea.LivingRoom });
+            areas: new[] { ApartmentArea.LivingRoom }, canBeDishelved: true);
 
         AssetDatabase.SaveAssets();
         Debug.Log("[ApartmentSceneBuilder] MessBlueprint SOs ensured.");
@@ -3740,7 +3751,7 @@ public static class ApartmentSceneBuilder
         SpillDefinition spillDef = null, bool requireSuccess = false, bool requireFailure = false,
         float minAffection = 0f, float maxAffection = 100f, string requireTag = "",
         int minDay = 1, float weight = 1f, Color? objColor = null, Vector3? objScale = null,
-        ApartmentArea[] areas = null)
+        ApartmentArea[] areas = null, bool canBeDishelved = false)
     {
         string path = $"{dir}/Mess_{fileName}.asset";
         if (AssetDatabase.LoadAssetAtPath<MessBlueprint>(path) != null) return;
@@ -3761,6 +3772,7 @@ public static class ApartmentSceneBuilder
         bp.objectColor = objColor ?? Color.gray;
         bp.objectScale = objScale ?? Vector3.one * 0.1f;
         bp.allowedAreas = areas ?? new[] { ApartmentArea.Kitchen, ApartmentArea.LivingRoom };
+        bp.canBeDishelved = canBeDishelved;
 
         AssetDatabase.CreateAsset(bp, path);
     }
