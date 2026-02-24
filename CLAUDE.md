@@ -24,6 +24,7 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
 | Window > Iris > Build Settings Panel | `Assets/Editor/SettingsPanelBuilder.cs` | Generates settings panel prefab with all tabs/controls |
 | Window > Iris > Build Lighting Test Scene | `Assets/Editor/LightingTestSceneBuilder.cs` | Generates lighting/shader test scene with 8 cameras, debug HUD, PSX controls, weather/nature sliders |
+| Window > Iris > Mess Editor | `Assets/Editor/MessEditorWindow.cs` | Overview window for all MessBlueprint SOs — filter, select, edit, scene view gizmos |
 
 ## Code Conventions
 
@@ -60,6 +61,8 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | `AccessibilitySettings` | Static utility | `Assets/Scripts/Framework/AccessibilitySettings.cs` |
 | `CaptionDisplay` | Persistent (DDoL) | `Assets/Scripts/UI/CaptionDisplay.cs` |
 | `TidyScorer` | Scene-scoped | `Assets/Scripts/Apartment/TidyScorer.cs` |
+| `AuthoredMessSpawner` | Scene-scoped | `Assets/Scripts/Apartment/AuthoredMessSpawner.cs` |
+| `ApartmentDebugPanel` | Scene-scoped | `Assets/Scripts/Apartment/ApartmentDebugPanel.cs` |
 | `SimplePauseMenu` | Scene-scoped | `Assets/Scripts/UI/SimplePauseMenu.cs` |
 
 ## Script Directory Map
@@ -161,6 +164,40 @@ Station group positions (lines 30-32):
 | `DrinkMakingStationPos` | (-4, 0, -5.2) | Drink station in kitchen |
 
 Edit these, then re-run **Window > Iris > Build Apartment Scene** to regenerate.
+
+### Authored Mess System
+
+Blueprint-driven mess spawning replaces the old random stain/trash system. Each mess is a `MessBlueprint` ScriptableObject with narrative conditions tied to date outcomes, flower trims, and day progression.
+
+**Architecture:**
+```
+MessBlueprint (SO) — defines a single mess (stain or object)
+    ├─ Identity: messName, description (flavor text)
+    ├─ Classification: MessCategory (DateAftermath/OffScreen/General), MessType (Stain/Object)
+    ├─ Conditions: requireDateSuccess/Failure, minAffection, requireReactionTag,
+    │              requireBadFlowerTrim (<40), requireGoodFlowerTrim (>=80), minDay
+    ├─ Placement: spawnPosition, spawnRotation, allowedAreas, weight
+    ├─ Stain settings: SpillDefinition reference
+    └─ Object settings: objectPrefab (or procedural box with objectScale/objectColor), canBeDishelved
+
+AuthoredMessSpawner (scene-scoped singleton)
+    ├─ Filters eligible blueprints by DateOutcomeCapture + GameClock day
+    ├─ Weighted random selection (Fisher-Yates), up to _maxStainsPerDay / _maxObjectsPerDay
+    ├─ Stains → moves pre-placed CleanableSurface slots to authored positions
+    ├─ Objects → instantiates prefab or procedural box with PlaceableObject + ReactableTag
+    └─ Called by DayPhaseManager during ExplorationTransition, or auto-spawns if no DPM
+
+DailyMessSpawner (scene-scoped singleton)
+    └─ Entrance item misplacement only (shoes, coat, hat to random wrong positions)
+```
+
+**Editor tools:**
+- `MessBlueprintEditor` — custom inspector with condition summary, validation warnings, procedural preview, "Capture Position from Scene View" button, draggable scene gizmos (discs for stains, cubes for objects), color-coded by category (red=DateAftermath, blue=OffScreen, green=General)
+- `MessEditorWindow` (`Window > Iris > Mess Editor`) — split-panel overview of all blueprints, filter by category/type/search, embedded inspector, toggleable scene gizmos, "New Mess Blueprint" button with category/type picker
+
+**SOs:** `Assets/ScriptableObjects/Messes/` (15 blueprints — wine ring, lipstick smear, broken glass, muddy footprints, spilled coffee, wilted petals, petal debris, stem clippings, wilted leaves, etc.)
+
+**Debug:** `ApartmentDebugPanel` (F3) — runtime overlay with grid snap slider, tidiness %, clock, mood readout.
 
 ## Vertical Slice — Full Game Flow
 
@@ -266,7 +303,9 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Entrance judgments | Working | EntranceJudgmentSequence (outfit, perfume, welcome, cleanliness) |
 | Outfit selection | Working | OutfitSelector |
 | Tidiness scoring | Working | TidyScorer, DailyMessSpawner, DropZone, ItemCategory |
-| Pre-spawned mess | Working | DailyMessSpawner (trash + misplaced entrance items each morning) |
+| Authored mess system | Working | MessBlueprint (SO), AuthoredMessSpawner, MessBlueprintEditor, MessEditorWindow |
+| Pre-spawned mess | Working | DailyMessSpawner (entrance item misplacement) + AuthoredMessSpawner (blueprint-driven stains + objects) |
+| Apartment debug panel | Working | ApartmentDebugPanel (F3 toggle, grid snap slider, tidiness/clock/mood readout) |
 | Ambient watering | Working | WateringManager, WaterablePlant (not a station, always active) |
 | Name entry overlay | Working | NameEntryScreen (in-apartment overlay, calls DayManager.BeginDay1) |
 | Apartment calendar | Working | ApartmentCalendar (7-day grid with date history) |
