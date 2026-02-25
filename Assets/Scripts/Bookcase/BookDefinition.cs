@@ -31,6 +31,13 @@ public class BookDefinition : ScriptableObject
     public int hiddenItemPage = -1;
 
     // ──────────────────────────────────────────────────────────────
+    // Date Reactions
+    // ──────────────────────────────────────────────────────────────
+    [Header("Date Reactions")]
+    [Tooltip("Tags for ReactableTag (e.g. 'poetry', 'manga'). Matched against DatePreferences.")]
+    public string[] reactionTags = { "book" };
+
+    // ──────────────────────────────────────────────────────────────
     // Visuals
     // ──────────────────────────────────────────────────────────────
     [Header("Visuals")]

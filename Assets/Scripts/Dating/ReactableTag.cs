@@ -55,6 +55,15 @@ public class ReactableTag : MonoBehaviour
         set => smellAmount = value;
     }
 
+    /// <summary>
+    /// Configure tags and display name at runtime (e.g. from BookDefinition).
+    /// </summary>
+    public void Setup(string[] newTags, string newDisplayName)
+    {
+        tags = newTags;
+        displayName = newDisplayName;
+    }
+
     // ──────────────────────────────────────────────────────────────
     // Static registry
     // ──────────────────────────────────────────────────────────────

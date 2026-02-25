@@ -22,6 +22,10 @@ MonoBehaviour:
   hasHiddenItem: 0
   hiddenItemDescription:
   hiddenItemPage: -1
+  reactionTags:
+  - book
+  - fiction
+  - literature
   spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
   heightScale: 0.85
   thicknessScale: 0.032

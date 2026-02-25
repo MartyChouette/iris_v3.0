@@ -22,6 +22,10 @@ MonoBehaviour:
   hasHiddenItem: 1
   hiddenItemDescription: A pressed violet, perfectly flat, its edges translucent with age.
   hiddenItemPage: 0
+  reactionTags:
+  - book
+  - reference
+  - flowers
   spineColor: {r: 0.25, g: 0.35, b: 0.2, a: 1}
   heightScale: 0.95
   thicknessScale: 0.055

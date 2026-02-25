@@ -22,6 +22,10 @@ MonoBehaviour:
   hasHiddenItem: 1
   hiddenItemDescription: A faded concert ticket stub tucked between the pages.
   hiddenItemPage: 1
+  reactionTags:
+  - book
+  - personal
+  - sentimental
   spineColor: {r: 0.55, g: 0.3, b: 0.3, a: 1}
   heightScale: 0.9
   thicknessScale: 0.05

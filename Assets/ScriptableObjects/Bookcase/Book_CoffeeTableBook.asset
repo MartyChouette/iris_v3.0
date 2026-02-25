@@ -22,6 +22,10 @@ MonoBehaviour:
   hasHiddenItem: 0
   hiddenItemDescription:
   hiddenItemPage: -1
+  reactionTags:
+  - book
+  - art
+  - photography
   spineColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
   heightScale: 0.92
   thicknessScale: 0.045
