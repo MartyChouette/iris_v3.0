@@ -741,6 +741,10 @@ public class ObjectGrabber : MonoBehaviour
                 _heldRb.linearVelocity = Vector3.zero;
                 _held.OnPlaced(nearest, false, pos, rot);
 
+                // Book public/private toggle on force-drop
+                var bookItem = _held.GetComponent<BookItem>();
+                if (bookItem != null) bookItem.OnBookPlaced(nearest);
+
                 // Stack-aware plate hooks on force-drop
                 var stackable = _held.GetComponent<StackablePlate>();
                 if (stackable != null)
