@@ -942,6 +942,15 @@ public static class ApartmentSceneBuilder
             Vector3.zero, new Vector3(1.0f, 0.1f, 1.0f)),
             PlacementSurface.SurfaceAxis.Up, surfacesLayer);
 
+        // Coffee table DropZone — books placed here count as "at home" via _altHomeZoneName
+        {
+            var dz = refs.coffeeTable.AddComponent<DropZone>();
+            var dzSO = new SerializedObject(dz);
+            dzSO.FindProperty("_zoneName").stringValue = "CoffeeTable";
+            dzSO.FindProperty("_destroyOnDeposit").boolValue = false;
+            dzSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         // Kitchen table surface (horizontal)
         // KitchenTable_Top is a unit cube scaled to (1.2, 0.05, 0.8) — bounds in local (unit) space
         AddSurface(refs.kitchenTable, new Bounds(
