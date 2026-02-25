@@ -20,6 +20,44 @@ public class BookItem : MonoBehaviour
     public BookDefinition Definition => _definition;
 
     private bool _hiddenItemDropped;
+    private ReactableTag _reactable;
+
+    private void Awake()
+    {
+        _reactable = GetComponent<ReactableTag>();
+        if (_reactable == null)
+            _reactable = gameObject.AddComponent<ReactableTag>();
+
+        if (_definition != null)
+        {
+            _reactable.Setup(
+                _definition.reactionTags.Length > 0 ? _definition.reactionTags : new[] { "book" },
+                _definition.title);
+        }
+
+        // Shelf default: active but private (date ignores books on shelves)
+        _reactable.IsActive = true;
+        _reactable.IsPrivate = true;
+    }
+
+    /// <summary>
+    /// Called by ObjectGrabber after placement. Toggles public/private
+    /// based on whether the book landed on a coffee table DropZone.
+    /// </summary>
+    public void OnBookPlaced(PlacementSurface surface)
+    {
+        if (_reactable == null) return;
+
+        bool onCoffeeTable = false;
+        if (surface != null)
+        {
+            var zone = surface.GetComponent<DropZone>();
+            if (zone != null && zone.ZoneName == "CoffeeTable")
+                onCoffeeTable = true;
+        }
+
+        _reactable.IsPrivate = !onCoffeeTable;
+    }
 
     /// <summary>
     /// Called by ObjectGrabber after PlaceableObject.OnPickedUp().
@@ -27,6 +65,9 @@ public class BookItem : MonoBehaviour
     /// </summary>
     public void OnBookPickedUp()
     {
+        if (_reactable != null)
+            _reactable.IsPrivate = true;
+
         if (_hiddenItemDropped) return;
         if (_definition == null || !_definition.hasHiddenItem) return;
         if (_hiddenItemPrefab == null) return;
