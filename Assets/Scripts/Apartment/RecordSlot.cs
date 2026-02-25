@@ -4,9 +4,15 @@ using UnityEngine;
 /// Turntable/record player receiver. Accepts a PlaceableObject with RecordItem,
 /// manages playback via AudioManager, feeds MoodMachine, and toggles ReactableTag.
 /// Place on the turntable GameObject alongside a ReactableTag.
+/// Scene-scoped singleton (one turntable per apartment).
 /// </summary>
 public class RecordSlot : MonoBehaviour
 {
+    public static RecordSlot Instance { get; private set; }
+
+    /// <summary>Fired when a record starts playing (for MidDateActionWatcher).</summary>
+    public static event System.Action OnRecordChanged;
+
     [Header("Visuals")]
     [Tooltip("Transform of the disc visual (rotated during playback).")]
     [SerializeField] private Transform _discVisual;
@@ -38,6 +44,14 @@ public class RecordSlot : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[RecordSlot] Duplicate instance destroyed.");
+            Destroy(this);
+            return;
+        }
+        Instance = this;
+
         if (_discRenderer != null)
         {
             _labelMat = new Material(_discRenderer.sharedMaterial);
@@ -47,6 +61,7 @@ public class RecordSlot : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         if (_labelMat != null)
             Object.Destroy(_labelMat);
     }
@@ -151,6 +166,16 @@ public class RecordSlot : MonoBehaviour
             StartPlayback();
     }
 
+    /// <summary>
+    /// Stops playback without ejecting the record. Called by GameClock / DayPhaseManager
+    /// during phase transitions.
+    /// </summary>
+    public void Stop()
+    {
+        if (_isPlaying)
+            StopPlayback();
+    }
+
     private void StartPlayback()
     {
         if (_loadedRecordItem == null || _loadedRecordItem.Definition == null) return;
@@ -174,6 +199,7 @@ public class RecordSlot : MonoBehaviour
         if (reactable != null) reactable.IsActive = true;
 
         AudioManager.Instance?.PlaySFX(_playSFX);
+        OnRecordChanged?.Invoke();
 
         Debug.Log($"[RecordSlot] Playing: {def.title} by {def.artist}");
     }

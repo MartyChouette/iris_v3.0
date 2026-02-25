@@ -606,7 +606,7 @@ public class DayPhaseManager : MonoBehaviour
     private void DismissAllStationUI()
     {
         WateringManager.Instance?.ForceIdle();
-        RecordPlayerManager.Instance?.StopPlayback();
+        RecordSlot.Instance?.Stop();
         SimpleDrinkManager.Instance?.ForceIdle();
         FridgeController.Instance?.CloseDoor();
 

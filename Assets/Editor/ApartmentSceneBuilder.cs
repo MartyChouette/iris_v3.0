@@ -88,10 +88,14 @@ public static class ApartmentSceneBuilder
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         int placeableLayer = EnsureLayer(PlaceableLayerName);
-        int booksLayer = EnsureLayer(BooksLayerName);
-        int drawersLayer = EnsureLayer(DrawersLayerName);
-        int perfumesLayer = EnsureLayer(PerfumesLayerName);
-        int coffeeTableBooksLayer = EnsureLayer(CoffeeTableBooksLayerName);
+        // NOTE: Books/Drawers/Perfumes/CoffeeTableBooks/VinylStack/Turntable layers
+        // were used by the retired bookcase and record player station builders.
+        // Layers are still ensured for hand-placed scene objects but no longer
+        // assigned by code here.
+        EnsureLayer(BooksLayerName);
+        EnsureLayer(DrawersLayerName);
+        EnsureLayer(PerfumesLayerName);
+        EnsureLayer(CoffeeTableBooksLayerName);
         int newspaperLayer = EnsureLayer(NewspaperLayerName);
         int cleanableLayer = EnsureLayer(CleanableLayerName);
         int phoneLayer = EnsureLayer(PhoneLayerName);
@@ -99,8 +103,8 @@ public static class ApartmentSceneBuilder
         int plantsLayer = EnsureLayer(PlantsLayerName);
         int glassLayer = EnsureLayer(GlassLayerName);
         int surfacesLayer = EnsureLayer(SurfacesLayerName);
-        int vinylStackLayer = EnsureLayer(VinylStackLayerName);
-        int turntableLayer = EnsureLayer(TurntableLayerName);
+        EnsureLayer(VinylStackLayerName);
+        EnsureLayer(TurntableLayerName);
         int doorLayer = EnsureLayer(DoorLayerName);
 
         // ── 1. Lighting ──
@@ -130,9 +134,9 @@ public static class ApartmentSceneBuilder
         BuildApartmentModel();
 
         // ── 4. Modular station groups ──
-        BuildBookcaseStationGroup(camGO, booksLayer, drawersLayer,
-            perfumesLayer, coffeeTableBooksLayer);
-        BuildRecordPlayerStationGroup(vinylStackLayer, turntableLayer);
+        // NOTE: Bookcase and RecordPlayer station groups are now hand-placed
+        // using FBX furniture + PlaceableObject/BookItem/RecordItem/RecordSlot.
+        // See _Parked/BookcaseSceneBuilder.cs and _Parked/RecordPlayerManager.cs.
         BuildDrinkMakingStationGroup(camGO, fridgeLayer, glassLayer);
 
         // ── 4d. Newspaper station (DayPhaseManager-driven, not a StationRoot) ──
@@ -487,7 +491,7 @@ public static class ApartmentSceneBuilder
             new Vector3(-1.834f, 1.067f, -2.15f), new Vector3(1.5f, 0.08f, 0.4f),
             new Color(0.50f, 0.45f, 0.38f));
         {
-            int surfLayer = BookcaseSceneBuilder.EnsureLayer("Surfaces");
+            int surfLayer = EnsureLayer("Surfaces");
             sunLedge.layer = surfLayer;
             sunLedge.isStatic = false;
             var ledgeSurface = sunLedge.AddComponent<PlacementSurface>();
@@ -520,7 +524,7 @@ public static class ApartmentSceneBuilder
                 new Vector3(3.8f, 1.28f, 2.0f), new Vector3(0.04f, 0.2f, 0.25f),
                 new Color(0.30f, 0.28f, 0.25f));
 
-            int surfLayer = BookcaseSceneBuilder.EnsureLayer("Surfaces");
+            int surfLayer = EnsureLayer("Surfaces");
             shelfTop.layer = surfLayer;
             shelfTop.isStatic = false;
             var shelfSurface = shelfTop.AddComponent<PlacementSurface>();
@@ -1179,47 +1183,12 @@ public static class ApartmentSceneBuilder
     // Modular Station Groups
     // ══════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Builds the bookcase station as a self-contained group:
-    /// BookcaseUnit + BookInteractionManager. No station camera — uses browse cam.
-    /// </summary>
-    private static void BuildBookcaseStationGroup(GameObject camGO,
-        int booksLayer, int drawersLayer, int perfumesLayer,
-        int coffeeTableBooksLayer)
-    {
-        var groupGO = new GameObject("Station_Bookcase");
+    // NOTE: BuildBookcaseStationGroup and BuildRecordPlayerStationGroup
+    // have been retired. Books and records are now hand-placed as
+    // PlaceableObject + BookItem / RecordItem on FBX furniture.
+    // See _Parked/ for the original implementations.
 
-        // Coffee table target (world-space, baked into each CoffeeTableBook's serialized fields)
-        Vector3 ctBase = new Vector3(-0.571f, 0.38f, 2.007f);
-        Quaternion ctRot = Quaternion.Euler(0f, 5f, 90f);
-
-        // Bookcase unit (shared with standalone bookcase scene)
-        var bookcaseRoot = BookcaseSceneBuilder.BuildBookcaseUnit(
-            booksLayer, drawersLayer, perfumesLayer, coffeeTableBooksLayer,
-            ctBase, ctRot);
-        bookcaseRoot.transform.SetParent(groupGO.transform);
-        bookcaseRoot.transform.localPosition = Vector3.zero;
-        bookcaseRoot.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
-
-        // BookInteractionManager
-        var bookManager = BuildBookInteractionManager(camGO, booksLayer,
-            drawersLayer, perfumesLayer, coffeeTableBooksLayer);
-        bookManager.transform.SetParent(groupGO.transform);
-
-        // No ReactableTag on bookcase itself — only individual coffee table books
-        // have ReactableTags (set by BookcaseSceneBuilder.BuildCoffeeTableBooks)
-
-        // Position and rotate the entire group
-        groupGO.transform.position = BookcaseStationPos;
-        groupGO.transform.rotation = BookcaseStationRot;
-
-        Debug.Log("[ApartmentSceneBuilder] Bookcase station group built.");
-    }
-
-    /// <summary>
-    /// Builds the record player station as a self-contained group:
-    /// Furniture + RecordPlayerManager + RecordPlayerHUD + AudioSource. No station camera.
-    /// </summary>
+    /* RETIRED — see _Parked/RecordPlayerManager.cs
     private static void BuildRecordPlayerStationGroup(int vinylStackLayer, int turntableLayer)
     {
         int sleeveLayer = EnsureLayer("RecordSleeves");
@@ -1394,8 +1363,9 @@ public static class ApartmentSceneBuilder
         hudSO.FindProperty("hintsText").objectReferenceValue = hintsText;
         hudSO.ApplyModifiedPropertiesWithoutUndo();
 
-        Debug.Log($"[ApartmentSceneBuilder] Record Player station group built ({records.Length} records, {sleeveTransforms.Length} sleeves).");
+        Debug.Log($"...");
     }
+    RETIRED */
 
     // ══════════════════════════════════════════════════════════════════
     // Gunpla Figure (poseable articulated mecha model)
@@ -2662,6 +2632,7 @@ public static class ApartmentSceneBuilder
         return lens;
     }
 
+    /* RETIRED — see _Parked/BookInteractionManager.cs
     // ══════════════════════════════════════════════════════════════════
     // BookInteractionManager
     // ══════════════════════════════════════════════════════════════════
@@ -2736,6 +2707,7 @@ public static class ApartmentSceneBuilder
 
         return manager;
     }
+    RETIRED */
 
     // ══════════════════════════════════════════════════════════════════
     // Drink Making Station Group (Kitchen) — with fridge door

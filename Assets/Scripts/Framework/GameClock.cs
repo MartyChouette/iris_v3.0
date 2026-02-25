@@ -156,9 +156,7 @@ public class GameClock : MonoBehaviour
         // Reset all UI / station state before fading out
         FridgeController.Instance?.ForceClose();
         SimpleDrinkManager.Instance?.HideRecipePanel();
-        if (RecordPlayerManager.Instance != null
-            && RecordPlayerManager.Instance.CurrentState == RecordPlayerManager.State.Playing)
-            RecordPlayerManager.Instance.StopPlayback();
+        RecordSlot.Instance?.Stop();
         DateEndScreen.Instance?.Dismiss();
 
         // 1. Fade to black
