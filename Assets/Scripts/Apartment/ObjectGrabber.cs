@@ -265,6 +265,24 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (_held == null) return;
 
+        // ── RecordSlot check (turntable) ──
+        // If over a surface parented to a RecordSlot while holding a RecordItem, accept it
+        if (_currentSurface != null)
+        {
+            var slot = _currentSurface.GetComponentInParent<RecordSlot>();
+            if (slot != null && _held.GetComponent<RecordItem>() != null)
+            {
+                _heldRb.constraints = _originalConstraints;
+                _heldRb.linearVelocity = Vector3.zero;
+                if (slot.TryAcceptRecord(_held))
+                {
+                    AudioManager.Instance?.PlaySFX(_placeSFX);
+                    ClearHeld();
+                    return;
+                }
+            }
+        }
+
         // Must be over a surface to place
         if (_currentSurface == null) return;
 
