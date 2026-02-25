@@ -15,13 +15,13 @@ MonoBehaviour:
   label: "V9 \u2014 Surveillance"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: -7.421945, y: 6.9611187, z: -9.648032}
-    rotation: {x: 27.014744, y: 54.18433, z: 1.1328996}
+    position: {x: 4.2638726, y: 5.884564, z: -9.267714}
+    rotation: {x: 28.481256, y: 338.023, z: 357.84637}
     lens:
-      FieldOfView: 60
-      OrthographicSize: 3.8101735
-      NearClipPlane: 0.038101736
-      FarClipPlane: 7620.347
+      FieldOfView: 3.122996
+      OrthographicSize: 2.521815
+      NearClipPlane: 0.02521815
+      FarClipPlane: 5043.63
       Dutch: 0
       ModeOverride: 1
       PhysicalProperties:
@@ -40,13 +40,13 @@ MonoBehaviour:
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
   - areaLabel: Living Room
-    position: {x: -9.022187, y: 6.327363, z: 2.0247698}
-    rotation: {x: 26.212725, y: 97.02519, z: 1.12818}
+    position: {x: -3.115982, y: 3.1325364, z: 1.6475875}
+    rotation: {x: 21.726215, y: 125.91757, z: 358.03458}
     lens:
-      FieldOfView: 60
-      OrthographicSize: 3.646099
-      NearClipPlane: 0.036460992
-      FarClipPlane: 7292.198
+      FieldOfView: 3.122996
+      OrthographicSize: 2.4034564
+      NearClipPlane: 0.024034565
+      FarClipPlane: 4806.913
       Dutch: 0
       ModeOverride: 1
       PhysicalProperties:
@@ -65,15 +65,15 @@ MonoBehaviour:
     lightIntensityMultiplier: 0
     lightColorTint: {r: 0, g: 0, b: 0, a: 0}
   - areaLabel: Entrance
-    position: {x: 2, y: 4, z: 9.5}
-    rotation: {x: 40, y: 210, z: 0}
+    position: {x: 6.659839, y: 3.8682551, z: -0.58889794}
+    rotation: {x: 13.9390135, y: 255.35106, z: 358.20428}
     lens:
-      FieldOfView: 35
-      OrthographicSize: 10
-      NearClipPlane: 0.3
-      FarClipPlane: 1000
+      FieldOfView: 3.122996
+      OrthographicSize: 3.3474345
+      NearClipPlane: 0.033474345
+      FarClipPlane: 6694.869
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}

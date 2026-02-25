@@ -23,9 +23,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Current_Build/G_Flower_DEC14.unity
     guid: 058acf0ee14c7cc4185e6817383041d9
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/mainmenu.unity
     guid: a641b70817a19454eb015b20fad2e8f8
+  - enabled: 1
+    path: Assets/Scenes/mainmenu_nemahead.unity
+    guid: 050256692266fd248a5cb4e90e124441
   - enabled: 1
     path: Assets/Scenes/apartment.unity
     guid: e700961ca0bfc494e83e0f64e787dbd7

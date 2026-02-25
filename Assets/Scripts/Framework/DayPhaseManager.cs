@@ -348,7 +348,6 @@ public class DayPhaseManager : MonoBehaviour
         // Go to Bed panel is only visible during Evening
         if (_goToBedPanel != null)
             _goToBedPanel.SetActive(phase == DayPhase.Evening);
-
         switch (phase)
         {
             case DayPhase.Morning:
