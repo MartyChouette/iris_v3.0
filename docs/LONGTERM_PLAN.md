@@ -172,8 +172,8 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 
 ### VS-1: Core Flow (Not Yet Built)
 
-- [ ] **Main menu scene** — Start button, title screen
-- [ ] **Tutorial card** — Overlay shown once between menu and gameplay, direct control instructions
+- [x] **Main menu scene** — Start button, title screen. MainMenuManager (3-panel FSM), MainMenuSceneBuilder, Nema parallax head, TMP_FocusBlur title, TextDissolveButton hover, 3 GameModeConfig SOs. Scene: `Assets/Scenes/mainmenu.unity`
+- [x] **Tutorial card** — Overlay shown once between menu and gameplay, direct control instructions. TutorialCard.cs integrated with MainMenuManager
 - [ ] **Name entry (mirror scene)** — Separate scene (hard cut). 3D Nema model with loop animation in front of bathroom mirror. Text input with profanity filter. Deferred to later — placeholder skip for now.
 - [ ] **Profanity filter** — Block slurs/bad words in name input. Word list + substring check.
 - [ ] **Photo intro sequence** — Nema poses, camera takes photo, B&W filter, photo placed next to personals ad in newspaper. Cinematic transition.

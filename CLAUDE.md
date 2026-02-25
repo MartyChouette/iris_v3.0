@@ -315,13 +315,13 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Text theme | Working | IrisTextTheme SO (Resources/), AccessibleText, IrisTextThemeApplier |
 | PSX rendering | Working | PSXRenderController, PSXPostProcessFeature, PSXLit.shader, PSXPost.shader |
 | Pause menu | Working | SimplePauseMenu (ESC toggle, settings integration) |
+| Main menu | Working | MainMenuManager (3-panel FSM), MainMenuSceneBuilder, Nema parallax head, 3 GameModeConfig SOs |
+| Tutorial card | Working | TutorialCard (overlay between menu and gameplay) |
 
 ## Not Yet Built
 
 | System | Notes |
 |--------|-------|
-| Main menu | Scene + UI (MainMenuSceneBuilder exists in `_Parked/`) |
-| Tutorial card | Overlay between menu and gameplay (TutorialCard exists in `_Parked/`) |
 | Name entry (mirror scene) | Deferred — separate scene, hard cut, added later. NameEntryScreen overlay exists as placeholder |
 | Photo intro sequence | Camera pose → B&W photo → newspaper transition |
 | Half-folded newspaper visual | Rework newspaper mesh/canvas to folded look |
