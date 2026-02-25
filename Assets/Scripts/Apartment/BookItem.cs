@@ -48,6 +48,10 @@ public class BookItem : MonoBehaviour
     {
         if (_reactable == null) return;
 
+        // If placed inside a cubby, let DrawerController handle privacy
+        var cubby = DrawerController.FindByInteriorSurface(surface);
+        if (cubby != null) return;
+
         bool onCoffeeTable = false;
         if (surface != null)
         {

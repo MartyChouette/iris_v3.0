@@ -310,18 +310,6 @@ public class ObjectGrabber : MonoBehaviour
         // Must be over a surface to place
         if (_currentSurface == null) return;
 
-        // ── Drawer storage check ──
-        // If surface is child of an open drawer with capacity, store the item
-        var drawer = _currentSurface.GetComponentInParent<DrawerController>();
-        if (drawer != null && drawer.CurrentState == DrawerController.State.Open && drawer.HasCapacity)
-        {
-            _heldRb.constraints = _originalConstraints;
-            _heldRb.linearVelocity = Vector3.zero;
-            drawer.StoreItem(_held);
-            ClearHeld();
-            return;
-        }
-
         // ── DropZone check ──
         // If surface has a DropZone matching the held item's home or alt zone, route through it
         {
@@ -384,7 +372,7 @@ public class ObjectGrabber : MonoBehaviour
         if (bookItem != null) bookItem.OnBookPlaced(_currentSurface);
 
         // Cubby privacy: items placed on a closed cubby's interior surface become private
-        var cubbyDrawer = _currentSurface.GetComponentInParent<DrawerController>();
+        var cubbyDrawer = DrawerController.FindByInteriorSurface(_currentSurface);
         if (cubbyDrawer != null && cubbyDrawer.IsInteriorAndClosed(_currentSurface))
         {
             var tag = _held.GetComponent<ReactableTag>();

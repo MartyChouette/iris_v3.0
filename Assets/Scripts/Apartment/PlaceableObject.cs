@@ -92,6 +92,12 @@ public class PlaceableObject : MonoBehaviour
     public PlacementSurface LastPlacedSurface => _lastPlacedSurface;
 
     /// <summary>
+    /// Assign the surface this item is sitting on. Used by DrawerController
+    /// to claim editor-placed items that didn't go through OnPlaced().
+    /// </summary>
+    public void SetLastPlacedSurface(PlacementSurface surface) => _lastPlacedSurface = surface;
+
+    /// <summary>
     /// True when a dishelvable item is tilted beyond its angle threshold.
     /// Books, magazines, papers on surfaces at an angle signal mess.
     /// Wall-mounted items are excluded.

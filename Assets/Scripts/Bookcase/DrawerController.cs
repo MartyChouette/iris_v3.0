@@ -46,6 +46,10 @@ public class DrawerController : MonoBehaviour
     public State CurrentState { get; private set; } = State.Closed;
     public bool HasCapacity => _storedItems.Count < _maxCapacity;
 
+    // ── Static registry ─────────────────────────────────────────────
+    private static readonly List<DrawerController> s_all = new();
+    public static IReadOnlyList<DrawerController> All => s_all;
+
     private readonly List<PlaceableObject> _storedItems = new();
 
     private Vector3 _closedPosition;
@@ -56,6 +60,9 @@ public class DrawerController : MonoBehaviour
 
     // Smell aggregation — drawer's own ReactableTag proxies stored items' smell
     private ReactableTag _drawerTag;
+
+    private void OnEnable() { s_all.Add(this); }
+    private void OnDisable() { s_all.Remove(this); }
 
     private void Awake()
     {
@@ -78,9 +85,39 @@ public class DrawerController : MonoBehaviour
 
     private void Start()
     {
+        if (_interiorSurface == null) return;
+
+        // Claim items physically sitting on the interior surface at startup.
+        // Editor-placed items don't go through OnPlaced(), so LastPlacedSurface is null.
+        ClaimItemsOnInteriorSurface();
+
         // Items already on interior surface start private if door is closed
-        if (_interiorSurface != null && CurrentState == State.Closed)
+        if (CurrentState == State.Closed)
             SetInteriorItemsPrivate(true);
+    }
+
+    /// <summary>
+    /// Find all PlaceableObjects physically on the interior surface and claim them.
+    /// Sets LastPlacedSurface so privacy toggling works, and ensures a ReactableTag exists.
+    /// </summary>
+    private void ClaimItemsOnInteriorSurface()
+    {
+        var all = PlaceableObject.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            // Skip items already claimed by a surface
+            if (all[i].LastPlacedSurface != null) continue;
+
+            if (!_interiorSurface.ContainsWorldPoint(all[i].transform.position)) continue;
+
+            // Claim this item for the interior surface
+            all[i].SetLastPlacedSurface(_interiorSurface);
+
+            // Ensure it has a ReactableTag
+            var tag = all[i].GetComponent<ReactableTag>();
+            if (tag == null)
+                tag = all[i].gameObject.AddComponent<ReactableTag>();
+        }
     }
 
     public void SetContentsRoot(GameObject root)
@@ -250,6 +287,19 @@ public class DrawerController : MonoBehaviour
 
     /// <summary>The interior PlacementSurface, if any.</summary>
     public PlacementSurface InteriorSurface => _interiorSurface;
+
+    /// <summary>
+    /// Find the DrawerController that owns the given surface as its interior.
+    /// Returns null if no drawer claims it.
+    /// </summary>
+    public static DrawerController FindByInteriorSurface(PlacementSurface surface)
+    {
+        if (surface == null) return null;
+        for (int i = 0; i < s_all.Count; i++)
+            if (s_all[i]._interiorSurface == surface)
+                return s_all[i];
+        return null;
+    }
 
     // ── Item storage ────────────────────────────────────────────────
 
