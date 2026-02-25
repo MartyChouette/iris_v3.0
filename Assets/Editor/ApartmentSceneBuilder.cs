@@ -293,9 +293,9 @@ public static class ApartmentSceneBuilder
         {
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset);
             instance.name = "ApartmentModel";
-            instance.transform.position = Vector3.zero;
-            instance.transform.rotation = Quaternion.identity;
-            instance.transform.localScale = Vector3.one;
+            instance.transform.position = new Vector3(0.6172299f, 0f, -2.295473f);
+            instance.transform.rotation = new Quaternion(0f, -0.70792603f, 0f, 0.70628667f);
+            instance.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
             // Mark all children static for lighting + NavMesh
             foreach (var tf in instance.GetComponentsInChildren<Transform>(true))
