@@ -366,6 +366,14 @@ public class ObjectGrabber : MonoBehaviour
         var bookItem = _held.GetComponent<BookItem>();
         if (bookItem != null) bookItem.OnBookPlaced(_currentSurface);
 
+        // Cubby privacy: items placed on a closed cubby's interior surface become private
+        var cubbyDrawer = _currentSurface.GetComponentInParent<DrawerController>();
+        if (cubbyDrawer != null && cubbyDrawer.IsInteriorAndClosed(_currentSurface))
+        {
+            var tag = _held.GetComponent<ReactableTag>();
+            if (tag != null) tag.IsPrivate = true;
+        }
+
         OnObjectPlaced?.Invoke();
         AudioManager.Instance?.PlaySFX(_placeSFX);
 

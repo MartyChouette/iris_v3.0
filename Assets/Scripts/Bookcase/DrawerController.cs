@@ -35,6 +35,10 @@ public class DrawerController : MonoBehaviour
     [Tooltip("Root GameObject for drawer contents (activated on open).")]
     [SerializeField] private GameObject contentsRoot;
 
+    [Header("Interior Surface")]
+    [Tooltip("PlacementSurface inside the cubby. Items on this surface become private when door is closed.")]
+    [SerializeField] private PlacementSurface _interiorSurface;
+
     [Header("Storage")]
     [Tooltip("Maximum number of PlaceableObjects that can be stored in this drawer.")]
     [SerializeField] private int _maxCapacity = 3;
@@ -70,6 +74,13 @@ public class DrawerController : MonoBehaviour
 
         // Cache or create the drawer's own ReactableTag for smell aggregation
         _drawerTag = GetComponent<ReactableTag>();
+    }
+
+    private void Start()
+    {
+        // Items already on interior surface start private if door is closed
+        if (_interiorSurface != null && CurrentState == State.Closed)
+            SetInteriorItemsPrivate(true);
     }
 
     public void SetContentsRoot(GameObject root)
@@ -127,6 +138,7 @@ public class DrawerController : MonoBehaviour
             if (contentsRoot != null)
                 contentsRoot.SetActive(true);
             PositionStoredItems();
+            SetInteriorItemsPrivate(false);
         }
         else
         {
@@ -134,6 +146,7 @@ public class DrawerController : MonoBehaviour
             HideStoredItems();
             if (contentsRoot != null)
                 contentsRoot.SetActive(false);
+            SetInteriorItemsPrivate(true);
         }
     }
 
@@ -203,6 +216,40 @@ public class DrawerController : MonoBehaviour
         Vector3 finalPivotOffset = transform.rotation * pivotOffset;
         transform.position = closedPivotWorld - finalPivotOffset;
     }
+
+    // ── Interior surface privacy ────────────────────────────────────
+
+    /// <summary>
+    /// Toggle IsPrivate on all PlaceableObjects sitting on the interior surface.
+    /// Called on open (private=false) and close (private=true).
+    /// </summary>
+    private void SetInteriorItemsPrivate(bool isPrivate)
+    {
+        if (_interiorSurface == null) return;
+
+        var all = PlaceableObject.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            if (all[i].LastPlacedSurface != _interiorSurface) continue;
+            var tag = all[i].GetComponent<ReactableTag>();
+            if (tag != null)
+                tag.IsPrivate = isPrivate;
+        }
+    }
+
+    /// <summary>
+    /// Returns true if the given surface is this cubby's interior and the door is closed.
+    /// ObjectGrabber can call this after placement to set the item private.
+    /// </summary>
+    public bool IsInteriorAndClosed(PlacementSurface surface)
+    {
+        return _interiorSurface != null
+            && surface == _interiorSurface
+            && CurrentState == State.Closed;
+    }
+
+    /// <summary>The interior PlacementSurface, if any.</summary>
+    public PlacementSurface InteriorSurface => _interiorSurface;
 
     // ── Item storage ────────────────────────────────────────────────
 
