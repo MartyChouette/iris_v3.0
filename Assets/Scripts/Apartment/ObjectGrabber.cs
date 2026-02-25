@@ -219,6 +219,13 @@ public class ObjectGrabber : MonoBehaviour
         if (placeable == null || placeable.CurrentState == PlaceableObject.State.Held)
             return;
 
+        // Click-to-straighten: tilted items get straightened without pickup
+        if (placeable.IsDishelved)
+        {
+            placeable.Straighten();
+            return;
+        }
+
         _held = placeable;
 
         // Detach from plate stack before pickup
@@ -299,24 +306,28 @@ public class ObjectGrabber : MonoBehaviour
         }
 
         // ── DropZone check ──
-        // If surface has a DropZone matching the held item's home zone, route through it
-        if (!string.IsNullOrEmpty(_held.HomeZoneName))
+        // If surface has a DropZone matching the held item's home or alt zone, route through it
         {
             var zone = _currentSurface.GetComponent<DropZone>();
-            if (zone != null && zone.ZoneName == _held.HomeZoneName)
+            if (zone != null)
             {
-                _heldRb.constraints = _originalConstraints;
-                _heldRb.linearVelocity = Vector3.zero;
-
-                if (zone.DestroyOnDeposit)
+                bool matchesHome = (!string.IsNullOrEmpty(_held.HomeZoneName) && zone.ZoneName == _held.HomeZoneName)
+                    || (!string.IsNullOrEmpty(_held.AltHomeZoneName) && zone.ZoneName == _held.AltHomeZoneName);
+                if (matchesHome)
                 {
-                    // Trash can — shrink and destroy
-                    zone.RegisterDeposit(_held);
-                    ClearHeld();
-                    return;
+                    _heldRb.constraints = _originalConstraints;
+                    _heldRb.linearVelocity = Vector3.zero;
+
+                    if (zone.DestroyOnDeposit)
+                    {
+                        // Trash can — shrink and destroy
+                        zone.RegisterDeposit(_held);
+                        ClearHeld();
+                        return;
+                    }
+                    // Normal drop zone — place normally, zone registers deposit
+                    // Fall through to standard placement, OnPlaced will set IsAtHome
                 }
-                // Normal drop zone — place normally, zone registers deposit
-                // Fall through to standard placement, OnPlaced will set IsAtHome
             }
         }
 
@@ -354,11 +365,15 @@ public class ObjectGrabber : MonoBehaviour
         AudioManager.Instance?.PlaySFX(_placeSFX);
 
         // DropZone deposit (non-destroy — item stays placed on surface)
-        if (!string.IsNullOrEmpty(_held.HomeZoneName))
         {
             var zone = _currentSurface.GetComponent<DropZone>();
-            if (zone != null && zone.ZoneName == _held.HomeZoneName)
-                zone.RegisterDeposit(_held);
+            if (zone != null)
+            {
+                bool match = (!string.IsNullOrEmpty(_held.HomeZoneName) && zone.ZoneName == _held.HomeZoneName)
+                    || (!string.IsNullOrEmpty(_held.AltHomeZoneName) && zone.ZoneName == _held.AltHomeZoneName);
+                if (match)
+                    zone.RegisterDeposit(_held);
+            }
         }
 
         // Stack-aware plate hooks

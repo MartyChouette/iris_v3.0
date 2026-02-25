@@ -60,7 +60,7 @@ public class DropZone : MonoBehaviour
         // Check if player is holding an item that matches this zone (static accessor — no scene scan)
         _playerHoldingMatch = false;
         var held = ObjectGrabber.HeldObject;
-        if (held != null && held.HomeZoneName == _zoneName)
+        if (held != null && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
             _playerHoldingMatch = true;
 
         // Pulse color

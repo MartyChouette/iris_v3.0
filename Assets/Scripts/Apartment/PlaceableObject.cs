@@ -27,6 +27,9 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Name of the DropZone this item belongs to (empty = no home zone).")]
     [SerializeField] private string _homeZoneName = "";
 
+    [Tooltip("Secondary zone name (e.g. 'CoffeeTable'). Item counts as home on either zone.")]
+    [SerializeField] private string _altHomeZoneName = "";
+
     [Tooltip("Short description shown when picked up (leave empty to use object name).")]
     [SerializeField] private string _itemDescription = "";
 
@@ -67,6 +70,7 @@ public class PlaceableObject : MonoBehaviour
     public State CurrentState { get; private set; } = State.Resting;
     public ItemCategory Category => _itemCategory;
     public string HomeZoneName => _homeZoneName;
+    public string AltHomeZoneName => _altHomeZoneName;
     public string ItemDescription => !string.IsNullOrEmpty(_itemDescription) ? _itemDescription : name;
     private bool _isAtHomeOverride;
     public bool IsAtHome
@@ -102,6 +106,20 @@ public class PlaceableObject : MonoBehaviour
             float angle = Vector3.Angle(transform.up, Vector3.up);
             return angle > _dishevelAngle;
         }
+    }
+
+    /// <summary>
+    /// Straighten a dishelved item in-place (zeroes X/Z rotation, keeps Y).
+    /// Returns true if the item was dishelved and got straightened.
+    /// </summary>
+    public bool Straighten()
+    {
+        if (!IsDishelved) return false;
+        float yAngle = transform.eulerAngles.y;
+        transform.rotation = Quaternion.Euler(0f, yAngle, 0f);
+        if (_rb != null) _rb.angularVelocity = Vector3.zero;
+        Debug.Log($"[PlaceableObject] {name} straightened.");
+        return true;
     }
 
     /// <summary>
@@ -285,12 +303,16 @@ public class PlaceableObject : MonoBehaviour
         _lastValidRotation = rotation;
         _lastPlacedSurface = surface;
 
-        // Check if placed on a matching DropZone
-        if (surface != null && !string.IsNullOrEmpty(_homeZoneName))
+        // Check if placed on a matching DropZone (home or alt zone)
+        if (surface != null)
         {
             var zone = surface.GetComponent<DropZone>();
-            if (zone != null && zone.ZoneName == _homeZoneName)
-                IsAtHome = true;
+            if (zone != null)
+            {
+                if ((!string.IsNullOrEmpty(_homeZoneName) && zone.ZoneName == _homeZoneName)
+                    || (!string.IsNullOrEmpty(_altHomeZoneName) && zone.ZoneName == _altHomeZoneName))
+                    IsAtHome = true;
+            }
         }
 
         transform.position = position;
