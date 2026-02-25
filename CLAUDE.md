@@ -4,7 +4,7 @@
 
 Iris v3.0 is a contemplative flower-trimming game (thesis project). Unity 6.0.3, URP, C#. Players cut stems with scissors, evaluated against ideal rules for score and "days alive."
 
-The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera browses 3 areas (Kitchen, Living Room, Entrance). Stations (bookcase, drink making, etc.) are always active — no StationRoot gating. Managed by `ApartmentManager` (Browsing state only). The apartment model is imported from Blender (`aprtment blockout.obj`) at 0.1 scale.
+The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera browses 3 areas (Kitchen, Living Room, Entrance). Items (books, records, perfumes, etc.) are hand-placed PlaceableObjects on FBX furniture — no procedural station builders. Managed by `ApartmentManager` (Browsing state only). The apartment model is imported from Blender (`aprtment blockout.obj`) at 0.1 scale.
 
 ## Build & Run
 
@@ -19,7 +19,6 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 |-----------|--------|--------------|
 | Window > Iris > Flower Auto Setup | `Assets/Editor/FlowerAutoSetup.cs` | Auto-wires flower components from a model |
 | Window > Iris > Build Apartment Scene | `Assets/Editor/ApartmentSceneBuilder.cs` | Generates apartment hub with Kitchen + Living Room, modular station groups, dating loop |
-| Window > Iris > Build Bookcase Browsing Scene | `Assets/Editor/BookcaseSceneBuilder.cs` | Generates standalone bookcase station scene |
 | Window > Iris > Build Dating Loop Scene | `Assets/Editor/DatingLoopSceneBuilder.cs` | Generates standalone dating loop test scene with full gameplay loop |
 | Window > Iris > Quick Flower Builder | `Assets/Editor/QuickFlowerBuilder.cs` | One-click wizard: drag in stem/leaf/petal meshes, builds full flower hierarchy with components + SOs |
 | Window > Iris > Build Settings Panel | `Assets/Editor/SettingsPanelBuilder.cs` | Generates settings panel prefab with all tabs/controls |
@@ -48,7 +47,7 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | `HorrorCameraManager` | Scene-scoped | `Assets/Scripts/Camera/HorrorCameraManager.cs` |
 | `ApartmentManager` | Scene-scoped | `Assets/Scripts/Apartment/ApartmentManager.cs` |
 | `NewspaperManager` | Scene-scoped | `Assets/Scripts/Dating/NewspaperManager.cs` |
-| `BookInteractionManager` | Scene-scoped | `Assets/Scripts/Bookcase/BookInteractionManager.cs` |
+| `RecordSlot` | Scene-scoped | `Assets/Scripts/Apartment/RecordSlot.cs` |
 | `GameClock` | Scene-scoped | `Assets/Scripts/Framework/GameClock.cs` |
 | `DateSessionManager` | Scene-scoped | `Assets/Scripts/Dating/DateSessionManager.cs` |
 | `MoodMachine` | Scene-scoped | `Assets/Scripts/Apartment/MoodMachine.cs` |
@@ -77,10 +76,10 @@ The game centers on an **apartment hub** — a direct pos/rot/FOV-lerp camera br
 | `Scripts/Camera/` | HorrorCameraManager, CameraZoneTrigger, SimpleTestCharacter |
 | `Scripts/DynamicMeshCutter/` | Mesh cutting engine (DMC) |
 | `Scripts/Tags/` | Marker components (StemPieceMarker, LeafAttachmentMarker, etc.) |
-| `Scripts/Apartment/` | Hub system: ApartmentManager, StationRoot, ObjectGrabber, PlacementSurface, MoodMachine |
-| `Scripts/Bookcase/` | BookInteractionManager, BookVolume, PerfumeBottle, CoffeeTableBook, DrawerController, ItemInspector |
+| `Scripts/Apartment/` | Hub system: ApartmentManager, ObjectGrabber, PlacementSurface, MoodMachine, BookItem, RecordItem, RecordSlot |
+| `Scripts/Bookcase/` | PerfumeBottle, DrawerController (BookInteractionManager, BookVolume, CoffeeTableBook, ItemInspector retired to `_Parked/`) |
 | `Scripts/Dating/` | Dating loop: DateSessionManager, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, NewspaperManager, DayManager |
-| `Scripts/Mechanics/` | 10 prototype minigames: DrinkMaking, Cleaning, Watering, MirrorMakeup, RecordPlayer, etc. |
+| `Scripts/Mechanics/` | 10 prototype minigames: DrinkMaking, Cleaning, Watering, MirrorMakeup, etc. (RecordPlayerManager retired to `_Parked/`) |
 | `Scripts/Testing/` | Test scene controllers: LightingTestController, ObjectGrabberAutoEnabler |
 | `Scripts/Rendering/` | PSX rendering: PSXRenderController, PSXPostProcessFeature |
 | `Scripts/Prototype_LivingRoom_Scripts/` | Legacy living room prototype (not active) |
@@ -103,7 +102,7 @@ ObjectGrabber + CleaningManager + WateringManager always enabled
 | Area | StationType | Notes |
 |------|-------------|-------|
 | Kitchen | DrinkMaking | Fridge gates DrinkMaking entry, phase-gated to DateInProgress |
-| Living Room | Bookcase | BookInteractionManager |
+| Living Room | None | Hand-placed books (BookItem), records (RecordItem), turntable (RecordSlot), perfumes, drawers |
 | Entrance | None | Shoe rack, coat rack, front door |
 
 ### Key Components
@@ -111,8 +110,10 @@ ObjectGrabber + CleaningManager + WateringManager always enabled
 - `StationRoot` — Exists in code but NOT wired by builder; all managers are always active, no station cameras
 - `FridgeController` — Click-to-open fridge door that gates DrinkMaking station
 - `CleaningManager` — Always enabled, raycasts from Camera.main on cleanableLayer
-- `ObjectGrabber` — Spring-damper pick-and-place with surface raycast (no depth plane)
-- `BookcaseSceneBuilder.BuildBookcaseUnit()` — shared builder used by both standalone and apartment scenes
+- `ObjectGrabber` — Spring-damper pick-and-place with surface raycast (no depth plane). Routes held items to RecordSlot, DrawerController, DropZone before normal placement. Calls `BookItem.OnBookPickedUp()` on pickup.
+- `BookItem` — Companion to PlaceableObject for books. References `BookDefinition`, optionally drops hidden item prefab on first pickup (day-gated via GameClock)
+- `RecordItem` — Companion to PlaceableObject for vinyl records. References `RecordDefinition`
+- `RecordSlot` — Scene-scoped singleton turntable receiver. Accepts `RecordItem` via ObjectGrabber, plays music via `AudioManager.PlayMusic`, feeds `MoodMachine "Music"` source, toggles `ReactableTag`. Public `Stop()` for phase transitions, `OnRecordChanged` event for `MidDateActionWatcher`
 - `InteractableHighlight` — Toggle-based rim light on hover (off by default, driven by `ApartmentManager` hover raycast)
 
 ### Camera Preset System
@@ -159,9 +160,9 @@ Station group positions (lines 30-32):
 
 | Constant | Default | Purpose |
 |----------|---------|---------|
-| `BookcaseStationPos` | (-6.3, 0, 3.0) | Bookcase station in living room |
-| `RecordPlayerStationPos` | (-2, 0, 5) | Record player in living room |
 | `DrinkMakingStationPos` | (-4, 0, -5.2) | Drink station in kitchen |
+
+Bookcase and record player positions are retired — furniture is now hand-placed FBX models.
 
 Edit these, then re-run **Window > Iris > Build Apartment Scene** to regenerate.
 
@@ -234,8 +235,8 @@ After selecting a date, a timer starts. The apartment starts messy (bottles, win
 |--------|---------------|-------|
 | Clean stains (wine, blood, trash, bottles) | CleaningManager | Sponge only (spray deferred) |
 | Water plants | WateringManager | One-shot perfect pour mechanic (click timing) |
-| Choose coffee table book | BookInteractionManager | Leave on coffee table for date to see |
-| Choose vinyl record | RecordPlayerManager | Playing during date affects reactions |
+| Choose coffee table book | ObjectGrabber + BookItem | Grab book from shelf, place on coffee table for date to see |
+| Choose vinyl record | ObjectGrabber + RecordSlot | Grab record from shelf, place on turntable to play |
 | Spray perfume | PerfumeBottle | Changes hue, filter, weather, environment SFX via MoodMachine |
 | Leave out items | DrawerController → shelf | Shelf display for date to react to |
 | Choose outfit | **NEW: OutfitSelector** | Judged in date Phase 1 |
@@ -286,8 +287,8 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Newspaper (button selection) | Working | NewspaperManager, NewspaperAdSlot |
 | Cleaning (sponge only) | Working | CleaningManager, CleanableSurface |
 | Object grab/place | Working | ObjectGrabber, PlacementSurface |
-| Bookcase interaction | Working | BookInteractionManager, BookVolume |
-| Record player | Working | RecordPlayerManager, RecordPlayerHUD |
+| Books (hand-placed) | Working | BookItem, BookDefinition, PlaceableObject (home slot system) |
+| Record player | Working | RecordItem, RecordSlot, RecordDefinition, PlaceableObject |
 | Perfume spray | Working | PerfumeBottle, EnvironmentMoodController |
 | Drink making | Working | DrinkMakingManager (needs rework to perfect-pour) |
 | Fridge door mechanic | Working | FridgeController |
