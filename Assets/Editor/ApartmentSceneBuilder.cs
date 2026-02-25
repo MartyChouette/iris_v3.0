@@ -286,7 +286,7 @@ public static class ApartmentSceneBuilder
 
     private static void BuildApartmentModel()
     {
-        const string modelPath = "Assets/Scenes/Iris_V3/aprtment blockout.obj";
+        const string modelPath = "Assets/apartment_blockout_detail_full_feb24.fbx";
         var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
 
         if (modelAsset != null)
