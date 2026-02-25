@@ -216,7 +216,24 @@ public class ObjectGrabber : MonoBehaviour
         if (placeable == null)
             placeable = hit.collider.GetComponentInParent<PlaceableObject>();
 
-        if (placeable == null || placeable.CurrentState == PlaceableObject.State.Held)
+        // No placeable hit — check for cubby/drawer door click
+        if (placeable == null)
+        {
+            var clickedDrawer = hit.collider.GetComponent<DrawerController>();
+            if (clickedDrawer == null)
+                clickedDrawer = hit.collider.GetComponentInParent<DrawerController>();
+
+            if (clickedDrawer != null)
+            {
+                if (clickedDrawer.CurrentState == DrawerController.State.Closed)
+                    clickedDrawer.Open();
+                else if (clickedDrawer.CurrentState == DrawerController.State.Open)
+                    clickedDrawer.Close();
+            }
+            return;
+        }
+
+        if (placeable.CurrentState == PlaceableObject.State.Held)
             return;
 
         // Click-to-straighten: tilted items get straightened without pickup
