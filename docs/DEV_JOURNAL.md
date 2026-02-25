@@ -2,6 +2,57 @@
 
 ---
 
+## 2026-02-25 — Scene Sync, Transition Fix, DrawerController Setup
+
+### Session Summary
+
+Rolled back to commit 07b8097 (ObjectGrabber click-to-open/close DrawerController cubby doors) to recover stable state. Fixed a white screen hang during the name entry → newspaper transition, and resolved DrawerController click detection on new furniture.
+
+---
+
+### 1. DayPhaseManager Morning Transition Fix
+
+**Problem:** After confirming name in NameEntryScreen, the screen stayed solid white and never faded to reveal the newspaper.
+
+**Root cause:** `DayPhaseManager._currentPhase` is a `[SerializeField]` field defaulting to `Evening`. The scene file had it saved as `Morning` from a previous play session. When `SetPhase(DayPhase.Morning)` was called, the early-return guard (`if (_currentPhase == phase) return;`) skipped the entire `MorningTransition` coroutine, including the `ScreenFade.FadeIn()` call.
+
+**Diagnosis:** Added FLAG debug logs at 8 points through the chain (NameEntryScreen → DayManager → DayPhaseManager → ScreenFade). FLAG 5a revealed `_currentPhase` was already `Morning` on entry.
+
+**Fix:** Reset `_currentPhase` to `Evening` in the scene Inspector and saved.
+
+**Files:** `DayPhaseManager.cs` (debug flags added then removed), `apartment.unity` (scene resaved)
+
+---
+
+### 2. DrawerController Click Detection
+
+**Problem:** DrawerController on cabinet doors didn't respond to clicks despite being configured with 90-degree open angle.
+
+**Root cause:** ObjectGrabber's click raycast (line 212) uses `placeableLayer` mask. The cabinet door was on `Default` layer, invisible to the raycast.
+
+**Fix:** Set the door GameObject's Layer to `Placeables` in the Inspector.
+
+---
+
+### 3. Scene & Editor State Sync
+
+Synced editor state after rollback: updated FBX models, scene layout, area SOs (removed unused BookNook/CozyCorner/WateringNook areas), added missing .meta files for BookItem, RecordItem, RecordSlot, and book definition SOs.
+
+---
+
+### Files Changed (Summary)
+
+| File | Change |
+|------|--------|
+| `DayPhaseManager.cs` | Debug flags added and removed (code unchanged from 07b8097) |
+| `apartment.unity` | Scene resaved with _currentPhase=Evening, layout updates |
+| `PlaceableLayout.json` | Updated positions |
+| Area SOs | Removed BookNook, CozyCorner, WateringNook; updated Kitchen/LivingRoom/Entrance |
+| Book SO .metas | Added missing meta files |
+| FBX files | Synced model state |
+
+---
+
 ## 2026-02-21 — Performance Optimization, Text Theme, Accessibility Suite
 
 ### Session Summary

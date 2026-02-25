@@ -40,7 +40,7 @@ Players live as Nema in a small apartment, dating strangers from newspaper perso
 | **Camera Presets** | A/B/C camera comparison: LensSettings, VolumeProfile, light overrides per area |
 | **Object Interaction** | Spring-damper grab, surface snap, wall mounting, cross-room dragging, tether safety |
 | **Tidiness System** | Per-area scoring (stains, mess, smell, floor clutter), DropZones, DailyMessSpawner |
-| **Bookcase Station** | 15 books, 5 coffee table books, 3 perfumes, 2 drawers, double-click inspection |
+| **Bookcase / Shelving** | Hand-placed books (BookItem), records (RecordItem), perfumes, drawers (DrawerController with slide/hinge modes) |
 | **Dating Loop** | 7-day calendar, newspaper ads, 3-phase dates (entrance/kitchen/living room), affection tracking |
 | **Flower Trimming** | Additive scene loading, virtual stem cutting, scoring brain, living plant persistence |
 | **Accessibility** | 15 settings across 5 categories, tabbed settings panel, captions, text scaling, reduce motion |
@@ -118,7 +118,7 @@ Assets/
 ├── Editor/                 # Scene builders and editor tools
 │   ├── FlowerAutoSetup     # Auto-wiring wizard for new flowers
 │   ├── ApartmentSceneBuilder # Generates full apartment hub scene
-│   ├── BookcaseSceneBuilder  # Generates bookcase station (shared builder)
+│   ├── CredenzaSetup          # Editor tool for credenza furniture setup
 │   ├── SettingsPanelBuilder  # Generates settings panel prefab
 │   └── ...SceneBuilder     # 10+ scene builders for each mechanic
 ├── Scripts/
@@ -130,7 +130,7 @@ Assets/
 │   ├── UI/                 # HUD, grading, SettingsPanel, CaptionDisplay, IrisTextTheme
 │   ├── Tags/               # Marker components (StemPieceMarker, etc.)
 │   ├── Apartment/          # Hub: ApartmentManager, ObjectGrabber, MoodMachine, TidyScorer
-│   ├── Bookcase/           # BookInteractionManager, BookVolume, PerfumeBottle, etc.
+│   ├── Bookcase/           # PerfumeBottle, DrawerController (legacy bookcase systems retired to _Parked/)
 │   ├── Dating/             # DateSessionManager, GameClock, PhoneController, etc.
 │   ├── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
 │   ├── Rendering/          # PSX retro rendering (PSXRenderController, PSXPostProcessFeature)

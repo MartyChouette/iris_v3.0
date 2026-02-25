@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 21, 2026
+**Last Updated:** February 25, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -174,12 +174,13 @@ Full game flow: Menu → Tutorial → Name Entry → Photo Intro → Newspaper �
 
 - [x] **Main menu scene** — Start button, title screen. MainMenuManager (3-panel FSM), MainMenuSceneBuilder, Nema parallax head, TMP_FocusBlur title, TextDissolveButton hover, 3 GameModeConfig SOs. Scene: `Assets/Scenes/mainmenu.unity`
 - [x] **Tutorial card** — Overlay shown once between menu and gameplay, direct control instructions. TutorialCard.cs integrated with MainMenuManager
-- [ ] **Name entry (mirror scene)** — Separate scene (hard cut). 3D Nema model with loop animation in front of bathroom mirror. Text input with profanity filter. Deferred to later — placeholder skip for now.
+- [x] **Name entry overlay** — Earthbound-style letter grid name entry (NameEntryScreen). In-apartment overlay, arrow/WASD navigation, mouse click support. Calls DayManager.BeginDay1() on confirm. Save-aware: skips if save exists for active slot.
+- [ ] **Name entry (mirror scene)** — Separate scene (hard cut). 3D Nema model with loop animation in front of bathroom mirror. Deferred to later.
 - [ ] **Profanity filter** — Block slurs/bad words in name input. Word list + substring check.
 - [ ] **Photo intro sequence** — Nema poses, camera takes photo, B&W filter, photo placed next to personals ad in newspaper. Cinematic transition.
 - [ ] **Half-folded newspaper visual** — Rework newspaper mesh/canvas to cliche folded-in-half look. 3 personal ads + 2 commercial slots per day.
 - [ ] **Couch win scene** — Date succeeds → couch cuddling scene, Nema holding scissors behind her back. Separate camera angle.
-- [ ] **Flower trimming transition** — Hard cut from apartment to flower trimming scene. Load flower, get score. End of day.
+- [x] **Flower trimming transition** — FlowerTrimmingBridge loads scene additively, DayPhaseManager orchestrates fade/title/scene. Done via VS-1b.
 
 ### VS-1b: Flower ↔ Apartment Integration (Done)
 
@@ -213,14 +214,14 @@ Each date character brings a specific flower. The flower trimming score determin
 - [x] **DateCharacterController excursion gating** — Only wanders in Phase 3 (done)
 - [x] **ReactableTag system** — Static registry, date NPC discovery (done)
 - [x] **DateReactionUI** — Thought bubble with emotes (done)
-- [ ] **Phase 1 rework (Entrance)** — Date arrives at door (not couch). Three sequential judgments: outfit, perfume, welcome greeting. Each with Sims-style thought bubble + emote + SFX.
+- [x] **Phase 1 rework (Entrance)** — EntranceJudgmentSequence: 4 sequential judgments (outfit, perfume, welcome, cleanliness) with thought bubble + emote + SFX. Cleanliness via TidyScorer.
 - [ ] **Phase 2 rework (Kitchen Drinks)** — Date stands by kitchen counter. Player sees drink recipe HUD, selects correct alcohol bottle from shelf, does perfect-pour. Score → date reacts.
-- [ ] **Phase 3 living room flow** — Date walks to living room with drink. Investigates: coffee table book, vinyl playing, perfume scent, shelf trinket, apartment cleanliness.
+- [ ] **Phase 3 living room flow** — Date walks to living room with drink. Investigates: coffee table book, vinyl playing, perfume scent, shelf items, apartment cleanliness.
 - [ ] **Phase pass/fail gating** — If Phase 1 or 2 fails badly, date can leave early.
 
 ### VS-4: Nema's Life Systems (Design Doc: DESIGN_NEMA_LIFE.md)
 
-- [ ] **Calendar system** — Physical in-apartment calendar (wall/desk), clickable, shows current day, scheduled dates, completed dates, disappeared dates. `CalendarData` backing store.
+- [x] **Calendar system** — ApartmentCalendar: clickable 7-day grid with date history, flower grades, learned preferences per day. Built by ApartmentSceneBuilder.
 - [ ] **Time gates** — Mail arrives at 4pm daily, dates don't start until 8pm. GameClock expansion.
 - [ ] **Mail system** — Daily 4pm delivery via GameClock event. Contains: newspaper, letters from dates, bills/flyers, missing person notices (escalating horror). SO-driven content pool.
 - [ ] **Nema placeholder** — Visible player character in kitchen and living room. Contextual idle animations (leaning on counter, sitting on couch, swaying to music, reading mail). `NemaController` with room-aware state machine. All meshes/animations swappable via SO/prefab references.
@@ -230,14 +231,14 @@ Each date character brings a specific flower. The flower trimming score determin
 - [ ] **Repeat dates** — Same person returns, remembers previous visits. Relationship deepens. Eventually they might disappear too.
 - [ ] **Convention demo mode** — 7-minute timer, curated slice of the full loop.
 - [ ] **Feedback system** — Easy player feedback collection when time limits expire (convention demo end, demo end).
-- [ ] **Save game system** — Full game state persistence: calendar day, date history, knowledge, item states, souvenirs, apartment layout. Auto-save on sleep, manual save from pause. `GameSaveData` JSON container. Existing `SaveManager` extended or replaced.
+- [x] **Save game system** — IrisSaveData with AutoSaveController. Auto-saves on quit + end of date. Persists calendar day, date history, plant records, apartment layout. SaveManager with slot system.
 - [ ] **Player knowledge system (dating journal)** — Per-date, per-phase insight unlocks. Even if rejected at Phase 2, player keeps Phase 1+2 knowledge. Reveals DatePreferences progressively. Journal UI accessible from apartment (notebook/phone). Tracks: preferences learned, times encountered, highest phase reached, disappeared status. Integrates with ReactionEvaluator + DateEndScreen.
 
 ### VS-5: Deferred
 
 - [ ] **Bathroom mirror scene** — Separate scene with hard cut. 3D Nema, mirror, name entry. Will be added later.
 - [ ] **Scissors cutting mechanic** — Code preserved (`ScissorsCutController`, `CutPathEvaluator`, `NewspaperSurface`). Not active in vertical slice.
-- [ ] **Additional apartment areas** — Entrance, Cozy Corner, Watering Nook, Flower Room, Bathroom. Code partially exists.
+- [ ] **Additional apartment areas** — Cozy Corner, Watering Nook, Flower Room, Bathroom. Entrance is now built (3rd area with shoe rack, coat rack, DropZones).
 - [ ] **Memory profiling** — Extended play session leak testing
 - [ ] **Profile on target hardware** — Min-spec performance testing
 
