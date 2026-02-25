@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
-  m_Name: Book_003_Phantom_Garden_Vol._1
+  m_Name: Book_Manga
   m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
   title: Phantom Garden Vol. 1
-  author: Hana Sakurai
+  author: K. Morimoto
   pageTexts:
-  - "(Manga content \u2014 page 1)"
-  - "(Manga content \u2014 page 2)"
+  - 'Panel 1: A girl kneels in an overgrown greenhouse, her hands deep in soil that
+    glows faintly blue. Caption: "The flowers here bloom only for the dead."'
+  - 'Panel 4: She holds a single stem, its petals black and shimmering. "If I cut
+    this one," she whispers, "will you come back?"'
   hasHiddenItem: 0
-  hiddenItemDescription: 
+  hiddenItemDescription:
   hiddenItemPage: -1
-  spineColor: {r: 0.7, g: 0.62, b: 0.48, a: 1}
-  heightScale: 0.7162683
-  thicknessScale: 0.027523044
+  spineColor: {r: 0.15, g: 0.12, b: 0.18, a: 1}
+  heightScale: 0.78
+  thicknessScale: 0.025

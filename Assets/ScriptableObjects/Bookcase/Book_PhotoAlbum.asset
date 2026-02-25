@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
+  m_Name: Book_PhotoAlbum
+  m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
+  title: Our Days Together
+  author: ""
+  pageTexts:
+  - 'A polaroid of two people at a flower market, laughing. Someone has written
+    underneath in pencil: "the day we bought too many tulips."'
+  - 'The last page is empty except for four adhesive corners, slightly yellowed,
+    where a photo used to be.'
+  hasHiddenItem: 1
+  hiddenItemDescription: A faded concert ticket stub tucked between the pages.
+  hiddenItemPage: 1
+  spineColor: {r: 0.55, g: 0.3, b: 0.3, a: 1}
+  heightScale: 0.9
+  thicknessScale: 0.05

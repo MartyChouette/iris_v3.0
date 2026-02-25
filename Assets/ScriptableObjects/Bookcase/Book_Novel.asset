@@ -10,17 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
-  m_Name: Book_042_Still_Life_with_Vase
+  m_Name: Book_Novel
   m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
-  title: Still Life with Vase
-  author: Olive Stillman
+  title: The Quiet Garden
+  author: H. Fernwood
   pageTexts:
-  - 'The vase held three stems: one straight, one curved, one broken. Together they
-    made a sentence.'
-  - 'Still life painters know: the flower in the painting will outlast the flower
-    on the table.'
-  - She arranged the flowers not for beauty but for conversation. The lily had something
-    to say to the rose.
+  - 'A garden is never quiet. Listen closely: the earthworms turning, the slow exhale
+    of opening buds, the patient drip.'
+  - She planted marigolds along the fence not for their color, but because they reminded
+    her of someone she'd rather not forget.
+  hasHiddenItem: 0
+  hiddenItemDescription:
+  hiddenItemPage: -1
   spineColor: {r: 0.12, g: 0.15, b: 0.4, a: 1}
-  heightScale: 0.735272
-  thicknessScale: 0.04504058
+  heightScale: 0.85
+  thicknessScale: 0.032

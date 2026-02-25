@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
-  m_Name: Book_005_Stem_Theory
+  m_Name: Book_Poems
   m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
-  title: Stem Theory
-  author: P.L. Greenshaw
+  title: A Collection of Poems
+  author: R. Sato
   pageTexts:
-  - 'Chapter 1: The stem is not merely a support structure. It is a highway, a messenger,
-    a spine.'
-  - "Consider the hollow stem of the dandelion \u2014 empty inside, yet strong enough
-    to hold a wish."
+  - 'I left the window open all night. / By morning the curtain smelled of rain /
+    and the cat had dragged in a leaf.'
+  - 'How to say goodbye: / place one hand on the door, / the other on nothing at
+    all.'
   hasHiddenItem: 0
-  hiddenItemDescription: 
+  hiddenItemDescription:
   hiddenItemPage: -1
-  spineColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
-  heightScale: 0.8681743
-  thicknessScale: 0.039681844
+  spineColor: {r: 0.6, g: 0.5, b: 0.55, a: 1}
+  heightScale: 0.72
+  thicknessScale: 0.022

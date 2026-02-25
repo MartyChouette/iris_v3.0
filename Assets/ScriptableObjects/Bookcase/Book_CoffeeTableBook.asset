@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a168407a49d06cc4691c61bc8ef33eef, type: 3}
-  m_Name: Book_004_Book_Five
+  m_Name: Book_CoffeeTableBook
   m_EditorClassIdentifier: Assembly-CSharp::BookDefinition
-  title: Book Five
-  author: TBD
+  title: Arrangements in Bloom
+  author: M. Nakamura
   pageTexts:
-  - "(TBD content \u2014 page 1)"
-  - "(TBD content \u2014 page 2)"
+  - 'Ikebana is not about filling a vase. It is about the spaces between stems,
+    the silence a single branch can hold.'
+  - 'Full-page photograph: a moss-covered stone bowl holding three white camellias,
+    their petals just beginning to loosen.'
   hasHiddenItem: 0
-  hiddenItemDescription: 
+  hiddenItemDescription:
   hiddenItemPage: -1
-  spineColor: {r: 0.45, g: 0.2, b: 0.4, a: 1}
-  heightScale: 0.8584999
-  thicknessScale: 0.024229424
+  spineColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
+  heightScale: 0.92
+  thicknessScale: 0.045
