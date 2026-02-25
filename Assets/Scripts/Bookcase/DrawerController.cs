@@ -17,14 +17,15 @@ public class DrawerController : MonoBehaviour
     /// Forward = local -Z (pull out), Right = local X, Up = local Y.
     /// Positive slideDistance moves in the negative axis direction (pull).
     /// Negative slideDistance moves in the positive axis direction (push/slide).
+    /// HingeDown = rotates around bottom edge (flip-down cabinet door).
     /// </summary>
-    public enum SlideAxis { Forward, Right, Up }
+    public enum SlideAxis { Forward, Right, Up, HingeDown }
 
     [Header("Settings")]
-    [Tooltip("Which local axis the drawer slides along.")]
+    [Tooltip("Which local axis the drawer slides along, or HingeDown for flip-down doors.")]
     [SerializeField] private SlideAxis _slideAxis = SlideAxis.Forward;
 
-    [Tooltip("Distance the drawer slides. Positive = pull (negative axis dir), Negative = push (positive axis dir).")]
+    [Tooltip("For slide axes: distance the drawer slides. For HingeDown: open angle in degrees (default 90).")]
     [SerializeField] private float slideDistance = 0.3f;
 
     [Tooltip("Time to open/close in seconds.")]
@@ -44,6 +45,7 @@ public class DrawerController : MonoBehaviour
     private readonly List<PlaceableObject> _storedItems = new();
 
     private Vector3 _closedPosition;
+    private Quaternion _closedRotation;
     private Material _instanceMaterial;
     private Color _baseColor;
     private bool _isHovered;
@@ -54,6 +56,7 @@ public class DrawerController : MonoBehaviour
     private void Awake()
     {
         _closedPosition = transform.localPosition;
+        _closedRotation = transform.localRotation;
 
         var rend = GetComponent<Renderer>();
         if (rend != null)
@@ -113,6 +116,29 @@ public class DrawerController : MonoBehaviour
         if (_instanceMaterial != null)
             _instanceMaterial.color = _baseColor;
 
+        if (_slideAxis == SlideAxis.HingeDown)
+            yield return HingeRoutine(opening);
+        else
+            yield return TranslateRoutine(opening);
+
+        if (opening)
+        {
+            CurrentState = State.Open;
+            if (contentsRoot != null)
+                contentsRoot.SetActive(true);
+            PositionStoredItems();
+        }
+        else
+        {
+            CurrentState = State.Closed;
+            HideStoredItems();
+            if (contentsRoot != null)
+                contentsRoot.SetActive(false);
+        }
+    }
+
+    private IEnumerator TranslateRoutine(bool opening)
+    {
         Vector3 slideDir = _slideAxis switch
         {
             SlideAxis.Right => transform.right,
@@ -133,21 +159,49 @@ public class DrawerController : MonoBehaviour
         }
 
         transform.localPosition = endPos;
+    }
 
-        if (opening)
+    /// <summary>
+    /// Rotates the door around its bottom edge (local X axis).
+    /// slideDistance is used as the open angle in degrees (default 90).
+    /// Pivot is the bottom edge of the door mesh.
+    /// </summary>
+    private IEnumerator HingeRoutine(bool opening)
+    {
+        // Pivot at bottom edge: half the door height below center, in local space
+        var col = GetComponent<Collider>();
+        float halfHeight = col != null ? col.bounds.extents.y : 0.15f;
+        Vector3 pivotOffset = -transform.up * halfHeight;
+
+        float openAngle = Mathf.Abs(slideDistance) > 0.01f ? slideDistance : 90f;
+        Quaternion openRotation = _closedRotation * Quaternion.AngleAxis(openAngle, Vector3.right);
+
+        Quaternion startRot = transform.localRotation;
+        Quaternion endRot = opening ? openRotation : _closedRotation;
+
+        Vector3 startPos = transform.localPosition;
+        // Calculate where position needs to be so the bottom edge stays fixed
+        Vector3 closedPivotWorld = transform.parent.TransformPoint(_closedPosition) + transform.rotation * pivotOffset;
+
+        float elapsed = 0f;
+
+        while (elapsed < slideDuration)
         {
-            CurrentState = State.Open;
-            if (contentsRoot != null)
-                contentsRoot.SetActive(true);
-            PositionStoredItems();
+            elapsed += Time.deltaTime;
+            float t = Smoothstep(elapsed / slideDuration);
+
+            transform.localRotation = Quaternion.Slerp(startRot, endRot, t);
+
+            // Keep bottom edge pinned: recalculate position from pivot
+            Vector3 currentPivotOffset = transform.rotation * pivotOffset;
+            transform.position = closedPivotWorld - currentPivotOffset;
+
+            yield return null;
         }
-        else
-        {
-            CurrentState = State.Closed;
-            HideStoredItems();
-            if (contentsRoot != null)
-                contentsRoot.SetActive(false);
-        }
+
+        transform.localRotation = endRot;
+        Vector3 finalPivotOffset = transform.rotation * pivotOffset;
+        transform.position = closedPivotWorld - finalPivotOffset;
     }
 
     // ── Item storage ────────────────────────────────────────────────
