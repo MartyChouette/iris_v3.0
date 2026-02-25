@@ -361,6 +361,11 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb.linearVelocity = Vector3.zero;
 
         _held.OnPlaced(_currentSurface, _gridSnap, pos, rot);
+
+        // Book public/private toggle based on placement surface
+        var bookItem = _held.GetComponent<BookItem>();
+        if (bookItem != null) bookItem.OnBookPlaced(_currentSurface);
+
         OnObjectPlaced?.Invoke();
         AudioManager.Instance?.PlaySFX(_placeSFX);
 
