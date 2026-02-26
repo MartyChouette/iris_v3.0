@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 using TMPro;
 
 /// <summary>
@@ -51,6 +52,12 @@ public class DateReactionUI : MonoBehaviour
 
         _iconRenderer = _bubbleGO.AddComponent<SpriteRenderer>();
         _iconRenderer.sortingOrder = 100;
+
+        // Render through walls so reactions are always visible
+        var spriteMat = new Material(Shader.Find("Sprites/Default"));
+        spriteMat.SetInt("_ZTest", (int)CompareFunction.Always);
+        spriteMat.renderQueue = 4000;
+        _iconRenderer.material = spriteMat;
 
         _bubbleGO.SetActive(false);
 
@@ -276,6 +283,11 @@ public class DateReactionUI : MonoBehaviour
         _bubbleText.outlineColor = new Color32(0, 0, 0, 200);
         _bubbleText.rectTransform.sizeDelta = new Vector2(4f, 2f);
         _bubbleText.enableWordWrapping = true;
+        _bubbleText.sortingOrder = 101;
+
+        // Render text through walls
+        _bubbleText.renderer.material.SetInt("_ZTestMode", (int)CompareFunction.Always);
+        _bubbleText.renderer.material.renderQueue = 4001;
     }
 
     private static string GetRandomSentiment(ReactionType type)

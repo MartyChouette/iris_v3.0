@@ -168,12 +168,42 @@ public class GlassController : MonoBehaviour
     void Awake()
     {
         _glassRenderer = GetComponent<Renderer>();
+        // Check children if renderer not on root (common with FBX imports)
+        if (_glassRenderer == null)
+            _glassRenderer = GetComponentInChildren<Renderer>();
     }
 
     void Update()
     {
         SettleFoam(Time.deltaTime);
         UpdateVisuals();
+        UpdateGlowPulse();
+    }
+
+    // ── Glow pulse (while pouring) ──────────────────────────────────────
+
+    private bool _isPouring;
+
+    /// <summary>Signal that liquid is actively being poured into this glass.</summary>
+    public void SetPouring(bool pouring) { _isPouring = pouring; }
+
+    private void UpdateGlowPulse()
+    {
+        if (!_glowing || _rimMat == null) return;
+
+        if (_isPouring)
+        {
+            // Pulse the rim intensity while actively pouring
+            float pulse = 1.0f + Mathf.Sin(Time.time * 4f) * 0.4f;
+            _rimMat.SetFloat("_RimIntensity", pulse);
+            _rimMat.SetColor("_RimColor", new Color(0.5f, 1f, 0.6f, 0.65f));
+        }
+        else
+        {
+            // Idle glow — gentle blue rim
+            _rimMat.SetFloat("_RimIntensity", 1.2f);
+            _rimMat.SetColor("_RimColor", new Color(0.6f, 0.9f, 1f, 0.55f));
+        }
     }
 
     // ── Internals ──────────────────────────────────────────────────────

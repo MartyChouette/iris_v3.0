@@ -59,12 +59,17 @@ public class CoffeeTableDelivery : MonoBehaviour
 
         // Tint the cup to liquid color (track material to avoid leak)
         var rend = _currentDrink.GetComponent<Renderer>();
+        if (rend == null) rend = _currentDrink.GetComponentInChildren<Renderer>();
         if (rend != null)
         {
-            _drinkMat = new Material(rend.sharedMaterial);
-            // URP Lit uses _BaseColor; Standard uses _Color — set both for compatibility
+            // Always create from a known-good URP Lit shader to avoid broken materials
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) shader = Shader.Find("Standard");
+            _drinkMat = new Material(shader);
             _drinkMat.SetColor("_BaseColor", liquidColor);
             _drinkMat.color = liquidColor;
+            // Ensure surface type is opaque
+            _drinkMat.SetFloat("_Surface", 0f);
             rend.material = _drinkMat;
         }
 

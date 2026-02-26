@@ -241,6 +241,7 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
         if (_selectedBottle == null) return;
         _isPouring = true;
         _selectedBottle.StartPour();
+        if (glass != null) glass.SetPouring(true);
     }
 
     private void EndPour()
@@ -249,7 +250,10 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
             _selectedBottle.StopPour();
 
         if (glass != null)
+        {
             glass.StopPouring();
+            glass.SetPouring(false);
+        }
 
         _isPouring = false;
     }
@@ -357,6 +361,9 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
 
         // Deliver drink to coffee table for date reaction
         CoffeeTableDelivery.Instance?.DeliverDrink(activeRecipe, glass.CurrentColor, lastScore);
+
+        // Clear the glass so it doesn't linger in the kitchen after serving
+        if (glass != null) glass.Clear();
 
         currentState = State.Scoring;
         Debug.Log($"[DrinkMakingManager] Score: {lastScore} (fill={lastFillScore:F0} ingr={lastIngredientScore:F0} stir={lastStirScore:F0} overflow={lastOverflowScore:F0})");

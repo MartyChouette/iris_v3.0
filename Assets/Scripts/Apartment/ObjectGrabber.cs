@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
@@ -163,6 +164,10 @@ public class ObjectGrabber : MonoBehaviour
 
         if (_mouseClick.WasPressedThisFrame())
         {
+            // Block game-world clicks when pointer is over UI
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+                return;
+
             if (_held == null)
             {
                 TryPickUp();
@@ -667,7 +672,7 @@ public class ObjectGrabber : MonoBehaviour
                 _grabTarget = ray.GetPoint(enter);
         }
 
-        ClampGrabTargetToWalls();
+        // Wall clamping removed — felt too harsh. Surface bounds still constrain placement.
     }
 
     /// <summary>

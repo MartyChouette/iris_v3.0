@@ -227,24 +227,28 @@ public class DayPhaseManager : MonoBehaviour
         if (timerWarningSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(timerWarningSFX);
 
-        // Show the nudge briefly — reposition panel to center-screen, bigger
+        // Show the nudge — top-third of screen, large and prominent
         if (_prepTimerText != null)
         {
             _prepTimerText.text = "Your date will arrive soon!";
-            _prepTimerText.fontSize = 36f;
+            _prepTimerText.fontSize = 44f;
         }
         if (_prepTimerPanel != null)
         {
-            // Override position to center of screen, bigger panel
             var rt = _prepTimerPanel.GetComponent<RectTransform>();
             if (rt != null)
             {
-                rt.anchorMin = new Vector2(0.5f, 0.5f);
-                rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(550f, 80f);
-                rt.anchoredPosition = Vector2.zero;
+                rt.anchorMin = new Vector2(0.5f, 1f);
+                rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.sizeDelta = new Vector2(650f, 90f);
+                rt.anchoredPosition = new Vector2(0f, -80f);
             }
+
+            // Ensure panel background is visible
+            var panelImg = _prepTimerPanel.GetComponent<UnityEngine.UI.Image>();
+            if (panelImg != null)
+                panelImg.color = new Color(0.08f, 0.07f, 0.06f, 0.85f);
 
             _prepTimerPanel.SetActive(true);
 

@@ -460,8 +460,8 @@ public static class ApartmentSceneBuilder
     {
         var go = new GameObject("JudgmentStopPoint");
         go.transform.SetParent(parent);
-        // In front of the door, between entrance and kitchen table
-        go.transform.position = new Vector3(-3f, 0f, -4f);
+        // In front of the door, visible from entrance camera angle
+        go.transform.position = new Vector3(-2.5f, 0f, -3.5f);
         go.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
         return go.transform;
     }
@@ -471,8 +471,8 @@ public static class ApartmentSceneBuilder
     {
         var go = new GameObject("KitchenStandPoint");
         go.transform.SetParent(parent);
-        // Near the drink making station (-4, 0, -5.2), offset so NPC watches the player
-        go.transform.position = new Vector3(-3.5f, 0f, -4.8f);
+        // Near the drink station, offset toward camera so NPC is visible
+        go.transform.position = new Vector3(-3.0f, 0f, -4.2f);
         return go.transform;
     }
 
@@ -546,7 +546,7 @@ public static class ApartmentSceneBuilder
         // Couch seat target (where date character sits)
         var seatGO = new GameObject("CouchSeatTarget");
         seatGO.transform.SetParent(parent);
-        seatGO.transform.position = new Vector3(-5.5f, 0.5f, 3f);
+        seatGO.transform.position = new Vector3(-4.5f, 0.5f, 2.5f);
         couchSeatTarget = seatGO.transform;
 
         // Coffee table delivery point (where drinks appear)
@@ -2151,6 +2151,16 @@ public static class ApartmentSceneBuilder
             areaNamePanel.GetComponentInChildren<TMP_Text>();
         so.FindProperty("browseHintsPanel").objectReferenceValue = browseHints;
 
+        // Nav button area name labels (AreaLabel child of each wrapper)
+        var navLeftWrapper = navLeftBtn.transform.parent; // ArrowBtn → NavLeft wrapper
+        var navRightWrapper = navRightBtn.transform.parent;
+        var leftLabel = navLeftWrapper.Find("AreaLabel");
+        var rightLabel = navRightWrapper.Find("AreaLabel");
+        if (leftLabel != null)
+            so.FindProperty("_navLeftLabel").objectReferenceValue = leftLabel.GetComponent<TMP_Text>();
+        if (rightLabel != null)
+            so.FindProperty("_navRightLabel").objectReferenceValue = rightLabel.GetComponent<TMP_Text>();
+
         so.ApplyModifiedPropertiesWithoutUndo();
 
         // Start hidden — DayPhaseManager shows it when entering Exploration
@@ -2166,34 +2176,34 @@ public static class ApartmentSceneBuilder
         Vector2 aMin = anchorMin ?? new Vector2(0.5f, 0.5f);
         Vector2 aMax = anchorMax ?? new Vector2(0.5f, 0.5f);
 
-        // Wrapper that holds arrow button + "Camera" label
+        // Wrapper that holds arrow button + area name label
         var wrapperGO = new GameObject(name);
         wrapperGO.transform.SetParent(parent);
         var wrapperRT = wrapperGO.AddComponent<RectTransform>();
         wrapperRT.anchorMin = aMin;
         wrapperRT.anchorMax = aMax;
-        wrapperRT.sizeDelta = new Vector2(90f, 110f);
+        wrapperRT.sizeDelta = new Vector2(110f, 100f);
         wrapperRT.anchoredPosition = anchoredPos;
         wrapperRT.localScale = Vector3.one;
 
-        // Arrow button (larger, warm muted color)
+        // Arrow button — pill shape, warm semi-transparent
         var btnGO = new GameObject("ArrowBtn");
         btnGO.transform.SetParent(wrapperGO.transform, false);
         var btnRT = btnGO.AddComponent<RectTransform>();
         btnRT.anchorMin = new Vector2(0.5f, 1f);
         btnRT.anchorMax = new Vector2(0.5f, 1f);
         btnRT.pivot = new Vector2(0.5f, 1f);
-        btnRT.sizeDelta = new Vector2(80f, 80f);
+        btnRT.sizeDelta = new Vector2(56f, 56f);
         btnRT.anchoredPosition = Vector2.zero;
 
         var img = btnGO.AddComponent<Image>();
-        img.color = new Color(0.15f, 0.13f, 0.12f, 0.7f);
+        img.color = new Color(0.12f, 0.11f, 0.10f, 0.75f);
 
         var btn = btnGO.AddComponent<Button>();
         var colors = btn.colors;
         colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1f, 0.92f, 0.8f);
-        colors.pressedColor = new Color(0.85f, 0.75f, 0.6f);
+        colors.highlightedColor = new Color(1f, 0.95f, 0.85f);
+        colors.pressedColor = new Color(0.8f, 0.72f, 0.58f);
         btn.colors = colors;
 
         var textGO = new GameObject("Arrow");
@@ -2206,27 +2216,27 @@ public static class ApartmentSceneBuilder
 
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.text = label;
-        tmp.fontSize = 42f;
+        tmp.fontSize = 32f;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = new Color(0.92f, 0.88f, 0.80f);
+        tmp.color = new Color(0.92f, 0.90f, 0.84f);
         tmp.raycastTarget = false;
 
-        // "Camera" label below the arrow
-        var camLabelGO = new GameObject("CamLabel");
-        camLabelGO.transform.SetParent(wrapperGO.transform, false);
-        var camLabelRT = camLabelGO.AddComponent<RectTransform>();
-        camLabelRT.anchorMin = new Vector2(0.5f, 0f);
-        camLabelRT.anchorMax = new Vector2(0.5f, 0f);
-        camLabelRT.pivot = new Vector2(0.5f, 0f);
-        camLabelRT.sizeDelta = new Vector2(90f, 24f);
-        camLabelRT.anchoredPosition = Vector2.zero;
+        // Area name label below the arrow (dynamically updated by ApartmentManager)
+        var areaLabelGO = new GameObject("AreaLabel");
+        areaLabelGO.transform.SetParent(wrapperGO.transform, false);
+        var areaLabelRT = areaLabelGO.AddComponent<RectTransform>();
+        areaLabelRT.anchorMin = new Vector2(0.5f, 0f);
+        areaLabelRT.anchorMax = new Vector2(0.5f, 0f);
+        areaLabelRT.pivot = new Vector2(0.5f, 1f);
+        areaLabelRT.sizeDelta = new Vector2(120f, 30f);
+        areaLabelRT.anchoredPosition = new Vector2(0f, 28f);
 
-        var camLabel = camLabelGO.AddComponent<TextMeshProUGUI>();
-        camLabel.text = "Camera";
-        camLabel.fontSize = 14f;
-        camLabel.alignment = TextAlignmentOptions.Center;
-        camLabel.color = new Color(0.65f, 0.6f, 0.55f, 0.8f);
-        camLabel.raycastTarget = false;
+        var areaLabel = areaLabelGO.AddComponent<TextMeshProUGUI>();
+        areaLabel.text = "";
+        areaLabel.fontSize = 13f;
+        areaLabel.alignment = TextAlignmentOptions.Center;
+        areaLabel.color = new Color(0.72f, 0.68f, 0.62f, 0.9f);
+        areaLabel.raycastTarget = false;
 
         return btnGO;
     }
@@ -2988,11 +2998,11 @@ public static class ApartmentSceneBuilder
         var btnRT = btnGO.AddComponent<RectTransform>();
         btnRT.anchorMin = new Vector2(0.5f, 0f);
         btnRT.anchorMax = new Vector2(0.5f, 0f);
-        btnRT.pivot = new Vector2(0.5f, 0f);
-        btnRT.sizeDelta = new Vector2(200f, 50f);
-        btnRT.anchoredPosition = new Vector2(0f, 30f);
+        btnRT.pivot = new Vector2(0.5f, 0.5f);
+        btnRT.sizeDelta = new Vector2(240f, 56f);
+        btnRT.anchoredPosition = new Vector2(0f, 80f);
         btnRT.localScale = Vector3.one;
-        btnGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.2f, 0.5f, 0.3f);
+        btnGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.22f, 0.20f, 0.18f, 0.88f);
         var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
 
         var btnLabel = new GameObject("Label");
@@ -3862,12 +3872,12 @@ public static class ApartmentSceneBuilder
         bedRT.anchorMin = new Vector2(0.5f, 0f);
         bedRT.anchorMax = new Vector2(0.5f, 0f);
         bedRT.pivot = new Vector2(0.5f, 0f);
-        bedRT.sizeDelta = new Vector2(220f, 60f);
-        bedRT.anchoredPosition = new Vector2(0f, 30f);
+        bedRT.sizeDelta = new Vector2(240f, 56f);
+        bedRT.anchoredPosition = new Vector2(0f, 90f);
         bedRT.localScale = Vector3.one;
 
         var bedBg = bedPanel.AddComponent<UnityEngine.UI.Image>();
-        bedBg.color = new Color(0.1f, 0.05f, 0.2f, 0.85f);
+        bedBg.color = new Color(0.18f, 0.15f, 0.22f, 0.88f);
 
         var bedBtn = bedPanel.AddComponent<UnityEngine.UI.Button>();
 
@@ -4413,7 +4423,7 @@ public static class ApartmentSceneBuilder
         titleRT.anchorMin = new Vector2(0.5f, 0.5f);
         titleRT.anchorMax = new Vector2(0.5f, 0.5f);
         titleRT.sizeDelta = new Vector2(600f, 60f);
-        titleRT.anchoredPosition = new Vector2(0f, 260f);
+        titleRT.anchoredPosition = new Vector2(0f, 280f);
         titleRT.localScale = Vector3.one;
         var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
         titleTMP.text = "What is your name?";
@@ -4429,7 +4439,7 @@ public static class ApartmentSceneBuilder
         nameRT.anchorMin = new Vector2(0.5f, 0.5f);
         nameRT.anchorMax = new Vector2(0.5f, 0.5f);
         nameRT.sizeDelta = new Vector2(500f, 50f);
-        nameRT.anchoredPosition = new Vector2(0f, 250f);
+        nameRT.anchoredPosition = new Vector2(0f, 200f);
         nameRT.localScale = Vector3.one;
         var nameTMP = nameGO.AddComponent<TextMeshProUGUI>();
         nameTMP.text = "N e m a _ . . .";

@@ -319,18 +319,22 @@ public class FlowerTrimmingBridge : MonoBehaviour
         var btnGO = new GameObject("ContinueButton");
         btnGO.transform.SetParent(canvasGO.transform, false);
         var btnImage = btnGO.AddComponent<Image>();
-        btnImage.color = new Color(0.1f, 0.1f, 0.1f, 0.75f);
+        btnImage.color = new Color(0.22f, 0.20f, 0.18f, 0.88f);
         var btn = btnGO.AddComponent<Button>();
         btn.targetGraphic = btnImage;
+        var btnColors = btn.colors;
+        btnColors.highlightedColor = new Color(1f, 0.95f, 0.85f);
+        btnColors.pressedColor = new Color(0.85f, 0.8f, 0.7f);
+        btn.colors = btnColors;
         btn.interactable = false; // enabled after 1.5s delay
         btn.onClick.AddListener(() => onClick?.Invoke());
 
         var btnRect = btnGO.GetComponent<RectTransform>();
         btnRect.anchorMin = new Vector2(0.5f, 0f);
         btnRect.anchorMax = new Vector2(0.5f, 0f);
-        btnRect.pivot = new Vector2(0.5f, 0f);
-        btnRect.anchoredPosition = new Vector2(0f, 40f);
-        btnRect.sizeDelta = new Vector2(200f, 50f);
+        btnRect.pivot = new Vector2(0.5f, 0.5f);
+        btnRect.anchoredPosition = new Vector2(0f, 100f);
+        btnRect.sizeDelta = new Vector2(240f, 56f);
 
         // Button text
         var textGO = new GameObject("Text");

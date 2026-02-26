@@ -65,6 +65,12 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Panel showing browse-mode control hints.")]
     [SerializeField] private GameObject browseHintsPanel;
 
+    [Tooltip("Label on the left nav button showing the previous area name.")]
+    [SerializeField] private TMP_Text _navLeftLabel;
+
+    [Tooltip("Label on the right nav button showing the next area name.")]
+    [SerializeField] private TMP_Text _navRightLabel;
+
     // ──────────────────────────────────────────────────────────────
     // Constants
     // ──────────────────────────────────────────────────────────────
@@ -355,6 +361,18 @@ public class ApartmentManager : MonoBehaviour
 
         if (browseHintsPanel != null)
             browseHintsPanel.SetActive(true);
+
+        // Update nav button labels with destination area names
+        if (areas != null && areas.Length > 1)
+        {
+            int leftIdx = (_currentAreaIndex - 1 + areas.Length) % areas.Length;
+            int rightIdx = (_currentAreaIndex + 1) % areas.Length;
+
+            if (_navLeftLabel != null)
+                _navLeftLabel.text = areas[leftIdx].areaName;
+            if (_navRightLabel != null)
+                _navRightLabel.text = areas[rightIdx].areaName;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────
