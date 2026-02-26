@@ -179,9 +179,11 @@ public static class RecordSetup
         var discRend = disc.GetComponent<Renderer>();
         if (discRend != null)
         {
-            Material discMat = rend != null && rend.sharedMaterial != null
-                ? new Material(rend.sharedMaterial)
-                : new Material(Shader.Find("Standard"));
+            Material discMat;
+            if (rend != null && rend.sharedMaterial != null)
+                discMat = new Material(rend.sharedMaterial);
+            else
+                discMat = new Material(Shader.Find("Standard"));
             discMat.color = new Color(0.05f, 0.05f, 0.05f); // Black vinyl
             discRend.sharedMaterial = discMat;
         }
