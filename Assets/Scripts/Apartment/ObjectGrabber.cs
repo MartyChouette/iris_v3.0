@@ -384,6 +384,13 @@ public class ObjectGrabber : MonoBehaviour
             rot = _held.transform.rotation;
         }
 
+        // Home snap: if placing near the item's home position, use exact home pos/rot
+        if (_held.HasHome && Vector3.Distance(pos, _held.HomePosition) < _held.HomeTolerance * 2f)
+        {
+            pos = _held.HomePosition;
+            rot = _held.HomeRotation;
+        }
+
         // Restore constraints before placement configures the rigidbody
         _heldRb.constraints = _originalConstraints;
         _heldRb.linearVelocity = Vector3.zero;

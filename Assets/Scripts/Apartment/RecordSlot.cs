@@ -3,7 +3,9 @@ using UnityEngine;
 /// <summary>
 /// Turntable/record player receiver. Accepts a PlaceableObject with RecordItem,
 /// manages playback via AudioManager, feeds MoodMachine, and toggles ReactableTag.
-/// Place on the turntable GameObject alongside a ReactableTag.
+/// When a record is playing, it stands upright at the display point so the player
+/// can see which record is loaded. On eject (or song switch), the record returns
+/// to its shelf home position.
 /// Scene-scoped singleton (one turntable per apartment).
 /// </summary>
 public class RecordSlot : MonoBehaviour
@@ -24,8 +26,11 @@ public class RecordSlot : MonoBehaviour
     [SerializeField] private float _rotationSpeed = 33.3f;
 
     [Header("Record Placement")]
-    [Tooltip("Where the record snaps to when placed on the turntable.")]
+    [Tooltip("Where the record snaps to when placed on the turntable (hidden).")]
     [SerializeField] private Transform _recordSnapPoint;
+
+    [Tooltip("Where the playing record stands upright for display. If null, uses turntable position + offset.")]
+    [SerializeField] private Transform _displayPoint;
 
     [Header("Audio")]
     [Tooltip("SFX played when a record starts playing.")]
@@ -36,6 +41,8 @@ public class RecordSlot : MonoBehaviour
 
     private PlaceableObject _loadedRecord;
     private RecordItem _loadedRecordItem;
+    private Vector3 _loadedHomePosition;
+    private Quaternion _loadedHomeRotation;
     private Material _labelMat;
     private bool _isPlaying;
 
@@ -83,7 +90,7 @@ public class RecordSlot : MonoBehaviour
         var recordItem = held.GetComponent<RecordItem>();
         if (recordItem == null || recordItem.Definition == null) return false;
 
-        // Eject current record if one is loaded
+        // Eject current record if one is loaded (returns it to shelf)
         if (_loadedRecord != null)
             EjectRecord();
 
@@ -91,7 +98,11 @@ public class RecordSlot : MonoBehaviour
         _loadedRecord = held;
         _loadedRecordItem = recordItem;
 
-        // Disable physics and snap to turntable
+        // Remember where it came from so we can return it
+        _loadedHomePosition = recordItem.HomePosition;
+        _loadedHomeRotation = recordItem.HomeRotation;
+
+        // Disable physics
         var rb = held.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -104,18 +115,8 @@ public class RecordSlot : MonoBehaviour
         foreach (var col in held.GetComponents<Collider>())
             col.enabled = false;
 
-        // Snap position
-        if (_recordSnapPoint != null)
-        {
-            held.transform.position = _recordSnapPoint.position;
-            held.transform.rotation = _recordSnapPoint.rotation;
-        }
-        else
-        {
-            held.transform.position = transform.position + Vector3.up * 0.02f;
-            held.transform.rotation = Quaternion.identity;
-        }
-
+        // Stand the record upright at the display point
+        PositionAtDisplay(held);
         held.transform.SetParent(transform);
 
         StartPlayback();
@@ -123,7 +124,25 @@ public class RecordSlot : MonoBehaviour
     }
 
     /// <summary>
-    /// Ejects the current record, re-enabling its physics and PlaceableObject state.
+    /// Position the record standing upright at the display point.
+    /// </summary>
+    private void PositionAtDisplay(PlaceableObject record)
+    {
+        if (_displayPoint != null)
+        {
+            record.transform.position = _displayPoint.position;
+            record.transform.rotation = _displayPoint.rotation;
+        }
+        else
+        {
+            // Default: stand upright behind the turntable
+            record.transform.position = transform.position + transform.forward * -0.15f + Vector3.up * 0.1f;
+            record.transform.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
+        }
+    }
+
+    /// <summary>
+    /// Ejects the current record, returning it to its shelf home position.
     /// </summary>
     public void EjectRecord()
     {
@@ -131,23 +150,28 @@ public class RecordSlot : MonoBehaviour
 
         StopPlayback();
 
-        // Re-enable physics
         _loadedRecord.transform.SetParent(null);
+
+        // Return to shelf home position
+        _loadedRecord.transform.position = _loadedHomePosition;
+        _loadedRecord.transform.rotation = _loadedHomeRotation;
 
         var rb = _loadedRecord.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.isKinematic = false;
-            rb.useGravity = true;
+            rb.isKinematic = true;  // Stay put on shelf
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
 
         // Re-enable colliders
         foreach (var col in _loadedRecord.GetComponents<Collider>())
             col.enabled = true;
 
-        _loadedRecord.OnDropped();
+        // Mark as at home
+        _loadedRecord.IsAtHome = true;
 
-        Debug.Log($"[RecordSlot] Ejected '{_loadedRecordItem?.Definition?.title}'.");
+        Debug.Log($"[RecordSlot] Returned '{_loadedRecordItem?.Definition?.title}' to shelf.");
 
         _loadedRecord = null;
         _loadedRecordItem = null;

@@ -60,6 +60,9 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Distance threshold — object counts as 'at home' when within this range.")]
     [SerializeField] private float _homeTolerance = 0.2f;
 
+    [Tooltip("World-space home rotation. Auto-captured alongside home position.")]
+    [SerializeField] private Quaternion _homeRotation = Quaternion.identity;
+
     // ── Static world bounds (set by ApartmentManager) ─────────────────
     private static Bounds s_worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
     private static bool s_boundsSet;
@@ -90,6 +93,10 @@ public class PlaceableObject : MonoBehaviour
     public bool WallOnly => wallOnly;
     public bool CanBeDishelved => _canBeDishelved;
     public PlacementSurface LastPlacedSurface => _lastPlacedSurface;
+    public Vector3 HomePosition => _homePosition;
+    public Quaternion HomeRotation => _homeRotation;
+    public float HomeTolerance => _homeTolerance;
+    public bool HasHome => _homePosition != Vector3.zero;
 
     /// <summary>
     /// Assign the surface this item is sitting on. Used by DrawerController
@@ -106,7 +113,10 @@ public class PlaceableObject : MonoBehaviour
         if (homeZone != null) _homeZoneName = homeZone;
         if (altHomeZone != null) _altHomeZoneName = altHomeZone;
         if (useSpawnAsHome && _homePosition == Vector3.zero)
+        {
             _homePosition = transform.position;
+            _homeRotation = transform.rotation;
+        }
     }
 
     /// <summary>
@@ -212,9 +222,12 @@ public class PlaceableObject : MonoBehaviour
         _rb = GetComponent<Rigidbody>();
         _colliders = GetComponents<Collider>();
 
-        // Auto-capture spawn position as home
+        // Auto-capture spawn position/rotation as home
         if (_useSpawnAsHome && _homePosition == Vector3.zero)
+        {
             _homePosition = transform.position;
+            _homeRotation = transform.rotation;
+        }
     }
 
     private void Update()
