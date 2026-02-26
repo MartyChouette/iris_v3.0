@@ -231,7 +231,19 @@ public class ObjectGrabber : MonoBehaviour
                     clickedDrawer.Open();
                 else if (clickedDrawer.CurrentState == DrawerController.State.Open)
                     clickedDrawer.Close();
+                return;
             }
+
+            // Check for light switch click
+            var lightSwitch = hit.collider.GetComponent<LightSwitch>();
+            if (lightSwitch == null)
+                lightSwitch = hit.collider.GetComponentInParent<LightSwitch>();
+            if (lightSwitch != null)
+            {
+                lightSwitch.Toggle();
+                return;
+            }
+
             return;
         }
 
