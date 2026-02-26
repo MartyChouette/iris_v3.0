@@ -120,9 +120,7 @@ public class GameClock : MonoBehaviour
 
     private void Update()
     {
-        if (_isSleeping) return;
-
-        // Demo timer counts real time (unscaledDeltaTime) — ignores pause and time scale
+        // Demo timer always ticks (real time) — even during sleep sequences
         if (_demoTimeLimitSeconds > 0f && _demoTimeRemaining > 0f)
         {
             _demoTimeRemaining -= Time.unscaledDeltaTime;
@@ -136,6 +134,7 @@ public class GameClock : MonoBehaviour
             }
         }
 
+        if (_isSleeping) return;
         if (DateDebugOverlay.IsTimePaused) return;
 
         _currentHour += Time.deltaTime / realSecondsPerGameHour;

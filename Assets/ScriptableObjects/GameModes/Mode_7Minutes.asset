@@ -15,6 +15,6 @@ MonoBehaviour:
   modeName: 7 Minutes
   modeDescription: Real-time 7-minute countdown. A quick taste of Iris.
   totalDays: 1
-  demoTimeLimitSeconds: 900
+  demoTimeLimitSeconds: 420
   realSecondsPerGameHour: 60
   prepDuration: 180
