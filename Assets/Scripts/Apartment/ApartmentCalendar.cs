@@ -51,7 +51,7 @@ public class ApartmentCalendar : MonoBehaviour
         var meshRend = GetComponent<MeshRenderer>();
         if (meshRend != null) meshRend.enabled = false;
         var meshFilter = GetComponent<MeshFilter>();
-        if (meshFilter != null) meshFilter.enabled = false;
+        if (meshFilter != null) Destroy(meshFilter);
         var col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
 
