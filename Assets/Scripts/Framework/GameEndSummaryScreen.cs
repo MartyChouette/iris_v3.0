@@ -30,9 +30,16 @@ public class GameEndSummaryScreen : MonoBehaviour
     private static readonly Color Accent = new Color(0.85f, 0.65f, 0.45f);
     private static readonly Color BtnColor = new Color(0.25f, 0.55f, 0.35f);
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AutoSpawn()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterSceneCallback()
     {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (mode == LoadSceneMode.Additive) return;
         if (Instance != null) return;
         var go = new GameObject("GameEndSummaryScreen");
         go.AddComponent<GameEndSummaryScreen>();
