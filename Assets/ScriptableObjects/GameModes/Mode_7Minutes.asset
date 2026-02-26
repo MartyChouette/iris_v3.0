@@ -17,4 +17,4 @@ MonoBehaviour:
   totalDays: 1
   demoTimeLimitSeconds: 420
   realSecondsPerGameHour: 60
-  prepDuration: 60
+  prepDuration: 900
