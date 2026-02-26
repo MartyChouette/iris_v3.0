@@ -614,7 +614,10 @@ public class DayPhaseManager : MonoBehaviour
     {
         Debug.Log("[DayPhaseManager] Calendar complete — showing end screen.");
 
-        // 1. Fade to black
+        // Ensure time scale is normal so fades and waits work
+        TimeScaleManager.ClearAll();
+
+        // 1. Fade to black (ScreenFade uses unscaledDeltaTime internally)
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
@@ -625,8 +628,8 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.ShowPhaseTitle($"{modeName} Complete");
 
-        // 3. Hold for the player to read
-        yield return new WaitForSeconds(3f);
+        // 3. Hold for the player to read (real time — immune to time scale)
+        yield return new WaitForSecondsRealtime(3f);
 
         // 4. Hide phase title
         if (ScreenFade.Instance != null)

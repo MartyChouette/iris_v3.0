@@ -199,7 +199,7 @@ public class GameClock : MonoBehaviour
         }
 
         // 3. Hold on black for dream
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSecondsRealtime(3f);
 
         // 4. Hide dream text
         if (_dreamText != null)
@@ -212,19 +212,22 @@ public class GameClock : MonoBehaviour
         _currentDay++;
         _currentHour = startHour;
 
-        // 6. AdvanceDay fires OnNewNewspaper → DayPhaseManager.EnterMorning
+        // Check calendar completion BEFORE advancing to next day's morning
+        if (totalDays > 0 && _currentDay > totalDays)
+        {
+            _isSleeping = true; // block further ticking
+            Debug.Log("[GameClock] Calendar complete!");
+            OnCalendarComplete?.Invoke();
+            // Skip AdvanceDay — no next morning needed
+            yield break;
+        }
+
+        // 7. AdvanceDay fires OnNewNewspaper → DayPhaseManager.EnterMorning
         //    which already fades in from black
         dayManager?.AdvanceDay();
 
         _isSleeping = false;
         OnDayStarted?.Invoke();
         Debug.Log($"[GameClock] Day {_currentDay} started at {_currentHour:F0}:00");
-
-        if (totalDays > 0 && _currentDay > totalDays)
-        {
-            _isSleeping = true; // block further ticking
-            OnCalendarComplete?.Invoke();
-            Debug.Log("[GameClock] Calendar complete!");
-        }
     }
 }
