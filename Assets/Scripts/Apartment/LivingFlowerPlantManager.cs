@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Scene-scoped singleton tracking all living plants in the apartment.
@@ -99,6 +100,10 @@ public class LivingFlowerPlantManager : MonoBehaviour
 
         plantGO.transform.position = slot.position;
         plantGO.transform.rotation = slot.rotation;
+
+        // Move out of DontDestroyOnLoad (if it was there for scene-unload survival)
+        // so it gets cleaned up normally when leaving the apartment scene.
+        SceneManager.MoveGameObjectToScene(plantGO, gameObject.scene);
 
         var plant = plantGO.AddComponent<LivingFlowerPlant>();
         int currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1;
