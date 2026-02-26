@@ -152,6 +152,9 @@ public class FlowerTrimmingBridge : MonoBehaviour
         session.sessionEnded = false;
         session.endRequested = false;
 
+        // Disable scene-baked Quit/Restart buttons — apartment flow uses its own Continue button
+        DisableSceneButtons(flowerScene);
+
         // Wait for the session to produce a result
         int resultScore = 0;
         int resultDays = 0;
@@ -369,6 +372,26 @@ public class FlowerTrimmingBridge : MonoBehaviour
         _apartmentBrain = null;
         _apartmentListener = null;
         Debug.Log("[FlowerTrimmingBridge] Apartment camera restored.");
+    }
+
+    /// <summary>
+    /// Find and deactivate Quit/Restart buttons baked into the flower scene.
+    /// These are only relevant when the flower scene runs standalone.
+    /// </summary>
+    private static void DisableSceneButtons(Scene scene)
+    {
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            {
+                string n = t.gameObject.name;
+                if (n.StartsWith("Quit_Button") || n.StartsWith("Restart_Button"))
+                {
+                    t.gameObject.SetActive(false);
+                    Debug.Log($"[FlowerTrimmingBridge] Disabled scene button: {n}");
+                }
+            }
+        }
     }
 
     private void DisableApartmentCamera()
