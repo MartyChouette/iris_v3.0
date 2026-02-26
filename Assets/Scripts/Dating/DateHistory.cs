@@ -14,6 +14,7 @@ public static class DateHistory
         public float affection;
         public string grade;
         public bool succeeded;
+        public string failedPhase; // which phase the date failed at (Arrival, BackgroundJudging, Reveal, or empty)
         public List<string> learnedLikes = new List<string>();
         public List<string> learnedDislikes = new List<string>();
 

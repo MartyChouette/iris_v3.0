@@ -57,6 +57,12 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Affection below this after Phase 3 → NPC leaves without flower.")]
     [SerializeField] private float _revealFailThreshold = 30f;
 
+    [Tooltip("If affection drops below this at ANY point, date immediately fails. 0 = disabled.")]
+    [SerializeField] private float _bailOutThreshold = 10f;
+
+    [Tooltip("Minimum affection required for the date to give you a flower (and trigger flower trimming).")]
+    [SerializeField] private float _flowerAffectionThreshold = 90f;
+
     [Header("Ambient Check")]
     [Tooltip("Seconds between ambient mood evaluations.")]
     [SerializeField] private float moodCheckInterval = 15f;
@@ -462,6 +468,21 @@ public class DateSessionManager : MonoBehaviour
 
         OnAffectionChanged?.Invoke(_affection);
         Debug.Log($"[DateSessionManager] Reaction: {type} (delta={delta:+0.0;-0.0}) → Affection: {_affection:F1}");
+
+        // Continuous bail-out: if affection drops too low at any point, date fails immediately
+        CheckBailOut();
+    }
+
+    /// <summary>If affection is below the bail-out threshold, the date fails immediately.</summary>
+    private void CheckBailOut()
+    {
+        if (_bailOutThreshold <= 0f) return;
+        if (_state != SessionState.DateInProgress) return;
+        if (_affection < _bailOutThreshold)
+        {
+            Debug.Log($"[DateSessionManager] Affection {_affection:F1} below bail-out threshold {_bailOutThreshold} — date fails!");
+            FailDate();
+        }
     }
 
     /// <summary>Called when a drink is delivered to the coffee table.</summary>
@@ -522,8 +543,17 @@ public class DateSessionManager : MonoBehaviour
             {
                 reactionUI.ShowText("I had a wonderful time...", 3f);
                 yield return new WaitForSeconds(3.5f);
-                reactionUI.ShowText("Here... I brought you something.", 3f);
-                yield return new WaitForSeconds(3.5f);
+
+                if (_affection >= _flowerAffectionThreshold)
+                {
+                    reactionUI.ShowText("Here... I brought you something.", 3f);
+                    yield return new WaitForSeconds(3.5f);
+                }
+                else
+                {
+                    reactionUI.ShowText("See you around.", 2.5f);
+                    yield return new WaitForSeconds(3f);
+                }
             }
             SucceedDate();
         }
@@ -544,9 +574,10 @@ public class DateSessionManager : MonoBehaviour
     {
         if (_state == SessionState.Idle || _state == SessionState.DateEnding) return;
 
+        string failedPhaseName = _datePhase.ToString();
         _state = SessionState.DateEnding;
         _datePhase = DatePhase.None;
-        Debug.Log($"[DateSessionManager] Date FAILED with {_currentDate?.characterName}. Affection: {_affection:F1}");
+        Debug.Log($"[DateSessionManager] Date FAILED at {failedPhaseName} with {_currentDate?.characterName}. Affection: {_affection:F1}");
 
         DateOutcomeCapture.Capture(_currentDate, _affection, false, _accumulatedReactions);
 
@@ -556,7 +587,8 @@ public class DateSessionManager : MonoBehaviour
             day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 0,
             affection = _affection,
             grade = "F",
-            succeeded = false
+            succeeded = false,
+            failedPhase = failedPhaseName
         };
         PopulateLearnedPreferences(failEntry);
         DateHistory.Record(failEntry);
@@ -594,12 +626,15 @@ public class DateSessionManager : MonoBehaviour
         PopulateLearnedPreferences(successEntry);
         DateHistory.Record(successEntry);
 
-        // Signal flower trimming if this date has a flower scene configured
-        if (_currentDate != null && !string.IsNullOrEmpty(_currentDate.flowerSceneName))
+        // Only award flower if affection is high enough
+        bool earnedFlower = _affection >= _flowerAffectionThreshold;
+
+        // Signal flower trimming if this date has a flower scene configured AND player earned it
+        if (earnedFlower && _currentDate != null && !string.IsNullOrEmpty(_currentDate.flowerSceneName))
             PendingFlowerTrim = true;
 
-        // Zelda-style flower gift presentation (before dismissing character)
-        if (_currentDate != null && _currentDate.flowerPrefab != null
+        // Zelda-style flower gift presentation (only if earned)
+        if (earnedFlower && _currentDate != null && _currentDate.flowerPrefab != null
             && FlowerGiftPresenter.Instance != null)
         {
             yield return FlowerGiftPresenter.Instance.Present(
