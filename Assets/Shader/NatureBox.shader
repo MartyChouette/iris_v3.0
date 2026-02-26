@@ -358,15 +358,15 @@ Shader "Iris/NatureBox"
                     // Three overlapping column layers at different speeds
                     float r1 = hash21(floor(float2(rainUV.x * 1.0, 0.0)));
                     float streak1 = step(0.92, r1) * step(0.97,
-                        frac(rainUV.y * 0.5 - t_rain * (0.8 + r1 * 0.4)));
+                        frac(rainUV.y * 0.5 + t_rain * (0.8 + r1 * 0.4)));
 
                     float r2 = hash21(floor(float2(rainUV.x * 1.3 + 50.0, 0.0)));
                     float streak2 = step(0.90, r2) * step(0.96,
-                        frac(rainUV.y * 0.4 - t_rain * (1.0 + r2 * 0.3) + 0.5));
+                        frac(rainUV.y * 0.4 + t_rain * (1.0 + r2 * 0.3) + 0.5));
 
                     float r3 = hash21(floor(float2(rainUV.x * 0.7 + 100.0, 0.0)));
                     float streak3 = step(0.93, r3) * step(0.97,
-                        frac(rainUV.y * 0.6 - t_rain * (0.6 + r3 * 0.5) + 0.3));
+                        frac(rainUV.y * 0.6 + t_rain * (0.6 + r3 * 0.5) + 0.3));
 
                     float rain = saturate(streak1 + streak2 + streak3) * skyMask;
                     float3 rainCol = lerp(float3(0.7, 0.75, 0.85), float3(0.2, 0.22, 0.3), nightFade);

@@ -40,6 +40,12 @@ public class GlassController : MonoBehaviour
     private readonly List<(DrinkIngredientDefinition ingredient, float amount)> _ingredients
         = new List<(DrinkIngredientDefinition, float)>();
 
+    // Glow overlay
+    private Renderer _glassRenderer;
+    private Material _rimMat;
+    private Material[] _baseMaterials;
+    private bool _glowing;
+
     // ── Public read-only API ────────────────────────────────────────────
 
     public float LiquidLevel => _liquidLevel;
@@ -120,7 +126,49 @@ public class GlassController : MonoBehaviour
         _ingredients.Clear();
     }
 
+    // ── Glow API ─────────────────────────────────────────────────────
+
+    /// <summary>Add a rim light glow to the glass shell.</summary>
+    public void EnableGlow()
+    {
+        if (_glowing) return;
+        if (_glassRenderer == null) return;
+
+        if (_rimMat == null)
+        {
+            var shader = Shader.Find("Iris/RimLight");
+            if (shader == null) return;
+            _rimMat = new Material(shader);
+            _rimMat.SetColor("_RimColor", new Color(0.6f, 0.9f, 1f, 0.55f));
+            _rimMat.SetFloat("_RimPower", 2.5f);
+            _rimMat.SetFloat("_RimIntensity", 1.2f);
+        }
+
+        _baseMaterials = _glassRenderer.sharedMaterials;
+        var mats = new Material[_baseMaterials.Length + 1];
+        _baseMaterials.CopyTo(mats, 0);
+        mats[mats.Length - 1] = _rimMat;
+        _glassRenderer.materials = mats;
+        _glowing = true;
+    }
+
+    /// <summary>Remove the rim light glow from the glass shell.</summary>
+    public void DisableGlow()
+    {
+        if (!_glowing) return;
+        if (_glassRenderer == null) return;
+
+        if (_baseMaterials != null)
+            _glassRenderer.materials = _baseMaterials;
+        _glowing = false;
+    }
+
     // ── MonoBehaviour ──────────────────────────────────────────────────
+
+    void Awake()
+    {
+        _glassRenderer = GetComponent<Renderer>();
+    }
 
     void Update()
     {

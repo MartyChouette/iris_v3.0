@@ -62,6 +62,8 @@ public class CoffeeTableDelivery : MonoBehaviour
         if (rend != null)
         {
             _drinkMat = new Material(rend.sharedMaterial);
+            // URP Lit uses _BaseColor; Standard uses _Color — set both for compatibility
+            _drinkMat.SetColor("_BaseColor", liquidColor);
             _drinkMat.color = liquidColor;
             rend.material = _drinkMat;
         }

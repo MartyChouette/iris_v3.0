@@ -157,6 +157,9 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
         // Deselect all bottles
         DeselectAllBottles();
 
+        // Glow the glass so the player knows where to pour
+        if (glass != null) glass.EnableGlow();
+
         currentState = State.Pouring;
         Debug.Log($"[DrinkMakingManager] Selected recipe: {activeRecipe.drinkName}");
     }
@@ -347,6 +350,9 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
         if (AudioManager.Instance != null && scoreSFX != null)
             AudioManager.Instance.PlaySFX(scoreSFX);
 
+        // Remove glow once scored
+        if (glass != null) glass.DisableGlow();
+
         OnDrinkScored?.Invoke(lastScore);
 
         // Deliver drink to coffee table for date reaction
@@ -374,7 +380,7 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
     {
         activeRecipe = null;
         DeselectAllBottles();
-        if (glass != null) glass.Clear();
+        if (glass != null) { glass.DisableGlow(); glass.Clear(); }
         if (stirrer != null) stirrer.Reset();
         currentState = State.ChoosingRecipe;
         Debug.Log("[DrinkMakingManager] → ChoosingRecipe");
