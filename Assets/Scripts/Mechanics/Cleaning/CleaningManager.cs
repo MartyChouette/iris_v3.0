@@ -257,7 +257,7 @@ public class CleaningManager : MonoBehaviour
             return;
         }
 
-        if (ObjectGrabber.IsHoldingObject)
+        if (ObjectGrabber.IsHoldingObject || ObjectGrabber.ClickConsumedThisFrame)
         {
             SetSpongeVisual(Vector3.zero, false);
             _hoveredSurface = null;

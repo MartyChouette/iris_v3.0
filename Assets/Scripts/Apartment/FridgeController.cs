@@ -105,6 +105,7 @@ public class FridgeController : MonoBehaviour
             return;
 
         if (ObjectGrabber.IsHoldingObject) return;
+        if (ObjectGrabber.ClickConsumedThisFrame) return;
 
         if (_mainCamera == null) return;
 

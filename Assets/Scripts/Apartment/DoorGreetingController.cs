@@ -86,6 +86,7 @@ public class DoorGreetingController : MonoBehaviour
     {
         if (!_knockActive) return;
         if (ObjectGrabber.IsHoldingObject) return;
+        if (ObjectGrabber.ClickConsumedThisFrame) return;
 
         if (_clickAction.WasPressedThisFrame() && CheckDoorRaycast())
         {

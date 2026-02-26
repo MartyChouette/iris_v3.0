@@ -75,6 +75,13 @@ public class ObjectGrabber : MonoBehaviour
     /// <summary>The currently held PlaceableObject, or null if nothing is held.</summary>
     public static PlaceableObject HeldObject => s_instance != null ? s_instance._held : null;
 
+    /// <summary>
+    /// True when ObjectGrabber consumed a click this frame (picked up, placed, toggled drawer/switch).
+    /// Other click-driven systems should check this to avoid processing the same click.
+    /// </summary>
+    public static bool ClickConsumedThisFrame { get; private set; }
+    private static int s_lastConsumedFrame = -1;
+
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;
@@ -150,6 +157,10 @@ public class ObjectGrabber : MonoBehaviour
             Debug.Log($"[ObjectGrabber] Grid snap: {(_gridSnap ? "ON" : "OFF")}");
         }
 
+        // Reset click consumption flag at start of each frame
+        if (Time.frameCount != s_lastConsumedFrame)
+            ClickConsumedThisFrame = false;
+
         if (_mouseClick.WasPressedThisFrame())
         {
             if (_held == null)
@@ -164,13 +175,20 @@ public class ObjectGrabber : MonoBehaviour
                 _lastClickTime = now;
 
                 if (isDoubleClick && TryUnstackHeldPlate())
+                {
+                    ConsumeClick();
                     return;
+                }
 
                 // If holding a plate, check if clicking another plate → join stack
                 if (TryStackOntoClickedPlate())
+                {
+                    ConsumeClick();
                     return;
+                }
 
                 Place();
+                ConsumeClick();
             }
         }
 
@@ -209,6 +227,12 @@ public class ObjectGrabber : MonoBehaviour
 
     // ── Pick up ──────────────────────────────────────────────────────
 
+    private static void ConsumeClick()
+    {
+        ClickConsumedThisFrame = true;
+        s_lastConsumedFrame = Time.frameCount;
+    }
+
     private void TryPickUp()
     {
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
@@ -234,6 +258,7 @@ public class ObjectGrabber : MonoBehaviour
                     clickedDrawer.Open();
                 else if (clickedDrawer.CurrentState == DrawerController.State.Open)
                     clickedDrawer.Close();
+                ConsumeClick();
                 return;
             }
 
@@ -244,6 +269,7 @@ public class ObjectGrabber : MonoBehaviour
             if (lightSwitch != null)
             {
                 lightSwitch.Toggle();
+                ConsumeClick();
                 return;
             }
 
@@ -253,6 +279,7 @@ public class ObjectGrabber : MonoBehaviour
         if (placeable.CurrentState == PlaceableObject.State.Held)
             return;
 
+        ConsumeClick();
         _held = placeable;
 
         // Cache collider bounds BEFORE disabling — used for shadow size + surface offset

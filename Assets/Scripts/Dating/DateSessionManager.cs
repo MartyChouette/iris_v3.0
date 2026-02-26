@@ -232,6 +232,11 @@ public class DateSessionManager : MonoBehaviour
         _currentDate = date;
         _state = SessionState.WaitingForArrival;
         _arrivalTimerActive = false;
+
+        // Reset affection to 0 immediately so the HUD shows fresh for this date
+        _affection = 0f;
+        OnAffectionChanged?.Invoke(_affection);
+
         Debug.Log($"[DateSessionManager] Scheduled date with {date.characterName}. Waiting for prep phase to end.");
     }
 
