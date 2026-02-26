@@ -38,6 +38,11 @@ public class BookItem : MonoBehaviour
         // Shelf default: active but private (date ignores books on shelves)
         _reactable.IsActive = true;
         _reactable.IsPrivate = true;
+
+        // Books are "at home" on their bookcase spawn position or the coffee table
+        var placeable = GetComponent<PlaceableObject>();
+        if (placeable != null)
+            placeable.ConfigureHome(altHomeZone: "CoffeeTable", useSpawnAsHome: true);
     }
 
     /// <summary>

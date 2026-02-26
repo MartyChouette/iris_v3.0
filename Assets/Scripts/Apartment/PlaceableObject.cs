@@ -98,6 +98,18 @@ public class PlaceableObject : MonoBehaviour
     public void SetLastPlacedSurface(PlacementSurface surface) => _lastPlacedSurface = surface;
 
     /// <summary>
+    /// Configure home settings at runtime (e.g. from BookItem).
+    /// Captures current position as home if useSpawnAsHome is true and no home is set yet.
+    /// </summary>
+    public void ConfigureHome(string homeZone = null, string altHomeZone = null, bool useSpawnAsHome = false)
+    {
+        if (homeZone != null) _homeZoneName = homeZone;
+        if (altHomeZone != null) _altHomeZoneName = altHomeZone;
+        if (useSpawnAsHome && _homePosition == Vector3.zero)
+            _homePosition = transform.position;
+    }
+
+    /// <summary>
     /// True when this item is tilted beyond its angle threshold.
     /// Used by ObjectGrabber for click-to-straighten.
     /// </summary>
