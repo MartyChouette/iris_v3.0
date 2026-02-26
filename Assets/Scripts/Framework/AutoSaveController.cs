@@ -49,7 +49,9 @@ public class AutoSaveController : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+#if !UNITY_EDITOR
         PerformSave("application_quit");
+#endif
     }
 
     /// <summary>Trigger a save with a reason tag for debugging.</summary>

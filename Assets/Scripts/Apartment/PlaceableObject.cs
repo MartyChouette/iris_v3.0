@@ -98,11 +98,10 @@ public class PlaceableObject : MonoBehaviour
     public void SetLastPlacedSurface(PlacementSurface surface) => _lastPlacedSurface = surface;
 
     /// <summary>
-    /// True when a dishelvable item is tilted beyond its angle threshold.
-    /// Books, magazines, papers on surfaces at an angle signal mess.
-    /// Wall-mounted items are excluded.
+    /// True when this item is tilted beyond its angle threshold.
+    /// Used by ObjectGrabber for click-to-straighten.
     /// </summary>
-    public bool IsDishelved
+    public bool IsTilted
     {
         get
         {
@@ -115,12 +114,29 @@ public class PlaceableObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Straighten a dishelved item in-place (zeroes X/Z rotation, keeps Y).
-    /// Returns true if the item was dishelved and got straightened.
+    /// True when this item is messy / out of place. Includes:
+    /// - Trash items (always disheveled until disposed)
+    /// - Items not at home (need to be returned)
+    /// - Tilted items (crooked books, magazines)
+    /// </summary>
+    public bool IsDishelved
+    {
+        get
+        {
+            if (CurrentState == State.Held) return false;
+            if (_itemCategory == ItemCategory.Trash) return true;
+            if (!IsAtHome && _homePosition != Vector3.zero) return true;
+            return IsTilted;
+        }
+    }
+
+    /// <summary>
+    /// Straighten a tilted item in-place (zeroes X/Z rotation, keeps Y).
+    /// Returns true if the item was tilted and got straightened.
     /// </summary>
     public bool Straighten()
     {
-        if (!IsDishelved) return false;
+        if (!IsTilted) return false;
         float yAngle = transform.eulerAngles.y;
         transform.rotation = Quaternion.Euler(0f, yAngle, 0f);
         if (_rb != null) _rb.angularVelocity = Vector3.zero;
@@ -280,7 +296,7 @@ public class PlaceableObject : MonoBehaviour
         if (_rb != null)
             _rb.isKinematic = false;
 
-        // Disable colliders so held object doesn't block raycasts
+        // Disable colliders so held object doesn't block raycasts or knock items
         SetCollidersEnabled(false);
 
         // Brightness boost on main material

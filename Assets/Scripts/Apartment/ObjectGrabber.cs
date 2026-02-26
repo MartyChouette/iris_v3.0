@@ -77,6 +77,8 @@ public class ObjectGrabber : MonoBehaviour
     private Vector3 _grabTarget;
     private float _fallbackDepth;
     private RigidbodyConstraints _originalConstraints;
+    private float _heldShadowDiameter;
+    private Vector3 _heldBoundsExtents;
 
     // Surface tracking
     private PlacementSurface _currentSurface;
@@ -236,14 +238,20 @@ public class ObjectGrabber : MonoBehaviour
         if (placeable.CurrentState == PlaceableObject.State.Held)
             return;
 
-        // Click-to-straighten: tilted items get straightened without pickup
-        if (placeable.IsDishelved)
-        {
-            placeable.Straighten();
-            return;
-        }
-
         _held = placeable;
+
+        // Cache collider bounds BEFORE disabling — used for shadow size + surface offset
+        var pickupCol = placeable.GetComponent<Collider>();
+        if (pickupCol != null)
+        {
+            _heldBoundsExtents = pickupCol.bounds.extents;
+            _heldShadowDiameter = Mathf.Max(_heldBoundsExtents.x, _heldBoundsExtents.z) * 2f * 1.3f;
+        }
+        else
+        {
+            _heldBoundsExtents = Vector3.one * 0.1f;
+            _heldShadowDiameter = 0.3f;
+        }
 
         // Detach from plate stack before pickup
         var stackable = placeable.GetComponent<StackablePlate>();
@@ -318,6 +326,9 @@ public class ObjectGrabber : MonoBehaviour
             {
                 bool matchesHome = (!string.IsNullOrEmpty(_held.HomeZoneName) && zone.ZoneName == _held.HomeZoneName)
                     || (!string.IsNullOrEmpty(_held.AltHomeZoneName) && zone.ZoneName == _held.AltHomeZoneName);
+                // Trash items are always accepted by trash cans
+                if (!matchesHome && _held.Category == ItemCategory.Trash && zone.DestroyOnDeposit)
+                    matchesHome = true;
                 if (matchesHome)
                 {
                     _heldRb.constraints = _originalConstraints;
@@ -614,11 +625,8 @@ public class ObjectGrabber : MonoBehaviour
 
     private float GetHeldHalfExtentAlongNormal(Vector3 normal)
     {
-        var col = _held.GetComponent<Collider>();
-        if (col == null) return 0f;
-
-        Vector3 extents = col.bounds.extents;
-        return Mathf.Abs(Vector3.Dot(extents, normal.normalized)) + PlacementSafetyMargin;
+        // Use cached extents (colliders are disabled while held)
+        return Mathf.Abs(Vector3.Dot(_heldBoundsExtents, normal.normalized)) + PlacementSafetyMargin;
     }
 
     // ── Shadow preview ──────────────────────────────────────────────
@@ -717,13 +725,8 @@ public class ObjectGrabber : MonoBehaviour
         _shadowGO.transform.position = shadowPos;
         _shadowGO.transform.rotation = shadowRot;
 
-        var col = _held.GetComponent<Collider>();
-        if (col != null)
-        {
-            Vector3 ext = col.bounds.extents;
-            float diameter = Mathf.Max(ext.x, ext.z) * 2f * 1.3f; // 30% larger than footprint
-            _shadowGO.transform.localScale = new Vector3(diameter, 1f, diameter);
-        }
+        // Use cached diameter (measured before colliders were disabled)
+        _shadowGO.transform.localScale = new Vector3(_heldShadowDiameter, 1f, _heldShadowDiameter);
     }
 
     // ── Public API ──────────────────────────────────────────────────
