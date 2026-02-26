@@ -131,7 +131,7 @@ public class GameEndSummaryScreen : MonoBehaviour
             sb.AppendLine("<b>Flower Trimming</b>");
 
             // Best flower from date history
-            DateHistoryEntry bestFlower = null;
+            DateHistory.DateHistoryEntry bestFlower = null;
             if (entries != null)
             {
                 foreach (var e in entries)
