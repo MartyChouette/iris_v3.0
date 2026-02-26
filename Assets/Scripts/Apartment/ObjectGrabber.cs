@@ -357,6 +357,23 @@ public class ObjectGrabber : MonoBehaviour
             }
         }
 
+        // ── DiscoBall check ──
+        if (_currentSurface != null)
+        {
+            var disco = _currentSurface.GetComponentInParent<DiscoBallController>();
+            if (disco != null && _held.GetComponent<DiscoBallBulb>() != null)
+            {
+                _heldRb.constraints = _originalConstraints;
+                _heldRb.linearVelocity = Vector3.zero;
+                if (disco.TryAcceptBulb(_held))
+                {
+                    AudioManager.Instance?.PlaySFX(_placeSFX);
+                    ClearHeld();
+                    return;
+                }
+            }
+        }
+
         // Must be over a surface to place
         if (_currentSurface == null) return;
 
