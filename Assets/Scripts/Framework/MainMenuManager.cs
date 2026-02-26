@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
@@ -73,10 +74,23 @@ public class MainMenuManager : MonoBehaviour
     private MenuState _state;
     private GameModeConfig _selectedConfig;
     private bool _loading;
+    private InputAction _escapeAction;
+    private bool _quitConfirmShowing;
+    private GameObject _quitConfirmPanel;
 
     // ═══════════════════════════════════════════════════════════════
     // Lifecycle
     // ═══════════════════════════════════════════════════════════════
+
+    private void Awake()
+    {
+        _escapeAction = new InputAction("MenuEscape", InputActionType.Button, "<Keyboard>/escape");
+    }
+
+    private void OnEnable() => _escapeAction.Enable();
+    private void OnDisable() => _escapeAction.Disable();
+
+    private void OnDestroy() => _escapeAction?.Dispose();
 
     private void Start()
     {
@@ -96,11 +110,38 @@ public class MainMenuManager : MonoBehaviour
         if (_slot2Button != null) _slot2Button.onClick.AddListener(() => OnSlotClicked(2));
         if (_saveSlotBackButton != null) _saveSlotBackButton.onClick.AddListener(OnSaveSlotBack);
 
+        BuildQuitConfirmPanel();
+
         ShowPanel(MenuState.ModeSelect);
 
         // Fade in from black
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.FadeIn(_fadeDuration);
+    }
+
+    private void Update()
+    {
+        bool pressed = _escapeAction.WasPressedThisFrame() || Input.GetKeyDown(KeyCode.Escape);
+        if (!pressed || _loading) return;
+
+        if (_quitConfirmShowing)
+        {
+            HideQuitConfirm();
+            return;
+        }
+
+        switch (_state)
+        {
+            case MenuState.ModeSelect:
+                ShowQuitConfirm();
+                break;
+            case MenuState.GamePanel:
+                OnGamePanelBack();
+                break;
+            case MenuState.SaveSlots:
+                OnSaveSlotBack();
+                break;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -198,7 +239,31 @@ public class MainMenuManager : MonoBehaviour
 
     public void QuitGame()
     {
+        ShowQuitConfirm();
+    }
+
+    private void ShowQuitConfirm()
+    {
+        _quitConfirmShowing = true;
+        if (_quitConfirmPanel != null)
+            _quitConfirmPanel.SetActive(true);
+    }
+
+    private void HideQuitConfirm()
+    {
+        _quitConfirmShowing = false;
+        if (_quitConfirmPanel != null)
+            _quitConfirmPanel.SetActive(false);
+    }
+
+    private void DoQuitToDesktop()
+    {
+        Debug.Log("[MainMenuManager] Quitting application.");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
         Application.Quit();
+#endif
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -238,6 +303,99 @@ public class MainMenuManager : MonoBehaviour
     public void OnSaveSlotBack()
     {
         ShowPanel(MenuState.GamePanel);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Quit Confirm Panel (built at runtime)
+    // ═══════════════════════════════════════════════════════════════
+
+    private void BuildQuitConfirmPanel()
+    {
+        // Overlay canvas so it sits above everything
+        _quitConfirmPanel = new GameObject("QuitConfirmCanvas");
+        _quitConfirmPanel.transform.SetParent(transform, false);
+
+        var canvas = _quitConfirmPanel.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 100;
+
+        var scaler = _quitConfirmPanel.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        _quitConfirmPanel.AddComponent<GraphicRaycaster>();
+
+        // Dim bg
+        var dimGO = new GameObject("Dim");
+        dimGO.transform.SetParent(_quitConfirmPanel.transform, false);
+        var dimRT = dimGO.AddComponent<RectTransform>();
+        dimRT.anchorMin = Vector2.zero;
+        dimRT.anchorMax = Vector2.one;
+        dimRT.sizeDelta = Vector2.zero;
+        var dimImg = dimGO.AddComponent<Image>();
+        dimImg.color = new Color(0f, 0f, 0f, 0.6f);
+
+        // Panel
+        var panelGO = new GameObject("Panel");
+        panelGO.transform.SetParent(_quitConfirmPanel.transform, false);
+        var panelRT = panelGO.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRT.sizeDelta = new Vector2(500f, 200f);
+        var panelImg = panelGO.AddComponent<Image>();
+        panelImg.color = new Color(0.12f, 0.12f, 0.14f, 1f);
+
+        // Label
+        var labelGO = new GameObject("Label");
+        labelGO.transform.SetParent(panelGO.transform, false);
+        var labelRT = labelGO.AddComponent<RectTransform>();
+        labelRT.anchorMin = new Vector2(0f, 0.5f);
+        labelRT.anchorMax = new Vector2(1f, 1f);
+        labelRT.sizeDelta = Vector2.zero;
+        labelRT.anchoredPosition = Vector2.zero;
+        var labelTMP = labelGO.AddComponent<TextMeshProUGUI>();
+        labelTMP.text = "Quit to desktop?";
+        labelTMP.fontSize = 28f;
+        labelTMP.alignment = TextAlignmentOptions.Center;
+        labelTMP.color = new Color(0.95f, 0.92f, 0.85f);
+
+        // Yes button
+        MakeQuitConfirmButton(panelGO.transform, "Yes", new Vector2(-80f, -50f), DoQuitToDesktop);
+
+        // No button
+        MakeQuitConfirmButton(panelGO.transform, "No", new Vector2(80f, -50f), HideQuitConfirm);
+
+        _quitConfirmPanel.SetActive(false);
+    }
+
+    private void MakeQuitConfirmButton(Transform parent, string label, Vector2 pos, UnityEngine.Events.UnityAction onClick)
+    {
+        var btnGO = new GameObject($"Btn_{label}");
+        btnGO.transform.SetParent(parent, false);
+        var btnRT = btnGO.AddComponent<RectTransform>();
+        btnRT.anchorMin = new Vector2(0.5f, 0.5f);
+        btnRT.anchorMax = new Vector2(0.5f, 0.5f);
+        btnRT.anchoredPosition = pos;
+        btnRT.sizeDelta = new Vector2(140f, 45f);
+
+        var btnImg = btnGO.AddComponent<Image>();
+        btnImg.color = new Color(0.22f, 0.22f, 0.26f);
+
+        var btn = btnGO.AddComponent<Button>();
+        btn.targetGraphic = btnImg;
+        btn.onClick.AddListener(onClick);
+
+        var txtGO = new GameObject("Label");
+        txtGO.transform.SetParent(btnGO.transform, false);
+        var txtRT = txtGO.AddComponent<RectTransform>();
+        txtRT.anchorMin = Vector2.zero;
+        txtRT.anchorMax = Vector2.one;
+        txtRT.sizeDelta = Vector2.zero;
+        var tmp = txtGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = 22f;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
     }
 
     // ═══════════════════════════════════════════════════════════════
