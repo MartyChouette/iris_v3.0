@@ -18,6 +18,8 @@ public class LivingFlowerPlantManager : MonoBehaviour
     private readonly List<LivingFlowerPlant> _activePlants = new();
     private int _nextSlotIndex;
 
+    public IReadOnlyList<LivingFlowerPlant> ActivePlants => _activePlants;
+
     // ─── Lifecycle ────────────────────────────────────────────────
 
     private void Awake()

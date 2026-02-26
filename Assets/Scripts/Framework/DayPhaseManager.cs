@@ -577,22 +577,42 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
-        // 2. Show end title
+        // 2. Show phase title (dynamic mode name)
+        string modeName = MainMenuManager.ActiveConfig != null
+            ? MainMenuManager.ActiveConfig.modeName
+            : "Game";
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("7 Days Complete");
+            ScreenFade.Instance.ShowPhaseTitle($"{modeName} Complete");
 
         // 3. Hold for the player to read
-        yield return new WaitForSeconds(4f);
+        yield return new WaitForSeconds(3f);
 
-        // 4. Return to main menu if one exists, otherwise just stay on black
-        if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/MainMenu.unity") >= 0)
+        // 4. Hide phase title
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        // 5. Show summary screen if available, otherwise fall back to menu
+        if (GameEndSummaryScreen.Instance != null)
         {
-            TimeScaleManager.ClearAll();
-            SceneManager.LoadScene("MainMenu");
+            // Fade in so the summary screen is visible
+            if (ScreenFade.Instance != null)
+                yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+            GameEndSummaryScreen.Instance.Show();
+            // Summary screen handles feedback form → return to menu
         }
         else
         {
-            Debug.Log("[DayPhaseManager] No MainMenu scene in build settings — staying on end screen.");
+            // Fallback: return to main menu directly
+            if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/MainMenu.unity") >= 0)
+            {
+                TimeScaleManager.ClearAll();
+                SceneManager.LoadScene("MainMenu");
+            }
+            else
+            {
+                Debug.Log("[DayPhaseManager] No MainMenu scene in build settings — staying on end screen.");
+            }
         }
     }
 

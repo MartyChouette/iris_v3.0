@@ -60,6 +60,10 @@ public class GameClock : MonoBehaviour
     private int _currentDay = 1;
     private bool _isSleeping;
 
+    // Demo timer (real-time countdown)
+    private float _demoTimeLimitSeconds;
+    private float _demoTimeRemaining;
+
     // ──────────────────────────────────────────────────────────────
     // Public API
     // ──────────────────────────────────────────────────────────────
@@ -67,6 +71,8 @@ public class GameClock : MonoBehaviour
     public int CurrentDay => _currentDay;
     public bool IsSleeping => _isSleeping;
     public float NormalizedTimeOfDay => Mathf.Repeat(_currentHour, 24f) / 24f;
+    public float DemoTimeRemaining => _demoTimeRemaining;
+    public bool IsDemoMode => _demoTimeLimitSeconds > 0f;
 
     /// <summary>Restore day and hour from save data.</summary>
     public void RestoreFromSave(int day, float hour)
@@ -97,6 +103,13 @@ public class GameClock : MonoBehaviour
         {
             totalDays = MainMenuManager.ActiveConfig.totalDays;
             realSecondsPerGameHour = MainMenuManager.ActiveConfig.realSecondsPerGameHour;
+            _demoTimeLimitSeconds = MainMenuManager.ActiveConfig.demoTimeLimitSeconds;
+        }
+
+        if (_demoTimeLimitSeconds > 0f)
+        {
+            _demoTimeRemaining = _demoTimeLimitSeconds;
+            Debug.Log($"[GameClock] Demo timer started: {_demoTimeLimitSeconds}s");
         }
     }
 
@@ -108,6 +121,21 @@ public class GameClock : MonoBehaviour
     private void Update()
     {
         if (_isSleeping) return;
+
+        // Demo timer counts real time (unscaledDeltaTime) — ignores pause and time scale
+        if (_demoTimeLimitSeconds > 0f && _demoTimeRemaining > 0f)
+        {
+            _demoTimeRemaining -= Time.unscaledDeltaTime;
+            if (_demoTimeRemaining <= 0f)
+            {
+                _demoTimeRemaining = 0f;
+                _isSleeping = true;
+                Debug.Log("[GameClock] Demo timer expired!");
+                OnCalendarComplete?.Invoke();
+                return;
+            }
+        }
+
         if (DateDebugOverlay.IsTimePaused) return;
 
         _currentHour += Time.deltaTime / realSecondsPerGameHour;
