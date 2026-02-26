@@ -414,14 +414,14 @@ public class MainMenuManager : MonoBehaviour
         if (ScreenFade.Instance != null && _fadeDuration > 0f)
             StartCoroutine(FadeAndLoad(targetIndex));
         else
-            SceneManager.LoadScene(targetIndex);
+            LoadingScreen.LoadScene(targetIndex);
     }
 
     private IEnumerator FadeAndLoad(int sceneIndex)
     {
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
-        SceneManager.LoadScene(sceneIndex);
+        LoadingScreen.LoadScene(sceneIndex);
     }
 
     // ═══════════════════════════════════════════════════════════════
