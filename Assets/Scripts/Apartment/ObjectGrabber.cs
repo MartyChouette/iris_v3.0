@@ -627,24 +627,34 @@ public class ObjectGrabber : MonoBehaviour
     }
 
     /// <summary>
-    /// Clamps _grabTarget so the held item cannot pass through walls/floor/ceiling.
-    /// Linecasts from the item's current position to the desired target; if blocked,
-    /// stops just before the hit point.
+    /// Clamps _grabTarget so the held item cannot pass through walls and always
+    /// stays on the camera's side of any geometry (no wall between camera and item).
     /// </summary>
     private void ClampGrabTargetToWalls()
     {
         if (_heldRb == null) return;
 
+        const float margin = 0.05f;
+
+        // 1) Camera → target: keep item on camera's side of any wall
+        Vector3 camPos = cam.transform.position;
+        Vector3 camToTarget = _grabTarget - camPos;
+        float camDist = camToTarget.magnitude;
+
+        if (camDist > 0.001f &&
+            Physics.Raycast(camPos, camToTarget.normalized, out RaycastHit camHit, camDist, _wallLayer))
+        {
+            float safeDist = Mathf.Max(0f, camHit.distance - margin);
+            _grabTarget = camPos + camToTarget.normalized * safeDist;
+        }
+
+        // 2) Current position → target: prevent tunneling through walls frame-to-frame
         Vector3 from = _heldRb.position;
-        Vector3 to = _grabTarget;
-        Vector3 delta = to - from;
+        Vector3 delta = _grabTarget - from;
         float dist = delta.magnitude;
 
-        if (dist < 0.001f) return;
-
-        // Linecast with a small margin so the item doesn't sit flush against the wall
-        const float margin = 0.05f;
-        if (Physics.Raycast(from, delta.normalized, out RaycastHit wallHit, dist, _wallLayer))
+        if (dist > 0.001f &&
+            Physics.Raycast(from, delta.normalized, out RaycastHit wallHit, dist, _wallLayer))
         {
             float safeDist = Mathf.Max(0f, wallHit.distance - margin);
             _grabTarget = from + delta.normalized * safeDist;
