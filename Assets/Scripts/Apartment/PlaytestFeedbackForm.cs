@@ -1,0 +1,515 @@
+using System;
+using System.Collections;
+using System.IO;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using TMPro;
+
+/// <summary>
+/// Scene-scoped singleton playtest feedback form.
+/// F8 opens/closes. Collects star rating + free-text + auto-telemetry.
+/// Saves JSON + screenshot to Application.persistentDataPath/PlaytestFeedback/.
+/// Only functional when PlaytestConsentScreen.HasConsent is true.
+/// </summary>
+public class PlaytestFeedbackForm : MonoBehaviour
+{
+    public static PlaytestFeedbackForm Instance { get; private set; }
+
+    // ── Session ID (one per play session) ──
+    private static string s_sessionId;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void DomainReset()
+    {
+        s_sessionId = null;
+    }
+
+    // ── UI references (built at runtime) ──
+    private GameObject _canvasRoot;
+    private GameObject _formPanel;
+    private CanvasGroup _canvasGroup;
+    private TMP_InputField _positiveField;
+    private TMP_InputField _negativeField;
+    private TMP_InputField _bugField;
+    private Button[] _starButtons;
+    private Image[] _starImages;
+    private TextMeshProUGUI _confirmText;
+    private Button _submitButton;
+    private Button _closeButton;
+
+    private InputAction _toggleAction;
+    private bool _isOpen;
+    private int _selectedRating;
+    private FeedbackPayload _currentPayload;
+
+    private static readonly Color StarOff = new Color(0.3f, 0.3f, 0.3f);
+    private static readonly Color StarOn = new Color(0.95f, 0.8f, 0.2f);
+    private static readonly Color FieldBg = new Color(0.18f, 0.18f, 0.2f);
+    private static readonly Color PanelBg = new Color(0.1f, 0.1f, 0.12f, 0.97f);
+    private static readonly Color BtnSubmit = new Color(0.25f, 0.55f, 0.35f);
+    private static readonly Color BtnClose = new Color(0.45f, 0.2f, 0.2f);
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[PlaytestFeedbackForm] Duplicate instance destroyed.");
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        if (string.IsNullOrEmpty(s_sessionId))
+            s_sessionId = Guid.NewGuid().ToString();
+
+        _toggleAction = new InputAction("FeedbackToggle", InputActionType.Button, "<Keyboard>/f8");
+
+        BuildUI();
+        _canvasRoot.SetActive(false);
+    }
+
+    private void OnEnable() => _toggleAction.Enable();
+    private void OnDisable() => _toggleAction.Disable();
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        _toggleAction?.Dispose();
+    }
+
+    private void Update()
+    {
+        bool pressed = _toggleAction.WasPressedThisFrame() || Input.GetKeyDown(KeyCode.F8);
+        if (!pressed) return;
+
+        if (!PlaytestConsentScreen.HasConsent && !PlaytestConsentScreen.WasShown)
+        {
+            Debug.Log("[PlaytestFeedbackForm] Consent screen not yet shown.");
+            return;
+        }
+
+        if (!PlaytestConsentScreen.HasConsent)
+        {
+            Debug.Log("[PlaytestFeedbackForm] Player declined consent — form disabled.");
+            return;
+        }
+
+        if (_isOpen)
+            CloseForm();
+        else
+            OpenForm();
+    }
+
+    // ═══════════════════════════════════════
+    //  Open / Close
+    // ═══════════════════════════════════════
+
+    private void OpenForm()
+    {
+        _isOpen = true;
+        _selectedRating = 0;
+        RefreshStars();
+
+        _positiveField.text = "";
+        _negativeField.text = "";
+        _bugField.text = "";
+        _confirmText.text = "";
+
+        _currentPayload = GatherTelemetry();
+
+        _canvasRoot.SetActive(true);
+        TimeScaleManager.Set(TimeScaleManager.PRIORITY_PAUSE, 0f);
+
+        Debug.Log("[PlaytestFeedbackForm] Opened.");
+    }
+
+    private void CloseForm()
+    {
+        _isOpen = false;
+        _canvasRoot.SetActive(false);
+        TimeScaleManager.Clear(TimeScaleManager.PRIORITY_PAUSE);
+
+        Debug.Log("[PlaytestFeedbackForm] Closed without submitting.");
+    }
+
+    // ═══════════════════════════════════════
+    //  Submit
+    // ═══════════════════════════════════════
+
+    private void OnSubmit()
+    {
+        if (_currentPayload == null) return;
+
+        _currentPayload.enjoymentRating = _selectedRating;
+        _currentPayload.feedbackPositive = _positiveField.text;
+        _currentPayload.feedbackNegative = _negativeField.text;
+        _currentPayload.bugReport = _bugField.text;
+
+        SaveFeedback(_currentPayload);
+        StartCoroutine(CaptureScreenshotAndSave());
+    }
+
+    private void SaveFeedback(FeedbackPayload payload)
+    {
+        string folder = Path.Combine(Application.persistentDataPath, "PlaytestFeedback");
+        if (!Directory.Exists(folder))
+            Directory.CreateDirectory(folder);
+
+        string stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        string jsonPath = Path.Combine(folder, $"feedback_{stamp}.json");
+        string json = JsonUtility.ToJson(payload, true);
+        File.WriteAllText(jsonPath, json);
+
+        Debug.Log($"[PlaytestFeedbackForm] Saved feedback to {jsonPath}");
+    }
+
+    private IEnumerator CaptureScreenshotAndSave()
+    {
+        // Hide form briefly so screenshot captures gameplay
+        _canvasRoot.SetActive(false);
+        yield return new WaitForEndOfFrame();
+
+        string folder = Path.Combine(Application.persistentDataPath, "PlaytestFeedback");
+        string stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        string pngPath = Path.Combine(folder, $"feedback_{stamp}.png");
+
+        try
+        {
+            var tex = ScreenCapture.CaptureScreenshotAsTexture();
+            if (tex != null)
+            {
+                byte[] bytes = tex.EncodeToPNG();
+                File.WriteAllBytes(pngPath, bytes);
+                Destroy(tex);
+                Debug.Log($"[PlaytestFeedbackForm] Screenshot saved to {pngPath}");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[PlaytestFeedbackForm] Screenshot failed: {e.Message}");
+        }
+
+        // Show confirmation
+        _canvasRoot.SetActive(true);
+        _confirmText.text = "Saved! Thank you!";
+        _confirmText.color = new Color(0.4f, 0.9f, 0.5f);
+
+        yield return new WaitForSecondsRealtime(1.5f);
+
+        _isOpen = false;
+        _canvasRoot.SetActive(false);
+        TimeScaleManager.Clear(TimeScaleManager.PRIORITY_PAUSE);
+
+        Debug.Log("[PlaytestFeedbackForm] Submitted and closed.");
+    }
+
+    // ═══════════════════════════════════════
+    //  Telemetry gathering
+    // ═══════════════════════════════════════
+
+    private FeedbackPayload GatherTelemetry()
+    {
+        var p = new FeedbackPayload
+        {
+            sessionId = s_sessionId,
+            timestamp = DateTime.UtcNow.ToString("o"), // ISO 8601
+            buildVersion = Application.version,
+            playTimeSeconds = Time.realtimeSinceStartup,
+            currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : -1,
+            currentPhase = DayPhaseManager.Instance != null
+                ? DayPhaseManager.Instance.CurrentPhase.ToString()
+                : "Unknown",
+            tidiness = TidyScorer.Instance != null ? TidyScorer.Instance.OverallTidiness : -1f,
+            mood = MoodMachine.Instance != null ? MoodMachine.Instance.Mood : -1f,
+            dateCount = DateHistory.Entries.Count,
+            currentDateCharacter = DateSessionManager.Instance != null
+                && DateSessionManager.Instance.CurrentDate != null
+                ? DateSessionManager.Instance.CurrentDate.characterName
+                : "None",
+            currentAffection = DateSessionManager.Instance != null
+                ? DateSessionManager.Instance.Affection
+                : 0f,
+            systemInfo = $"{SystemInfo.operatingSystem} | {SystemInfo.graphicsDeviceName} | {SystemInfo.systemMemorySize}MB RAM",
+            screenResolution = $"{Screen.width}x{Screen.height} @ {Screen.currentResolution.refreshRateRatio}Hz",
+            accessibilityNotes = $"TextScale={AccessibilitySettings.TextScale:F2}, " +
+                $"TimerMult={AccessibilitySettings.TimerMultiplier:F1}, " +
+                $"PSX={AccessibilitySettings.PSXEnabled}"
+        };
+
+        return p;
+    }
+
+    // ═══════════════════════════════════════
+    //  Star rating
+    // ═══════════════════════════════════════
+
+    private void SelectRating(int rating)
+    {
+        _selectedRating = rating;
+        RefreshStars();
+    }
+
+    private void RefreshStars()
+    {
+        if (_starImages == null) return;
+        for (int i = 0; i < _starImages.Length; i++)
+            _starImages[i].color = (i < _selectedRating) ? StarOn : StarOff;
+    }
+
+    // ═══════════════════════════════════════
+    //  Runtime UI construction
+    // ═══════════════════════════════════════
+
+    private void BuildUI()
+    {
+        // ── Canvas ──
+        _canvasRoot = new GameObject("FeedbackFormCanvas");
+        _canvasRoot.transform.SetParent(transform, false);
+
+        var canvas = _canvasRoot.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 250;
+
+        var scaler = _canvasRoot.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        _canvasRoot.AddComponent<GraphicRaycaster>();
+
+        // ── Dim background ──
+        var dimBg = MakeChild(_canvasRoot, "DimBg");
+        var dimRT = dimBg.AddComponent<RectTransform>();
+        StretchFill(dimRT);
+        var dimImg = dimBg.AddComponent<Image>();
+        dimImg.color = new Color(0f, 0f, 0f, 0.7f);
+
+        // ── Panel ──
+        var panel = MakeChild(_canvasRoot, "Panel");
+        var panelRT = panel.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRT.pivot = new Vector2(0.5f, 0.5f);
+        panelRT.sizeDelta = new Vector2(700f, 700f);
+        var panelImg = panel.AddComponent<Image>();
+        panelImg.color = PanelBg;
+        _formPanel = panel;
+
+        float yPos = -25f;
+
+        // ── Title ──
+        yPos = AddLabel(panel, "Title", "Playtest Feedback", 28f, yPos, 40f,
+            new Color(0.95f, 0.92f, 0.85f), TextAlignmentOptions.Center);
+
+        // ── Star rating ──
+        yPos -= 10f;
+        yPos = AddLabel(panel, "RatingLabel", "How much did you enjoy playing? (1-5)", 18f, yPos, 28f,
+            new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Center);
+
+        yPos -= 5f;
+        BuildStarRow(panel, yPos);
+        yPos -= 55f;
+
+        // ── Text fields ──
+        yPos -= 5f;
+        yPos = AddLabel(panel, "PosLabel", "What did you enjoy?", 17f, yPos, 24f,
+            new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
+        _positiveField = AddInputField(panel, "PositiveField", yPos, 70f, "Type here...");
+        yPos -= 80f;
+
+        yPos = AddLabel(panel, "NegLabel", "What was confusing or frustrating?", 17f, yPos, 24f,
+            new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
+        _negativeField = AddInputField(panel, "NegativeField", yPos, 70f, "Type here...");
+        yPos -= 80f;
+
+        yPos = AddLabel(panel, "BugLabel", "Any bugs to report?", 17f, yPos, 24f,
+            new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
+        _bugField = AddInputField(panel, "BugField", yPos, 70f, "Type here...");
+        yPos -= 80f;
+
+        // ── Confirm text ──
+        var confirmGO = MakeChild(panel, "ConfirmText");
+        var confirmRT = confirmGO.AddComponent<RectTransform>();
+        confirmRT.anchorMin = new Vector2(0.5f, 1f);
+        confirmRT.anchorMax = new Vector2(0.5f, 1f);
+        confirmRT.pivot = new Vector2(0.5f, 1f);
+        confirmRT.anchoredPosition = new Vector2(0f, yPos);
+        confirmRT.sizeDelta = new Vector2(600f, 30f);
+        _confirmText = confirmGO.AddComponent<TextMeshProUGUI>();
+        _confirmText.text = "";
+        _confirmText.fontSize = 18f;
+        _confirmText.alignment = TextAlignmentOptions.Center;
+        _confirmText.color = new Color(0.4f, 0.9f, 0.5f);
+        yPos -= 40f;
+
+        // ── Buttons ──
+        _submitButton = AddButton(panel, "SubmitBtn", "Submit", -100f, yPos, 180f, 45f, BtnSubmit);
+        _submitButton.onClick.AddListener(OnSubmit);
+
+        _closeButton = AddButton(panel, "CloseBtn", "Close", 100f, yPos, 180f, 45f, BtnClose);
+        _closeButton.onClick.AddListener(CloseForm);
+    }
+
+    private void BuildStarRow(GameObject parent, float yPos)
+    {
+        _starButtons = new Button[5];
+        _starImages = new Image[5];
+
+        float starSize = 45f;
+        float spacing = 55f;
+        float startX = -2f * spacing;
+
+        for (int i = 0; i < 5; i++)
+        {
+            int rating = i + 1; // capture for closure
+
+            var starGO = MakeChild(parent, $"Star_{rating}");
+            var rt = starGO.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(startX + i * spacing, yPos - starSize * 0.5f);
+            rt.sizeDelta = new Vector2(starSize, starSize);
+
+            var img = starGO.AddComponent<Image>();
+            img.color = StarOff;
+            _starImages[i] = img;
+
+            var btn = starGO.AddComponent<Button>();
+            btn.targetGraphic = img;
+            btn.onClick.AddListener(() => SelectRating(rating));
+            _starButtons[i] = btn;
+
+            // Star number label
+            var labelGO = MakeChild(starGO, "Num");
+            var labelRT = labelGO.AddComponent<RectTransform>();
+            StretchFill(labelRT);
+            var tmp = labelGO.AddComponent<TextMeshProUGUI>();
+            tmp.text = rating.ToString();
+            tmp.fontSize = 22f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = Color.white;
+        }
+    }
+
+    // ── UI Factory Helpers ──
+
+    private float AddLabel(GameObject parent, string name, string text, float fontSize,
+        float yPos, float height, Color color, TextAlignmentOptions align)
+    {
+        var go = MakeChild(parent, name);
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.08f, 1f);
+        rt.anchorMax = new Vector2(0.92f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = new Vector2(0f, yPos);
+        rt.sizeDelta = new Vector2(0f, height);
+
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.alignment = align;
+        tmp.color = color;
+
+        return yPos - height;
+    }
+
+    private TMP_InputField AddInputField(GameObject parent, string name, float yPos,
+        float height, string placeholder)
+    {
+        var fieldGO = MakeChild(parent, name);
+        var fieldRT = fieldGO.AddComponent<RectTransform>();
+        fieldRT.anchorMin = new Vector2(0.08f, 1f);
+        fieldRT.anchorMax = new Vector2(0.92f, 1f);
+        fieldRT.pivot = new Vector2(0.5f, 1f);
+        fieldRT.anchoredPosition = new Vector2(0f, yPos);
+        fieldRT.sizeDelta = new Vector2(0f, height);
+
+        var fieldImg = fieldGO.AddComponent<Image>();
+        fieldImg.color = FieldBg;
+
+        // Text area
+        var textArea = MakeChild(fieldGO, "TextArea");
+        var textAreaRT = textArea.AddComponent<RectTransform>();
+        textAreaRT.anchorMin = new Vector2(0f, 0f);
+        textAreaRT.anchorMax = new Vector2(1f, 1f);
+        textAreaRT.offsetMin = new Vector2(10f, 5f);
+        textAreaRT.offsetMax = new Vector2(-10f, -5f);
+        var textAreaMask = textArea.AddComponent<RectMask2D>();
+
+        // Input text
+        var inputTextGO = MakeChild(textArea, "Text");
+        var inputTextRT = inputTextGO.AddComponent<RectTransform>();
+        StretchFill(inputTextRT);
+        var inputTMP = inputTextGO.AddComponent<TextMeshProUGUI>();
+        inputTMP.fontSize = 16f;
+        inputTMP.color = new Color(0.9f, 0.9f, 0.88f);
+        inputTMP.enableWordWrapping = true;
+
+        // Placeholder
+        var phGO = MakeChild(textArea, "Placeholder");
+        var phRT = phGO.AddComponent<RectTransform>();
+        StretchFill(phRT);
+        var phTMP = phGO.AddComponent<TextMeshProUGUI>();
+        phTMP.text = placeholder;
+        phTMP.fontSize = 16f;
+        phTMP.fontStyle = FontStyles.Italic;
+        phTMP.color = new Color(0.5f, 0.5f, 0.48f);
+        phTMP.enableWordWrapping = true;
+
+        // TMP_InputField component
+        var inputField = fieldGO.AddComponent<TMP_InputField>();
+        inputField.textViewport = textAreaRT;
+        inputField.textComponent = inputTMP;
+        inputField.placeholder = phTMP;
+        inputField.lineType = TMP_InputField.LineType.MultiLineNewline;
+        inputField.characterLimit = 500;
+        inputField.richText = false;
+
+        return inputField;
+    }
+
+    private Button AddButton(GameObject parent, string name, string label,
+        float x, float yPos, float w, float h, Color color)
+    {
+        var btnGO = MakeChild(parent, name);
+        var btnRT = btnGO.AddComponent<RectTransform>();
+        btnRT.anchorMin = new Vector2(0.5f, 1f);
+        btnRT.anchorMax = new Vector2(0.5f, 1f);
+        btnRT.pivot = new Vector2(0.5f, 0.5f);
+        btnRT.anchoredPosition = new Vector2(x, yPos - h * 0.5f);
+        btnRT.sizeDelta = new Vector2(w, h);
+
+        var img = btnGO.AddComponent<Image>();
+        img.color = color;
+
+        var btn = btnGO.AddComponent<Button>();
+        btn.targetGraphic = img;
+
+        var txtGO = MakeChild(btnGO, "Label");
+        var txtRT = txtGO.AddComponent<RectTransform>();
+        StretchFill(txtRT);
+        var tmp = txtGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = 20f;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+
+        return btn;
+    }
+
+    private static GameObject MakeChild(GameObject parent, string name)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        return go;
+    }
+
+    private static void StretchFill(RectTransform rt)
+    {
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.sizeDelta = Vector2.zero;
+        rt.anchoredPosition = Vector2.zero;
+    }
+}
