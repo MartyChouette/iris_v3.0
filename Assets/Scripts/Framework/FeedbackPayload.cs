@@ -9,6 +9,9 @@ public class FeedbackPayload
 {
     // ── Player input ──
     public int enjoymentRating;       // 1-5 stars
+    public int grabFeelRating;        // 1-5: picking up / putting down objects
+    public int dateFeelRating;        // 1-5: how the date felt
+    public int flowerFeelRating;      // 1-5: flower trimming scene
     public string feedbackPositive;
     public string feedbackNegative;
     public string bugReport;

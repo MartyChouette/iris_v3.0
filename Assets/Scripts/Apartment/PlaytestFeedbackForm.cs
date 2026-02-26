@@ -25,6 +25,16 @@ public class PlaytestFeedbackForm : MonoBehaviour
         s_sessionId = null;
     }
 
+    // ── Star rating questions ──
+    private const int RatingCount = 4;
+    private static readonly string[] RatingLabels = new[]
+    {
+        "How much did you enjoy playing?",
+        "How did picking up and putting things down feel?",
+        "How did you feel about the date?",
+        "How did you feel about the flower trimming scene?"
+    };
+
     // ── UI references (built at runtime) ──
     private GameObject _canvasRoot;
     private GameObject _formPanel;
@@ -32,15 +42,14 @@ public class PlaytestFeedbackForm : MonoBehaviour
     private TMP_InputField _positiveField;
     private TMP_InputField _negativeField;
     private TMP_InputField _bugField;
-    private Button[] _starButtons;
-    private Image[] _starImages;
+    private Image[][] _starImages;       // [question][star]
+    private int[] _selectedRatings;      // [question] = 0-5
     private TextMeshProUGUI _confirmText;
     private Button _submitButton;
     private Button _closeButton;
 
     private InputAction _toggleAction;
     private bool _isOpen;
-    private int _selectedRating;
     private FeedbackPayload _currentPayload;
 
     private static readonly Color StarOff = new Color(0.3f, 0.3f, 0.3f);
@@ -108,8 +117,9 @@ public class PlaytestFeedbackForm : MonoBehaviour
     private void OpenForm()
     {
         _isOpen = true;
-        _selectedRating = 0;
-        RefreshStars();
+        for (int i = 0; i < RatingCount; i++)
+            _selectedRatings[i] = 0;
+        RefreshAllStars();
 
         _positiveField.text = "";
         _negativeField.text = "";
@@ -141,7 +151,10 @@ public class PlaytestFeedbackForm : MonoBehaviour
     {
         if (_currentPayload == null) return;
 
-        _currentPayload.enjoymentRating = _selectedRating;
+        _currentPayload.enjoymentRating = _selectedRatings[0];
+        _currentPayload.grabFeelRating = _selectedRatings[1];
+        _currentPayload.dateFeelRating = _selectedRatings[2];
+        _currentPayload.flowerFeelRating = _selectedRatings[3];
         _currentPayload.feedbackPositive = _positiveField.text;
         _currentPayload.feedbackNegative = _negativeField.text;
         _currentPayload.bugReport = _bugField.text;
@@ -241,20 +254,28 @@ public class PlaytestFeedbackForm : MonoBehaviour
     }
 
     // ═══════════════════════════════════════
-    //  Star rating
+    //  Star ratings
     // ═══════════════════════════════════════
 
-    private void SelectRating(int rating)
+    private void SelectRating(int questionIndex, int rating)
     {
-        _selectedRating = rating;
-        RefreshStars();
+        _selectedRatings[questionIndex] = rating;
+        RefreshStarRow(questionIndex);
     }
 
-    private void RefreshStars()
+    private void RefreshStarRow(int questionIndex)
     {
-        if (_starImages == null) return;
-        for (int i = 0; i < _starImages.Length; i++)
-            _starImages[i].color = (i < _selectedRating) ? StarOn : StarOff;
+        if (_starImages == null || _starImages[questionIndex] == null) return;
+        var row = _starImages[questionIndex];
+        int selected = _selectedRatings[questionIndex];
+        for (int i = 0; i < row.Length; i++)
+            row[i].color = (i < selected) ? StarOn : StarOff;
+    }
+
+    private void RefreshAllStars()
+    {
+        for (int i = 0; i < RatingCount; i++)
+            RefreshStarRow(i);
     }
 
     // ═══════════════════════════════════════
@@ -290,10 +311,13 @@ public class PlaytestFeedbackForm : MonoBehaviour
         panelRT.anchorMin = new Vector2(0.5f, 0.5f);
         panelRT.anchorMax = new Vector2(0.5f, 0.5f);
         panelRT.pivot = new Vector2(0.5f, 0.5f);
-        panelRT.sizeDelta = new Vector2(700f, 700f);
+        panelRT.sizeDelta = new Vector2(700f, 950f);
         var panelImg = panel.AddComponent<Image>();
         panelImg.color = PanelBg;
         _formPanel = panel;
+
+        _starImages = new Image[RatingCount][];
+        _selectedRatings = new int[RatingCount];
 
         float yPos = -25f;
 
@@ -301,14 +325,16 @@ public class PlaytestFeedbackForm : MonoBehaviour
         yPos = AddLabel(panel, "Title", "Playtest Feedback", 28f, yPos, 40f,
             new Color(0.95f, 0.92f, 0.85f), TextAlignmentOptions.Center);
 
-        // ── Star rating ──
-        yPos -= 10f;
-        yPos = AddLabel(panel, "RatingLabel", "How much did you enjoy playing? (1-5)", 18f, yPos, 28f,
-            new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Center);
-
-        yPos -= 5f;
-        BuildStarRow(panel, yPos);
-        yPos -= 55f;
+        // ── Star rating rows ──
+        for (int q = 0; q < RatingCount; q++)
+        {
+            yPos -= 8f;
+            yPos = AddLabel(panel, $"RatingLabel_{q}", RatingLabels[q], 17f, yPos, 24f,
+                new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Center);
+            yPos -= 3f;
+            BuildStarRow(panel, yPos, q);
+            yPos -= 50f;
+        }
 
         // ── Text fields ──
         yPos -= 5f;
@@ -350,20 +376,20 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _closeButton.onClick.AddListener(CloseForm);
     }
 
-    private void BuildStarRow(GameObject parent, float yPos)
+    private void BuildStarRow(GameObject parent, float yPos, int questionIndex)
     {
-        _starButtons = new Button[5];
-        _starImages = new Image[5];
+        var rowImages = new Image[5];
 
-        float starSize = 45f;
-        float spacing = 55f;
+        float starSize = 40f;
+        float spacing = 50f;
         float startX = -2f * spacing;
 
         for (int i = 0; i < 5; i++)
         {
-            int rating = i + 1; // capture for closure
+            int rating = i + 1;         // capture for closure
+            int qIdx = questionIndex;   // capture for closure
 
-            var starGO = MakeChild(parent, $"Star_{rating}");
+            var starGO = MakeChild(parent, $"Star_{questionIndex}_{rating}");
             var rt = starGO.AddComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.5f, 1f);
             rt.anchorMax = new Vector2(0.5f, 1f);
@@ -373,12 +399,11 @@ public class PlaytestFeedbackForm : MonoBehaviour
 
             var img = starGO.AddComponent<Image>();
             img.color = StarOff;
-            _starImages[i] = img;
+            rowImages[i] = img;
 
             var btn = starGO.AddComponent<Button>();
             btn.targetGraphic = img;
-            btn.onClick.AddListener(() => SelectRating(rating));
-            _starButtons[i] = btn;
+            btn.onClick.AddListener(() => SelectRating(qIdx, rating));
 
             // Star number label
             var labelGO = MakeChild(starGO, "Num");
@@ -386,10 +411,12 @@ public class PlaytestFeedbackForm : MonoBehaviour
             StretchFill(labelRT);
             var tmp = labelGO.AddComponent<TextMeshProUGUI>();
             tmp.text = rating.ToString();
-            tmp.fontSize = 22f;
+            tmp.fontSize = 20f;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
         }
+
+        _starImages[questionIndex] = rowImages;
     }
 
     // ── UI Factory Helpers ──
