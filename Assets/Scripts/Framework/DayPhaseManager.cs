@@ -231,11 +231,29 @@ public class DayPhaseManager : MonoBehaviour
         if (_prepTimerText != null)
             _prepTimerText.text = "Your date will arrive soon!";
         if (_prepTimerPanel != null)
+        {
             _prepTimerPanel.SetActive(true);
+
+            // Click anywhere on the panel to dismiss early
+            var btn = _prepTimerPanel.GetComponent<UnityEngine.UI.Button>();
+            if (btn == null) btn = _prepTimerPanel.AddComponent<UnityEngine.UI.Button>();
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(DismissNudge);
+        }
 
         _nudgeHideCoroutine = StartCoroutine(HideNudgeAfterDelay(5f));
 
         Debug.Log("[DayPhaseManager] Date arrival nudge shown.");
+    }
+
+    private void DismissNudge()
+    {
+        if (_nudgeHideCoroutine != null)
+        {
+            StopCoroutine(_nudgeHideCoroutine);
+            _nudgeHideCoroutine = null;
+        }
+        if (_prepTimerPanel != null) _prepTimerPanel.SetActive(false);
     }
 
     private IEnumerator HideNudgeAfterDelay(float delay)
