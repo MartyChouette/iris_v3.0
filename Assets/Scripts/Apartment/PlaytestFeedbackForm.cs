@@ -8,9 +8,9 @@ using TMPro;
 
 /// <summary>
 /// Scene-scoped singleton playtest feedback form.
-/// F8 opens/closes. Collects star rating + free-text + auto-telemetry.
+/// F8 opens/closes. Also auto-pops after date ends and on quit.
+/// Collects star ratings + free-text + auto-telemetry.
 /// Saves JSON + screenshot to Application.persistentDataPath/PlaytestFeedback/.
-/// Only functional when PlaytestConsentScreen.HasConsent is true.
 /// </summary>
 public class PlaytestFeedbackForm : MonoBehaviour
 {
@@ -58,7 +58,9 @@ public class PlaytestFeedbackForm : MonoBehaviour
 
     private InputAction _toggleAction;
     private bool _isOpen;
+    public bool IsOpen => _isOpen;
     private FeedbackPayload _currentPayload;
+    private Action _onCloseCallback;
 
     private static readonly Color StarOff = new Color(0.3f, 0.3f, 0.3f);
     private static readonly Color StarOn = new Color(0.95f, 0.8f, 0.2f);
@@ -95,22 +97,17 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _toggleAction?.Dispose();
     }
 
+    private void Start()
+    {
+        // Subscribe to date end — show form when continue is clicked
+        if (DateSessionManager.Instance != null)
+            DateSessionManager.Instance.OnDateSessionEnded.AddListener(OnDateEnded);
+    }
+
     private void Update()
     {
         bool pressed = _toggleAction.WasPressedThisFrame() || Input.GetKeyDown(KeyCode.F8);
         if (!pressed) return;
-
-        if (!PlaytestConsentScreen.HasConsent && !PlaytestConsentScreen.WasShown)
-        {
-            Debug.Log("[PlaytestFeedbackForm] Consent screen not yet shown.");
-            return;
-        }
-
-        if (!PlaytestConsentScreen.HasConsent)
-        {
-            Debug.Log("[PlaytestFeedbackForm] Player declined consent — form disabled.");
-            return;
-        }
 
         if (_isOpen)
             CloseForm();
@@ -118,12 +115,44 @@ public class PlaytestFeedbackForm : MonoBehaviour
             OpenForm();
     }
 
+    private void OnDateEnded(DatePersonalDefinition date, float affection)
+    {
+        // Small delay so DateEndScreen shows first, then pop form after they dismiss it
+        StartCoroutine(OpenAfterDateEndScreen());
+    }
+
+    private IEnumerator OpenAfterDateEndScreen()
+    {
+        // Wait for DateEndScreen to be dismissed
+        while (DateEndScreen.Instance != null && DateEndScreen.Instance.IsShowing)
+        {
+            yield return null;
+        }
+
+        // Extra beat so it doesn't feel jarring
+        yield return new WaitForSecondsRealtime(0.5f);
+
+        if (!_isOpen)
+            OpenForm();
+    }
+
+    /// <summary>
+    /// Opens the form and calls onClose when the player submits or closes.
+    /// Used by SimplePauseMenu to show feedback before quitting.
+    /// </summary>
+    public void OpenWithCallback(Action onClose)
+    {
+        _onCloseCallback = onClose;
+        OpenForm();
+    }
+
     // ═══════════════════════════════════════
     //  Open / Close
     // ═══════════════════════════════════════
 
-    private void OpenForm()
+    public void OpenForm()
     {
+        if (_isOpen) return;
         _isOpen = true;
         for (int i = 0; i < RatingCount; i++)
             _selectedRatings[i] = 0;
@@ -147,6 +176,10 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _isOpen = false;
         _canvasRoot.SetActive(false);
         TimeScaleManager.Clear(TimeScaleManager.PRIORITY_PAUSE);
+
+        var cb = _onCloseCallback;
+        _onCloseCallback = null;
+        cb?.Invoke();
 
         Debug.Log("[PlaytestFeedbackForm] Closed without submitting.");
     }
@@ -222,6 +255,10 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _canvasRoot.SetActive(false);
         TimeScaleManager.Clear(TimeScaleManager.PRIORITY_PAUSE);
 
+        var cb = _onCloseCallback;
+        _onCloseCallback = null;
+        cb?.Invoke();
+
         Debug.Log("[PlaytestFeedbackForm] Submitted and closed.");
     }
 
@@ -231,32 +268,35 @@ public class PlaytestFeedbackForm : MonoBehaviour
 
     private FeedbackPayload GatherTelemetry()
     {
-        var p = new FeedbackPayload
+        var p = new FeedbackPayload();
+
+        // Telemetry only gathered if player consented
+        if (PlaytestConsentScreen.HasConsent)
         {
-            sessionId = s_sessionId,
-            timestamp = DateTime.UtcNow.ToString("o"), // ISO 8601
-            buildVersion = Application.version,
-            playTimeSeconds = Time.realtimeSinceStartup,
-            currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : -1,
-            currentPhase = DayPhaseManager.Instance != null
+            p.sessionId = s_sessionId;
+            p.timestamp = DateTime.UtcNow.ToString("o"); // ISO 8601
+            p.buildVersion = Application.version;
+            p.playTimeSeconds = Time.realtimeSinceStartup;
+            p.currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : -1;
+            p.currentPhase = DayPhaseManager.Instance != null
                 ? DayPhaseManager.Instance.CurrentPhase.ToString()
-                : "Unknown",
-            tidiness = TidyScorer.Instance != null ? TidyScorer.Instance.OverallTidiness : -1f,
-            mood = MoodMachine.Instance != null ? MoodMachine.Instance.Mood : -1f,
-            dateCount = DateHistory.Entries.Count,
-            currentDateCharacter = DateSessionManager.Instance != null
+                : "Unknown";
+            p.tidiness = TidyScorer.Instance != null ? TidyScorer.Instance.OverallTidiness : -1f;
+            p.mood = MoodMachine.Instance != null ? MoodMachine.Instance.Mood : -1f;
+            p.dateCount = DateHistory.Entries.Count;
+            p.currentDateCharacter = DateSessionManager.Instance != null
                 && DateSessionManager.Instance.CurrentDate != null
                 ? DateSessionManager.Instance.CurrentDate.characterName
-                : "None",
-            currentAffection = DateSessionManager.Instance != null
+                : "None";
+            p.currentAffection = DateSessionManager.Instance != null
                 ? DateSessionManager.Instance.Affection
-                : 0f,
-            systemInfo = $"{SystemInfo.operatingSystem} | {SystemInfo.graphicsDeviceName} | {SystemInfo.systemMemorySize}MB RAM",
-            screenResolution = $"{Screen.width}x{Screen.height} @ {Screen.currentResolution.refreshRateRatio}Hz",
-            accessibilityNotes = $"TextScale={AccessibilitySettings.TextScale:F2}, " +
+                : 0f;
+            p.systemInfo = $"{SystemInfo.operatingSystem} | {SystemInfo.graphicsDeviceName} | {SystemInfo.systemMemorySize}MB RAM";
+            p.screenResolution = $"{Screen.width}x{Screen.height} @ {Screen.currentResolution.refreshRateRatio}Hz";
+            p.accessibilityNotes = $"TextScale={AccessibilitySettings.TextScale:F2}, " +
                 $"TimerMult={AccessibilitySettings.TimerMultiplier:F1}, " +
-                $"PSX={AccessibilitySettings.PSXEnabled}"
-        };
+                $"PSX={AccessibilitySettings.PSXEnabled}";
+        }
 
         return p;
     }

@@ -117,12 +117,34 @@ public class SimplePauseMenu : MonoBehaviour
 
     public void QuitToMenu()
     {
+        if (PlaytestFeedbackForm.Instance != null && !PlaytestFeedbackForm.Instance.IsOpen)
+        {
+            if (_pauseRoot != null) _pauseRoot.SetActive(false);
+            PlaytestFeedbackForm.Instance.OpenWithCallback(DoQuitToMenu);
+            return;
+        }
+        DoQuitToMenu();
+    }
+
+    private void DoQuitToMenu()
+    {
         _isPaused = false;
         TimeScaleManager.ClearAll();
         SceneManager.LoadScene(0);
     }
 
     public void QuitToDesktop()
+    {
+        if (PlaytestFeedbackForm.Instance != null && !PlaytestFeedbackForm.Instance.IsOpen)
+        {
+            if (_pauseRoot != null) _pauseRoot.SetActive(false);
+            PlaytestFeedbackForm.Instance.OpenWithCallback(DoQuitToDesktop);
+            return;
+        }
+        DoQuitToDesktop();
+    }
+
+    private void DoQuitToDesktop()
     {
         Debug.Log("[SimplePauseMenu] Quitting application.");
 #if UNITY_EDITOR

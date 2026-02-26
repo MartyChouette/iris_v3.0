@@ -5,7 +5,7 @@ using TMPro;
 /// <summary>
 /// Shown once per play session before gameplay begins.
 /// Asks the player for consent to collect playtest telemetry.
-/// If declined, PlaytestFeedbackForm and telemetry are fully disabled.
+/// If declined, telemetry fields are omitted but the feedback form still appears.
 /// Does NOT persist across sessions — asked fresh each time.
 /// </summary>
 public class PlaytestConsentScreen : MonoBehaviour

@@ -9,6 +9,7 @@ using TMPro;
 public class DateEndScreen : MonoBehaviour
 {
     public static DateEndScreen Instance { get; private set; }
+    public bool IsShowing => screenRoot != null && screenRoot.activeSelf;
 
     [Header("References")]
     [SerializeField] private GameObject screenRoot;
