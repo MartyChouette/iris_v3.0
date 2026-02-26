@@ -190,6 +190,12 @@ public static class ApartmentSceneBuilder
         var debugPanelGO = new GameObject("ApartmentDebugPanel");
         debugPanelGO.AddComponent<ApartmentDebugPanel>();
 
+        // ── 10f. Playtest feedback (F8 toggle + consent screen) ──
+        var consentGO = new GameObject("PlaytestConsentScreen");
+        consentGO.AddComponent<PlaytestConsentScreen>();
+        var feedbackGO = new GameObject("PlaytestFeedbackForm");
+        feedbackGO.AddComponent<PlaytestFeedbackForm>();
+
         // ── 11. ApartmentManager + UI ──
         var apartmentUI = BuildApartmentManager(browseCam, grabber, areaDefs);
 

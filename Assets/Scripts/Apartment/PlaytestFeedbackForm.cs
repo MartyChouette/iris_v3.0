@@ -25,6 +25,14 @@ public class PlaytestFeedbackForm : MonoBehaviour
         s_sessionId = null;
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoSpawn()
+    {
+        if (Instance != null) return;
+        var go = new GameObject("PlaytestFeedbackForm");
+        go.AddComponent<PlaytestFeedbackForm>();
+    }
+
     // ── Star rating questions ──
     private const int RatingCount = 4;
     private static readonly string[] RatingLabels = new[]

@@ -20,6 +20,14 @@ public class PlaytestConsentScreen : MonoBehaviour
         WasShown = false;
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoSpawn()
+    {
+        if (WasShown) return;
+        var go = new GameObject("PlaytestConsentScreen");
+        go.AddComponent<PlaytestConsentScreen>();
+    }
+
     private GameObject _root;
 
     private void Awake()
