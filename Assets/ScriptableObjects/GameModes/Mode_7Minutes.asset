@@ -18,3 +18,4 @@ MonoBehaviour:
   demoTimeLimitSeconds: 900
   realSecondsPerGameHour: 60
   prepDuration: 900
+  datePhaseDuration: 180

@@ -29,4 +29,7 @@ public class GameModeConfig : ScriptableObject
 
     [Tooltip("Preparation phase duration in seconds (hidden from player).")]
     public float prepDuration = 900f;
+
+    [Tooltip("Phase 3 (couch judging) duration in seconds. 0 = use DateSessionManager default.")]
+    public float datePhaseDuration;
 }

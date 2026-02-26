@@ -183,6 +183,10 @@ public class DateSessionManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // Apply game mode date duration if set from main menu
+        if (MainMenuManager.ActiveConfig != null && MainMenuManager.ActiveConfig.datePhaseDuration > 0f)
+            phase3Duration = MainMenuManager.ActiveConfig.datePhaseDuration;
     }
 
     private void OnDestroy()
