@@ -2166,36 +2166,67 @@ public static class ApartmentSceneBuilder
         Vector2 aMin = anchorMin ?? new Vector2(0.5f, 0.5f);
         Vector2 aMax = anchorMax ?? new Vector2(0.5f, 0.5f);
 
-        var btnGO = new GameObject(name);
-        btnGO.transform.SetParent(parent);
+        // Wrapper that holds arrow button + "Camera" label
+        var wrapperGO = new GameObject(name);
+        wrapperGO.transform.SetParent(parent);
+        var wrapperRT = wrapperGO.AddComponent<RectTransform>();
+        wrapperRT.anchorMin = aMin;
+        wrapperRT.anchorMax = aMax;
+        wrapperRT.sizeDelta = new Vector2(90f, 110f);
+        wrapperRT.anchoredPosition = anchoredPos;
+        wrapperRT.localScale = Vector3.one;
 
-        var rt = btnGO.AddComponent<RectTransform>();
-        rt.anchorMin = aMin;
-        rt.anchorMax = aMax;
-        rt.sizeDelta = new Vector2(60f, 60f);
-        rt.anchoredPosition = anchoredPos;
-        rt.localScale = Vector3.one;
+        // Arrow button (larger, warm muted color)
+        var btnGO = new GameObject("ArrowBtn");
+        btnGO.transform.SetParent(wrapperGO.transform, false);
+        var btnRT = btnGO.AddComponent<RectTransform>();
+        btnRT.anchorMin = new Vector2(0.5f, 1f);
+        btnRT.anchorMax = new Vector2(0.5f, 1f);
+        btnRT.pivot = new Vector2(0.5f, 1f);
+        btnRT.sizeDelta = new Vector2(80f, 80f);
+        btnRT.anchoredPosition = Vector2.zero;
 
         var img = btnGO.AddComponent<Image>();
-        img.color = new Color(0f, 0f, 0f, 0.4f);
+        img.color = new Color(0.15f, 0.13f, 0.12f, 0.7f);
 
-        btnGO.AddComponent<Button>();
+        var btn = btnGO.AddComponent<Button>();
+        var colors = btn.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1f, 0.92f, 0.8f);
+        colors.pressedColor = new Color(0.85f, 0.75f, 0.6f);
+        btn.colors = colors;
 
-        var textGO = new GameObject("Label");
-        textGO.transform.SetParent(btnGO.transform);
-
+        var textGO = new GameObject("Arrow");
+        textGO.transform.SetParent(btnGO.transform, false);
         var textRT = textGO.AddComponent<RectTransform>();
         textRT.anchorMin = Vector2.zero;
         textRT.anchorMax = Vector2.one;
         textRT.offsetMin = Vector2.zero;
         textRT.offsetMax = Vector2.zero;
-        textRT.localScale = Vector3.one;
 
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.text = label;
-        tmp.fontSize = 28f;
+        tmp.fontSize = 42f;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = Color.white;
+        tmp.color = new Color(0.92f, 0.88f, 0.80f);
+        tmp.raycastTarget = false;
+
+        // "Camera" label below the arrow
+        var camLabelGO = new GameObject("CamLabel");
+        camLabelGO.transform.SetParent(wrapperGO.transform, false);
+        var camLabelRT = camLabelGO.AddComponent<RectTransform>();
+        camLabelRT.anchorMin = new Vector2(0.5f, 0f);
+        camLabelRT.anchorMax = new Vector2(0.5f, 0f);
+        camLabelRT.pivot = new Vector2(0.5f, 0f);
+        camLabelRT.sizeDelta = new Vector2(90f, 24f);
+        camLabelRT.anchoredPosition = Vector2.zero;
+
+        var camLabel = camLabelGO.AddComponent<TextMeshProUGUI>();
+        camLabel.text = "Camera";
+        camLabel.fontSize = 14f;
+        camLabel.alignment = TextAlignmentOptions.Center;
+        camLabel.color = new Color(0.65f, 0.6f, 0.55f, 0.8f);
+        camLabel.raycastTarget = false;
 
         return btnGO;
     }
@@ -4398,7 +4429,7 @@ public static class ApartmentSceneBuilder
         nameRT.anchorMin = new Vector2(0.5f, 0.5f);
         nameRT.anchorMax = new Vector2(0.5f, 0.5f);
         nameRT.sizeDelta = new Vector2(500f, 50f);
-        nameRT.anchoredPosition = new Vector2(0f, 190f);
+        nameRT.anchoredPosition = new Vector2(0f, 250f);
         nameRT.localScale = Vector3.one;
         var nameTMP = nameGO.AddComponent<TextMeshProUGUI>();
         nameTMP.text = "N e m a _ . . .";

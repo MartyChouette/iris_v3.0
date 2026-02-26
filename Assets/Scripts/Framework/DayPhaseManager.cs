@@ -227,11 +227,25 @@ public class DayPhaseManager : MonoBehaviour
         if (timerWarningSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(timerWarningSFX);
 
-        // Show the nudge briefly on the prep timer panel
+        // Show the nudge briefly — reposition panel to center-screen, bigger
         if (_prepTimerText != null)
+        {
             _prepTimerText.text = "Your date will arrive soon!";
+            _prepTimerText.fontSize = 36f;
+        }
         if (_prepTimerPanel != null)
         {
+            // Override position to center of screen, bigger panel
+            var rt = _prepTimerPanel.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchorMin = new Vector2(0.5f, 0.5f);
+                rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(550f, 80f);
+                rt.anchoredPosition = Vector2.zero;
+            }
+
             _prepTimerPanel.SetActive(true);
 
             // Click anywhere on the panel to dismiss early

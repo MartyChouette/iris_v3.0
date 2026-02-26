@@ -375,7 +375,7 @@ public class FlowerTrimmingBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// Find and deactivate Quit/Restart buttons baked into the flower scene.
+    /// Find and deactivate Quit/Restart buttons and Game Over UI baked into the flower scene.
     /// These are only relevant when the flower scene runs standalone.
     /// </summary>
     private static void DisableSceneButtons(Scene scene)
@@ -390,6 +390,15 @@ public class FlowerTrimmingBridge : MonoBehaviour
                     t.gameObject.SetActive(false);
                     Debug.Log($"[FlowerTrimmingBridge] Disabled scene button: {n}");
                 }
+            }
+
+            // Disable GameOverUI components so "Game Over" text never appears
+            foreach (var goUI in root.GetComponentsInChildren<GameOverUI>(true))
+            {
+                goUI.enabled = false;
+                if (goUI.root != null)
+                    goUI.root.gameObject.SetActive(false);
+                Debug.Log("[FlowerTrimmingBridge] Disabled GameOverUI.");
             }
         }
     }

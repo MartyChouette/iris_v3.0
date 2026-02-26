@@ -5,19 +5,11 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Kitchen wall calendar. Click the 3D object to open a screen-space overlay
-/// showing a 30-day month grid with date history. Fully self-constructing —
-/// builds its own UI in Awake(). Just drop the component on a GO with a collider.
+/// Calendar overlay toggled by Tab key. Shows a 30-day month grid
+/// with date history. Fully self-constructing — builds its own UI in Awake().
 /// </summary>
 public class ApartmentCalendar : MonoBehaviour
 {
-    [Header("Input")]
-    [Tooltip("Layer mask for calendar clickable object.")]
-    [SerializeField] private LayerMask _calendarLayer;
-
-    [Tooltip("Max raycast distance.")]
-    [SerializeField] private float _maxRayDistance = 10f;
-
     // ─── Constants ──────────────────────────────────────────────
     private const int DaysPerPage = 30;
     private const int Columns = 5;
@@ -41,12 +33,10 @@ public class ApartmentCalendar : MonoBehaviour
     private Button _closeButton;
 
     // ─── Input ──────────────────────────────────────────────────
-    private InputAction _clickAction;
-    private InputAction _pointerAction;
+    private InputAction _toggleAction;
     private InputAction _escapeAction;
 
     // ─── State ──────────────────────────────────────────────────
-    private Camera _cachedCamera;
     private bool _isOpen;
     private int _currentPage; // page 0 = days 1-30, page 1 = 31-60, etc.
 
@@ -54,9 +44,16 @@ public class ApartmentCalendar : MonoBehaviour
 
     private void Awake()
     {
-        _clickAction = new InputAction("CalendarClick", InputActionType.Button, "<Mouse>/leftButton");
-        _pointerAction = new InputAction("CalendarPointer", InputActionType.Value, "<Mouse>/position");
+        _toggleAction = new InputAction("ToggleCalendar", InputActionType.Button, "<Keyboard>/tab");
         _escapeAction = new InputAction("CalendarEscape", InputActionType.Button, "<Keyboard>/escape");
+
+        // Hide the 3D calendar object visual (box on wall) — now Tab-only
+        var meshRend = GetComponent<MeshRenderer>();
+        if (meshRend != null) meshRend.enabled = false;
+        var meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter != null) meshFilter.enabled = false;
+        var col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
 
         BuildUI();
 
@@ -66,22 +63,19 @@ public class ApartmentCalendar : MonoBehaviour
 
     private void OnEnable()
     {
-        _clickAction.Enable();
-        _pointerAction.Enable();
+        _toggleAction.Enable();
         _escapeAction.Enable();
     }
 
     private void OnDisable()
     {
-        _clickAction.Disable();
-        _pointerAction.Disable();
+        _toggleAction.Disable();
         _escapeAction.Disable();
     }
 
     private void OnDestroy()
     {
-        _clickAction?.Dispose();
-        _pointerAction?.Dispose();
+        _toggleAction?.Dispose();
         _escapeAction?.Dispose();
         if (_canvasGO != null) Destroy(_canvasGO);
     }
@@ -90,27 +84,17 @@ public class ApartmentCalendar : MonoBehaviour
     {
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
 
-        if (_isOpen)
+        if (_toggleAction.WasPressedThisFrame())
         {
-            if (_escapeAction.WasPressedThisFrame())
+            if (_isOpen)
                 CloseCalendar();
+            else
+                OpenCalendar();
             return;
         }
 
-        if (_clickAction.WasPressedThisFrame())
-        {
-            if (_cachedCamera == null) _cachedCamera = Camera.main;
-            if (_cachedCamera == null) return;
-
-            Vector2 mousePos = _pointerAction.ReadValue<Vector2>();
-            Ray ray = _cachedCamera.ScreenPointToRay(mousePos);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, _maxRayDistance, _calendarLayer))
-            {
-                if (hit.transform == transform || hit.transform.IsChildOf(transform))
-                    OpenCalendar();
-            }
-        }
+        if (_isOpen && _escapeAction.WasPressedThisFrame())
+            CloseCalendar();
     }
 
     // ─── Public API ─────────────────────────────────────────────
@@ -190,6 +174,12 @@ public class ApartmentCalendar : MonoBehaviour
             new Vector2(40f, 40f), "X");
         _closeButton = closeGO.GetComponent<Button>();
         _closeButton.onClick.AddListener(CloseCalendar);
+
+        // Hint text (top-left)
+        CreateTMPElement("TabHint", _panelRoot.transform,
+            new Vector2(-PanelWidth * 0.5f + 80f, PanelHeight * 0.5f - 30f),
+            new Vector2(120f, 30f), "[Tab]", 14f, FontStyles.Normal,
+            TextAlignmentOptions.Center, new Color(0.5f, 0.5f, 0.5f));
 
         // Grid cells (6 rows x 5 cols)
         _cellTexts = new TMP_Text[DaysPerPage];

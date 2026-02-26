@@ -91,9 +91,16 @@ public class FlowerGiftPresenter : MonoBehaviour
             yield break;
         }
 
-        // Spawn flower as child of camera so it stays in view regardless of camera movement.
-        var flowerClone = Instantiate(flowerPrefab, cam.transform);
-        flowerClone.transform.localPosition = _spawnOffset;
+        // Create a pivot wrapper so the flower rotates around its visual center.
+        var pivot = new GameObject("FlowerPivot");
+        pivot.transform.SetParent(cam.transform);
+        pivot.transform.localPosition = _spawnOffset;
+        pivot.transform.localRotation = Quaternion.identity;
+        pivot.transform.localScale = Vector3.one;
+
+        // Spawn flower as child of the pivot.
+        var flowerClone = Instantiate(flowerPrefab, pivot.transform);
+        flowerClone.transform.localPosition = Vector3.zero;
         flowerClone.transform.localRotation = Quaternion.identity;
         flowerClone.transform.localScale = Vector3.one * _presentationScale;
 
@@ -103,11 +110,17 @@ public class FlowerGiftPresenter : MonoBehaviour
         foreach (var col in flowerClone.GetComponentsInChildren<Collider>())
             col.enabled = false;
 
+        // Center the flower visuals at the pivot origin so rotation is around the visual center
+        CenterFlowerAtPivot(flowerClone);
+
+        // Render flower on top of scene geometry (but behind UI overlay text)
+        SetRenderOnTop(flowerClone);
+
         // Apply Zelda-style tilt (lean forward so spin looks dynamic)
-        flowerClone.transform.localRotation = Quaternion.Euler(_tiltAngle, 0f, 0f);
+        pivot.transform.localRotation = Quaternion.Euler(_tiltAngle, 0f, 0f);
 
         // Spawn sparkle particle ring around the flower
-        var sparkleGO = SpawnSparkleRing(flowerClone.transform);
+        var sparkleGO = SpawnSparkleRing(pivot.transform);
 
         float baseLocalY = _spawnOffset.y;
 
@@ -146,15 +159,15 @@ public class FlowerGiftPresenter : MonoBehaviour
         {
             elapsed += Time.deltaTime;
 
-            if (flowerClone != null)
+            if (pivot != null)
             {
                 // Bob in local Y
-                var localPos = flowerClone.transform.localPosition;
+                var localPos = pivot.transform.localPosition;
                 localPos.y = baseLocalY + Mathf.Sin(elapsed * _bobSpeed * Mathf.PI * 2f) * _bobAmplitude;
-                flowerClone.transform.localPosition = localPos;
+                pivot.transform.localPosition = localPos;
 
-                // Spin around tilted Y axis (Zelda-style)
-                flowerClone.transform.localRotation =
+                // Spin around tilted Y axis (Zelda-style) — pivot rotates, flower stays centered
+                pivot.transform.localRotation =
                     Quaternion.Euler(_tiltAngle, 0f, 0f) *
                     Quaternion.Euler(0f, _spinSpeed * elapsed, 0f);
             }
@@ -177,14 +190,47 @@ public class FlowerGiftPresenter : MonoBehaviour
             _canvasGroup.blocksRaycasts = false;
         }
 
-        // Cleanup
-        if (sparkleGO != null)
-            Destroy(sparkleGO);
-        if (flowerClone != null)
-            Destroy(flowerClone);
+        // Cleanup — destroying pivot also destroys the flower clone and sparkle
+        if (pivot != null)
+            Destroy(pivot);
 
         if (_overlayRoot != null)
             _overlayRoot.SetActive(false);
+    }
+
+    /// <summary>
+    /// Push all renderers' material render queue to Overlay so the flower
+    /// draws on top of scene geometry but behind screen-space UI.
+    /// </summary>
+    private static void SetRenderOnTop(GameObject flower)
+    {
+        foreach (var rend in flower.GetComponentsInChildren<Renderer>())
+        {
+            foreach (var mat in rend.materials)
+            {
+                if (mat != null)
+                    mat.renderQueue = 4000; // Overlay queue — above geometry, below screen UI
+            }
+        }
+    }
+
+    /// <summary>
+    /// Offset all children so the visual center of the flower sits at the local origin.
+    /// This ensures rotation around the visual center instead of an arbitrary pivot.
+    /// </summary>
+    private static void CenterFlowerAtPivot(GameObject flower)
+    {
+        var renderers = flower.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return;
+
+        var bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
+
+        // Convert world-space center to local space of the flower and shift all children
+        Vector3 localCenter = flower.transform.InverseTransformPoint(bounds.center);
+        foreach (Transform child in flower.transform)
+            child.localPosition -= localCenter;
     }
 
     /// <summary>
