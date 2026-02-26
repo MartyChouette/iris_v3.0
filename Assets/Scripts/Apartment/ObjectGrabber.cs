@@ -41,6 +41,9 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Camera used for raycasting. Auto-finds MainCamera if null.")]
     [SerializeField] private Camera cam;
 
+    [Tooltip("Layer mask for wall/ceiling/floor geometry that held items cannot pass through.")]
+    [SerializeField] private LayerMask _wallLayer = 1; // Default layer
+
     [Header("Audio")]
     [Tooltip("SFX played when picking up an object.")]
     [SerializeField] private AudioClip _pickupSFX;
@@ -572,6 +575,8 @@ public class ObjectGrabber : MonoBehaviour
         // so it travels with the cursor instead of clinging to the old room
         bool dollying = ApartmentManager.Instance != null && ApartmentManager.Instance.IsTransitioning;
 
+        bool foundSurface = false;
+
         if (!dollying && Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
         {
             var surface = hit.collider.GetComponentInParent<PlacementSurface>();
@@ -602,18 +607,48 @@ public class ObjectGrabber : MonoBehaviour
                 if (_isOnWall)
                     _held.AlignToWall(hitResult.surfaceNormal, _wallRotation);
 
-                return;
+                foundSurface = true;
             }
         }
 
-        // No valid surface or dollying — float at fallback depth following cursor
-        _currentSurface = null;
-        _isOnWall = false;
+        if (!foundSurface)
+        {
+            // No valid surface or dollying — float at fallback depth following cursor
+            _currentSurface = null;
+            _isOnWall = false;
 
-        Vector3 planePoint = cam.transform.position + cam.transform.forward * _fallbackDepth;
-        var plane = new Plane(-cam.transform.forward, planePoint);
-        if (plane.Raycast(ray, out float enter))
-            _grabTarget = ray.GetPoint(enter);
+            Vector3 planePoint = cam.transform.position + cam.transform.forward * _fallbackDepth;
+            var plane = new Plane(-cam.transform.forward, planePoint);
+            if (plane.Raycast(ray, out float enter))
+                _grabTarget = ray.GetPoint(enter);
+        }
+
+        ClampGrabTargetToWalls();
+    }
+
+    /// <summary>
+    /// Clamps _grabTarget so the held item cannot pass through walls/floor/ceiling.
+    /// Linecasts from the item's current position to the desired target; if blocked,
+    /// stops just before the hit point.
+    /// </summary>
+    private void ClampGrabTargetToWalls()
+    {
+        if (_heldRb == null) return;
+
+        Vector3 from = _heldRb.position;
+        Vector3 to = _grabTarget;
+        Vector3 delta = to - from;
+        float dist = delta.magnitude;
+
+        if (dist < 0.001f) return;
+
+        // Linecast with a small margin so the item doesn't sit flush against the wall
+        const float margin = 0.05f;
+        if (Physics.Raycast(from, delta.normalized, out RaycastHit wallHit, dist, _wallLayer))
+        {
+            float safeDist = Mathf.Max(0f, wallHit.distance - margin);
+            _grabTarget = from + delta.normalized * safeDist;
+        }
     }
 
     // ── Scroll input ─────────────────────────────────────────────────
