@@ -266,6 +266,27 @@ public class WateringManager : MonoBehaviour
 
     private void UpdateScoring()
     {
+        // Allow clicking the next plant to interrupt the score display
+        if (_clickAction.WasPressedThisFrame())
+        {
+            Vector2 pointer = _mousePosition.ReadValue<Vector2>();
+            Ray ray = _mainCamera.ScreenPointToRay(pointer);
+            if (Physics.Raycast(ray, out RaycastHit hit, 100f, _plantLayer))
+            {
+                var plant = hit.collider.GetComponent<WaterablePlant>();
+                if (plant == null)
+                    plant = hit.collider.GetComponentInParent<WaterablePlant>();
+
+                if (plant != null && plant.definition != null)
+                {
+                    if (plantClickSFX != null && AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX(plantClickSFX);
+                    BeginPouring(plant.definition);
+                    return;
+                }
+            }
+        }
+
         _scoreTimer -= Time.deltaTime;
         if (_scoreTimer <= 0f)
         {
