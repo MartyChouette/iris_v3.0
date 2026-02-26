@@ -73,8 +73,8 @@ public class DayPhaseManager : MonoBehaviour
     [SerializeField] private float _fadeDuration = 0.5f;
 
     [Header("Preparation Timer")]
-    [Tooltip("Duration of the preparation phase in seconds.")]
-    [SerializeField] private float _prepDuration = 120f;
+    [Tooltip("Duration of the preparation phase in seconds (hidden from player).")]
+    [SerializeField] private float _prepDuration = 900f;
 
     [Tooltip("TMP_Text displaying the countdown timer.")]
     [SerializeField] private TMP_Text _prepTimerText;
@@ -90,7 +90,7 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("SFX played at the start of a new day (morning transition).")]
     [SerializeField] private AudioClip nextDaySFX;
 
-    [Tooltip("SFX played when prep timer hits 10 seconds remaining.")]
+    [Tooltip("SFX played when date arrival nudge appears.")]
     [SerializeField] private AudioClip timerWarningSFX;
 
     [Tooltip("Optional ambience loop for the morning newspaper phase. If null, MoodMachine ambient runs.")]
@@ -107,7 +107,8 @@ public class DayPhaseManager : MonoBehaviour
 
     private float _prepTimer;
     private bool _prepTimerActive;
-    private bool _timerWarningPlayed;
+    private bool _nudgeShown;
+    private Coroutine _nudgeHideCoroutine;
 
     public DayPhase CurrentPhase => _currentPhase;
     public float PrepTimer => _prepTimer;
@@ -172,19 +173,11 @@ public class DayPhaseManager : MonoBehaviour
 
         _prepTimer -= Time.deltaTime;
 
-        if (_prepTimerText != null)
+        // Nudge at 60 seconds remaining — "your date will arrive soon"
+        if (!_nudgeShown && _prepTimer <= 60f && _prepTimer > 0f)
         {
-            int mins = Mathf.FloorToInt(Mathf.Max(_prepTimer, 0f) / 60f);
-            int secs = Mathf.FloorToInt(Mathf.Max(_prepTimer, 0f) % 60f);
-            _prepTimerText.SetText("{0}:{1:00}", mins, secs);
-        }
-
-        // Warning SFX at 10 seconds
-        if (!_timerWarningPlayed && _prepTimer <= 10f && _prepTimer > 0f)
-        {
-            _timerWarningPlayed = true;
-            if (timerWarningSFX != null && AudioManager.Instance != null)
-                AudioManager.Instance.PlaySFX(timerWarningSFX);
+            _nudgeShown = true;
+            ShowArrivalNudge();
         }
 
         if (_prepTimer <= 0f)
@@ -211,15 +204,45 @@ public class DayPhaseManager : MonoBehaviour
 
         _prepTimer = _prepDuration * multiplier;
         _prepTimerActive = true;
-        _timerWarningPlayed = false;
-        if (_prepTimerPanel != null) _prepTimerPanel.SetActive(true);
-        Debug.Log($"[DayPhaseManager] Prep timer started: {_prepTimer}s (base {_prepDuration} x {multiplier}).");
+        _nudgeShown = false;
+
+        // Timer is hidden — player doesn't see a countdown
+        if (_prepTimerPanel != null) _prepTimerPanel.SetActive(false);
+        Debug.Log($"[DayPhaseManager] Prep timer started (hidden): {_prepTimer}s (base {_prepDuration} x {multiplier}).");
     }
 
     private void StopPrepTimer()
     {
         _prepTimerActive = false;
         if (_prepTimerPanel != null) _prepTimerPanel.SetActive(false);
+        if (_nudgeHideCoroutine != null)
+        {
+            StopCoroutine(_nudgeHideCoroutine);
+            _nudgeHideCoroutine = null;
+        }
+    }
+
+    private void ShowArrivalNudge()
+    {
+        if (timerWarningSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(timerWarningSFX);
+
+        // Show the nudge briefly on the prep timer panel
+        if (_prepTimerText != null)
+            _prepTimerText.text = "Your date will arrive soon!";
+        if (_prepTimerPanel != null)
+            _prepTimerPanel.SetActive(true);
+
+        _nudgeHideCoroutine = StartCoroutine(HideNudgeAfterDelay(5f));
+
+        Debug.Log("[DayPhaseManager] Date arrival nudge shown.");
+    }
+
+    private IEnumerator HideNudgeAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (_prepTimerPanel != null) _prepTimerPanel.SetActive(false);
+        _nudgeHideCoroutine = null;
     }
 
     private void OnPrepTimerExpired()

@@ -27,6 +27,6 @@ public class GameModeConfig : ScriptableObject
     [Tooltip("Real-world seconds per one game hour.")]
     public float realSecondsPerGameHour = 60f;
 
-    [Tooltip("Preparation phase duration in seconds.")]
-    public float prepDuration = 120f;
+    [Tooltip("Preparation phase duration in seconds (hidden from player).")]
+    public float prepDuration = 900f;
 }
