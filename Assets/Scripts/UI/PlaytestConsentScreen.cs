@@ -20,24 +20,28 @@ public class PlaytestConsentScreen : MonoBehaviour
         WasShown = false;
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AutoSpawn()
-    {
-        if (WasShown) return;
-        var go = new GameObject("PlaytestConsentScreen");
-        go.AddComponent<PlaytestConsentScreen>();
-    }
-
     private GameObject _root;
+    private System.Action _onComplete;
 
-    private void Awake()
+    /// <summary>
+    /// Show consent screen. Calls onComplete(true/false) when player decides.
+    /// If already shown this session, calls onComplete immediately with cached result.
+    /// </summary>
+    public static void ShowIfNeeded(System.Action onComplete)
     {
         if (WasShown)
         {
-            Destroy(gameObject);
+            onComplete?.Invoke();
             return;
         }
 
+        var go = new GameObject("PlaytestConsentScreen");
+        var screen = go.AddComponent<PlaytestConsentScreen>();
+        screen._onComplete = onComplete;
+    }
+
+    private void Awake()
+    {
         BuildUI();
     }
 
@@ -130,8 +134,13 @@ public class PlaytestConsentScreen : MonoBehaviour
 
         Debug.Log($"[PlaytestConsentScreen] Consent {(agreed ? "granted" : "declined")}.");
 
+        var cb = _onComplete;
+        _onComplete = null;
+
         if (_root != null) Destroy(_root);
         Destroy(gameObject);
+
+        cb?.Invoke();
     }
 
     // ── UI helpers ──

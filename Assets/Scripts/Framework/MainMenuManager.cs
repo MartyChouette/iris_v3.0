@@ -204,14 +204,14 @@ public class MainMenuManager : MonoBehaviour
         ItemStateRegistry.Clear();
         PlayerData.PlayerName = "Nema";
 
-        if (_tutorialCard != null)
+        // Show consent screen, then tutorial, then load
+        PlaytestConsentScreen.ShowIfNeeded(() =>
         {
-            _tutorialCard.Show(() => LoadApartment());
-        }
-        else
-        {
-            LoadApartment();
-        }
+            if (_tutorialCard != null)
+                _tutorialCard.Show(() => LoadApartment());
+            else
+                LoadApartment();
+        });
     }
 
     public void OnContinue()
@@ -223,7 +223,7 @@ public class MainMenuManager : MonoBehaviour
 
         ActiveConfig = _selectedConfig;
         SaveManager.ActiveSlot = slot;
-        LoadApartment();
+        PlaytestConsentScreen.ShowIfNeeded(() => LoadApartment());
     }
 
     public void OnLoadSave()
@@ -297,7 +297,7 @@ public class MainMenuManager : MonoBehaviour
 
         ActiveConfig = _selectedConfig;
         SaveManager.ActiveSlot = slot;
-        LoadApartment();
+        PlaytestConsentScreen.ShowIfNeeded(() => LoadApartment());
     }
 
     public void OnSaveSlotBack()
