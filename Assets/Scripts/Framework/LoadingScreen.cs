@@ -40,6 +40,23 @@ public class LoadingScreen : MonoBehaviour
         _instance.StartCoroutine(_instance.LoadCoroutine(buildIndex));
     }
 
+    /// <summary>
+    /// Creates the loading screen using a pre-started AsyncOperation
+    /// (with allowSceneActivation = false). Sets activation to true
+    /// and monitors progress. If the preload is already at 0.9, the
+    /// scene activates nearly instantly.
+    /// </summary>
+    public static void LoadPreloaded(AsyncOperation preloadedOp)
+    {
+        if (_instance != null) return;
+
+        var go = new GameObject("LoadingScreen");
+        DontDestroyOnLoad(go);
+        _instance = go.AddComponent<LoadingScreen>();
+        _instance.Build();
+        _instance.StartCoroutine(_instance.ActivatePreloadedCoroutine(preloadedOp));
+    }
+
     private void OnDestroy()
     {
         if (_instance == this) _instance = null;
@@ -192,6 +209,58 @@ public class LoadingScreen : MonoBehaviour
         while (!op.isDone)
         {
             // Unity async progress goes 0→0.9 then jumps to 1.0 on activation
+            float t = Mathf.Clamp01(op.progress / 0.9f);
+            SetProgress(t);
+            UpdateFlower();
+            UpdateEllipsis();
+            yield return null;
+        }
+
+        SetProgress(1f);
+
+        // Wait one frame for new scene Awake/Start
+        yield return null;
+
+        // Fade out
+        float fadeTime = 0.5f;
+        float elapsed = 0f;
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            _canvasGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeTime);
+            UpdateFlower();
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private IEnumerator ActivatePreloadedCoroutine(AsyncOperation op)
+    {
+        // Brief hold so menu fade can finish
+        float holdTimer = 0.3f;
+        while (holdTimer > 0f)
+        {
+            holdTimer -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (op == null)
+        {
+            Debug.LogError("[LoadingScreen] Preloaded AsyncOperation is null.");
+            Destroy(gameObject);
+            yield break;
+        }
+
+        // Show current preload progress before activating
+        float preProgress = Mathf.Clamp01(op.progress / 0.9f);
+        SetProgress(preProgress);
+
+        // Allow the scene to activate
+        op.allowSceneActivation = true;
+
+        while (!op.isDone)
+        {
             float t = Mathf.Clamp01(op.progress / 0.9f);
             SetProgress(t);
             UpdateFlower();

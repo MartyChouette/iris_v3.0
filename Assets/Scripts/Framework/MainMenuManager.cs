@@ -78,6 +78,10 @@ public class MainMenuManager : MonoBehaviour
     private bool _quitConfirmShowing;
     private GameObject _quitConfirmPanel;
 
+    // ── Scene preloading ──────────────────────────────────────────
+    private AsyncOperation _preloadOp;
+    private int _targetSceneIndex;
+
     // ═══════════════════════════════════════════════════════════════
     // Lifecycle
     // ═══════════════════════════════════════════════════════════════
@@ -121,6 +125,29 @@ public class MainMenuManager : MonoBehaviour
         // Fade in from black
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        // Preload apartment scene in the background while player browses menu
+        PreloadApartmentScene();
+    }
+
+    private void PreloadApartmentScene()
+    {
+        _targetSceneIndex = _apartmentSceneIndex >= 0
+            ? _apartmentSceneIndex
+            : SceneManager.GetActiveScene().buildIndex + 1;
+
+        if (_targetSceneIndex < 0 || _targetSceneIndex >= SceneManager.sceneCountInBuildSettings)
+        {
+            Debug.LogWarning($"[MainMenuManager] Cannot preload scene index {_targetSceneIndex}.");
+            return;
+        }
+
+        _preloadOp = SceneManager.LoadSceneAsync(_targetSceneIndex);
+        if (_preloadOp != null)
+        {
+            _preloadOp.allowSceneActivation = false;
+            Debug.Log($"[MainMenuManager] Preloading scene {_targetSceneIndex} in background.");
+        }
     }
 
     private void Update()
@@ -411,21 +438,31 @@ public class MainMenuManager : MonoBehaviour
         if (_loading) return;
         _loading = true;
 
-        int targetIndex = _apartmentSceneIndex >= 0
-            ? _apartmentSceneIndex
-            : SceneManager.GetActiveScene().buildIndex + 1;
-
         if (ScreenFade.Instance != null && _fadeDuration > 0f)
-            StartCoroutine(FadeAndLoad(targetIndex));
+            StartCoroutine(FadeAndLoad());
         else
-            LoadingScreen.LoadScene(targetIndex);
+            ActivateLoad();
     }
 
-    private IEnumerator FadeAndLoad(int sceneIndex)
+    private IEnumerator FadeAndLoad()
     {
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
-        LoadingScreen.LoadScene(sceneIndex);
+        ActivateLoad();
+    }
+
+    private void ActivateLoad()
+    {
+        if (_preloadOp != null)
+        {
+            // Hand off the preloaded AsyncOperation to the loading screen
+            LoadingScreen.LoadPreloaded(_preloadOp);
+        }
+        else
+        {
+            // Fallback: no preload available, load from scratch
+            LoadingScreen.LoadScene(_targetSceneIndex);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
