@@ -26,6 +26,11 @@ public class NatureBoxController : MonoBehaviour
     [Tooltip("Scale of the environment box. Must be large enough to enclose the level.")]
     [SerializeField] private float _boxScale = 200f;
 
+    [Header("World Curve")]
+    [Tooltip("Push the horizon down to match CurvedWorldGrid. 0 = flat, 0.1+ = curved.")]
+    [Range(0f, 0.3f)]
+    [SerializeField] private float _horizonCurve = 0f;
+
     [Header("Transition")]
     [Tooltip("How fast weather properties lerp to their targets (units/sec).")]
     [SerializeField] private float _weatherLerpSpeed = 0.8f;
@@ -43,6 +48,7 @@ public class NatureBoxController : MonoBehaviour
     private static readonly int LeafIntensityId  = Shader.PropertyToID("_LeafIntensity");
     private static readonly int OvercastDarkenId = Shader.PropertyToID("_OvercastDarken");
     private static readonly int SnowCapId        = Shader.PropertyToID("_SnowCapIntensity");
+    private static readonly int HorizonCurveId  = Shader.PropertyToID("_HorizonCurve");
 
     // ── Target values (set by WeatherSystem) ─────────────────────────
     private float _targetRain;
@@ -140,6 +146,13 @@ public class NatureBoxController : MonoBehaviour
         _matInstance.SetFloat(SnowCapId,        _curSnowCap);
         _matInstance.SetFloat(CloudDensityId,   _curCloudDensity);
         _matInstance.SetFloat(HorizonFogId,     _curHorizonFog);
+        _matInstance.SetFloat(HorizonCurveId,   _horizonCurve);
+    }
+
+    public float HorizonCurve
+    {
+        get => _horizonCurve;
+        set => _horizonCurve = Mathf.Clamp(value, 0f, 0.3f);
     }
 
     /// <summary>

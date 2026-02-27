@@ -37,6 +37,9 @@ Shader "Iris/NatureBox"
         _LeafSpeed ("Leaf Speed", Float) = 0.4
         _LeafScale ("Leaf Scale", Float) = 25.0
 
+        [Header(World Curve)]
+        _HorizonCurve ("Horizon Curve (push horizon down)", Range(0, 0.3)) = 0
+
         [Header(Retro)]
         _PixelDensity ("Pixel Density (0 off, 240 N64, 480 PS2)", Float) = 0
         _ColorDepth ("Color Depth per channel (0 off, 16 N64, 32 PS1)", Float) = 0
@@ -89,6 +92,7 @@ Shader "Iris/NatureBox"
                 float _SnowScale;
                 float _LeafSpeed;
                 float _LeafScale;
+                float _HorizonCurve;
                 float _PixelDensity;
                 float _ColorDepth;
             CBUFFER_END
@@ -245,7 +249,7 @@ Shader "Iris/NatureBox"
                     viewDir = float3(r * cos(theta), yCoord, r * sin(theta));
                 }
 
-                float elevation = viewDir.y;
+                float elevation = viewDir.y + _HorizonCurve;
                 float2 horiz = viewDir.xz / max(length(viewDir.xz), 0.001);
 
                 float t = _TimeOfDay;
