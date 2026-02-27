@@ -12,11 +12,14 @@ public class NatureBoxController : MonoBehaviour
     public static NatureBoxController Instance { get; private set; }
 
     [Header("Override")]
-    [Tooltip("Time of day when GameClock is absent (0 = midnight, 0.5 = noon).")]
+    [Tooltip("Time of day (0 = midnight, 0.5 = noon). Drag to preview — overrides GameClock.")]
     [Range(0f, 1f)]
     [SerializeField] private float _manualTimeOfDay = 0.5f;
 
-    [Tooltip("Auto-cycle time for preview when no GameClock is present.")]
+    [Tooltip("Use the manual slider instead of GameClock.")]
+    [SerializeField] private bool _useManualTime;
+
+    [Tooltip("Auto-cycle time for preview.")]
     [SerializeField] private bool _animate;
 
     [Tooltip("Full day-night cycles per minute.")]
@@ -105,18 +108,27 @@ public class NatureBoxController : MonoBehaviour
 
         // ── Time of day ──
         float t;
-        if (GameClock.Instance != null)
+        if (_useManualTime)
+        {
+            // Manual override active (set via SetManualTime or inspector toggle)
+            if (_animate)
+            {
+                _manualTimeOfDay = Mathf.Repeat(
+                    _manualTimeOfDay + Time.deltaTime * _animateSpeed / 60f, 1f);
+            }
+            t = _manualTimeOfDay;
+        }
+        else if (GameClock.Instance != null)
         {
             t = GameClock.Instance.NormalizedTimeOfDay;
         }
-        else if (_animate)
-        {
-            _manualTimeOfDay = Mathf.Repeat(
-                _manualTimeOfDay + Time.deltaTime * _animateSpeed / 60f, 1f);
-            t = _manualTimeOfDay;
-        }
         else
         {
+            if (_animate)
+            {
+                _manualTimeOfDay = Mathf.Repeat(
+                    _manualTimeOfDay + Time.deltaTime * _animateSpeed / 60f, 1f);
+            }
             t = _manualTimeOfDay;
         }
 
@@ -179,9 +191,20 @@ public class NatureBoxController : MonoBehaviour
     public void SetManualTime(float normalizedTime)
     {
         _manualTimeOfDay = Mathf.Repeat(normalizedTime, 1f);
-        // Disable GameClock so it doesn't fight with the manual value
-        if (GameClock.Instance != null)
-            GameClock.Instance.enabled = false;
+        _useManualTime = true;
+    }
+
+    /// <summary>Release manual override, resume reading from GameClock.</summary>
+    public void ResumeGameClock()
+    {
+        _useManualTime = false;
+    }
+
+    private void OnValidate()
+    {
+        // Dragging the time slider in inspector during play mode activates manual override
+        if (Application.isPlaying && _matInstance != null)
+            _useManualTime = true;
     }
 
     /// <summary>Called when component is added in editor — auto-configures the box.</summary>
