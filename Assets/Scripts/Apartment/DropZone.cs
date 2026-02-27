@@ -63,12 +63,18 @@ public class DropZone : MonoBehaviour
         if (held != null && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
             _playerHoldingMatch = true;
 
-        // Pulse color
+        // Only show pulse when player is holding a matching item
         if (_instanceMat != null)
         {
-            Color baseColor = _playerHoldingMatch ? _activeColor : _idleColor;
-            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
-            _instanceMat.color = Color.Lerp(baseColor * 0.6f, baseColor, pulse);
+            if (_playerHoldingMatch)
+            {
+                float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
+                _instanceMat.color = Color.Lerp(_activeColor * 0.6f, _activeColor, pulse);
+            }
+            else
+            {
+                _instanceMat.color = Color.clear;
+            }
         }
     }
 

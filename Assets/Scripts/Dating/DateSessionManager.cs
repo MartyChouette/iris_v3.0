@@ -696,6 +696,10 @@ public class DateSessionManager : MonoBehaviour
         if (_dateCharacterGO.GetComponent<NPCGazeHighlight>() == null)
             _dateCharacterGO.AddComponent<NPCGazeHighlight>();
 
+        // Add occluded silhouette so player can see NPC through walls
+        if (_dateCharacterGO.GetComponent<OccludedSilhouette>() == null)
+            _dateCharacterGO.AddComponent<OccludedSilhouette>();
+
         // Add NavMeshAgent if missing
         var agent = _dateCharacterGO.GetComponent<UnityEngine.AI.NavMeshAgent>();
         if (agent == null)

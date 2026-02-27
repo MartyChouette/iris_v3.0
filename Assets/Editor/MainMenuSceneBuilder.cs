@@ -567,16 +567,28 @@ public static class MainMenuSceneBuilder
         bdImg.color = new Color(0f, 0f, 0f, 0.7f);
         bdImg.raycastTarget = true;
 
-        // Card panel — large, eggshell white, bloomy
+        // Card panel — warm dark parchment
         var panel = new GameObject("CardPanel");
         panel.transform.SetParent(cardCanvasGO.transform, false);
         var panelRT = panel.AddComponent<RectTransform>();
         panelRT.anchorMin = new Vector2(0.5f, 0.5f);
         panelRT.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRT.sizeDelta = new Vector2(1600f, 1000f);
+        panelRT.sizeDelta = new Vector2(900f, 750f);
         panelRT.anchoredPosition = Vector2.zero;
         var panelImg = panel.AddComponent<Image>();
-        panelImg.color = new Color(0.97f, 0.96f, 0.93f); // warm eggshell white
+        panelImg.color = new Color(0.12f, 0.10f, 0.09f, 0.95f); // dark warm brown
+
+        // Inner border accent
+        var border = new GameObject("Border");
+        border.transform.SetParent(panel.transform, false);
+        var borderRT = border.AddComponent<RectTransform>();
+        borderRT.anchorMin = Vector2.zero;
+        borderRT.anchorMax = Vector2.one;
+        borderRT.offsetMin = new Vector2(12f, 12f);
+        borderRT.offsetMax = new Vector2(-12f, -12f);
+        var borderImg = border.AddComponent<Image>();
+        borderImg.color = new Color(0.75f, 0.55f, 0.35f, 0.15f); // faint gold border
+        borderImg.raycastTarget = false;
 
         // Title
         var titleGO = new GameObject("Title");
@@ -584,63 +596,76 @@ public static class MainMenuSceneBuilder
         var titleRT = titleGO.AddComponent<RectTransform>();
         titleRT.anchorMin = new Vector2(0.5f, 1f);
         titleRT.anchorMax = new Vector2(0.5f, 1f);
-        titleRT.anchoredPosition = new Vector2(0f, -70f);
-        titleRT.sizeDelta = new Vector2(1400f, 80f);
+        titleRT.anchoredPosition = new Vector2(0f, -55f);
+        titleRT.sizeDelta = new Vector2(800f, 60f);
         var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
         titleTMP.text = "HOW TO PLAY";
-        titleTMP.fontSize = 50f;
+        titleTMP.fontSize = 36f;
         titleTMP.fontStyle = FontStyles.Bold;
         titleTMP.alignment = TextAlignmentOptions.Center;
-        titleTMP.color = new Color(0.12f, 0.12f, 0.12f);
+        titleTMP.color = new Color(0.92f, 0.82f, 0.65f); // warm gold
+        titleTMP.characterSpacing = 8f;
         titleTMP.raycastTarget = false;
 
-        // Controls text
+        // Divider line under title
+        var divider = new GameObject("Divider");
+        divider.transform.SetParent(panel.transform, false);
+        var divRT = divider.AddComponent<RectTransform>();
+        divRT.anchorMin = new Vector2(0.5f, 1f);
+        divRT.anchorMax = new Vector2(0.5f, 1f);
+        divRT.anchoredPosition = new Vector2(0f, -90f);
+        divRT.sizeDelta = new Vector2(500f, 1f);
+        var divImg = divider.AddComponent<Image>();
+        divImg.color = new Color(0.75f, 0.55f, 0.35f, 0.3f);
+        divImg.raycastTarget = false;
+
+        // Controls text — two columns feel, left-aligned
         var controlsGO = new GameObject("Controls");
         controlsGO.transform.SetParent(panel.transform, false);
         var ctrlRT = controlsGO.AddComponent<RectTransform>();
         ctrlRT.anchorMin = new Vector2(0.5f, 0.5f);
         ctrlRT.anchorMax = new Vector2(0.5f, 0.5f);
         ctrlRT.anchoredPosition = new Vector2(0f, 30f);
-        ctrlRT.sizeDelta = new Vector2(1300f, 650f);
+        ctrlRT.sizeDelta = new Vector2(780f, 420f);
         var ctrlTMP = controlsGO.AddComponent<TextMeshProUGUI>();
         ctrlTMP.text =
-            "<b>[Mouse / Click Buttons]</b>     Browse rooms\n" +
-            "<b>[Click]</b>                                    Interact\n" +
-            "<b>[Click + Hold]</b>                        Pour\n" +
-            "<b>[RMB]</b>                                    Back out / Cancel\n" +
-            "<b>[Esc]</b>                                      Pause\n" +
-            "<b>[Scroll]</b>                                   Rotate held items\n" +
-            "<b>[MMB]</b>                                    Show labels momentarily\n" +
+            "<color=#D4A574>[Click / Arrows]</color>     Browse rooms\n" +
+            "<color=#D4A574>[Click]</color>                       Interact\n" +
+            "<color=#D4A574>[Click + Hold]</color>           Pour\n" +
+            "<color=#D4A574>[RMB]</color>                        Cancel\n" +
+            "<color=#D4A574>[Esc]</color>                          Pause\n" +
+            "<color=#D4A574>[Scroll]</color>                      Rotate held items\n" +
+            "<color=#D4A574>[MMB]</color>                        Show labels\n" +
             "\n" +
-            "<b>Your Day</b>\n" +
-            "Read the paper, pick a date for that evening.\n" +
-            "Prep your apartment. Host your date.\n" +
-            "If you impress them enough, you may trim their flower.";
-        ctrlTMP.fontSize = 40f;
+            "<color=#E8D5B7>Your Day</color>\n" +
+            "Read the paper. Pick a date.\n" +
+            "Prep your apartment. Impress your guest.\n" +
+            "If things go well, you may trim their flower.";
+        ctrlTMP.fontSize = 28f;
         ctrlTMP.fontStyle = FontStyles.Normal;
         ctrlTMP.alignment = TextAlignmentOptions.Left;
-        ctrlTMP.color = new Color(0.15f, 0.15f, 0.15f);
+        ctrlTMP.color = new Color(0.82f, 0.78f, 0.72f); // warm cream text
         ctrlTMP.raycastTarget = false;
         ctrlTMP.richText = true;
-        ctrlTMP.lineSpacing = 12f;
+        ctrlTMP.lineSpacing = 8f;
 
-        // Start button — larger, dark
+        // Start button — warm accent
         var startBtnGO = new GameObject("StartButton");
         startBtnGO.transform.SetParent(panel.transform, false);
         var sBtnRT = startBtnGO.AddComponent<RectTransform>();
         sBtnRT.anchorMin = new Vector2(0.5f, 0f);
         sBtnRT.anchorMax = new Vector2(0.5f, 0f);
-        sBtnRT.anchoredPosition = new Vector2(0f, 70f);
-        sBtnRT.sizeDelta = new Vector2(300f, 70f);
+        sBtnRT.anchoredPosition = new Vector2(0f, 55f);
+        sBtnRT.sizeDelta = new Vector2(220f, 52f);
         var sBtnImg = startBtnGO.AddComponent<Image>();
-        sBtnImg.color = new Color(0.12f, 0.12f, 0.14f);
+        sBtnImg.color = new Color(0.65f, 0.42f, 0.25f); // warm brown button
 
         var sBtn = startBtnGO.AddComponent<Button>();
         var sBtnColors = sBtn.colors;
-        sBtnColors.normalColor = new Color(0.12f, 0.12f, 0.14f);
-        sBtnColors.highlightedColor = new Color(0.25f, 0.25f, 0.30f);
-        sBtnColors.pressedColor = new Color(0.08f, 0.08f, 0.10f);
-        sBtnColors.selectedColor = new Color(0.18f, 0.18f, 0.22f);
+        sBtnColors.normalColor = new Color(0.65f, 0.42f, 0.25f);
+        sBtnColors.highlightedColor = new Color(0.80f, 0.55f, 0.35f);
+        sBtnColors.pressedColor = new Color(0.50f, 0.32f, 0.18f);
+        sBtnColors.selectedColor = new Color(0.70f, 0.48f, 0.30f);
         sBtn.colors = sBtnColors;
 
         var sBtnLabelGO = new GameObject("Label");
@@ -651,11 +676,12 @@ public static class MainMenuSceneBuilder
         sBtnLabelRT.offsetMin = Vector2.zero;
         sBtnLabelRT.offsetMax = Vector2.zero;
         var sBtnTMP = sBtnLabelGO.AddComponent<TextMeshProUGUI>();
-        sBtnTMP.text = "START";
-        sBtnTMP.fontSize = 32f;
+        sBtnTMP.text = "BEGIN";
+        sBtnTMP.fontSize = 26f;
         sBtnTMP.fontStyle = FontStyles.Bold;
         sBtnTMP.alignment = TextAlignmentOptions.Center;
-        sBtnTMP.color = new Color(0.95f, 0.93f, 0.88f);
+        sBtnTMP.color = new Color(0.95f, 0.92f, 0.85f); // cream label
+        sBtnTMP.characterSpacing = 6f;
         sBtnTMP.raycastTarget = false;
 
         // Card starts hidden

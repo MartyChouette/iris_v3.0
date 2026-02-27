@@ -10,12 +10,20 @@ public static class ReactionEvaluator
     {
         if (tag == null || prefs == null) return ReactionType.Neutral;
 
+        // Check if this is a living plant — health affects the reaction
+        var plant = tag.GetComponent<LivingFlowerPlant>();
+
         foreach (string t in tag.Tags)
         {
             foreach (string liked in prefs.likedTags)
             {
                 if (string.Equals(t, liked, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    // If it's a plant the date cares about, health modifies reaction
+                    if (plant != null)
+                        return EvaluatePlantHealth(plant.Health);
                     return ReactionType.Like;
+                }
             }
         }
 
@@ -29,6 +37,14 @@ public static class ReactionEvaluator
         }
 
         return ReactionType.Neutral;
+    }
+
+    /// <summary>Map plant health to a reaction: healthy = Like, wilting = Neutral, dying = Dislike.</summary>
+    private static ReactionType EvaluatePlantHealth(float health)
+    {
+        if (health >= 0.6f) return ReactionType.Like;
+        if (health >= 0.3f) return ReactionType.Neutral;
+        return ReactionType.Dislike;
     }
 
     /// <summary>Evaluate a drink against date preferences and quality.</summary>

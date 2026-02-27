@@ -133,6 +133,9 @@ public static class ApartmentSceneBuilder
         // ── 3. Room geometry (import model or procedural fallback) ──
         BuildApartmentModel();
 
+        // ── 3b. Curved world grid (horizon visibility from iso camera) ──
+        BuildCurvedWorldGrid();
+
         // ── 4. Modular station groups ──
         // NOTE: Bookcase and RecordPlayer station groups are now hand-placed
         // using FBX furniture + PlaceableObject/BookItem/RecordItem/RecordSlot.
@@ -332,6 +335,25 @@ public static class ApartmentSceneBuilder
                 new Vector3(-3f, -0.05f, 0f), new Vector3(16f, 0.1f, 16f),
                 new Color(0.55f, 0.45f, 0.35f));
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Curved world grid (iso camera horizon)
+    // ══════════════════════════════════════════════════════════════════
+
+    private static void BuildCurvedWorldGrid()
+    {
+        var gridGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        gridGO.name = "CurvedWorldGrid";
+        gridGO.transform.position = new Vector3(-3f, -0.08f, 0f);
+        gridGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        gridGO.transform.localScale = new Vector3(80f, 80f, 1f);
+
+        // Remove default collider — this is visual only
+        var col = gridGO.GetComponent<Collider>();
+        if (col != null) Object.DestroyImmediate(col);
+
+        gridGO.AddComponent<CurvedWorldGrid>();
     }
 
     // ══════════════════════════════════════════════════════════════════
