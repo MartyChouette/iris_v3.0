@@ -26,6 +26,9 @@ public class NameEntryScreen : MonoBehaviour
     [Tooltip("SFX played when selecting a letter or command.")]
     [SerializeField] private AudioClip selectLetterSFX;
 
+    [Tooltip("Light click SFX for grid navigation (arrow keys, WASD, mouse hover).")]
+    [SerializeField] private AudioClip _navClickSFX;
+
     // ── Grid definition ────────────────────────────────────────────
     // 7 rows: 6 character rows (9 cols each) + 1 command row (3 zones)
     private static readonly char[][] _charGrid = {
@@ -182,6 +185,10 @@ public class NameEntryScreen : MonoBehaviour
             return;
         }
 
+        // Fade out menu music as the player enters their name
+        if (MusicDirector.Instance != null)
+            MusicDirector.Instance.FadeOutMenuMusic();
+
         RefreshDisplay();
     }
 
@@ -279,7 +286,16 @@ public class NameEntryScreen : MonoBehaviour
         }
 
         if (changed)
+        {
+            PlayNavClick();
             RefreshDisplay();
+        }
+    }
+
+    private void PlayNavClick()
+    {
+        if (_navClickSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayUI(_navClickSFX);
     }
 
     private bool TryParseCellLink(string linkId, out int row, out int col)
