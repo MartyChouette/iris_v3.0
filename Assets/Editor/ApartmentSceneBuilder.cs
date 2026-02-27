@@ -4445,7 +4445,7 @@ public static class ApartmentSceneBuilder
         titleRT.anchorMin = new Vector2(0.5f, 0.5f);
         titleRT.anchorMax = new Vector2(0.5f, 0.5f);
         titleRT.sizeDelta = new Vector2(600f, 60f);
-        titleRT.anchoredPosition = new Vector2(0f, 280f);
+        titleRT.anchoredPosition = new Vector2(0f, 340f);
         titleRT.localScale = Vector3.one;
         var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
         titleTMP.text = "What is your name?";
@@ -4461,7 +4461,7 @@ public static class ApartmentSceneBuilder
         nameRT.anchorMin = new Vector2(0.5f, 0.5f);
         nameRT.anchorMax = new Vector2(0.5f, 0.5f);
         nameRT.sizeDelta = new Vector2(500f, 50f);
-        nameRT.anchoredPosition = new Vector2(0f, 200f);
+        nameRT.anchoredPosition = new Vector2(0f, 260f);
         nameRT.localScale = Vector3.one;
         var nameTMP = nameGO.AddComponent<TextMeshProUGUI>();
         nameTMP.text = "N e m a _ . . .";
@@ -4476,8 +4476,8 @@ public static class ApartmentSceneBuilder
         var gridRT = gridGO.AddComponent<RectTransform>();
         gridRT.anchorMin = new Vector2(0.5f, 0.5f);
         gridRT.anchorMax = new Vector2(0.5f, 0.5f);
-        gridRT.sizeDelta = new Vector2(700f, 350f);
-        gridRT.anchoredPosition = new Vector2(0f, -40f);
+        gridRT.sizeDelta = new Vector2(700f, 300f);
+        gridRT.anchoredPosition = new Vector2(0f, -80f);
         gridRT.localScale = Vector3.one;
         var gridTMP = gridGO.AddComponent<TextMeshProUGUI>();
         gridTMP.text = "";
