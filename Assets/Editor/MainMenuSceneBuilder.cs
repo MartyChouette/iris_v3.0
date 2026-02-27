@@ -189,6 +189,12 @@ public static class MainMenuSceneBuilder
         audioSource.playOnAwake = true;
         audioSource.volume = 0.5f;
 
+        // ── 8b. MusicDirector (persistent cross-scene music manager) ──
+        var directorGO = new GameObject("MusicDirector");
+        directorGO.AddComponent<MusicDirector>();
+        // _menuSong clip must be assigned in inspector after build
+        // MusicDirector.PlayMenuSong() is called by MainMenuManager.Start()
+
         // ── 9. Bloom Volume (URP) ────────────────────────────────────
         var bloomGO = new GameObject("Bloom");
         bloomGO.transform.position = new Vector3(1.08f, -0.99f, -0.05f);

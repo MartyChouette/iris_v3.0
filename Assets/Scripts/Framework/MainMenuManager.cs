@@ -114,6 +114,10 @@ public class MainMenuManager : MonoBehaviour
 
         ShowPanel(MenuState.ModeSelect);
 
+        // Start menu music (persists through loading screen via DDoL)
+        if (MusicDirector.Instance != null)
+            MusicDirector.Instance.PlayMenuSong();
+
         // Fade in from black
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.FadeIn(_fadeDuration);

@@ -439,6 +439,9 @@ public class DayPhaseManager : MonoBehaviour
         if (nextDaySFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(nextDaySFX);
 
+        // Cross-fade menu music out as game ambience comes in
+        MusicDirector.Instance?.FadeOutMenuMusic();
+
         // Phase ambience override (gentle newspaper-reading tone)
         if (_morningAmbienceClip != null && AudioManager.Instance != null)
             AudioManager.Instance.PlayAmbience(_morningAmbienceClip, 0.5f);
