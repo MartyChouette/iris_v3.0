@@ -573,6 +573,18 @@ public static class MainMenuSceneBuilder
         bdImg.color = new Color(0f, 0f, 0f, 0.7f);
         bdImg.raycastTarget = true;
 
+        // Card shadow — slightly larger dark panel behind the card for depth
+        var shadow = new GameObject("CardShadow");
+        shadow.transform.SetParent(cardCanvasGO.transform, false);
+        var shadowRT = shadow.AddComponent<RectTransform>();
+        shadowRT.anchorMin = new Vector2(0.5f, 0.5f);
+        shadowRT.anchorMax = new Vector2(0.5f, 0.5f);
+        shadowRT.sizeDelta = new Vector2(920f, 770f);
+        shadowRT.anchoredPosition = new Vector2(4f, -4f);
+        var shadowImg = shadow.AddComponent<Image>();
+        shadowImg.color = new Color(0f, 0f, 0f, 0.4f);
+        shadowImg.raycastTarget = false;
+
         // Card panel — warm dark parchment
         var panel = new GameObject("CardPanel");
         panel.transform.SetParent(cardCanvasGO.transform, false);
@@ -582,7 +594,7 @@ public static class MainMenuSceneBuilder
         panelRT.sizeDelta = new Vector2(900f, 750f);
         panelRT.anchoredPosition = Vector2.zero;
         var panelImg = panel.AddComponent<Image>();
-        panelImg.color = new Color(0.12f, 0.10f, 0.09f, 0.95f); // dark warm brown
+        panelImg.color = new Color(0.12f, 0.10f, 0.09f, 0.97f); // dark warm brown
 
         // Inner border accent
         var border = new GameObject("Border");
@@ -590,10 +602,10 @@ public static class MainMenuSceneBuilder
         var borderRT = border.AddComponent<RectTransform>();
         borderRT.anchorMin = Vector2.zero;
         borderRT.anchorMax = Vector2.one;
-        borderRT.offsetMin = new Vector2(12f, 12f);
-        borderRT.offsetMax = new Vector2(-12f, -12f);
+        borderRT.offsetMin = new Vector2(10f, 10f);
+        borderRT.offsetMax = new Vector2(-10f, -10f);
         var borderImg = border.AddComponent<Image>();
-        borderImg.color = new Color(0.75f, 0.55f, 0.35f, 0.15f); // faint gold border
+        borderImg.color = new Color(0.75f, 0.55f, 0.35f, 0.12f); // faint gold border
         borderImg.raycastTarget = false;
 
         // Title
@@ -654,6 +666,18 @@ public static class MainMenuSceneBuilder
         ctrlTMP.raycastTarget = false;
         ctrlTMP.richText = true;
         ctrlTMP.lineSpacing = 8f;
+
+        // Bottom divider line (mirrors top divider to frame content)
+        var divider2 = new GameObject("DividerBottom");
+        divider2.transform.SetParent(panel.transform, false);
+        var div2RT = divider2.AddComponent<RectTransform>();
+        div2RT.anchorMin = new Vector2(0.5f, 0f);
+        div2RT.anchorMax = new Vector2(0.5f, 0f);
+        div2RT.anchoredPosition = new Vector2(0f, 100f);
+        div2RT.sizeDelta = new Vector2(500f, 1f);
+        var div2Img = divider2.AddComponent<Image>();
+        div2Img.color = new Color(0.75f, 0.55f, 0.35f, 0.2f);
+        div2Img.raycastTarget = false;
 
         // Start button — warm accent
         var startBtnGO = new GameObject("StartButton");
