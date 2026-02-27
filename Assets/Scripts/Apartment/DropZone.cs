@@ -20,9 +20,6 @@ public class DropZone : MonoBehaviour
     [Tooltip("Renderer for the zone highlight quad.")]
     [SerializeField] private Renderer _zoneRenderer;
 
-    [Tooltip("Idle pulse color (no matching item held).")]
-    [SerializeField] private Color _idleColor = new Color(0.3f, 0.7f, 0.9f, 0.25f);
-
     [Tooltip("Active pulse color (matching item held).")]
     [SerializeField] private Color _activeColor = new Color(0.4f, 0.9f, 1.0f, 0.55f);
 
@@ -48,33 +45,46 @@ public class DropZone : MonoBehaviour
         if (_zoneRenderer == null)
             _zoneRenderer = GetComponent<Renderer>();
 
-        if (_zoneRenderer != null && _zoneRenderer.sharedMaterial != null)
+        if (_zoneRenderer != null)
         {
-            _instanceMat = new Material(_zoneRenderer.sharedMaterial);
-            _zoneRenderer.material = _instanceMat;
+            if (_zoneRenderer.sharedMaterial != null)
+            {
+                _instanceMat = new Material(_zoneRenderer.sharedMaterial);
+                _zoneRenderer.material = _instanceMat;
+            }
+            // Start hidden — only show when player holds a matching item
+            _zoneRenderer.enabled = false;
         }
     }
 
     private void Update()
     {
+        if (_zoneRenderer == null) return;
+
         // Check if player is holding an item that matches this zone (static accessor — no scene scan)
         _playerHoldingMatch = false;
         var held = ObjectGrabber.HeldObject;
-        if (held != null && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
+        if (held != null && !string.IsNullOrEmpty(_zoneName)
+            && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
             _playerHoldingMatch = true;
 
-        // Only show pulse when player is holding a matching item
-        if (_instanceMat != null)
+        // Toggle renderer — Color.clear on opaque materials renders as a dark rectangle,
+        // so we disable the renderer entirely when no matching item is held.
+        if (_playerHoldingMatch)
         {
-            if (_playerHoldingMatch)
+            if (!_zoneRenderer.enabled)
+                _zoneRenderer.enabled = true;
+
+            if (_instanceMat != null)
             {
                 float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
                 _instanceMat.color = Color.Lerp(_activeColor * 0.6f, _activeColor, pulse);
             }
-            else
-            {
-                _instanceMat.color = Color.clear;
-            }
+        }
+        else
+        {
+            if (_zoneRenderer.enabled)
+                _zoneRenderer.enabled = false;
         }
     }
 
