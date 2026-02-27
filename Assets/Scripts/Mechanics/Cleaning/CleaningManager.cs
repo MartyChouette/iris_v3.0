@@ -58,6 +58,20 @@ public class CleaningManager : MonoBehaviour
     private bool _wasPressingLastFrame;
     private const float SFX_COOLDOWN = 0.15f;
 
+    // ── Sponge squish (velocity-based deformation) ──────────────────
+    private static readonly Vector3 SpongeBaseScale = new(0.09f, 0.04f, 0.12f);
+    private Vector3 _lastSpongePos;
+    private Vector3 _smoothVelocity;
+    private float _squishSpring;      // current spring displacement
+    private float _squishSpringVel;   // spring velocity (for overshoot)
+    private const float SquishMaxSpeed = 3f;    // world-space speed for full squish
+    private const float SquishSpringK = 120f;   // spring stiffness
+    private const float SquishDamping = 8f;     // damping coefficient
+    private const float SquishStretch = 0.35f;  // max stretch factor along movement
+    private const float SquishCompress = 0.25f; // max Y compression
+    private const float TiltAngle = 15f;        // max forward tilt degrees
+    private const float VelocitySmoothing = 12f; // velocity low-pass speed
+
     // ── Public API ──────────────────────────────────────────────────
 
     /// <summary>The surface currently under the cursor, or null.</summary>
@@ -433,7 +447,7 @@ public class CleaningManager : MonoBehaviour
         // Auto-create a simple sponge cube at runtime
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = "SpongeVisual_Auto";
-        go.transform.localScale = new Vector3(0.06f, 0.03f, 0.08f);
+        go.transform.localScale = SpongeBaseScale;
         // Remove collider — sponge is visual only, must not block raycasts
         var col = go.GetComponent<Collider>();
         if (col != null) Destroy(col);
@@ -463,6 +477,8 @@ public class CleaningManager : MonoBehaviour
                 Destroy(col);
                 Debug.Log("[CleaningManager] Stripped collider from sponge visual.");
             }
+            // Apply bigger base scale to scene-builder sponge too
+            _spongeVisual.localScale = SpongeBaseScale;
         }
 
         // Always sync with actual GO state to prevent desync
@@ -470,7 +486,91 @@ public class CleaningManager : MonoBehaviour
         if (visible != currentlyActive)
             _spongeVisual.gameObject.SetActive(visible);
 
-        if (visible) _spongeVisual.position = position;
+        if (!visible)
+        {
+            // Reset spring state when hidden so it doesn't pop on reappear
+            _squishSpring = 0f;
+            _squishSpringVel = 0f;
+            _smoothVelocity = Vector3.zero;
+            return;
+        }
+
+        _spongeVisual.position = position;
+        ApplySpongeSquish(position);
+    }
+
+    /// <summary>
+    /// Velocity-based squash/stretch and tilt. Tracks movement speed via a
+    /// smoothed velocity, feeds into a damped spring so the deformation
+    /// overshoots and wobbles — looks like the sponge is going fast.
+    /// </summary>
+    private void ApplySpongeSquish(Vector3 position)
+    {
+        float dt = Time.deltaTime;
+        if (dt < 1e-6f) return;
+
+        // Compute instantaneous velocity, smooth it
+        Vector3 instantVel = (position - _lastSpongePos) / dt;
+        _smoothVelocity = Vector3.Lerp(_smoothVelocity, instantVel, VelocitySmoothing * dt);
+        _lastSpongePos = position;
+
+        float speed = _smoothVelocity.magnitude;
+        float targetSquish = Mathf.Clamp01(speed / SquishMaxSpeed);
+
+        // Damped spring toward target
+        float springForce = (targetSquish - _squishSpring) * SquishSpringK;
+        _squishSpringVel += springForce * dt;
+        _squishSpringVel -= _squishSpringVel * SquishDamping * dt;
+        _squishSpring += _squishSpringVel * dt;
+        _squishSpring = Mathf.Clamp(_squishSpring, -0.3f, 1.2f);
+
+        float s = Mathf.Clamp01(_squishSpring);
+
+        // Scale: compress Y, stretch along movement axis (X/Z projected)
+        float yScale = 1f - s * SquishCompress;
+        float stretchScale = 1f + _squishSpring * SquishStretch; // spring can overshoot
+        stretchScale = Mathf.Max(stretchScale, 0.7f);
+
+        // Determine movement direction on the horizontal plane
+        Vector3 moveDir = new Vector3(_smoothVelocity.x, 0f, _smoothVelocity.z);
+        if (moveDir.sqrMagnitude > 0.001f)
+        {
+            moveDir.Normalize();
+
+            // Tilt forward into movement direction
+            float tilt = s * TiltAngle;
+            Quaternion tiltRot = Quaternion.AngleAxis(tilt, Vector3.Cross(Vector3.up, moveDir));
+            _spongeVisual.rotation = tiltRot;
+
+            // Stretch along movement, keep perpendicular at base
+            // Project base scale onto movement-aligned frame
+            Vector3 right = Vector3.Cross(Vector3.up, moveDir).normalized;
+            if (right.sqrMagnitude < 0.001f) right = Vector3.right;
+            Vector3 fwd = moveDir;
+
+            // Build scale in sponge-aligned axes: fwd=stretch, right=1, up=compress
+            Vector3 scale = new Vector3(
+                SpongeBaseScale.x,
+                SpongeBaseScale.y * yScale,
+                SpongeBaseScale.z * stretchScale
+            );
+
+            // Align sponge Z axis with movement direction
+            _spongeVisual.rotation = Quaternion.LookRotation(fwd, Vector3.up)
+                                   * Quaternion.AngleAxis(tilt, Vector3.right);
+            _spongeVisual.localScale = scale;
+        }
+        else
+        {
+            // Not moving — settle back to base
+            _spongeVisual.localScale = new Vector3(
+                SpongeBaseScale.x,
+                SpongeBaseScale.y * yScale,
+                SpongeBaseScale.z * stretchScale
+            );
+            // Smoothly return rotation to identity
+            _spongeVisual.rotation = Quaternion.Slerp(_spongeVisual.rotation, Quaternion.identity, 10f * dt);
+        }
     }
 
     private void PlaySFX(AudioClip clip)

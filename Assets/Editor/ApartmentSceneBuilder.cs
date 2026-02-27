@@ -3317,7 +3317,7 @@ public static class ApartmentSceneBuilder
 
         // ── Tool visual (sponge) ────────────────────────────────────────
         var spongeGO = CreateBox("SpongeVisual", null,
-            Vector3.zero, new Vector3(0.06f, 0.03f, 0.08f),
+            Vector3.zero, new Vector3(0.09f, 0.04f, 0.12f),
             new Color(0.9f, 0.85f, 0.3f));
         spongeGO.isStatic = false;
         spongeGO.SetActive(false);
