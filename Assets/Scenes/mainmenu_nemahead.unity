@@ -2760,7 +2760,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: 90dcdee533c485c4db9d33073d302735, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 0.5
   m_Pitch: 1
@@ -6403,7 +6403,7 @@ MonoBehaviour:
   sfxSource: {fileID: 0}
   ambienceSource: {fileID: 0}
   weatherSource: {fileID: 0}
-  musicSource: {fileID: 0}
+  musicSource: {fileID: 1072769811}
   environmentSource: {fileID: 0}
   uiSource: {fileID: 0}
   debugLogs: 0
