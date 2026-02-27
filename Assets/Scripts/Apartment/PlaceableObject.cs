@@ -191,6 +191,7 @@ public class PlaceableObject : MonoBehaviour
     private Collider[] _colliders;
     private Coroutine _validationCoroutine;
     private Coroutine _flashCoroutine;
+    private Coroutine _snapBounceCoroutine;
 
     private void OnEnable() => s_all.Add(this);
     private void OnDisable() => s_all.Remove(this);
@@ -394,6 +395,10 @@ public class PlaceableObject : MonoBehaviour
         }
 
         Debug.Log($"[PlaceableObject] {name} placed at {position} (grid={gridSnapped}, wall={surface != null && surface.IsVertical}).");
+
+        // Satisfying scale bounce on placement
+        if (_snapBounceCoroutine != null) StopCoroutine(_snapBounceCoroutine);
+        _snapBounceCoroutine = StartCoroutine(PlacementSnapBounce());
     }
 
     /// <summary>
@@ -571,6 +576,44 @@ public class PlaceableObject : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
         }
         _flashCoroutine = null;
+    }
+
+    // ── Placement snap bounce ─────────────────────────────────────────
+
+    private IEnumerator PlacementSnapBounce()
+    {
+        if (AccessibilitySettings.ReduceMotion)
+        {
+            _snapBounceCoroutine = null;
+            yield break;
+        }
+
+        Vector3 baseScale = transform.localScale;
+        Vector3 basePos = transform.position;
+
+        // Squish down (0.04s)
+        yield return ScaleLerp(baseScale, baseScale * 0.92f, basePos, basePos + Vector3.down * 0.01f, 0.04f);
+        // Bounce up (0.06s)
+        yield return ScaleLerp(baseScale * 0.92f, baseScale * 1.04f, basePos + Vector3.down * 0.01f, basePos, 0.06f);
+        // Settle (0.04s)
+        yield return ScaleLerp(baseScale * 1.04f, baseScale, basePos, basePos, 0.04f);
+
+        transform.localScale = baseScale;
+        transform.position = basePos;
+        _snapBounceCoroutine = null;
+    }
+
+    private IEnumerator ScaleLerp(Vector3 fromScale, Vector3 toScale, Vector3 fromPos, Vector3 toPos, float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            transform.localScale = Vector3.Lerp(fromScale, toScale, t);
+            transform.position = Vector3.Lerp(fromPos, toPos, t);
+            yield return null;
+        }
     }
 
     // ── Material restore ──────────────────────────────────────────────
