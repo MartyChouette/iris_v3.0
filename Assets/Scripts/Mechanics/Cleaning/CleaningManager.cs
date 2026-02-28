@@ -66,12 +66,13 @@ public class CleaningManager : MonoBehaviour
     private float _squishSpringVel;   // spring velocity (for overshoot)
     private float _clickBounce;       // extra compression on wipe click
     private float _clickBounceVel;    // spring velocity for click bounce
+    private float _spongeLingerTimer; // grace period before hiding sponge
+    private const float SpongeLingerTime = 0.25f; // seconds to keep sponge visible after leaving stain
     private const float SquishMaxSpeed = 2f;    // world-space speed for full squish
     private const float SquishSpringK = 55f;    // softer spring = more wobbly
     private const float SquishDamping = 3.5f;   // less damping = more oscillation
     private const float SquishStretch = 0.5f;   // generous stretch along movement
     private const float SquishCompress = 0.4f;  // generous Y compression
-    private const float TiltAngle = 25f;        // more lean into movement
     private const float VelocitySmoothing = 8f; // more reactive/sloppy
     private const float IdleWobbleSpeed = 3.5f; // idle breathing frequency
     private const float IdleWobbleAmount = 0.06f; // idle breathing amplitude
@@ -316,11 +317,12 @@ public class CleaningManager : MonoBehaviour
             if (_hoveredSurface != null && _hoveredSurface.IsFullyClean)
             {
                 _hoveredSurface = null;
-                SetSpongeVisual(Vector3.zero, false);
+                RequestSpongeHide();
             }
             else
             {
                 Vector3 toolPos = hitInfo.point + hitInfo.normal * _surfaceOffset;
+                _spongeLingerTimer = SpongeLingerTime; // reset linger
                 SetSpongeVisual(toolPos, true);
 
                 if (_mouseClick.IsPressed() && _hoveredSurface != null)
@@ -349,7 +351,7 @@ public class CleaningManager : MonoBehaviour
         else
         {
             _hoveredSurface = null;
-            SetSpongeVisual(Vector3.zero, false);
+            RequestSpongeHide();
         }
 
         _wasPressingLastFrame = _mouseClick.IsPressed();
@@ -471,6 +473,23 @@ public class CleaningManager : MonoBehaviour
         Debug.Log("[CleaningManager] Auto-created sponge visual at runtime.");
     }
 
+    /// <summary>
+    /// Start the linger countdown instead of hiding immediately.
+    /// Keeps the sponge visible for a grace period so scrubbing doesn't flicker.
+    /// </summary>
+    private void RequestSpongeHide()
+    {
+        if (_spongeLingerTimer > 0f)
+        {
+            _spongeLingerTimer -= Time.deltaTime;
+            // Keep sponge visible at its last position, still running squish
+            if (_spongeVisual != null && _spongeVisual.gameObject.activeSelf)
+                ApplySpongeSquish(_spongeVisual.position);
+            return;
+        }
+        SetSpongeVisual(Vector3.zero, false);
+    }
+
     /// <summary>Strip any collider from the sponge so it can't intercept physics raycasts.</summary>
     private bool _spongeColliderStripped;
 
@@ -514,9 +533,9 @@ public class CleaningManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Velocity-based squash/stretch and tilt with idle wobble and click bounce.
-    /// Soft spring creates sloppy overshoot. Idle breathing keeps it alive.
-    /// Click bounce gives a satisfying squish on each wipe press.
+    /// Velocity-based squash/stretch with idle wobble and click bounce.
+    /// Orientation stays fixed — only scale deforms to convey velocity.
+    /// Soft spring creates sloppy overshoot and wobble.
     /// </summary>
     private void ApplySpongeSquish(Vector3 position)
     {
@@ -557,39 +576,15 @@ public class CleaningManager : MonoBehaviour
         float stretchScale = 1f + _squishSpring * SquishStretch;
         stretchScale = Mathf.Max(stretchScale, 0.6f);
 
-        // Lateral wobble from idle breathing
+        // Lateral wobble from idle breathing + click bounce bulge
         float xScale = 1f + wobbleX + Mathf.Abs(_clickBounce) * 0.15f;
 
-        // Determine movement direction on the horizontal plane
-        Vector3 moveDir = new Vector3(_smoothVelocity.x, 0f, _smoothVelocity.z);
-        if (moveDir.sqrMagnitude > 0.001f)
-        {
-            moveDir.Normalize();
-
-            float tilt = s * TiltAngle;
-
-            Vector3 scale = new Vector3(
-                SpongeBaseScale.x * xScale,
-                SpongeBaseScale.y * yScale,
-                SpongeBaseScale.z * stretchScale
-            );
-
-            // Align sponge Z axis with movement direction, tilt forward
-            _spongeVisual.rotation = Quaternion.LookRotation(moveDir, Vector3.up)
-                                   * Quaternion.AngleAxis(tilt, Vector3.right);
-            _spongeVisual.localScale = scale;
-        }
-        else
-        {
-            // Not moving — settle back to base with idle wobble
-            _spongeVisual.localScale = new Vector3(
-                SpongeBaseScale.x * xScale,
-                SpongeBaseScale.y * yScale,
-                SpongeBaseScale.z * stretchScale
-            );
-            // Smoothly return rotation to identity
-            _spongeVisual.rotation = Quaternion.Slerp(_spongeVisual.rotation, Quaternion.identity, 8f * dt);
-        }
+        // Scale only — no rotation. Orientation stays fixed.
+        _spongeVisual.localScale = new Vector3(
+            SpongeBaseScale.x * xScale,
+            SpongeBaseScale.y * yScale,
+            SpongeBaseScale.z * stretchScale
+        );
     }
 
     private void PlaySFX(AudioClip clip)
