@@ -35,6 +35,16 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Smoothing speed for parallax follow.")]
     [SerializeField, Range(1f, 20f)] private float parallaxSmoothing = 8f;
 
+    [Header("Zoom")]
+    [Tooltip("FOV degrees added/removed per scroll tick.")]
+    [SerializeField, Range(1f, 10f)] private float zoomStep = 3f;
+
+    [Tooltip("Minimum FOV when zoomed in.")]
+    [SerializeField] private float zoomMinFOV = 20f;
+
+    [Tooltip("Maximum FOV when zoomed out.")]
+    [SerializeField] private float zoomMaxFOV = 80f;
+
     [Header("World Bounds")]
     [Tooltip("Objects outside this box are recovered to the nearest surface.")]
     [SerializeField] private Bounds worldBounds = new Bounds(new Vector3(-3f, 1.5f, 0f), new Vector3(16f, 8f, 20f));
@@ -83,6 +93,7 @@ public class ApartmentManager : MonoBehaviour
     private InputAction _navigateLeftAction;
     private InputAction _navigateRightAction;
     private InputAction _mousePositionAction;
+    private InputAction _scrollAction;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state
@@ -112,6 +123,9 @@ public class ApartmentManager : MonoBehaviour
 
     // Preset override (CameraTestController feeds its target here for parallax)
     private bool _presetOverrideActive;
+
+    // Zoom offset (added on top of area FOV)
+    private float _zoomOffset;
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
@@ -144,6 +158,9 @@ public class ApartmentManager : MonoBehaviour
 
         _mousePositionAction = new InputAction("MousePosition", InputActionType.Value,
             "<Mouse>/position");
+
+        _scrollAction = new InputAction("Scroll", InputActionType.Value,
+            "<Mouse>/scroll/y");
     }
 
     private void OnEnable()
@@ -151,6 +168,7 @@ public class ApartmentManager : MonoBehaviour
         _navigateLeftAction.Enable();
         _navigateRightAction.Enable();
         _mousePositionAction.Enable();
+        _scrollAction.Enable();
     }
 
     private void OnDisable()
@@ -158,6 +176,7 @@ public class ApartmentManager : MonoBehaviour
         _navigateLeftAction.Disable();
         _navigateRightAction.Disable();
         _mousePositionAction.Disable();
+        _scrollAction.Disable();
     }
 
     private void Start()
@@ -210,6 +229,7 @@ public class ApartmentManager : MonoBehaviour
 
         UpdateTransition();
         HandleBrowsingInput();
+        HandleZoomInput();
         ApplyParallax();
         UpdateHoverHighlight();
     }
@@ -310,6 +330,22 @@ public class ApartmentManager : MonoBehaviour
             CycleArea(-1);
         else if (_navigateRightAction.WasPressedThisFrame())
             CycleArea(1);
+    }
+
+    private void HandleZoomInput()
+    {
+        // Skip zoom when ObjectGrabber is holding (scroll rotates held object)
+        if (ObjectGrabber.IsHoldingObject) return;
+
+        float scroll = _scrollAction.ReadValue<float>();
+        if (Mathf.Abs(scroll) < 0.01f) return;
+
+        // Scroll up = zoom in (lower FOV), scroll down = zoom out
+        _zoomOffset -= Mathf.Sign(scroll) * zoomStep;
+
+        // Clamp so final FOV stays within min/max
+        float areaFOV = _baseFOV;
+        _zoomOffset = Mathf.Clamp(_zoomOffset, zoomMinFOV - areaFOV, zoomMaxFOV - areaFOV);
     }
 
     private void CycleArea(int direction)
@@ -444,7 +480,7 @@ public class ApartmentManager : MonoBehaviour
         if (!_presetOverrideActive)
         {
             var lens = browseCamera.Lens;
-            lens.FieldOfView = _baseFOV;
+            lens.FieldOfView = Mathf.Clamp(_baseFOV + _zoomOffset, zoomMinFOV, zoomMaxFOV);
             browseCamera.Lens = lens;
         }
     }
