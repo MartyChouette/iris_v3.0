@@ -59,18 +59,25 @@ public class CleaningManager : MonoBehaviour
     private const float SFX_COOLDOWN = 0.15f;
 
     // ── Sponge squish (velocity-based deformation) ──────────────────
-    private static readonly Vector3 SpongeBaseScale = new(0.09f, 0.04f, 0.12f);
+    private static readonly Vector3 SpongeBaseScale = new(0.14f, 0.07f, 0.16f);
     private Vector3 _lastSpongePos;
     private Vector3 _smoothVelocity;
     private float _squishSpring;      // current spring displacement
     private float _squishSpringVel;   // spring velocity (for overshoot)
-    private const float SquishMaxSpeed = 3f;    // world-space speed for full squish
-    private const float SquishSpringK = 120f;   // spring stiffness
-    private const float SquishDamping = 8f;     // damping coefficient
-    private const float SquishStretch = 0.35f;  // max stretch factor along movement
-    private const float SquishCompress = 0.25f; // max Y compression
-    private const float TiltAngle = 15f;        // max forward tilt degrees
-    private const float VelocitySmoothing = 12f; // velocity low-pass speed
+    private float _clickBounce;       // extra compression on wipe click
+    private float _clickBounceVel;    // spring velocity for click bounce
+    private const float SquishMaxSpeed = 2f;    // world-space speed for full squish
+    private const float SquishSpringK = 55f;    // softer spring = more wobbly
+    private const float SquishDamping = 3.5f;   // less damping = more oscillation
+    private const float SquishStretch = 0.5f;   // generous stretch along movement
+    private const float SquishCompress = 0.4f;  // generous Y compression
+    private const float TiltAngle = 25f;        // more lean into movement
+    private const float VelocitySmoothing = 8f; // more reactive/sloppy
+    private const float IdleWobbleSpeed = 3.5f; // idle breathing frequency
+    private const float IdleWobbleAmount = 0.06f; // idle breathing amplitude
+    private const float ClickBounceK = 200f;    // click bounce spring stiffness
+    private const float ClickBounceDamp = 10f;  // click bounce damping
+    private const float ClickBounceStrength = 0.6f; // initial click bounce impulse
 
     // ── Public API ──────────────────────────────────────────────────
 
@@ -319,7 +326,12 @@ public class CleaningManager : MonoBehaviour
                 if (_mouseClick.IsPressed() && _hoveredSurface != null)
                 {
                     if (!_wasPressingLastFrame)
+                    {
                         OnWipeStarted?.Invoke();
+                        // Trigger sponge click bounce
+                        _clickBounce = ClickBounceStrength;
+                        _clickBounceVel = 0f;
+                    }
 
                     bool wasClean = _hoveredSurface.IsFullyClean;
                     Vector2 uv = HitToUV(hitInfo, _hoveredSurface.transform);
@@ -491,6 +503,8 @@ public class CleaningManager : MonoBehaviour
             // Reset spring state when hidden so it doesn't pop on reappear
             _squishSpring = 0f;
             _squishSpringVel = 0f;
+            _clickBounce = 0f;
+            _clickBounceVel = 0f;
             _smoothVelocity = Vector3.zero;
             return;
         }
@@ -500,9 +514,9 @@ public class CleaningManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Velocity-based squash/stretch and tilt. Tracks movement speed via a
-    /// smoothed velocity, feeds into a damped spring so the deformation
-    /// overshoots and wobbles — looks like the sponge is going fast.
+    /// Velocity-based squash/stretch and tilt with idle wobble and click bounce.
+    /// Soft spring creates sloppy overshoot. Idle breathing keeps it alive.
+    /// Click bounce gives a satisfying squish on each wipe press.
     /// </summary>
     private void ApplySpongeSquish(Vector3 position)
     {
@@ -517,19 +531,34 @@ public class CleaningManager : MonoBehaviour
         float speed = _smoothVelocity.magnitude;
         float targetSquish = Mathf.Clamp01(speed / SquishMaxSpeed);
 
-        // Damped spring toward target
+        // Damped spring toward target (soft = lots of wobble)
         float springForce = (targetSquish - _squishSpring) * SquishSpringK;
         _squishSpringVel += springForce * dt;
         _squishSpringVel -= _squishSpringVel * SquishDamping * dt;
         _squishSpring += _squishSpringVel * dt;
-        _squishSpring = Mathf.Clamp(_squishSpring, -0.3f, 1.2f);
+        _squishSpring = Mathf.Clamp(_squishSpring, -0.4f, 1.3f);
+
+        // Click bounce spring (decays independently)
+        float bounceForce = (0f - _clickBounce) * ClickBounceK;
+        _clickBounceVel += bounceForce * dt;
+        _clickBounceVel -= _clickBounceVel * ClickBounceDamp * dt;
+        _clickBounce += _clickBounceVel * dt;
+        _clickBounce = Mathf.Clamp(_clickBounce, -0.5f, 1f);
 
         float s = Mathf.Clamp01(_squishSpring);
 
-        // Scale: compress Y, stretch along movement axis (X/Z projected)
-        float yScale = 1f - s * SquishCompress;
-        float stretchScale = 1f + _squishSpring * SquishStretch; // spring can overshoot
-        stretchScale = Mathf.Max(stretchScale, 0.7f);
+        // Idle breathing wobble — gentle sine pulse when not moving much
+        float idleFactor = 1f - Mathf.Clamp01(speed / (SquishMaxSpeed * 0.3f));
+        float wobble = Mathf.Sin(Time.time * IdleWobbleSpeed) * IdleWobbleAmount * idleFactor;
+        float wobbleX = Mathf.Sin(Time.time * IdleWobbleSpeed * 1.3f) * IdleWobbleAmount * 0.5f * idleFactor;
+
+        // Combined compression: movement squish + click bounce + idle wobble
+        float yScale = 1f - s * SquishCompress - Mathf.Abs(_clickBounce) * 0.3f + wobble;
+        float stretchScale = 1f + _squishSpring * SquishStretch;
+        stretchScale = Mathf.Max(stretchScale, 0.6f);
+
+        // Lateral wobble from idle breathing
+        float xScale = 1f + wobbleX + Mathf.Abs(_clickBounce) * 0.15f;
 
         // Determine movement direction on the horizontal plane
         Vector3 moveDir = new Vector3(_smoothVelocity.x, 0f, _smoothVelocity.z);
@@ -537,39 +566,29 @@ public class CleaningManager : MonoBehaviour
         {
             moveDir.Normalize();
 
-            // Tilt forward into movement direction
             float tilt = s * TiltAngle;
-            Quaternion tiltRot = Quaternion.AngleAxis(tilt, Vector3.Cross(Vector3.up, moveDir));
-            _spongeVisual.rotation = tiltRot;
 
-            // Stretch along movement, keep perpendicular at base
-            // Project base scale onto movement-aligned frame
-            Vector3 right = Vector3.Cross(Vector3.up, moveDir).normalized;
-            if (right.sqrMagnitude < 0.001f) right = Vector3.right;
-            Vector3 fwd = moveDir;
-
-            // Build scale in sponge-aligned axes: fwd=stretch, right=1, up=compress
             Vector3 scale = new Vector3(
-                SpongeBaseScale.x,
+                SpongeBaseScale.x * xScale,
                 SpongeBaseScale.y * yScale,
                 SpongeBaseScale.z * stretchScale
             );
 
-            // Align sponge Z axis with movement direction
-            _spongeVisual.rotation = Quaternion.LookRotation(fwd, Vector3.up)
+            // Align sponge Z axis with movement direction, tilt forward
+            _spongeVisual.rotation = Quaternion.LookRotation(moveDir, Vector3.up)
                                    * Quaternion.AngleAxis(tilt, Vector3.right);
             _spongeVisual.localScale = scale;
         }
         else
         {
-            // Not moving — settle back to base
+            // Not moving — settle back to base with idle wobble
             _spongeVisual.localScale = new Vector3(
-                SpongeBaseScale.x,
+                SpongeBaseScale.x * xScale,
                 SpongeBaseScale.y * yScale,
                 SpongeBaseScale.z * stretchScale
             );
             // Smoothly return rotation to identity
-            _spongeVisual.rotation = Quaternion.Slerp(_spongeVisual.rotation, Quaternion.identity, 10f * dt);
+            _spongeVisual.rotation = Quaternion.Slerp(_spongeVisual.rotation, Quaternion.identity, 8f * dt);
         }
     }
 
