@@ -50,6 +50,9 @@ public class DayPhaseManager : MonoBehaviour
     [Tooltip("Read camera — raised to priority 30 during Morning, lowered during Exploration.")]
     [SerializeField] private CinemachineCamera _readCamera;
 
+    [Tooltip("CinemachineBrain on the main camera — used for hard-cut during perspective→ortho switch.")]
+    [SerializeField] private CinemachineBrain brain;
+
     [Tooltip("Transform for the tossed newspaper position on the coffee table.")]
     [SerializeField] private Transform _tossedNewspaperPosition;
 
@@ -133,6 +136,9 @@ public class DayPhaseManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        if (brain == null)
+            brain = FindAnyObjectByType<CinemachineBrain>();
     }
 
     private void Start()
@@ -478,17 +484,39 @@ public class DayPhaseManager : MonoBehaviour
 
     private IEnumerator ExplorationTransition()
     {
-        // Smooth camera blend — no fade. Cinemachine brain handles the transition.
+        // Fade to black → switch cameras (perspective→ortho) while hidden → fade in.
+        // Cinemachine can't cleanly blend between perspective and orthographic,
+        // so we hide the switch behind a black screen.
 
-        // 1. Lower read camera → browse camera wins via priority
+        // 1. Fade to black
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+
+        // ── While screen is black ────────────────────────────────────
+
+        // 2. Lower read camera → browse camera wins via priority
         if (_readCamera != null)
             _readCamera.Priority = PriorityInactive;
 
-        // 2. Raise browse camera (ApartmentManager owns its priority value)
+        // 3. Raise browse camera + restore ortho lens from default preset
         if (ApartmentManager.Instance != null)
             ApartmentManager.Instance.SetBrowseCameraActive(true);
 
-        // 3. Toss newspaper to coffee table
+        // 4. Restore suspended camera preset (ortho mode, volume profile, light overrides)
+        CameraTestController.Instance?.RestorePreset();
+
+        // 5. Force a hard cut so Cinemachine doesn't try to blend
+        if (brain != null)
+        {
+            var savedBlend = brain.DefaultBlend;
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.Cut, 0f);
+            // Let one frame pass so the cut takes effect
+            yield return null;
+            brain.DefaultBlend = savedBlend;
+        }
+
+        // 6. Toss newspaper to coffee table
         if (_tossedNewspaperPosition != null)
         {
             var surface = _newspaperManager != null ? _newspaperManager.NewspaperTransform : null;
@@ -499,47 +527,33 @@ public class DayPhaseManager : MonoBehaviour
             }
         }
 
-        // 4. Disable newspaper manager (done for the day)
+        // 7. Disable newspaper manager (done for the day)
         if (_newspaperManager != null)
             _newspaperManager.enabled = false;
 
-        // 5. UI: show apartment browse, hide newspaper HUD
+        // 8. UI: show apartment browse, hide newspaper HUD
         if (_apartmentUI != null)
             _apartmentUI.SetActive(true);
         if (_newspaperHUD != null)
             _newspaperHUD.SetActive(false);
 
-        // 6. Spawn authored messes (stains + objects) + misplace entrance items
+        // 9. Spawn authored messes (stains + objects) + misplace entrance items
         if (_authoredMessSpawner != null)
             _authoredMessSpawner.SpawnDailyMess();
         if (_entranceMessSpawner != null)
             _entranceMessSpawner.SpawnDailyMess();
 
-        // 7. Wait for Cinemachine blend to finish (default 0.8s EaseInOut)
-        yield return new WaitForSeconds(0.9f);
-
-        // 8. Restore suspended camera preset (if player had one active before morning)
-        CameraTestController.Instance?.RestorePreset();
-
-        // 9. Swap to exploration ambience (or let MoodMachine take over if null)
+        // 10. Swap to exploration ambience (or let MoodMachine take over if null)
         if (_explorationAmbienceClip != null && AudioManager.Instance != null)
             AudioManager.Instance.PlayAmbience(_explorationAmbienceClip, 0.5f);
 
-        // 10. Safety: ensure ScreenFade is not blocking raycasts.
-        // MorningTransition's FadeIn should have already cleared this, but
-        // guard against edge cases (skipped morning, interrupted fade, etc.).
-        if (ScreenFade.Instance != null && ScreenFade.Instance.IsFading == false)
-        {
-            var cg = ScreenFade.Instance.GetComponentInChildren<CanvasGroup>();
-            if (cg != null && cg.blocksRaycasts)
-            {
-                cg.blocksRaycasts = false;
-                cg.alpha = 0f;
-                Debug.LogWarning("[DayPhaseManager] ScreenFade was still blocking — forced clear.");
-            }
-        }
+        // ── Reveal ───────────────────────────────────────────────────
 
-        // 11. Start preparation countdown
+        // 11. Fade in from black (ortho browse camera is now active)
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        // 12. Start preparation countdown
         StartPrepTimer();
     }
 
