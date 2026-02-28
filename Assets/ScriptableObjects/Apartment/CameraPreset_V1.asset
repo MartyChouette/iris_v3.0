@@ -15,8 +15,8 @@ MonoBehaviour:
   label: "V1 \u2014 High Angle"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: 2.8704362, y: 3.2320735, z: -6.8386946}
-    rotation: {x: 27.362335, y: 331.0517, z: 0.512008}
+    position: {x: 2.6763372, y: 2.366016, z: -2.8246403}
+    rotation: {x: 11.209815, y: 315.35547, z: 0.0024953762}
     lens:
       FieldOfView: 60.000004
       OrthographicSize: 10
@@ -40,8 +40,8 @@ MonoBehaviour:
     lightIntensityMultiplier: 0.5
     lightColorTint: {r: 0, g: 1, b: 0.9771137, a: 0}
   - areaLabel: Living Room
-    position: {x: -3.7605186, y: 3.5701694, z: 4.346033}
-    rotation: {x: 31.372711, y: 130.62434, z: 0.57052356}
+    position: {x: -3.3960655, y: 3.5090756, z: 2.5723193}
+    rotation: {x: 30.11744, y: 127.35641, z: -0.0008814114}
     lens:
       FieldOfView: 60.000004
       OrthographicSize: 10
@@ -65,8 +65,8 @@ MonoBehaviour:
     lightIntensityMultiplier: 0.5
     lightColorTint: {r: 1, g: 0, b: 0.20996284, a: 0}
   - areaLabel: Entrance
-    position: {x: -3.7605186, y: 3.5701694, z: 4.346033}
-    rotation: {x: 31.372711, y: 130.62434, z: 0.57052356}
+    position: {x: -1.7409134, y: 2.0568395, z: -3.865938}
+    rotation: {x: 7.084521, y: 19.182722, z: 0.0020090062}
     lens:
       FieldOfView: 60.000004
       OrthographicSize: 10
