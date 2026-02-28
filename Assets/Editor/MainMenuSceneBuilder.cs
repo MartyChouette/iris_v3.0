@@ -339,7 +339,11 @@ public static class MainMenuSceneBuilder
 
         mgrSO.ApplyModifiedPropertiesWithoutUndo();
 
-        // ── 17. Save scene ───────────────────────────────────────────
+        // ── 17. Text theme applier ──────────────────────────────────
+        var themeGO = new GameObject("IrisTextThemeApplier");
+        themeGO.AddComponent<IrisTextThemeApplier>();
+
+        // ── 18. Save scene ───────────────────────────────────────────
         string dir = "Assets/Scenes";
         if (!AssetDatabase.IsValidFolder(dir))
             AssetDatabase.CreateFolder("Assets", "Scenes");
