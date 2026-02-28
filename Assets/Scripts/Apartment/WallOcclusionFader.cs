@@ -35,6 +35,7 @@ public class WallOcclusionFader : MonoBehaviour
     private Camera _cam;
     private readonly Dictionary<Renderer, FadeState> _trackedRenderers = new();
     private readonly List<Renderer> _removeList = new();
+    private readonly List<Renderer> _keyBuffer = new();
     private readonly HashSet<Renderer> _hitThisFrame = new();
     private readonly RaycastHit[] _hitBuffer = new RaycastHit[32];
 
@@ -128,21 +129,24 @@ public class WallOcclusionFader : MonoBehaviour
 
         // ── Fade out renderers that are no longer hit ───────────────
         _removeList.Clear();
+        _keyBuffer.Clear();
         foreach (var kvp in _trackedRenderers)
-        {
-            if (_hitThisFrame.Contains(kvp.Key)) continue;
+            _keyBuffer.Add(kvp.Key);
 
-            var rend = kvp.Key;
+        for (int i = 0; i < _keyBuffer.Count; i++)
+        {
+            var rend = _keyBuffer[i];
+            if (_hitThisFrame.Contains(rend)) continue;
+
             if (rend == null) { _removeList.Add(rend); continue; }
 
-            var state = kvp.Value;
+            var state = _trackedRenderers[rend];
             float speed = _fadeOutDuration > 0f ? 1f / _fadeOutDuration : 100f;
             state.current = Mathf.MoveTowards(state.current, state.floor, speed * dt);
             state.mpb.SetFloat(DissolveID, state.current);
             rend.SetPropertyBlock(state.mpb);
             _trackedRenderers[rend] = state;
 
-            // Remove from tracking once fully restored
             if (Mathf.Approximately(state.current, state.floor))
                 _removeList.Add(rend);
         }
