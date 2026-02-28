@@ -482,24 +482,22 @@ public class ApartmentManager : MonoBehaviour
         t.position = _basePosition + _currentParallaxOffset;
         t.rotation = _baseRotation;
 
-        // Skip lens override when preset is active (CameraTestController owns the lens)
-        if (!_presetOverrideActive)
+        // Write lens — preset or area default, then layer zoom on top
         {
             var lens = browseCamera.Lens;
             bool isOrtho = lens.ModeOverride == LensSettings.OverrideModes.Orthographic;
 
+            // Base lens: preset owns it when active, otherwise use area FOV
+            if (!_presetOverrideActive)
+                lens.FieldOfView = _baseFOV;
+
+            // Layer zoom on top (works with both preset and default lens)
             if (_currentZoom >= 0f)
             {
-                // Player has zoomed — apply persistent zoom level
                 if (isOrtho)
                     lens.OrthographicSize = _currentZoom;
                 else
                     lens.FieldOfView = _currentZoom;
-            }
-            else
-            {
-                // No zoom yet — use area default
-                lens.FieldOfView = _baseFOV;
             }
 
             browseCamera.Lens = lens;

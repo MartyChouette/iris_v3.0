@@ -63,7 +63,7 @@ public class ObjectGrabber : MonoBehaviour
     private InputAction _scrollAction;
 
     private bool _isEnabled;
-    private bool _gridSnap;
+    private bool _gridSnap = true;
 
     /// <summary>Fired after an object is placed on a surface.</summary>
     public static event System.Action OnObjectPlaced;
