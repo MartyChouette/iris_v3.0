@@ -15,15 +15,15 @@ MonoBehaviour:
   label: "V1 \u2014 High Angle"
   areaConfigs:
   - areaLabel: Kitchen
-    position: {x: 2.6763372, y: 2.366016, z: -2.8246403}
-    rotation: {x: 11.209815, y: 315.35547, z: 0.0024953762}
+    position: {x: 1.9345858, y: 1.9217837, z: -2.9326603}
+    rotation: {x: 16.824755, y: 319.59464, z: -0.0022909842}
     lens:
-      FieldOfView: 60.000004
-      OrthographicSize: 3.1054544
-      NearClipPlane: 0.037283115
-      FarClipPlane: 7456.623
+      FieldOfView: 60
+      OrthographicSize: 2.3062263
+      NearClipPlane: 0.01
+      FarClipPlane: 4612.4526
       Dutch: 0
-      ModeOverride: 2
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
@@ -40,15 +40,15 @@ MonoBehaviour:
     lightIntensityMultiplier: 0.5
     lightColorTint: {r: 0, g: 1, b: 0.9771137, a: 0}
   - areaLabel: Living Room
-    position: {x: -3.3960655, y: 3.5090756, z: 2.5723193}
-    rotation: {x: 30.11744, y: 127.35641, z: -0.0008814114}
+    position: {x: -3.5340323, y: 3.0146494, z: 1.6759546}
+    rotation: {x: 19.804153, y: 110.85506, z: -0.0031914776}
     lens:
-      FieldOfView: 60.000004
-      OrthographicSize: 3.1054544
-      NearClipPlane: 0.037283115
-      FarClipPlane: 7456.623
+      FieldOfView: 60
+      OrthographicSize: 1.4276922
+      NearClipPlane: 0.01
+      FarClipPlane: 2855.3843
       Dutch: 0
-      ModeOverride: 2
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
@@ -65,15 +65,15 @@ MonoBehaviour:
     lightIntensityMultiplier: 0.5
     lightColorTint: {r: 1, g: 0, b: 0.20996284, a: 0}
   - areaLabel: Entrance
-    position: {x: -1.7409134, y: 2.0568395, z: -3.865938}
-    rotation: {x: 7.084521, y: 19.182722, z: 0.0020090062}
+    position: {x: -2.9581017, y: 2.1397831, z: -4.5454926}
+    rotation: {x: 16.137215, y: 18.15114, z: -0.0015402783}
     lens:
-      FieldOfView: 60.000004
-      OrthographicSize: 3.1054544
-      NearClipPlane: 0.037283115
-      FarClipPlane: 7456.623
+      FieldOfView: 60
+      OrthographicSize: 2.513357
+      NearClipPlane: 0.01
+      FarClipPlane: 5026.714
       Dutch: 0
-      ModeOverride: 2
+      ModeOverride: 1
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
