@@ -147,10 +147,6 @@ public class SimplePauseMenu : MonoBehaviour
     private void DoQuitToDesktop()
     {
         Debug.Log("[SimplePauseMenu] Quitting application.");
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        GracefulQuit.Execute();
     }
 }

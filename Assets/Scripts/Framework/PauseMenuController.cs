@@ -222,6 +222,6 @@ public class PauseMenuController : MonoBehaviour
             Debug.Log("[PauseMenuController] QuitGame called.", this);
 
         TimeScaleManager.ClearAll();
-        Application.Quit();
+        GracefulQuit.Execute();
     }
 }
