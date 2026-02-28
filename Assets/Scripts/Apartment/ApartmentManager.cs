@@ -35,6 +35,13 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Smoothing speed for parallax follow.")]
     [SerializeField, Range(1f, 20f)] private float parallaxSmoothing = 8f;
 
+    [Header("Pan (MMB Drag)")]
+    [Tooltip("Pan speed multiplier for middle-mouse drag.")]
+    [SerializeField, Range(0.001f, 0.1f)] private float panSpeed = 0.01f;
+
+    [Tooltip("Maximum pan distance from area center.")]
+    [SerializeField] private float panMaxDistance = 3f;
+
     [Header("Zoom")]
     [Tooltip("Amount added/removed per scroll tick (FOV degrees for perspective, ortho size units for orthographic).")]
     [SerializeField, Range(0.01f, 10f)] private float zoomStep = 0.02f;
@@ -94,6 +101,8 @@ public class ApartmentManager : MonoBehaviour
     private InputAction _navigateRightAction;
     private InputAction _mousePositionAction;
     private InputAction _scrollAction;
+    private InputAction _panButtonAction;
+    private InputAction _mouseDeltaAction;
 
     // ──────────────────────────────────────────────────────────────
     // Runtime state
@@ -126,6 +135,9 @@ public class ApartmentManager : MonoBehaviour
 
     // Persistent zoom level (written to lens each frame)
     private float _currentZoom = -1f; // -1 = uninitialized, use lens default
+
+    // Pan offset (MMB drag, reset on area change)
+    private Vector3 _panOffset;
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
@@ -161,6 +173,12 @@ public class ApartmentManager : MonoBehaviour
 
         _scrollAction = new InputAction("Scroll", InputActionType.Value,
             "<Mouse>/scroll/y");
+
+        _panButtonAction = new InputAction("PanButton", InputActionType.Button,
+            "<Mouse>/middleButton");
+
+        _mouseDeltaAction = new InputAction("MouseDelta", InputActionType.Value,
+            "<Mouse>/delta");
     }
 
     private void OnEnable()
@@ -169,6 +187,8 @@ public class ApartmentManager : MonoBehaviour
         _navigateRightAction.Enable();
         _mousePositionAction.Enable();
         _scrollAction.Enable();
+        _panButtonAction.Enable();
+        _mouseDeltaAction.Enable();
     }
 
     private void OnDisable()
@@ -177,6 +197,8 @@ public class ApartmentManager : MonoBehaviour
         _navigateRightAction.Disable();
         _mousePositionAction.Disable();
         _scrollAction.Disable();
+        _panButtonAction.Disable();
+        _mouseDeltaAction.Disable();
     }
 
     private void Start()
@@ -230,6 +252,7 @@ public class ApartmentManager : MonoBehaviour
         UpdateTransition();
         HandleBrowsingInput();
         HandleZoomInput();
+        HandlePanInput();
         ApplyParallax();
         UpdateHoverHighlight();
     }
@@ -372,12 +395,30 @@ public class ApartmentManager : MonoBehaviour
         _currentZoom = Mathf.Clamp(_currentZoom - Mathf.Sign(scroll) * zoomStep, zoomMin, zoomMax);
     }
 
+    private void HandlePanInput()
+    {
+        if (!_panButtonAction.IsPressed()) return;
+
+        Vector2 delta = _mouseDeltaAction.ReadValue<Vector2>();
+        if (delta.sqrMagnitude < 0.01f) return;
+
+        // Move along camera-local right/up axes
+        Vector3 right = _baseRotation * Vector3.right;
+        Vector3 up = _baseRotation * Vector3.up;
+        _panOffset -= (right * delta.x + up * delta.y) * panSpeed;
+
+        // Clamp to max distance from area center
+        if (_panOffset.magnitude > panMaxDistance)
+            _panOffset = _panOffset.normalized * panMaxDistance;
+    }
+
     private void CycleArea(int direction)
     {
         if (areas == null || areas.Length == 0) return;
 
         _currentAreaIndex = (_currentAreaIndex + direction + areas.Length) % areas.Length;
         var area = areas[_currentAreaIndex];
+        _panOffset = Vector3.zero;
 
         AudioManager.Instance?.PlaySFX(_areaTransitionSFX);
 
@@ -496,8 +537,8 @@ public class ApartmentManager : MonoBehaviour
                 Time.deltaTime * parallaxSmoothing);
         }
 
-        // Write final position = base + parallax offset
-        t.position = _basePosition + _currentParallaxOffset;
+        // Write final position = base + parallax + pan
+        t.position = _basePosition + _currentParallaxOffset + _panOffset;
         t.rotation = _baseRotation;
 
         // Write lens — preset or area default, then layer zoom on top
