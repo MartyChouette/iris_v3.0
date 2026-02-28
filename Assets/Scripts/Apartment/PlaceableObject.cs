@@ -231,6 +231,13 @@ public class PlaceableObject : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        // Build silhouette once — stays alive so resting objects show
+        // through furniture via ZTest Greater
+        BuildSilhouette();
+    }
+
     private void Update()
     {
         if (CurrentState == State.Held) return;
@@ -328,9 +335,6 @@ public class PlaceableObject : MonoBehaviour
         // Brightness boost on main material
         if (_instanceMat != null)
             _instanceMat.color = _originalColor * heldBrightness;
-
-        // Spawn silhouette child mesh (renders only where occluded by furniture)
-        BuildSilhouette();
 
         if (_validationCoroutine != null)
         {
@@ -447,6 +451,7 @@ public class PlaceableObject : MonoBehaviour
     private void BuildSilhouette()
     {
         if (_silhouetteMat == null) return;
+        if (_silhouetteGO != null) return; // Already built
 
         var mf = GetComponent<MeshFilter>();
         if (mf == null || mf.sharedMesh == null) return;
@@ -622,7 +627,5 @@ public class PlaceableObject : MonoBehaviour
     {
         if (_instanceMat != null)
             _instanceMat.color = _originalColor;
-
-        DestroySilhouette();
     }
 }
