@@ -36,14 +36,14 @@ public class ApartmentManager : MonoBehaviour
     [SerializeField, Range(1f, 20f)] private float parallaxSmoothing = 8f;
 
     [Header("Zoom")]
-    [Tooltip("FOV degrees added/removed per scroll tick.")]
-    [SerializeField, Range(1f, 10f)] private float zoomStep = 3f;
+    [Tooltip("Amount added/removed per scroll tick (FOV degrees for perspective, ortho size units for orthographic).")]
+    [SerializeField, Range(0.1f, 10f)] private float zoomStep = 0.5f;
 
-    [Tooltip("Minimum FOV when zoomed in.")]
-    [SerializeField] private float zoomMinFOV = 20f;
+    [Tooltip("Minimum ortho size / FOV when zoomed in.")]
+    [SerializeField] private float zoomMin = 1f;
 
-    [Tooltip("Maximum FOV when zoomed out.")]
-    [SerializeField] private float zoomMaxFOV = 80f;
+    [Tooltip("Maximum ortho size / FOV when zoomed out.")]
+    [SerializeField] private float zoomMax = 15f;
 
     [Header("World Bounds")]
     [Tooltip("Objects outside this box are recovered to the nearest surface.")]
@@ -340,12 +340,8 @@ public class ApartmentManager : MonoBehaviour
         float scroll = _scrollAction.ReadValue<float>();
         if (Mathf.Abs(scroll) < 0.01f) return;
 
-        // Scroll up = zoom in (lower FOV), scroll down = zoom out
+        // Scroll up = zoom in (smaller size), scroll down = zoom out
         _zoomOffset -= Mathf.Sign(scroll) * zoomStep;
-
-        // Clamp so final FOV stays within min/max
-        float areaFOV = _baseFOV;
-        _zoomOffset = Mathf.Clamp(_zoomOffset, zoomMinFOV - areaFOV, zoomMaxFOV - areaFOV);
     }
 
     private void CycleArea(int direction)
@@ -480,8 +476,25 @@ public class ApartmentManager : MonoBehaviour
         if (!_presetOverrideActive)
         {
             var lens = browseCamera.Lens;
-            lens.FieldOfView = Mathf.Clamp(_baseFOV + _zoomOffset, zoomMinFOV, zoomMaxFOV);
+            lens.FieldOfView = _baseFOV;
             browseCamera.Lens = lens;
+        }
+
+        // Apply zoom on the actual camera (works for both ortho and perspective)
+        if (_cachedMainCamera == null) _cachedMainCamera = UnityEngine.Camera.main;
+        if (_cachedMainCamera != null && Mathf.Abs(_zoomOffset) > 0.001f)
+        {
+            if (_cachedMainCamera.orthographic)
+            {
+                _cachedMainCamera.orthographicSize = Mathf.Clamp(
+                    _cachedMainCamera.orthographicSize + _zoomOffset, zoomMin, zoomMax);
+            }
+            else
+            {
+                _cachedMainCamera.fieldOfView = Mathf.Clamp(
+                    _cachedMainCamera.fieldOfView + _zoomOffset, zoomMin, zoomMax);
+            }
+            _zoomOffset = 0f; // Consumed — applied directly to camera
         }
     }
 
