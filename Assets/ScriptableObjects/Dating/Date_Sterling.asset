@@ -31,10 +31,13 @@ MonoBehaviour:
   - keyword: rare breed
     commentary: Confident. Very confident. He will yap about wine and whiskey all
       night.
+    preparationTag: vinyl
   - keyword: ski trip
     commentary: He'll bring you a gift - that was gifted to him by someone else.
+    preparationTag:
   - keyword: watches, gym, and whiskey
     commentary: Wearing a suit. Just got off work. Will complain about work.
+    preparationTag: drink
   flowerPrefab: {fileID: 0}
   flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0

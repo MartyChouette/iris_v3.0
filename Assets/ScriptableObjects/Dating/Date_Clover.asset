@@ -30,11 +30,14 @@ MonoBehaviour:
   keywords:
   - keyword: cook from scratch
     commentary: She means it. Everything from scratch. No shortcuts.
+    preparationTag:
   - keyword: peaceful home
     commentary: She takes pride in the space. She'll notice what you've done with
       yours.
+    preparationTag: plant
   - keyword: catlike
     commentary: Soft and gentle, but on her own terms. Don't push.
+    preparationTag: book
   flowerPrefab: {fileID: 0}
   flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0

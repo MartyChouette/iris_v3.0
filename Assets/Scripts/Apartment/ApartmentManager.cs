@@ -242,6 +242,30 @@ public class ApartmentManager : MonoBehaviour
         _browseSuppressed = !active;
         if (browseCamera != null)
             browseCamera.Priority = active ? PriorityActive : PriorityInactive;
+
+        // Re-apply default preset lens (including ortho mode) when browse camera is raised
+        if (active)
+            ReapplyDefaultLens();
+    }
+
+    /// <summary>
+    /// Re-applies the default preset lens settings for the current area.
+    /// Restores orthographic mode after the read camera (perspective) phase.
+    /// </summary>
+    public void ReapplyDefaultLens()
+    {
+        if (browseCamera == null || defaultPreset == null) return;
+        if (areas == null || areas.Length == 0) return;
+
+        GetCameraValues(_currentAreaIndex, out _, out _, out _, out LensSettings? presetLens);
+        if (presetLens.HasValue)
+        {
+            browseCamera.Lens = presetLens.Value;
+            ApplyBrainOrthoMode(presetLens.Value.ModeOverride == LensSettings.OverrideModes.Orthographic);
+
+            // Reset zoom so it re-reads from the restored lens on next scroll
+            _currentZoom = -1f;
+        }
     }
 
     private void Update()

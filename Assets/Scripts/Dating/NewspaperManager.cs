@@ -652,8 +652,8 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         var tooltipTextRT = tooltipTextGO.AddComponent<RectTransform>();
         tooltipTextRT.anchorMin = Vector2.zero;
         tooltipTextRT.anchorMax = Vector2.one;
-        tooltipTextRT.offsetMin = new Vector2(6f, 4f);
-        tooltipTextRT.offsetMax = new Vector2(-6f, -4f);
+        tooltipTextRT.offsetMin = new Vector2(12f, 8f);
+        tooltipTextRT.offsetMax = new Vector2(-12f, -8f);
         tooltipTextRT.localScale = Vector3.one;
         _tooltipText = tooltipTextGO.AddComponent<TextMeshProUGUI>();
         _tooltipText.text = "";

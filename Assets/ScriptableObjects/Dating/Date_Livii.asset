@@ -31,11 +31,14 @@ MonoBehaviour:
   - keyword: move to Paris
     commentary: She dresses with deliberate glamour. By day she sells five-star stays
       and upgrades.
+    preparationTag: perfume
   - keyword: co-parent a cat
     commentary: She holds lovers to novel-worthy standards - and mistakes the ideal
       for the real.
+    preparationTag: book
   - keyword: coastal-cliff elopement
     commentary: Tonic water or champagne. She likes things a certain way.
+    preparationTag: vinyl
   flowerPrefab: {fileID: 0}
   flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0

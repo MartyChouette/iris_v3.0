@@ -120,21 +120,80 @@ public class KeywordTooltip : MonoBehaviour
         var rt = _tooltipPanel.GetComponent<RectTransform>();
         if (rt == null) return;
 
-        // Position tooltip near mouse, clamped to screen
+        // Ensure tooltip renders on top of sibling elements
+        _tooltipPanel.transform.SetAsLastSibling();
+
+        // Dynamic sizing: fit to text content
+        if (_tooltipText != null)
+        {
+            _tooltipText.ForceMeshUpdate();
+            float textW = _tooltipText.preferredWidth;
+            float textH = _tooltipText.preferredHeight;
+            float padX = 12f;
+            float padY = 8f;
+            float maxW = 280f;
+            float w = Mathf.Min(textW + padX * 2f, maxW);
+            // If clamped to maxW, recalculate height with wrapping
+            if (textW + padX * 2f > maxW)
+            {
+                var textRT = _tooltipText.GetComponent<RectTransform>();
+                if (textRT != null)
+                {
+                    textRT.offsetMin = new Vector2(padX, padY);
+                    textRT.offsetMax = new Vector2(-padX, -padY);
+                }
+                _tooltipText.ForceMeshUpdate();
+                textH = _tooltipText.preferredHeight;
+            }
+            float h = textH + padY * 2f;
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        // Position tooltip near mouse with bounds clamping
         Vector2 mousePos = Input.mousePosition;
+        float offsetX = 20f;
+        float offsetY = -30f;
+
         var parentCanvas = _tooltipPanel.GetComponentInParent<Canvas>();
         if (parentCanvas != null && parentCanvas.renderMode == RenderMode.WorldSpace)
         {
-            // World-space canvas — convert screen pos to local canvas pos
             RectTransform canvasRT = parentCanvas.GetComponent<RectTransform>();
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvasRT, mousePos, _mainCamera, out Vector2 localPoint);
-            rt.localPosition = new Vector3(localPoint.x + 10f, localPoint.y - 20f, 0f);
+
+            float tipW = rt.sizeDelta.x;
+            float tipH = rt.sizeDelta.y;
+            float canvasW = canvasRT.sizeDelta.x;
+            float canvasH = canvasRT.sizeDelta.y;
+
+            float x = localPoint.x + offsetX;
+            float y = localPoint.y + offsetY;
+
+            // Flip left if overflowing right
+            if (x + tipW * 0.5f > canvasW * 0.5f)
+                x = localPoint.x - offsetX - tipW;
+            // Flip above if overflowing bottom
+            if (y - tipH < -canvasH * 0.5f)
+                y = localPoint.y - offsetY;
+
+            rt.localPosition = new Vector3(x, y, 0f);
         }
         else
         {
-            // Screen-space overlay
-            rt.position = new Vector3(mousePos.x + 15f, mousePos.y - 25f, 0f);
+            float tipW = rt.sizeDelta.x;
+            float tipH = rt.sizeDelta.y;
+
+            float x = mousePos.x + offsetX;
+            float y = mousePos.y + offsetY;
+
+            // Flip left if overflowing right
+            if (x + tipW > Screen.width)
+                x = mousePos.x - offsetX - tipW;
+            // Flip above if overflowing bottom
+            if (y - tipH < 0f)
+                y = mousePos.y - offsetY;
+
+            rt.position = new Vector3(x, y, 0f);
         }
     }
 

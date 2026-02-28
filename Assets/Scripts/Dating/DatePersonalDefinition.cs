@@ -68,6 +68,9 @@ public class DatePersonalDefinition : ScriptableObject
         [TextArea(1, 3)]
         [Tooltip("Commentary shown in the tooltip when hovering this keyword.")]
         public string commentary;
+
+        [Tooltip("Optional tag linking this keyword to a likedTag for the prep checklist (e.g. 'vinyl', 'book', 'perfume').")]
+        public string preparationTag;
     }
 
     // ──────────────────────────────────────────────────────────────

@@ -30,11 +30,14 @@ MonoBehaviour:
   - keyword: Art school dropout
     commentary: She traded brushes for bouquets. Probably still has paint under her
       nails.
+    preparationTag: book
   - keyword: waters their plants
     commentary: A simple test of care. Do you keep things alive?
+    preparationTag: plant
   - keyword: Vinyl snobs welcome
     commentary: "She wants someone who owns real records \u2014 not just a Spotify
       playlist."
+    preparationTag: vinyl
   flowerPrefab: {fileID: 3126228506876650885, guid: 7582aaee248b6e149b10daac037b2334, type: 3}
   flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0

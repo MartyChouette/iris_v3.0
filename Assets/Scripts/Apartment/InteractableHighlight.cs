@@ -15,12 +15,16 @@ public class InteractableHighlight : MonoBehaviour
     private static Material s_sharedRimMat;
     private static Material s_sharedGazeMat;
     private static Material s_sharedDisplayMat;
+    private static Material s_sharedPrepLikedMat;
+    private static Material s_sharedPrepDislikedMat;
 
     private Renderer[] _renderers;
     private Material[][] _baseMaterialArrays;
     private bool _highlighted;
     private bool _gazeActive;
     private bool _displayActive;
+    private bool _prepLikedActive;
+    private bool _prepDislikedActive;
 
     private void Awake()
     {
@@ -67,9 +71,31 @@ public class InteractableHighlight : MonoBehaviour
         RebuildMaterials();
     }
 
+    /// <summary>
+    /// Toggle prep-liked rim light (green, date likes this item) on or off.
+    /// </summary>
+    public void SetPrepLikedHighlighted(bool on)
+    {
+        if (_renderers == null || _renderers.Length == 0 || on == _prepLikedActive) return;
+        _prepLikedActive = on;
+        RebuildMaterials();
+    }
+
+    /// <summary>
+    /// Toggle prep-disliked rim light (red, date dislikes this item) on or off.
+    /// </summary>
+    public void SetPrepDislikedHighlighted(bool on)
+    {
+        if (_renderers == null || _renderers.Length == 0 || on == _prepDislikedActive) return;
+        _prepDislikedActive = on;
+        RebuildMaterials();
+    }
+
     private void RebuildMaterials()
     {
         int extraCount = (_displayActive ? 1 : 0)
+                       + (_prepLikedActive ? 1 : 0)
+                       + (_prepDislikedActive ? 1 : 0)
                        + (_gazeActive ? 1 : 0)
                        + (_highlighted ? 1 : 0);
 
@@ -93,6 +119,12 @@ public class InteractableHighlight : MonoBehaviour
             // Display renders first (background — subtlest)
             if (_displayActive && s_sharedDisplayMat != null)
                 mats[slot++] = s_sharedDisplayMat;
+
+            // Prep highlights (liked=green, disliked=red)
+            if (_prepLikedActive && s_sharedPrepLikedMat != null)
+                mats[slot++] = s_sharedPrepLikedMat;
+            if (_prepDislikedActive && s_sharedPrepDislikedMat != null)
+                mats[slot++] = s_sharedPrepDislikedMat;
 
             // Gaze renders second (middle)
             if (_gazeActive && s_sharedGazeMat != null)
@@ -153,6 +185,30 @@ public class InteractableHighlight : MonoBehaviour
                 s_sharedDisplayMat.SetColor("_RimColor", new Color(1f, 0.85f, 0.65f, 0.35f));
                 s_sharedDisplayMat.SetFloat("_RimPower", 3.8f);
                 s_sharedDisplayMat.SetFloat("_RimIntensity", 0.35f);
+            }
+        }
+
+        if (s_sharedPrepLikedMat == null)
+        {
+            var shader = Shader.Find("Iris/RimLight");
+            if (shader != null)
+            {
+                s_sharedPrepLikedMat = new Material(shader);
+                s_sharedPrepLikedMat.SetColor("_RimColor", new Color(0.3f, 0.9f, 0.4f, 0.6f));
+                s_sharedPrepLikedMat.SetFloat("_RimPower", 2.5f);
+                s_sharedPrepLikedMat.SetFloat("_RimIntensity", 0.7f);
+            }
+        }
+
+        if (s_sharedPrepDislikedMat == null)
+        {
+            var shader = Shader.Find("Iris/RimLight");
+            if (shader != null)
+            {
+                s_sharedPrepDislikedMat = new Material(shader);
+                s_sharedPrepDislikedMat.SetColor("_RimColor", new Color(0.95f, 0.3f, 0.3f, 0.6f));
+                s_sharedPrepDislikedMat.SetFloat("_RimPower", 2.5f);
+                s_sharedPrepDislikedMat.SetFloat("_RimIntensity", 0.7f);
             }
         }
     }

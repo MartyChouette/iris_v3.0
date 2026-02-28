@@ -2886,6 +2886,12 @@ public static class ApartmentSceneBuilder
         // ── ReactableTag Debug Labels (toggle with L key) ────────────
         managersGO.AddComponent<ReactableTagDebugLabels>();
 
+        // ── Prep Checklist Panel (Numpad 1 toggle) ──────────────────
+        managersGO.AddComponent<PrepChecklistPanel>();
+
+        // ── Date Item Highlighter (Numpad 3 toggle) ─────────────────
+        managersGO.AddComponent<DateItemHighlighter>();
+
         // ── PhoneController ───────────────────────────────────────────
         PhoneController phoneCtrl = null;
         if (furnitureRefs.phoneTransform != null)

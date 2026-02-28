@@ -31,12 +31,15 @@ MonoBehaviour:
   keywords:
   - keyword: overthink at night
     commentary: First date comes with a spontaneous reading (donation suggested).
+    preparationTag: book
   - keyword: upcoming change
     commentary: They'll land one eerie, specific truth about you - and accidentally
       drop a piece of your lore.
+    preparationTag: perfume
   - keyword: a letter
     commentary: Warm, attentive, and weirdly good at making people feel seen. May
       offer... substances.
+    preparationTag: plant
   flowerPrefab: {fileID: 0}
   flowerSceneName: Daisy_Flower_Scene
   forceAvailable: 0
