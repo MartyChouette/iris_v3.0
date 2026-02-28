@@ -243,9 +243,16 @@ public class ApartmentManager : MonoBehaviour
         if (browseCamera != null)
             browseCamera.Priority = active ? PriorityActive : PriorityInactive;
 
-        // Re-apply default preset lens (including ortho mode) when browse camera is raised
         if (active)
+        {
+            // Re-apply default preset lens (including ortho mode) when browse camera is raised
             ReapplyDefaultLens();
+        }
+        else
+        {
+            // Clear brain ortho override so the read camera can render in perspective
+            ApplyBrainOrthoMode(false);
+        }
     }
 
     /// <summary>
