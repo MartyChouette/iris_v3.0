@@ -239,11 +239,18 @@ public class ApartmentManager : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Reads camera position/rotation/FOV for an area index.
+    /// Reads camera position/rotation/lens for an area index.
     /// Prefers defaultPreset SO; falls back to ApartmentAreaDefinition.
     /// </summary>
     private void GetCameraValues(int areaIndex, out Vector3 pos, out Quaternion rot, out float fov)
     {
+        GetCameraValues(areaIndex, out pos, out rot, out fov, out _);
+    }
+
+    private void GetCameraValues(int areaIndex, out Vector3 pos, out Quaternion rot, out float fov, out LensSettings? lens)
+    {
+        lens = null;
+
         if (defaultPreset != null &&
             defaultPreset.areaConfigs != null &&
             areaIndex < defaultPreset.areaConfigs.Length)
@@ -251,7 +258,9 @@ public class ApartmentManager : MonoBehaviour
             var cfg = defaultPreset.areaConfigs[areaIndex];
             pos = cfg.position;
             rot = Quaternion.Euler(cfg.rotation);
-            fov = cfg.lens.FieldOfView;
+            lens = cfg.lens;
+            bool isOrtho = cfg.lens.ModeOverride == LensSettings.OverrideModes.Orthographic;
+            fov = isOrtho ? cfg.lens.OrthographicSize : cfg.lens.FieldOfView;
             return;
         }
 
@@ -266,7 +275,7 @@ public class ApartmentManager : MonoBehaviour
     {
         if (browseCamera == null) return;
 
-        GetCameraValues(_currentAreaIndex, out _basePosition, out _baseRotation, out _baseFOV);
+        GetCameraValues(_currentAreaIndex, out _basePosition, out _baseRotation, out _baseFOV, out LensSettings? presetLens);
 
         _targetPosition = _basePosition;
         _targetRotation = _baseRotation;
@@ -279,9 +288,18 @@ public class ApartmentManager : MonoBehaviour
         t.position = _basePosition;
         t.rotation = _baseRotation;
 
-        var lens = browseCamera.Lens;
-        lens.FieldOfView = _baseFOV;
-        browseCamera.Lens = lens;
+        // Apply full lens from preset (includes ortho mode, near/far, etc.)
+        if (presetLens.HasValue)
+        {
+            browseCamera.Lens = presetLens.Value;
+            ApplyBrainOrthoMode(presetLens.Value.ModeOverride == LensSettings.OverrideModes.Orthographic);
+        }
+        else
+        {
+            var lens = browseCamera.Lens;
+            lens.FieldOfView = _baseFOV;
+            browseCamera.Lens = lens;
+        }
 
         if (!_browseSuppressed)
             browseCamera.Priority = PriorityActive;
@@ -502,6 +520,24 @@ public class ApartmentManager : MonoBehaviour
 
             browseCamera.Lens = lens;
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Brain Ortho Override
+    // ──────────────────────────────────────────────────────────────
+
+    private void ApplyBrainOrthoMode(bool ortho)
+    {
+        if (brain == null) return;
+        var lmo = brain.LensModeOverride;
+        lmo.Enabled = ortho;
+        if (ortho)
+            lmo.DefaultMode = LensSettings.OverrideModes.Orthographic;
+        brain.LensModeOverride = lmo;
+
+        var cam = brain.GetComponent<UnityEngine.Camera>();
+        if (cam != null)
+            cam.orthographic = ortho;
     }
 
     // ──────────────────────────────────────────────────────────────
