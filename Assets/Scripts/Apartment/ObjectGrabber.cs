@@ -76,6 +76,9 @@ public class ObjectGrabber : MonoBehaviour
     /// <summary>The currently held PlaceableObject, or null if nothing is held.</summary>
     public static PlaceableObject HeldObject => s_instance != null ? s_instance._held : null;
 
+    /// <summary>The surface the held object is currently hovering over, or null.</summary>
+    public static PlacementSurface CurrentSurface => s_instance != null ? s_instance._currentSurface : null;
+
     /// <summary>
     /// True when ObjectGrabber consumed a click this frame (picked up, placed, toggled drawer/switch).
     /// Other click-driven systems should check this to avoid processing the same click.
@@ -209,6 +212,14 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (_held == null || _heldRb == null) return;
 
+        // When hovering a surface, snap directly so placement feels instant
+        if (_currentSurface != null)
+        {
+            _heldRb.linearVelocity = Vector3.zero;
+            _heldRb.position = _grabTarget;
+            return;
+        }
+
         // Tether snap-back
         if (Vector3.Distance(_heldRb.position, _grabTarget) > maxTetherDistance)
         {
@@ -216,7 +227,7 @@ public class ObjectGrabber : MonoBehaviour
             _heldRb.linearVelocity = Vector3.zero;
         }
 
-        // Spring-damper pull
+        // Spring-damper pull (free-floating, no surface)
         Vector3 toTarget = _grabTarget - _heldRb.worldCenterOfMass;
         Vector3 accel = toTarget * grabSpring - _heldRb.linearVelocity * grabDamper;
 
@@ -813,32 +824,25 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (_shadowGO == null || _heldRb == null) return;
 
-        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
-        Ray ray = cam.ScreenPointToRay(screenPos);
-
-        bool valid = false;
-        Vector3 shadowPos = _heldRb.position + Vector3.down * 0.5f;
-        Quaternion shadowRot = Quaternion.identity;
-
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
+        // Only show shadow when hovering a valid placement surface
+        if (_currentSurface == null)
         {
-            var surface = hit.collider.GetComponentInParent<PlacementSurface>();
-            if (surface != null)
-            {
-                bool canPlace = (!surface.IsVertical || _held.CanWallMount)
-                    && (surface.IsVertical || !_held.WallOnly);
-                var hitResult = surface.ProjectOntoSurface(hit.point);
-                shadowPos = hitResult.worldPosition + hitResult.surfaceNormal * 0.01f;
-                shadowRot = Quaternion.FromToRotation(Vector3.up, hitResult.surfaceNormal);
-                valid = canPlace;
-            }
+            _shadowGO.SetActive(false);
+            return;
         }
 
-        _shadowMat.color = valid ? s_shadowValid : s_shadowInvalid;
+        _shadowGO.SetActive(true);
+
+        var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget);
+        Vector3 shadowPos = hitResult.worldPosition + hitResult.surfaceNormal * 0.01f;
+        Quaternion shadowRot = Quaternion.FromToRotation(Vector3.up, hitResult.surfaceNormal);
+
+        bool canPlace = (!_currentSurface.IsVertical || _held.CanWallMount)
+            && (_currentSurface.IsVertical || !_held.WallOnly);
+
+        _shadowMat.color = canPlace ? s_shadowValid : s_shadowInvalid;
         _shadowGO.transform.position = shadowPos;
         _shadowGO.transform.rotation = shadowRot;
-
-        // Use cached diameter (measured before colliders were disabled)
         _shadowGO.transform.localScale = new Vector3(_heldShadowDiameter, 1f, _heldShadowDiameter);
     }
 

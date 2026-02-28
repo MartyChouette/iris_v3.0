@@ -39,6 +39,8 @@ public class WallOcclusionFader : MonoBehaviour
     private readonly HashSet<Renderer> _hitThisFrame = new();
     private readonly RaycastHit[] _hitBuffer = new RaycastHit[32];
 
+    private readonly HashSet<Renderer> _exemptThisFrame = new();
+
     private static readonly int DissolveID = Shader.PropertyToID("_DissolveAmount");
 
     private struct FadeState
@@ -78,7 +80,21 @@ public class WallOcclusionFader : MonoBehaviour
         }
 
         _hitThisFrame.Clear();
+        _exemptThisFrame.Clear();
         Vector3 camPos = _cam.transform.position;
+
+        // ── Exempt wall the held object is being placed on ───────────
+        var held = ObjectGrabber.HeldObject;
+        if (held != null)
+        {
+            var surface = ObjectGrabber.CurrentSurface;
+            if (surface != null)
+            {
+                var wallRend = surface.GetComponentInParent<Renderer>();
+                if (wallRend != null)
+                    _exemptThisFrame.Add(wallRend);
+            }
+        }
 
         // ── Gather targets ──────────────────────────────────────────
         // 1. Date NPC
@@ -87,7 +103,6 @@ public class WallOcclusionFader : MonoBehaviour
             CastToTarget(camPos, dateMgr.DateCharacter.transform.position);
 
         // 2. Held object
-        var held = ObjectGrabber.HeldObject;
         if (held != null)
             CastToTarget(camPos, held.transform.position);
 
@@ -95,13 +110,13 @@ public class WallOcclusionFader : MonoBehaviour
         var apt = ApartmentManager.Instance;
         if (apt != null)
         {
-            // The area definitions store the camera position; the focus is roughly
-            // forward from there. Use the area camera position as a proxy target.
             int idx = apt.CurrentAreaIndex;
-            // Raycast toward a point slightly in front of camera along forward
             Vector3 focusPoint = camPos + _cam.transform.forward * 5f;
             CastToTarget(camPos, focusPoint);
         }
+
+        // Remove exempt renderers from hit set so they won't be faded
+        _hitThisFrame.ExceptWith(_exemptThisFrame);
 
         // ── Drive dissolve on hit renderers ─────────────────────────
         float dt = Time.deltaTime;
