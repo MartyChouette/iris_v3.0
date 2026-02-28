@@ -19,11 +19,11 @@ MonoBehaviour:
     rotation: {x: 11.209815, y: 315.35547, z: 0.0024953762}
     lens:
       FieldOfView: 60.000004
-      OrthographicSize: 10
+      OrthographicSize: 3.1054544
       NearClipPlane: 0.037283115
       FarClipPlane: 7456.623
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 2
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
@@ -44,11 +44,11 @@ MonoBehaviour:
     rotation: {x: 30.11744, y: 127.35641, z: -0.0008814114}
     lens:
       FieldOfView: 60.000004
-      OrthographicSize: 10
+      OrthographicSize: 3.1054544
       NearClipPlane: 0.037283115
       FarClipPlane: 7456.623
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 2
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
@@ -69,11 +69,11 @@ MonoBehaviour:
     rotation: {x: 7.084521, y: 19.182722, z: 0.0020090062}
     lens:
       FieldOfView: 60.000004
-      OrthographicSize: 10
+      OrthographicSize: 3.1054544
       NearClipPlane: 0.037283115
       FarClipPlane: 7456.623
       Dutch: 0
-      ModeOverride: 0
+      ModeOverride: 2
       PhysicalProperties:
         GateFit: 2
         SensorSize: {x: 21.946, y: 16.002}
