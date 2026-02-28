@@ -15,7 +15,7 @@ MonoBehaviour:
   areaName: Living Room
   description: Bookcase, coffee table.
   stationType: 1
-  cameraPosition: {x: -3.115982, y: 3.1325364, z: 1.6475875}
-  cameraRotation: {x: 21.726215, y: 125.91757, z: 358.03458}
-  cameraFOV: 3.122996
+  cameraPosition: {x: -3.7605186, y: 3.5701694, z: 4.346033}
+  cameraRotation: {x: 31.372711, y: 130.62434, z: 0.57052356}
+  cameraFOV: 60.000004
   browseBlendDuration: 0.8

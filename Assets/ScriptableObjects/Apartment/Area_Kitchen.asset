@@ -15,7 +15,7 @@ MonoBehaviour:
   areaName: Kitchen
   description: Fridge (drink-making), counter, cleaning, watering.
   stationType: 8
-  cameraPosition: {x: 4.2638726, y: 5.884564, z: -9.267714}
-  cameraRotation: {x: 28.481256, y: 338.023, z: 357.84637}
-  cameraFOV: 3.122996
+  cameraPosition: {x: 2.8704362, y: 3.2320735, z: -6.8386946}
+  cameraRotation: {x: 27.362335, y: 331.0517, z: 0.512008}
+  cameraFOV: 60.000004
   browseBlendDuration: 0.8
