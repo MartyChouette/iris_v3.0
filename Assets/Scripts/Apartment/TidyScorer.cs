@@ -42,12 +42,20 @@ public class TidyScorer : MonoBehaviour
     [Tooltip("Maximum expected dishelved items per area before dishevelClean = 0.")]
     [SerializeField] private int _maxExpectedDishelved = 3;
 
-    [Header("Area Bounds (world-space X)")]
-    [Tooltip("X boundary between Kitchen (lower) and LivingRoom (higher).")]
-    [SerializeField] private float _kitchenLivingBoundaryX = -1f;
+    [Header("Area Bounds (drag boxes in Scene View)")]
+    [SerializeField] private Bounds _kitchenBounds = new Bounds(
+        new Vector3(-3.5f, 1.5f, 1f), new Vector3(5f, 4f, 11f));
 
-    [Tooltip("Z boundary: Entrance is Z < this value (entrance is at negative Z).")]
-    [SerializeField] private float _entranceBoundaryZ = -4.5f;
+    [SerializeField] private Bounds _livingRoomBounds = new Bounds(
+        new Vector3(2f, 1.5f, 1f), new Vector3(6f, 4f, 11f));
+
+    [SerializeField] private Bounds _entranceBounds = new Bounds(
+        new Vector3(0f, 1.5f, -6f), new Vector3(12f, 4f, 3f));
+
+    /// <summary>Read-only access for custom editor.</summary>
+    public Bounds KitchenBounds { get => _kitchenBounds; set => _kitchenBounds = value; }
+    public Bounds LivingRoomBounds { get => _livingRoomBounds; set => _livingRoomBounds = value; }
+    public Bounds EntranceBounds { get => _entranceBounds; set => _entranceBounds = value; }
 
     private void Awake()
     {
@@ -100,11 +108,18 @@ public class TidyScorer : MonoBehaviour
     /// <summary>Assign an area based on an object's world position.</summary>
     public ApartmentArea ClassifyPosition(Vector3 worldPos)
     {
-        if (worldPos.z < _entranceBoundaryZ)
-            return ApartmentArea.Entrance;
-        if (worldPos.x < _kitchenLivingBoundaryX)
-            return ApartmentArea.Kitchen;
-        return ApartmentArea.LivingRoom;
+        if (_kitchenBounds.Contains(worldPos)) return ApartmentArea.Kitchen;
+        if (_livingRoomBounds.Contains(worldPos)) return ApartmentArea.LivingRoom;
+        if (_entranceBounds.Contains(worldPos)) return ApartmentArea.Entrance;
+
+        // Fallback: nearest box
+        float dK = _kitchenBounds.SqrDistance(worldPos);
+        float dL = _livingRoomBounds.SqrDistance(worldPos);
+        float dE = _entranceBounds.SqrDistance(worldPos);
+
+        if (dK <= dL && dK <= dE) return ApartmentArea.Kitchen;
+        if (dL <= dE) return ApartmentArea.LivingRoom;
+        return ApartmentArea.Entrance;
     }
 
     private float GetStainClean(ApartmentArea area)
@@ -192,4 +207,29 @@ public class TidyScorer : MonoBehaviour
 
         return 1f - Mathf.Clamp01(totalSmell / _smellThreshold);
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        DrawAreaGizmo(_kitchenBounds, new Color(1f, 0.6f, 0.2f, 0.12f), new Color(1f, 0.6f, 0.2f, 0.7f), "Kitchen");
+        DrawAreaGizmo(_livingRoomBounds, new Color(0.3f, 0.6f, 1f, 0.12f), new Color(0.3f, 0.6f, 1f, 0.7f), "Living Room");
+        DrawAreaGizmo(_entranceBounds, new Color(0.3f, 0.9f, 0.4f, 0.12f), new Color(0.3f, 0.9f, 0.4f, 0.7f), "Entrance");
+    }
+
+    private static void DrawAreaGizmo(Bounds b, Color fill, Color wire, string label)
+    {
+        Gizmos.color = fill;
+        Gizmos.DrawCube(b.center, b.size);
+        Gizmos.color = wire;
+        Gizmos.DrawWireCube(b.center, b.size);
+
+        UnityEditor.Handles.Label(b.center + Vector3.up * (b.extents.y + 0.3f), label,
+            new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = wire }
+            });
+    }
+#endif
 }
