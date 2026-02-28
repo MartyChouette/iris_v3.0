@@ -124,8 +124,8 @@ public class ApartmentManager : MonoBehaviour
     // Preset override (CameraTestController feeds its target here for parallax)
     private bool _presetOverrideActive;
 
-    // Zoom offset (added on top of area FOV)
-    private float _zoomOffset;
+    // Persistent zoom level (written to lens each frame)
+    private float _currentZoom = -1f; // -1 = uninitialized, use lens default
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
@@ -334,14 +334,24 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandleZoomInput()
     {
+        if (browseCamera == null) return;
+
         // Skip zoom when ObjectGrabber is holding (scroll rotates held object)
         if (ObjectGrabber.IsHoldingObject) return;
 
         float scroll = _scrollAction.ReadValue<float>();
         if (Mathf.Abs(scroll) < 0.01f) return;
 
-        // Scroll up = zoom in (smaller size), scroll down = zoom out
-        _zoomOffset -= Mathf.Sign(scroll) * zoomStep;
+        // Initialize from current lens on first scroll
+        if (_currentZoom < 0f)
+        {
+            var lens = browseCamera.Lens;
+            bool isOrtho = lens.ModeOverride == LensSettings.OverrideModes.Orthographic;
+            _currentZoom = isOrtho ? lens.OrthographicSize : lens.FieldOfView;
+        }
+
+        // Scroll up = zoom in (smaller value), scroll down = zoom out
+        _currentZoom = Mathf.Clamp(_currentZoom - Mathf.Sign(scroll) * zoomStep, zoomMin, zoomMax);
     }
 
     private void CycleArea(int direction)
@@ -476,25 +486,23 @@ public class ApartmentManager : MonoBehaviour
         if (!_presetOverrideActive)
         {
             var lens = browseCamera.Lens;
-            lens.FieldOfView = _baseFOV;
-            browseCamera.Lens = lens;
-        }
+            bool isOrtho = lens.ModeOverride == LensSettings.OverrideModes.Orthographic;
 
-        // Apply zoom on the actual camera (works for both ortho and perspective)
-        if (_cachedMainCamera == null) _cachedMainCamera = UnityEngine.Camera.main;
-        if (_cachedMainCamera != null && Mathf.Abs(_zoomOffset) > 0.001f)
-        {
-            if (_cachedMainCamera.orthographic)
+            if (_currentZoom >= 0f)
             {
-                _cachedMainCamera.orthographicSize = Mathf.Clamp(
-                    _cachedMainCamera.orthographicSize + _zoomOffset, zoomMin, zoomMax);
+                // Player has zoomed — apply persistent zoom level
+                if (isOrtho)
+                    lens.OrthographicSize = _currentZoom;
+                else
+                    lens.FieldOfView = _currentZoom;
             }
             else
             {
-                _cachedMainCamera.fieldOfView = Mathf.Clamp(
-                    _cachedMainCamera.fieldOfView + _zoomOffset, zoomMin, zoomMax);
+                // No zoom yet — use area default
+                lens.FieldOfView = _baseFOV;
             }
-            _zoomOffset = 0f; // Consumed — applied directly to camera
+
+            browseCamera.Lens = lens;
         }
     }
 
