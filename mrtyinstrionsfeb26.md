@@ -108,4 +108,69 @@ In `Assets/ScriptableObjects/DiscoBall/`, right-click > **Create > Iris > Disco 
 
 ---
 
+## 6. Mirror -- Scene Setup
+
+1. Select the mirror mesh/quad in the scene
+2. Assign `Assets/Materials/Mirror.mat` to its Renderer
+3. Add component: **PlanarMirror**
+4. Make sure the quad's **blue arrow (forward)** points toward the camera/player
+5. Optional: tweak `Texture Width`/`Texture Height` (default 256x192), `Skip Frames` for performance
+
+---
+
+## 7. Cursor World Shadow
+
+1. Select a Managers GO (or create an empty)
+2. Add component: **CursorWorldShadow**
+3. Set **Surface Layers** to the layers you want the shadow to project on (Default + Surfaces)
+4. Adjust **Diameter** (default 0.3m) to taste
+5. Auto-hides when ObjectGrabber is holding something
+
+---
+
+## 8. PSXLitGlitch Shader -- Messy/Trash Items
+
+For items that should look glitchy when out of place (trash, askew items):
+
+1. Assign `Assets/Materials/PSXLit_Glitch.mat` to the item's Renderer, OR change existing material shader to `Iris/PSXLitGlitch`
+2. Set `Glitch Intensity` slider (0 = normal PSXLit, 0.5 = moderate, 1 = heavy corruption)
+3. To drive from code: `renderer.material.SetFloat("_GlitchIntensity", value);`
+
+---
+
+## 9. Dishevel System -- Messy Item Tilting
+
+On any `PlaceableObject` that should start tilted/crooked when messy:
+
+1. Check **Can Be Dishelved** in the Inspector
+2. `Dishevel Angle` defaults to 25 degrees (the threshold before it counts as messy)
+3. Call `placeableObject.Dishevel()` from spawners to apply random tilt
+4. Player picks up → auto-straightens → places down straight
+5. Player scroll-rotating after placement does NOT count as disheveled
+
+---
+
+## 10. PrepChecklistPanel -- Date Prep Guide
+
+1. Add `PrepChecklistPanel` component to a Managers GO
+2. Toggle with **Numpad 1** — shows what the selected date likes with live completion checkmarks
+3. Auto-hides when date phase starts
+
+---
+
+## 11. DateItemHighlighter -- Item Glow Guide
+
+1. Add `DateItemHighlighter` component to a Managers GO
+2. Toggle with **Numpad 3** — green rim on liked items, red rim on disliked items
+3. Re-scans every 0.5s, auto-clears on phase change
+
+---
+
+## 12. Wall Materials -- See-Through for Date NPC
+
+1. Assign `Assets/Materials/PSXLit_Dissovable.mat` (shader `Iris/PSXLitDissolvable`) to apartment wall materials
+2. `WallOcclusionFader` drives `_DissolveAmount` when the date NPC is behind walls
+
+---
+
 *This doc will be updated with more instructions as the session continues.*
