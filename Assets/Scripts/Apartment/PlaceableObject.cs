@@ -167,6 +167,42 @@ public class PlaceableObject : MonoBehaviour
     }
 
     /// <summary>
+    /// Make this item look messy — apply a random tilt (X/Z) or Y-axis rotation offset.
+    /// Call from mess spawners or DailyMessSpawner to scatter items.
+    /// </summary>
+    public void Dishevel()
+    {
+        if (!_canBeDishelved) return;
+
+        // Randomly choose: tilt (lean over) or twist (rotate on Y)
+        bool tilt = Random.value > 0.4f; // 60% tilt, 40% twist
+        float angle = Random.Range(_dishevelAngle, _dishevelAngle + 10f);
+
+        if (tilt)
+        {
+            // Lean on a random axis in the XZ plane
+            float axisAngle = Random.Range(0f, 360f);
+            Vector3 axis = new Vector3(Mathf.Cos(axisAngle * Mathf.Deg2Rad), 0f, Mathf.Sin(axisAngle * Mathf.Deg2Rad));
+            transform.rotation = transform.rotation * Quaternion.AngleAxis(angle, axis);
+        }
+        else
+        {
+            // Twist around Y + slight lean
+            float yTwist = Random.Range(15f, 45f) * (Random.value > 0.5f ? 1f : -1f);
+            float lean = Random.Range(5f, 15f);
+            float leanAxis = Random.Range(0f, 360f);
+            transform.rotation = transform.rotation
+                * Quaternion.Euler(0f, yTwist, 0f)
+                * Quaternion.AngleAxis(lean, new Vector3(Mathf.Cos(leanAxis * Mathf.Deg2Rad), 0f, Mathf.Sin(leanAxis * Mathf.Deg2Rad)));
+        }
+
+        if (_rb != null)
+            _rb.angularVelocity = Vector3.zero;
+
+        Debug.Log($"[PlaceableObject] {name} disheveled.");
+    }
+
+    /// <summary>
     /// True when the object is resting on the floor (not held, not on a surface/DropZone).
     /// Items on PlacementSurfaces or in DropZones are NOT considered clutter.
     /// </summary>
@@ -328,6 +364,15 @@ public class PlaceableObject : MonoBehaviour
 
         if (_rb != null)
             _rb.isKinematic = false;
+
+        // Auto-straighten disheveled items on pickup (keeps Y rotation)
+        if (_canBeDishelved && IsTilted)
+        {
+            float yAngle = transform.eulerAngles.y;
+            transform.rotation = Quaternion.Euler(0f, yAngle, 0f);
+            if (_rb != null) _rb.angularVelocity = Vector3.zero;
+            Debug.Log($"[PlaceableObject] {name} auto-straightened on pickup.");
+        }
 
         // Disable colliders so held object doesn't block raycasts or knock items
         SetCollidersEnabled(false);
