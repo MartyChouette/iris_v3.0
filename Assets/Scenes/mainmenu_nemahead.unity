@@ -1700,6 +1700,9 @@ MonoBehaviour:
   _root: {fileID: 658287896}
   _startButton: {fileID: 1241973396}
   _dismissSFX: {fileID: 0}
+  _fadeInDuration: 0.35
+  _fadeOutDuration: 0.2
+  _scaleFrom: 0.92
 --- !u!224 &658287898
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2004,8 +2007,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Iris
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1461f9c3625452f4fa71aaacea73e85f, type: 2}
+  m_sharedMaterial: {fileID: 6835897342130650632, guid: 1461f9c3625452f4fa71aaacea73e85f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

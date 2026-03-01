@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Spill_Counter_Grime
   m_EditorClassIdentifier: Assembly-CSharp::SpillDefinition
   spillType: 0
-  spillColor: {r: 0.45, g: 0.42, b: 0.38, a: 1}
+  spillColor: {r: 0.3962264, g: 0.2201258, b: 0, a: 1}
   coverage: 0.4
   seed: 77
   textureSize: 256
