@@ -20,7 +20,7 @@ public class ObjectGrabber : MonoBehaviour
 
     [Header("Grid Snap")]
     [Tooltip("Grid cell size in world units.")]
-    [SerializeField] private float gridSize = 0.3f;
+    [SerializeField] private float gridSize = 0.09f;
 
     public float GridSize
     {
