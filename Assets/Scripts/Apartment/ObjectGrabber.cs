@@ -341,7 +341,7 @@ public class ObjectGrabber : MonoBehaviour
         var bookItem = placeable.GetComponent<BookItem>();
         if (bookItem != null) bookItem.OnBookPickedUp();
 
-        AudioManager.Instance?.PlaySFX(_pickupSFX);
+        AudioManager.Instance?.PlaySFX(placeable.PickupSFXOverride != null ? placeable.PickupSFXOverride : _pickupSFX);
         ShowShadow(true);
 
         // Show pickup description
@@ -366,7 +366,7 @@ public class ObjectGrabber : MonoBehaviour
                 _heldRb.linearVelocity = Vector3.zero;
                 if (slot.TryAcceptRecord(_held))
                 {
-                    AudioManager.Instance?.PlaySFX(_placeSFX);
+                    PlayPlaceSFX(_held);
                     ClearHeld();
                     return;
                 }
@@ -383,7 +383,7 @@ public class ObjectGrabber : MonoBehaviour
                 _heldRb.linearVelocity = Vector3.zero;
                 if (disco.TryAcceptBulb(_held))
                 {
-                    AudioManager.Instance?.PlaySFX(_placeSFX);
+                    PlayPlaceSFX(_held);
                     ClearHeld();
                     return;
                 }
@@ -473,7 +473,7 @@ public class ObjectGrabber : MonoBehaviour
         }
 
         OnObjectPlaced?.Invoke();
-        AudioManager.Instance?.PlaySFX(_placeSFX);
+        PlayPlaceSFX(_held);
 
         // DropZone deposit (non-destroy — item stays placed on surface)
         {
@@ -609,6 +609,12 @@ public class ObjectGrabber : MonoBehaviour
                 count++;
         }
         return count;
+    }
+
+    private void PlayPlaceSFX(PlaceableObject obj)
+    {
+        var clip = obj != null && obj.PlaceSFXOverride != null ? obj.PlaceSFXOverride : _placeSFX;
+        AudioManager.Instance?.PlaySFX(clip);
     }
 
     private void ClearHeld()

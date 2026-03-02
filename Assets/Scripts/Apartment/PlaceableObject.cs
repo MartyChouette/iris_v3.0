@@ -56,6 +56,13 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("True when a disheveled rotation has been captured.")]
     [SerializeField] private bool _hasDisheveledPose;
 
+    [Header("Audio Overrides")]
+    [Tooltip("Pickup sound override. If set, plays instead of ObjectGrabber's default.")]
+    [SerializeField] private AudioClip _pickupSFXOverride;
+
+    [Tooltip("Place sound override. If set, plays instead of ObjectGrabber's default.")]
+    [SerializeField] private AudioClip _placeSFXOverride;
+
     [Header("Home Position")]
     [Tooltip("If true, captures spawn position as home on Awake (when _homePosition is unset).")]
     [SerializeField] private bool _useSpawnAsHome;
@@ -81,6 +88,8 @@ public class PlaceableObject : MonoBehaviour
     public string HomeZoneName => _homeZoneName;
     public string AltHomeZoneName => _altHomeZoneName;
     public string ItemDescription => !string.IsNullOrEmpty(_itemDescription) ? _itemDescription : name;
+    public AudioClip PickupSFXOverride => _pickupSFXOverride;
+    public AudioClip PlaceSFXOverride => _placeSFXOverride;
     private bool _isAtHomeOverride;
     public bool IsAtHome
     {

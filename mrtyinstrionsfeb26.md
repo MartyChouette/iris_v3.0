@@ -128,4 +128,18 @@ On any `PlaceableObject` that should start tilted/crooked when messy:
 
 ---
 
+## 13. Glass & Light Switch Audio — Wire in Inspector
+
+`PlaceableObject` now has **Audio Overrides** fields (`_pickupSFXOverride`, `_placeSFXOverride`). ObjectGrabber uses these instead of the global default when set.
+
+**Glass items** (perfume bottles, disco ball bulbs):
+1. Select each glass PlaceableObject in the scene
+2. Drag `Assets/Audio/glass_pickup_ES_Button Press Click, Tap, Video Game, Main Menu, Select 01 - Epidemic Sound.wav` into both **Pickup SFX Override** and **Place SFX Override**
+
+**Disco ball toggle**:
+1. Select the `DiscoBall` GO
+2. Drag `Assets/Audio/light_switch_ES_Clothes Peg, Click - Epidemic Sound.wav` into `DiscoBallController._toggleSFX`
+
+---
+
 *This doc will be updated with more instructions as the session continues.*
