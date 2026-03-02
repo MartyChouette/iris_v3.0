@@ -673,4 +673,31 @@ public class PlaceableObject : MonoBehaviour
         if (_instanceMat != null)
             _instanceMat.color = _originalColor;
     }
+
+    /// <summary>
+    /// Override the instance material's shader and properties from a source material.
+    /// Call AFTER Awake (which creates _instanceMat) and BEFORE InteractableHighlight
+    /// caches base materials. Preserves the material reference so pickup/place still works.
+    /// </summary>
+    public void ApplyMaterialOverride(Material source, Color color)
+    {
+        if (source == null) return;
+
+        if (_instanceMat == null)
+        {
+            // Awake hasn't run yet — set on the renderer directly
+            _renderer = GetComponent<Renderer>();
+            if (_renderer == null) return;
+            _instanceMat = new Material(source);
+            _instanceMat.color = color;
+            _renderer.material = _instanceMat;
+        }
+        else
+        {
+            _instanceMat.shader = source.shader;
+            _instanceMat.CopyPropertiesFromMaterial(source);
+            _instanceMat.color = color;
+        }
+        _originalColor = color;
+    }
 }

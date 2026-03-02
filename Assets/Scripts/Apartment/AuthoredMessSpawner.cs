@@ -271,30 +271,18 @@ public class AuthoredMessSpawner : MonoBehaviour
     {
         GameObject go;
 
+        bool isProcedural = bp.objectPrefab == null;
+
         if (bp.objectPrefab != null)
         {
             go = Instantiate(bp.objectPrefab, position, Quaternion.identity);
         }
         else
         {
-            // Procedural box with glitch material
+            // Procedural box — material applied via PlaceableObject.ApplyMaterialOverride below
             go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.transform.position = position;
             go.transform.localScale = bp.objectScale;
-
-            var rend = go.GetComponent<Renderer>();
-            if (rend != null)
-            {
-                if (_glitchMatInstance != null)
-                {
-                    rend.material = new Material(_glitchMatInstance);
-                    rend.material.color = bp.objectColor;
-                }
-                else
-                {
-                    rend.material.color = bp.objectColor;
-                }
-            }
         }
 
         go.name = bp.messName.Replace(" ", "_");
@@ -307,7 +295,7 @@ public class AuthoredMessSpawner : MonoBehaviour
         rb.mass = 0.05f;
         rb.isKinematic = true;
 
-        // Add PlaceableObject as Trash
+        // Add PlaceableObject as Trash — Awake creates _instanceMat
         var po = go.GetComponent<PlaceableObject>();
         if (po == null) po = go.AddComponent<PlaceableObject>();
 
@@ -319,7 +307,14 @@ public class AuthoredMessSpawner : MonoBehaviour
         if (bp.canBeDishelved)
             poSO.SetBool("_canBeDishelved", true);
 
-        // Add InteractableHighlight
+        // Apply glitch material AFTER PlaceableObject.Awake (so _instanceMat exists)
+        // and BEFORE InteractableHighlight.Awake (so it caches the correct base material)
+        if (isProcedural && _glitchMatInstance != null)
+            po.ApplyMaterialOverride(_glitchMatInstance, bp.objectColor);
+        else if (isProcedural)
+            go.GetComponent<Renderer>()?.material.SetColor("_Color", bp.objectColor);
+
+        // Add InteractableHighlight — caches materials including glitch override
         if (go.GetComponent<InteractableHighlight>() == null)
             go.AddComponent<InteractableHighlight>();
 
