@@ -12,6 +12,8 @@ public static class DiscoBallSetup
     static readonly Vector3 BulbRowStart = new Vector3(-0.2f, 0.85f, 2f);
     const float BulbSpacing = 0.12f;
     const string SOFolder = "Assets/ScriptableObjects/DiscoBall";
+    const string GlassClipPath = "Assets/Audio/glass_pickup_ES_Button Press Click, Tap, Video Game, Main Menu, Select 01 - Epidemic Sound.wav";
+    const string LightSwitchClipPath = "Assets/Audio/light_switch_ES_Clothes Peg, Click - Epidemic Sound.wav";
 
     [MenuItem("Window/Iris/Setup Disco Ball")]
     public static void Setup()
@@ -159,6 +161,9 @@ public static class DiscoBallSetup
         controllerSO.FindProperty("_spotlight").objectReferenceValue = spotlight;
         controllerSO.FindProperty("_ballVisual").objectReferenceValue = visual.transform;
         controllerSO.FindProperty("_bulbSnapPoint").objectReferenceValue = snapPoint.transform;
+        var toggleClip = AssetDatabase.LoadAssetAtPath<AudioClip>(LightSwitchClipPath);
+        if (toggleClip != null)
+            controllerSO.FindProperty("_toggleSFX").objectReferenceValue = toggleClip;
         controllerSO.ApplyModifiedProperties();
 
         // Wire ReactableTag
@@ -199,7 +204,7 @@ public static class DiscoBallSetup
         go.AddComponent<SphereCollider>();
 
         // Components
-        go.AddComponent<PlaceableObject>();
+        var placeable = go.AddComponent<PlaceableObject>();
         var bulb = go.AddComponent<DiscoBallBulb>();
         go.AddComponent<ReactableTag>(); // tags auto-set from definition in Awake
         var rb = go.AddComponent<Rigidbody>();
@@ -209,6 +214,16 @@ public static class DiscoBallSetup
         var bulbSO = new SerializedObject(bulb);
         bulbSO.FindProperty("_definition").objectReferenceValue = def;
         bulbSO.ApplyModifiedProperties();
+
+        // Wire glass pickup/place SFX on PlaceableObject
+        var glassClip = AssetDatabase.LoadAssetAtPath<AudioClip>(GlassClipPath);
+        if (glassClip != null)
+        {
+            var placeableSO = new SerializedObject(placeable);
+            placeableSO.FindProperty("_pickupSFXOverride").objectReferenceValue = glassClip;
+            placeableSO.FindProperty("_placeSFXOverride").objectReferenceValue = glassClip;
+            placeableSO.ApplyModifiedProperties();
+        }
 
         Undo.RegisterCreatedObjectUndo(go, $"Create Bulb {bulbName}");
     }
