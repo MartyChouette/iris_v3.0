@@ -12,11 +12,18 @@ using UnityEngine;
 /// </summary>
 public class InteractableHighlight : MonoBehaviour
 {
+    [Tooltip("Drag Iris/RimLight shader here so it's included in builds.")]
+    [SerializeField] private Shader _rimShader;
+
+    private static Shader s_cachedRimShader;
     private static Material s_sharedRimMat;
     private static Material s_sharedGazeMat;
     private static Material s_sharedDisplayMat;
     private static Material s_sharedPrepLikedMat;
     private static Material s_sharedPrepDislikedMat;
+
+    /// <summary>Cached Iris/RimLight shader. Available for other scripts (e.g. GlassController).</summary>
+    public static Shader RimShader => s_cachedRimShader;
 
     private Renderer[] _renderers;
     private Material[][] _baseMaterialArrays;
@@ -40,6 +47,13 @@ public class InteractableHighlight : MonoBehaviour
     {
         _renderers = GetComponentsInChildren<Renderer>();
         if (_renderers.Length == 0) return;
+
+        // Cache shader from serialized ref (survives builds) or Shader.Find fallback
+        if (s_cachedRimShader == null)
+        {
+            s_cachedRimShader = _rimShader;
+            if (s_cachedRimShader == null) s_cachedRimShader = Shader.Find("Iris/RimLight");
+        }
 
         EnsureSharedMaterials();
 
@@ -225,7 +239,7 @@ public class InteractableHighlight : MonoBehaviour
     {
         if (s_sharedRimMat == null)
         {
-            var shader = Shader.Find("Iris/RimLight");
+            var shader = s_cachedRimShader;
             if (shader == null)
             {
                 Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found.");
@@ -241,7 +255,7 @@ public class InteractableHighlight : MonoBehaviour
 
         if (s_sharedGazeMat == null)
         {
-            var shader = Shader.Find("Iris/RimLight");
+            var shader = s_cachedRimShader;
             if (shader == null)
             {
                 Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found for gaze material.");
@@ -257,7 +271,7 @@ public class InteractableHighlight : MonoBehaviour
 
         if (s_sharedDisplayMat == null)
         {
-            var shader = Shader.Find("Iris/RimLight");
+            var shader = s_cachedRimShader;
             if (shader == null)
             {
                 Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found for display material.");
@@ -273,7 +287,7 @@ public class InteractableHighlight : MonoBehaviour
 
         if (s_sharedPrepLikedMat == null)
         {
-            var shader = Shader.Find("Iris/RimLight");
+            var shader = s_cachedRimShader;
             if (shader != null)
             {
                 s_sharedPrepLikedMat = new Material(shader);
@@ -285,7 +299,7 @@ public class InteractableHighlight : MonoBehaviour
 
         if (s_sharedPrepDislikedMat == null)
         {
-            var shader = Shader.Find("Iris/RimLight");
+            var shader = s_cachedRimShader;
             if (shader != null)
             {
                 s_sharedPrepDislikedMat = new Material(shader);
