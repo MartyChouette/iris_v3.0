@@ -367,16 +367,46 @@ public class PlaytestFeedbackForm : MonoBehaviour
         var dimImg = dimBg.AddComponent<Image>();
         dimImg.color = new Color(0f, 0f, 0f, 0.7f);
 
-        // ── Panel ──
+        // ── Panel (outer frame, height capped to screen) ──
+        const float MaxPanelHeight = 920f;
+        const float ButtonAreaHeight = 65f;
+
         var panel = MakeChild(_canvasRoot, "Panel");
         var panelRT = panel.AddComponent<RectTransform>();
         panelRT.anchorMin = new Vector2(0.5f, 0.5f);
         panelRT.anchorMax = new Vector2(0.5f, 0.5f);
         panelRT.pivot = new Vector2(0.5f, 0.5f);
-        panelRT.sizeDelta = new Vector2(700f, 1130f);
+        // sizeDelta set after content is measured
         var panelImg = panel.AddComponent<Image>();
         panelImg.color = PanelBg;
         _formPanel = panel;
+
+        // ── Scroll viewport (fills panel above button strip) ──
+        var viewport = MakeChild(panel, "Viewport");
+        var viewportRT = viewport.AddComponent<RectTransform>();
+        viewportRT.anchorMin = Vector2.zero;
+        viewportRT.anchorMax = Vector2.one;
+        viewportRT.offsetMin = new Vector2(0f, ButtonAreaHeight);
+        viewportRT.offsetMax = Vector2.zero;
+        viewport.AddComponent<Image>().color = Color.clear;
+        viewport.AddComponent<RectMask2D>();
+
+        // ── Scroll content (auto-sized to fit all questions) ──
+        var scrollContent = MakeChild(viewport, "Content");
+        var scrollContentRT = scrollContent.AddComponent<RectTransform>();
+        scrollContentRT.anchorMin = new Vector2(0f, 1f);
+        scrollContentRT.anchorMax = new Vector2(1f, 1f);
+        scrollContentRT.pivot = new Vector2(0.5f, 1f);
+        scrollContentRT.anchoredPosition = Vector2.zero;
+
+        // ── ScrollRect ──
+        var scrollRect = panel.AddComponent<ScrollRect>();
+        scrollRect.viewport = viewportRT;
+        scrollRect.content = scrollContentRT;
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.scrollSensitivity = 30f;
 
         _starImages = new Image[RatingCount][];
         _selectedRatings = new int[RatingCount];
@@ -384,39 +414,39 @@ public class PlaytestFeedbackForm : MonoBehaviour
         float yPos = -25f;
 
         // ── Title ──
-        yPos = AddLabel(panel, "Title", "Playtest Feedback", 28f, yPos, 40f,
+        yPos = AddLabel(scrollContent, "Title", "Playtest Feedback", 28f, yPos, 40f,
             new Color(0.95f, 0.92f, 0.85f), TextAlignmentOptions.Center);
 
         // ── Star rating rows ──
         for (int q = 0; q < RatingCount; q++)
         {
             yPos -= 8f;
-            yPos = AddLabel(panel, $"RatingLabel_{q}", RatingLabels[q], 17f, yPos, 24f,
+            yPos = AddLabel(scrollContent, $"RatingLabel_{q}", RatingLabels[q], 17f, yPos, 24f,
                 new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Center);
             yPos -= 3f;
-            BuildStarRow(panel, yPos, q);
+            BuildStarRow(scrollContent, yPos, q);
             yPos -= 50f;
         }
 
         // ── Text fields ──
         yPos -= 5f;
-        yPos = AddLabel(panel, "PosLabel", "What did you enjoy?", 17f, yPos, 24f,
+        yPos = AddLabel(scrollContent, "PosLabel", "What did you enjoy?", 17f, yPos, 24f,
             new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
-        _positiveField = AddInputField(panel, "PositiveField", yPos, 70f, "Type here...");
+        _positiveField = AddInputField(scrollContent, "PositiveField", yPos, 70f, "Type here...");
         yPos -= 80f;
 
-        yPos = AddLabel(panel, "NegLabel", "What was confusing or frustrating?", 17f, yPos, 24f,
+        yPos = AddLabel(scrollContent, "NegLabel", "What was confusing or frustrating?", 17f, yPos, 24f,
             new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
-        _negativeField = AddInputField(panel, "NegativeField", yPos, 70f, "Type here...");
+        _negativeField = AddInputField(scrollContent, "NegativeField", yPos, 70f, "Type here...");
         yPos -= 80f;
 
-        yPos = AddLabel(panel, "BugLabel", "Any bugs to report?", 17f, yPos, 24f,
+        yPos = AddLabel(scrollContent, "BugLabel", "Any bugs to report?", 17f, yPos, 24f,
             new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
-        _bugField = AddInputField(panel, "BugField", yPos, 70f, "Type here...");
+        _bugField = AddInputField(scrollContent, "BugField", yPos, 70f, "Type here...");
         yPos -= 80f;
 
         // ── Confirm text ──
-        var confirmGO = MakeChild(panel, "ConfirmText");
+        var confirmGO = MakeChild(scrollContent, "ConfirmText");
         var confirmRT = confirmGO.AddComponent<RectTransform>();
         confirmRT.anchorMin = new Vector2(0.5f, 1f);
         confirmRT.anchorMax = new Vector2(0.5f, 1f);
@@ -430,11 +460,19 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _confirmText.color = new Color(0.4f, 0.9f, 0.5f);
         yPos -= 40f;
 
-        // ── Buttons ──
-        _submitButton = AddButton(panel, "SubmitBtn", "Submit", -100f, yPos, 180f, 45f, BtnSubmit);
+        // ── Size scroll content to fit, cap panel height ──
+        float totalContentHeight = Mathf.Abs(yPos) + 20f;
+        scrollContentRT.sizeDelta = new Vector2(0f, totalContentHeight);
+
+        float panelHeight = Mathf.Min(totalContentHeight + ButtonAreaHeight, MaxPanelHeight);
+        panelRT.sizeDelta = new Vector2(700f, panelHeight);
+
+        // ── Buttons (pinned to bottom of panel, outside scroll) ──
+        float buttonYFromTop = -(panelHeight - ButtonAreaHeight * 0.5f);
+        _submitButton = AddButton(panel, "SubmitBtn", "Submit", -100f, buttonYFromTop, 180f, 45f, BtnSubmit);
         _submitButton.onClick.AddListener(OnSubmit);
 
-        _closeButton = AddButton(panel, "CloseBtn", "Close", 100f, yPos, 180f, 45f, BtnClose);
+        _closeButton = AddButton(panel, "CloseBtn", "Close", 100f, buttonYFromTop, 180f, 45f, BtnClose);
         _closeButton.onClick.AddListener(CloseForm);
     }
 
