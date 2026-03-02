@@ -48,63 +48,15 @@ The mess system supports spawning dirty dishes as authored messes. You just need
 
 ---
 
-## 5. Disco Ball -- Scene Setup
+## ~~5. Disco Ball -- Scene Setup~~ ✅ DONE
 
-The disco ball system is fully coded but needs manual scene wiring.
+~~Automated by **Window > Iris > Setup Disco Ball** (`Assets/Editor/DiscoBallSetup.cs`). Creates 4 DiscoBulbDefinition SOs + spawns DiscoBall and 4 bulb GameObjects with all references wired.~~
 
-### 5a. Create the Disco Ball GameObject
-
-1. Create a new empty GO named `DiscoBall` in the apartment scene (living room area)
-2. Add a **sphere mesh** child (the mirrored ball visual) -- scale it small, like 0.15
-3. Add components to the root GO:
-   - `DiscoBallController`
-   - `PlacementSurface`
-   - `ReactableTag` -- tags: `light`, `disco`, `party` -- set `isActive` to **false**
-   - `InteractableHighlight`
-   - `Collider` (BoxCollider or SphereCollider)
-4. Add a child **Spotlight** (Light > Spot Light):
-   - Point it roughly 45 degrees upward
-   - Assign it to `DiscoBallController._spotlight` in the Inspector
-5. Add a child empty GO named `BulbSnapPoint`:
-   - Position it where you want the bulb to visually sit (e.g. just below the ball)
-   - Assign it to `DiscoBallController._bulbSnapPoint`
-6. Assign the sphere mesh transform to `DiscoBallController._ballVisual`
-
-### 5b. Create 4 Bulb GameObjects
-
-For each bulb:
-1. Create a small colored sphere GO (scale ~0.05)
-2. Add components:
-   - `PlaceableObject`
-   - `DiscoBallBulb`
-   - `ReactableTag`
-   - `Rigidbody` (use gravity, not kinematic)
-   - `Collider` (SphereCollider)
-3. Place them on a shelf or table where the player can grab them
-
-### 5c. Create 4 Disco Bulb Definition SOs
-
-In `Assets/ScriptableObjects/DiscoBall/`, right-click > **Create > Iris > Disco Bulb Definition** for each:
-
-| SO Name | Pattern | Color | Cycle Colors | Gradient | Speed | Mood |
-|---------|---------|-------|--------------|----------|-------|------|
-| `Bulb_ColorCircles` | ColorCircles | White | Yes | Rainbow | 2.0 | 0.7 |
-| `Bulb_MirrorClassic` | MirrorGrid | Warm white (0.95, 0.9, 0.8) | No | -- | 4.0 | 0.5 |
-| `Bulb_Pinpoints` | Pinpoints | Amber (1.0, 0.7, 0.3) | No | -- | 1.5 | 0.4 |
-| `Bulb_Prism` | Prism | White | Yes | Prism rainbow | 1.0 | 0.6 |
-
-### 5d. Wire It Up
-
-1. Assign each SO to its corresponding bulb GO's `DiscoBallBulb._definition` field
-2. Optionally assign `_toggleSFX` and `_insertSFX` audio clips on the `DiscoBallController`
-3. Make sure the disco ball GO and bulb GOs are on the **Placeables** layer (so ObjectGrabber can raycast them)
-
-### 5e. Verify
-
-1. Grab a bulb, drop it on the disco ball -- should auto-turn on, spotlight projects pattern
-2. Click the disco ball -- toggles off/on
-3. Swap bulbs -- old one ejects to home position, new pattern loads
-4. Check MoodMachine debug panel (F3) shows "DiscoBall" source while active
+After running the tool, manually adjust:
+1. Position the DiscoBall GO where you want it (default near ceiling)
+2. Move bulb GOs to a shelf/table
+3. Optionally assign `_toggleSFX` and `_insertSFX` audio clips on `DiscoBallController`
+4. Set layer to **Placeables** on disco ball + bulbs (so ObjectGrabber can raycast them)
 
 ---
 
