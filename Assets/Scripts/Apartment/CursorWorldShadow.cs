@@ -3,8 +3,9 @@ using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// Projects a shadow + reflection disc onto world surfaces under the mouse cursor.
-/// The disc aligns to the surface normal and follows the cursor each frame.
+/// Projects a shadow onto world surfaces under the mouse cursor.
+/// When a CursorContext exists in the scene, the shadow matches the active
+/// cursor texture. Otherwise falls back to a procedural disc.
 /// </summary>
 public class CursorWorldShadow : MonoBehaviour
 {
@@ -16,11 +17,15 @@ public class CursorWorldShadow : MonoBehaviour
     [SerializeField] private float _maxDistance = 50f;
 
     [Header("Shadow Size")]
-    [Tooltip("World-space diameter of the shadow disc.")]
+    [Tooltip("World-space diameter of the shadow quad.")]
     [SerializeField] private float _diameter = 0.3f;
 
     [Tooltip("Offset from surface along normal to prevent z-fighting.")]
     [SerializeField] private float _surfaceOffset = 0.005f;
+
+    [Header("Cursor Texture")]
+    [Tooltip("Cursor texture to project as shadow. If a CursorContext exists in the scene, its active texture is used instead.")]
+    [SerializeField] private Texture2D _cursorTexture;
 
     [Header("Smoothing")]
     [Tooltip("How quickly the shadow follows the cursor (0 = instant).")]
@@ -34,6 +39,9 @@ public class CursorWorldShadow : MonoBehaviour
     private Vector3 _currentPos;
     private Quaternion _currentRot;
     private bool _hasTarget;
+
+    private CursorContext _cursorContext;
+    private Texture2D _activeTexture;
 
     private void Awake()
     {
@@ -99,6 +107,34 @@ public class CursorWorldShadow : MonoBehaviour
         _shadowQuad.SetActive(false);
     }
 
+    private void SyncCursorTexture()
+    {
+        // Try to find CursorContext each frame until found
+        if (_cursorContext == null)
+            _cursorContext = FindAnyObjectByType<CursorContext>();
+
+        // Pick texture: CursorContext active texture > serialized fallback
+        Texture2D desired = null;
+        if (_cursorContext != null)
+            desired = _cursorContext.ActiveCursorTexture;
+        if (desired == null)
+            desired = _cursorTexture;
+
+        if (desired != null)
+        {
+            if (desired != _activeTexture)
+            {
+                _activeTexture = desired;
+                _shadowMat.SetTexture("_MainTex", _activeTexture);
+            }
+            _shadowMat.SetFloat("_UseTexture", 1f);
+        }
+        else
+        {
+            _shadowMat.SetFloat("_UseTexture", 0f);
+        }
+    }
+
     private void Update()
     {
         if (_cam == null)
@@ -114,13 +150,21 @@ public class CursorWorldShadow : MonoBehaviour
             return;
         }
 
+        SyncCursorTexture();
+
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
         Ray ray = _cam.ScreenPointToRay(screenPos);
 
         if (Physics.Raycast(ray, out RaycastHit hit, _maxDistance, _surfaceLayers))
         {
             Vector3 targetPos = hit.point + hit.normal * _surfaceOffset;
-            Quaternion targetRot = Quaternion.FromToRotation(Vector3.up, hit.normal);
+
+            // Orient quad: face the surface normal, align cursor "up" with
+            // camera up projected onto the surface so it looks correct on screen.
+            Vector3 projUp = Vector3.ProjectOnPlane(_cam.transform.up, hit.normal);
+            if (projUp.sqrMagnitude < 0.001f)
+                projUp = Vector3.ProjectOnPlane(_cam.transform.forward, hit.normal);
+            Quaternion targetRot = Quaternion.LookRotation(projUp.normalized, hit.normal);
 
             if (!_hasTarget)
             {

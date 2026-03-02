@@ -42,6 +42,9 @@ public class CursorContext : MonoBehaviour
     private bool isHovering = false;
     private Camera mainCamera;
 
+    /// <summary>Returns whichever cursor texture is currently active (hover or default).</summary>
+    public Texture2D ActiveCursorTexture => isHovering && hoverCursor != null ? hoverCursor : defaultCursor;
+
     void Start()
     {
         mainCamera = Camera.main;

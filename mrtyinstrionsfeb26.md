@@ -108,13 +108,13 @@ In `Assets/ScriptableObjects/DiscoBall/`, right-click > **Create > Iris > Disco 
 
 ---
 
-## 6. Mirror -- Scene Setup
+## ~~6. Mirror -- Scene Setup~~ ✅ DONE
 
-1. Select the mirror mesh/quad in the scene
-2. Assign `Assets/Materials/Mirror.mat` to its Renderer
-3. Add component: **PlanarMirror**
-4. Make sure the quad's **blue arrow (forward)** points toward the camera/player
-5. Optional: tweak `Texture Width`/`Texture Height` (default 256x192), `Skip Frames` for performance
+~~1. Select the mirror mesh/quad in the scene~~
+~~2. Assign `Assets/Materials/Mirror.mat` to its Renderer~~
+~~3. Add component: **PlanarMirror**~~
+~~4. Make sure the quad's **blue arrow (forward)** points toward the camera/player~~
+~~5. Optional: tweak `Texture Width`/`Texture Height` (default 256x192), `Skip Frames` for performance~~
 
 ---
 
@@ -166,10 +166,10 @@ On any `PlaceableObject` that should start tilted/crooked when messy:
 
 ---
 
-## 12. Wall Materials -- See-Through for Date NPC
+## ~~12. Wall Materials -- See-Through for Date NPC~~ ✅ DONE
 
-1. Assign `Assets/Materials/PSXLit_Dissovable.mat` (shader `Iris/PSXLitDissolvable`) to apartment wall materials
-2. `WallOcclusionFader` drives `_DissolveAmount` when the date NPC is behind walls
+~~1. Assign `Assets/Materials/PSXLit_Dissovable.mat` (shader `Iris/PSXLitDissolvable`) to apartment wall materials~~
+~~2. `WallOcclusionFader` drives `_DissolveAmount` when the date NPC is behind walls~~
 
 ---
 

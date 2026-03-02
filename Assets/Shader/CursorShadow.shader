@@ -2,6 +2,10 @@ Shader "Iris/CursorShadow"
 {
     Properties
     {
+        [Header(Cursor Texture)]
+        _MainTex       ("Cursor Texture", 2D) = "white" {}
+        _UseTexture    ("Use Texture", Float) = 0
+
         [Header(Shadow)]
         _ShadowColor   ("Shadow Color", Color) = (0.05, 0.03, 0.08, 0.5)
         _ShadowRadius  ("Shadow Radius", Range(0.01, 1.0)) = 0.15
@@ -54,7 +58,11 @@ Shader "Iris/CursorShadow"
                 float2 uv         : TEXCOORD0;
             };
 
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
             CBUFFER_START(UnityPerMaterial)
+                half   _UseTexture;
                 half4  _ShadowColor;
                 half   _ShadowRadius;
                 half   _ShadowSoftness;
@@ -75,31 +83,34 @@ Shader "Iris/CursorShadow"
 
             half4 frag(Varyings input) : SV_Target
             {
-                // UV 0-1 centered at 0.5
                 float2 centered = input.uv - 0.5;
                 float dist = length(centered);
-
-                // Pulse animation
                 float pulse = 1.0 + sin(_Time.y * _PulseSpeed) * _PulseAmount;
 
-                // ── Shadow (larger, darker disc) ──
-                float shadowEdge = _ShadowRadius * pulse;
-                float shadowAlpha = 1.0 - smoothstep(shadowEdge * (1.0 - _ShadowSoftness), shadowEdge, dist);
-                half4 shadow = half4(_ShadowColor.rgb, _ShadowColor.a * shadowAlpha);
+                if (_UseTexture > 0.5)
+                {
+                    // Texture mode: cursor silhouette as shadow
+                    half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
+                    half alpha = tex.a * _ShadowColor.a;
+                    clip(alpha - 0.001);
+                    return half4(_ShadowColor.rgb, alpha);
+                }
+                else
+                {
+                    // Procedural circle mode (original behavior)
+                    float shadowEdge = _ShadowRadius * pulse;
+                    float shadowAlpha = 1.0 - smoothstep(shadowEdge * (1.0 - _ShadowSoftness), shadowEdge, dist);
+                    half4 shadow = half4(_ShadowColor.rgb, _ShadowColor.a * shadowAlpha);
 
-                // ── Reflection highlight (small bright spot in center) ──
-                float reflEdge = _ReflRadius * pulse;
-                float reflAlpha = 1.0 - smoothstep(reflEdge * (1.0 - _ReflSoftness), reflEdge, dist);
-                half4 refl = half4(_ReflColor.rgb, _ReflColor.a * reflAlpha);
+                    float reflEdge = _ReflRadius * pulse;
+                    float reflAlpha = 1.0 - smoothstep(reflEdge * (1.0 - _ReflSoftness), reflEdge, dist);
+                    half4 refl = half4(_ReflColor.rgb, _ReflColor.a * reflAlpha);
 
-                // Composite: reflection on top of shadow
-                half3 color = lerp(shadow.rgb, refl.rgb, reflAlpha * refl.a);
-                half alpha = max(shadow.a, refl.a);
-
-                // Clip outside the circle
-                clip(alpha - 0.001);
-
-                return half4(color, alpha);
+                    half3 color = lerp(shadow.rgb, refl.rgb, reflAlpha * refl.a);
+                    half alpha = max(shadow.a, refl.a);
+                    clip(alpha - 0.001);
+                    return half4(color, alpha);
+                }
             }
             ENDHLSL
         }
