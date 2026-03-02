@@ -173,29 +173,19 @@ public class PlaceableObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Apply the captured disheveled pose, or fall back to procedural Z lean.
+    /// Apply the captured disheveled pose. Does nothing if no pose was captured.
     /// Call from mess spawners or DailyMessSpawner to scatter items.
     /// </summary>
     public void Dishevel()
     {
-        if (!_canBeDishelved) return;
+        if (!_canBeDishelved || !_hasDisheveledPose) return;
 
-        if (_hasDisheveledPose)
-        {
-            transform.rotation = _disheveledRotation;
-        }
-        else
-        {
-            // Fallback: lean on local Z axis, random direction
-            float sign = Random.value > 0.5f ? 1f : -1f;
-            float angle = Random.Range(_dishevelAngle, _dishevelAngle + 10f) * sign;
-            transform.rotation = transform.rotation * Quaternion.Euler(0f, 0f, angle);
-        }
+        transform.rotation = _disheveledRotation;
 
         if (_rb != null)
             _rb.angularVelocity = Vector3.zero;
 
-        Debug.Log($"[PlaceableObject] {name} disheveled (captured={_hasDisheveledPose}).");
+        Debug.Log($"[PlaceableObject] {name} disheveled.");
     }
 
     /// <summary>Capture current transform rotation as the disheveled pose.</summary>
