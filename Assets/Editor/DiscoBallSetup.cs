@@ -272,6 +272,38 @@ public static class DiscoBallSetup
     }
 
     // ----------------------------------------------------------------
+    //  Wire glass audio on all PerfumeBottles in scene
+    // ----------------------------------------------------------------
+
+    [MenuItem("Window/Iris/Wire Glass Audio on Perfume Bottles")]
+    public static void WireGlassAudioOnPerfumeBottles()
+    {
+        var glassClip = AssetDatabase.LoadAssetAtPath<AudioClip>(GlassClipPath);
+        if (glassClip == null)
+        {
+            Debug.LogWarning($"[DiscoBallSetup] Glass clip not found at {GlassClipPath}");
+            return;
+        }
+
+        var bottles = Object.FindObjectsByType<PerfumeBottle>(FindObjectsSortMode.None);
+        int count = 0;
+        foreach (var bottle in bottles)
+        {
+            var placeable = bottle.GetComponent<PlaceableObject>();
+            if (placeable == null) continue;
+
+            var so = new SerializedObject(placeable);
+            so.FindProperty("_pickupSFXOverride").objectReferenceValue = glassClip;
+            so.FindProperty("_placeSFXOverride").objectReferenceValue = glassClip;
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(placeable);
+            count++;
+        }
+
+        Debug.Log($"[DiscoBallSetup] Wired glass audio on {count} perfume bottle(s). Save the scene to keep changes.");
+    }
+
+    // ----------------------------------------------------------------
     //  Folder helper
     // ----------------------------------------------------------------
 
