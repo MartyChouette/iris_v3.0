@@ -159,14 +159,18 @@ public class PlaceableObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Straighten a tilted item in-place (zeroes X/Z rotation, keeps Y).
+    /// Straighten a tilted item — snaps to home rotation if captured, otherwise zeroes X/Z.
     /// Returns true if the item was tilted and got straightened.
     /// </summary>
     public bool Straighten()
     {
         if (!IsTilted) return false;
-        float yAngle = transform.eulerAngles.y;
-        transform.rotation = Quaternion.Euler(0f, yAngle, 0f);
+
+        if (_homeRotation != Quaternion.identity)
+            transform.rotation = _homeRotation;
+        else
+            transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
         if (_rb != null) _rb.angularVelocity = Vector3.zero;
         Debug.Log($"[PlaceableObject] {name} straightened.");
         return true;
@@ -378,15 +382,25 @@ public class PlaceableObject : MonoBehaviour
         if (_rb != null)
             _rb.isKinematic = false;
 
-        // Auto-straighten any tilted item on pickup (keeps Y rotation)
-        Vector3 euler = transform.eulerAngles;
-        float xTilt = Mathf.Abs(Mathf.DeltaAngle(euler.x, 0f));
-        float zTilt = Mathf.Abs(Mathf.DeltaAngle(euler.z, 0f));
-        if (xTilt > 1f || zTilt > 1f)
+        // Auto-straighten to home rotation on pickup (if home was captured)
+        if (_homeRotation != Quaternion.identity)
         {
-            transform.rotation = Quaternion.Euler(0f, euler.y, 0f);
+            transform.rotation = _homeRotation;
             if (_rb != null) _rb.angularVelocity = Vector3.zero;
-            Debug.Log($"[PlaceableObject] {name} auto-straightened on pickup.");
+            Debug.Log($"[PlaceableObject] {name} straightened to home rotation on pickup.");
+        }
+        else
+        {
+            // No home rotation — just zero X/Z, keep Y
+            Vector3 euler = transform.eulerAngles;
+            float xTilt = Mathf.Abs(Mathf.DeltaAngle(euler.x, 0f));
+            float zTilt = Mathf.Abs(Mathf.DeltaAngle(euler.z, 0f));
+            if (xTilt > 1f || zTilt > 1f)
+            {
+                transform.rotation = Quaternion.Euler(0f, euler.y, 0f);
+                if (_rb != null) _rb.angularVelocity = Vector3.zero;
+                Debug.Log($"[PlaceableObject] {name} auto-straightened on pickup.");
+            }
         }
 
         // Disable colliders so held object doesn't block raycasts or knock items
