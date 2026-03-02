@@ -50,6 +50,12 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Angle threshold (degrees) — tilted beyond this from upright = dishelved.")]
     [SerializeField] private float _dishevelAngle = 25f;
 
+    [Tooltip("Captured disheveled rotation. Use context menu 'Capture Disheveled Pose' to set.")]
+    [SerializeField] private Quaternion _disheveledRotation = Quaternion.identity;
+
+    [Tooltip("True when a disheveled rotation has been captured.")]
+    [SerializeField] private bool _hasDisheveledPose;
+
     [Header("Home Position")]
     [Tooltip("If true, captures spawn position as home on Awake (when _homePosition is unset).")]
     [SerializeField] private bool _useSpawnAsHome;
@@ -167,23 +173,56 @@ public class PlaceableObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Make this item look messy — lean it to one side (Z-axis rotation).
-    /// Books lean sideways, bowls go lopsided, magazines tilt over.
+    /// Apply the captured disheveled pose, or fall back to procedural Z lean.
     /// Call from mess spawners or DailyMessSpawner to scatter items.
     /// </summary>
     public void Dishevel()
     {
         if (!_canBeDishelved) return;
 
-        // Lean to one side on Z axis, random direction
-        float sign = Random.value > 0.5f ? 1f : -1f;
-        float angle = Random.Range(_dishevelAngle, _dishevelAngle + 10f) * sign;
-        transform.rotation = transform.rotation * Quaternion.Euler(0f, 0f, angle);
+        if (_hasDisheveledPose)
+        {
+            transform.rotation = _disheveledRotation;
+        }
+        else
+        {
+            // Fallback: lean on local Z axis, random direction
+            float sign = Random.value > 0.5f ? 1f : -1f;
+            float angle = Random.Range(_dishevelAngle, _dishevelAngle + 10f) * sign;
+            transform.rotation = transform.rotation * Quaternion.Euler(0f, 0f, angle);
+        }
 
         if (_rb != null)
             _rb.angularVelocity = Vector3.zero;
 
-        Debug.Log($"[PlaceableObject] {name} disheveled ({angle:F1}° on Z).");
+        Debug.Log($"[PlaceableObject] {name} disheveled (captured={_hasDisheveledPose}).");
+    }
+
+    /// <summary>Capture current transform rotation as the disheveled pose.</summary>
+    [ContextMenu("Capture Disheveled Pose")]
+    private void CaptureDisheveledPose()
+    {
+        _disheveledRotation = transform.rotation;
+        _hasDisheveledPose = true;
+        Debug.Log($"[PlaceableObject] {name} disheveled pose captured: {transform.eulerAngles}");
+    }
+
+    /// <summary>Capture current transform as the normal/home pose.</summary>
+    [ContextMenu("Capture Normal Pose")]
+    private void CaptureNormalPose()
+    {
+        _homePosition = transform.position;
+        _homeRotation = transform.rotation;
+        Debug.Log($"[PlaceableObject] {name} normal pose captured: pos={_homePosition}, rot={transform.eulerAngles}");
+    }
+
+    /// <summary>Clear the captured disheveled pose (reverts to procedural fallback).</summary>
+    [ContextMenu("Clear Disheveled Pose")]
+    private void ClearDisheveledPose()
+    {
+        _hasDisheveledPose = false;
+        _disheveledRotation = Quaternion.identity;
+        Debug.Log($"[PlaceableObject] {name} disheveled pose cleared.");
     }
 
     /// <summary>
