@@ -267,8 +267,10 @@ public class ApartmentManager : MonoBehaviour
         GetCameraValues(_currentAreaIndex, out _, out _, out _, out LensSettings? presetLens);
         if (presetLens.HasValue)
         {
-            browseCamera.Lens = presetLens.Value;
-            ApplyBrainOrthoMode(presetLens.Value.ModeOverride == LensSettings.OverrideModes.Orthographic);
+            var pl = presetLens.Value;
+            pl.NearClipPlane = -9f;
+            browseCamera.Lens = pl;
+            ApplyBrainOrthoMode(pl.ModeOverride == LensSettings.OverrideModes.Orthographic);
 
             // Reset zoom so it re-reads from the restored lens on next scroll
             _currentZoom = -1f;
@@ -345,13 +347,16 @@ public class ApartmentManager : MonoBehaviour
         // Apply full lens from preset (includes ortho mode, near/far, etc.)
         if (presetLens.HasValue)
         {
-            browseCamera.Lens = presetLens.Value;
-            ApplyBrainOrthoMode(presetLens.Value.ModeOverride == LensSettings.OverrideModes.Orthographic);
+            var pl = presetLens.Value;
+            pl.NearClipPlane = -9f;
+            browseCamera.Lens = pl;
+            ApplyBrainOrthoMode(pl.ModeOverride == LensSettings.OverrideModes.Orthographic);
         }
         else
         {
             var lens = browseCamera.Lens;
             lens.FieldOfView = _baseFOV;
+            lens.NearClipPlane = -9f;
             browseCamera.Lens = lens;
         }
 
@@ -590,6 +595,7 @@ public class ApartmentManager : MonoBehaviour
                     lens.FieldOfView = _currentZoom;
             }
 
+            lens.NearClipPlane = -9f;
             browseCamera.Lens = lens;
         }
     }
