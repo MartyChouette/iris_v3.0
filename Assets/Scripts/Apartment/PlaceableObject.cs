@@ -175,11 +175,10 @@ public class PlaceableObject : MonoBehaviour
     {
         if (!_canBeDishelved) return;
 
-        // Lean to one side on world Z axis, random direction
-        // World-space so items lean consistently regardless of Y facing
+        // Lean to one side on Z axis, random direction
         float sign = Random.value > 0.5f ? 1f : -1f;
         float angle = Random.Range(_dishevelAngle, _dishevelAngle + 10f) * sign;
-        transform.rotation = Quaternion.Euler(0f, 0f, angle) * transform.rotation;
+        transform.rotation = transform.rotation * Quaternion.Euler(0f, 0f, angle);
 
         if (_rb != null)
             _rb.angularVelocity = Vector3.zero;
