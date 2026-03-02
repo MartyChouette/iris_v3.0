@@ -125,6 +125,7 @@ In `Assets/ScriptableObjects/DiscoBall/`, right-click > **Create > Iris > Disco 
 3. Set **Surface Layers** to the layers you want the shadow to project on (Default + Surfaces)
 4. Adjust **Diameter** (default 0.3m) to taste
 5. Auto-hides when ObjectGrabber is holding something
+6. **Cursor texture**: If a `CursorContext` component exists in the scene, the shadow auto-matches the active cursor image. Otherwise, drag a cursor texture into the **Cursor Texture** field on the component
 
 ---
 
