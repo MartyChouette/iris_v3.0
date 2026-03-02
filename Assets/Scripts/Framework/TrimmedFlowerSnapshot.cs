@@ -45,6 +45,9 @@ public static class TrimmedFlowerSnapshot
         // Re-center: shift root so lowest point is at Y=0
         RecenterToGround(root);
 
+        int rendererCount = root.GetComponentsInChildren<Renderer>().Length;
+        Debug.Log($"[TrimmedFlowerSnapshot] Captured {rendererCount} renderer(s) from flower brain.");
+
         return root;
     }
 

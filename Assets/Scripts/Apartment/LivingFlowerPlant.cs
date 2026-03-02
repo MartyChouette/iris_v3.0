@@ -77,12 +77,22 @@ public class LivingFlowerPlant : MonoBehaviour
 
     private void Awake()
     {
-        _renderers = GetComponentsInChildren<Renderer>();
-        _originalColors = new Color[_renderers.Length];
-        for (int i = 0; i < _renderers.Length; i++)
+        // Collect only flower renderers — skip pot and soil so wilt tint
+        // doesn't turn them green.
+        var allRenderers = GetComponentsInChildren<Renderer>();
+        var tintable = new System.Collections.Generic.List<Renderer>();
+        var colors = new System.Collections.Generic.List<Color>();
+
+        foreach (var r in allRenderers)
         {
-            _originalColors[i] = _renderers[i].material.color;
+            if (r.gameObject.name == "Pot" || r.gameObject.name == "Soil")
+                continue;
+            tintable.Add(r);
+            colors.Add(r.material.color);
         }
+
+        _renderers = tintable.ToArray();
+        _originalColors = colors.ToArray();
         _baseScale = transform.localScale;
     }
 
@@ -90,10 +100,10 @@ public class LivingFlowerPlant : MonoBehaviour
 
     private void UpdateVisuals()
     {
-        // Wilt tint: lerps from white (healthy) → yellowish → brown (dead)
+        // Wilt tint: white (fresh) → yellowish (wilting) → brown (dead)
         Color wiltTint;
         if (_health > 0.5f)
-            wiltTint = Color.Lerp(WiltingColor, HealthyColor, (_health - 0.5f) * 2f);
+            wiltTint = Color.Lerp(WiltingColor, Color.white, (_health - 0.5f) * 2f);
         else
             wiltTint = Color.Lerp(DeadColor, WiltingColor, _health * 2f);
 
