@@ -26,6 +26,16 @@ public class InteractableHighlight : MonoBehaviour
     private bool _prepLikedActive;
     private bool _prepDislikedActive;
 
+    // Per-instance glitch rim materials (only created for objects with _GlitchIntensity > 0)
+    private float _glitchIntensity;
+    private Material _glitchRimMat;
+    private Material _glitchGazeMat;
+    private Material _glitchDisplayMat;
+    private Material _glitchPrepLikedMat;
+    private Material _glitchPrepDislikedMat;
+
+    private static readonly int GlitchID = Shader.PropertyToID("_GlitchIntensity");
+
     private void Awake()
     {
         _renderers = GetComponentsInChildren<Renderer>();
@@ -37,6 +47,9 @@ public class InteractableHighlight : MonoBehaviour
         _baseMaterialArrays = new Material[_renderers.Length][];
         for (int i = 0; i < _renderers.Length; i++)
             _baseMaterialArrays[i] = _renderers[i].sharedMaterials;
+
+        // Detect glitch intensity from base material
+        DetectGlitch();
     }
 
     /// <summary>
@@ -91,6 +104,52 @@ public class InteractableHighlight : MonoBehaviour
         RebuildMaterials();
     }
 
+    /// <summary>
+    /// Check base materials for PSXLitGlitch and create per-instance rim materials
+    /// with matching vertex jitter so highlights track the glitching mesh.
+    /// </summary>
+    private void DetectGlitch()
+    {
+        for (int r = 0; r < _renderers.Length; r++)
+        {
+            if (_renderers[r] == null) continue;
+            foreach (var mat in _baseMaterialArrays[r])
+            {
+                if (mat == null) continue;
+                if (!mat.HasFloat(GlitchID)) continue;
+                float gi = mat.GetFloat(GlitchID);
+                if (gi > 0.001f)
+                {
+                    _glitchIntensity = gi;
+                    BuildGlitchRimMaterials();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void BuildGlitchRimMaterials()
+    {
+        _glitchRimMat = MakeGlitchVariant(s_sharedRimMat);
+        _glitchGazeMat = MakeGlitchVariant(s_sharedGazeMat);
+        _glitchDisplayMat = MakeGlitchVariant(s_sharedDisplayMat);
+        _glitchPrepLikedMat = MakeGlitchVariant(s_sharedPrepLikedMat);
+        _glitchPrepDislikedMat = MakeGlitchVariant(s_sharedPrepDislikedMat);
+    }
+
+    private Material MakeGlitchVariant(Material source)
+    {
+        if (source == null) return null;
+        var mat = new Material(source);
+        mat.SetFloat(GlitchID, _glitchIntensity);
+        return mat;
+    }
+
+    private Material PickRim(Material shared, Material glitch)
+    {
+        return _glitchIntensity > 0 && glitch != null ? glitch : shared;
+    }
+
     private void RebuildMaterials()
     {
         int extraCount = (_displayActive ? 1 : 0)
@@ -117,25 +176,49 @@ public class InteractableHighlight : MonoBehaviour
             int slot = baseMats.Length;
 
             // Display renders first (background — subtlest)
-            if (_displayActive && s_sharedDisplayMat != null)
-                mats[slot++] = s_sharedDisplayMat;
+            if (_displayActive)
+            {
+                var m = PickRim(s_sharedDisplayMat, _glitchDisplayMat);
+                if (m != null) mats[slot++] = m;
+            }
 
             // Prep highlights (liked=green, disliked=red)
-            if (_prepLikedActive && s_sharedPrepLikedMat != null)
-                mats[slot++] = s_sharedPrepLikedMat;
-            if (_prepDislikedActive && s_sharedPrepDislikedMat != null)
-                mats[slot++] = s_sharedPrepDislikedMat;
+            if (_prepLikedActive)
+            {
+                var m = PickRim(s_sharedPrepLikedMat, _glitchPrepLikedMat);
+                if (m != null) mats[slot++] = m;
+            }
+            if (_prepDislikedActive)
+            {
+                var m = PickRim(s_sharedPrepDislikedMat, _glitchPrepDislikedMat);
+                if (m != null) mats[slot++] = m;
+            }
 
             // Gaze renders second (middle)
-            if (_gazeActive && s_sharedGazeMat != null)
-                mats[slot++] = s_sharedGazeMat;
+            if (_gazeActive)
+            {
+                var m = PickRim(s_sharedGazeMat, _glitchGazeMat);
+                if (m != null) mats[slot++] = m;
+            }
 
             // Hover renders on top (player intent dominates)
-            if (_highlighted && s_sharedRimMat != null)
-                mats[slot++] = s_sharedRimMat;
+            if (_highlighted)
+            {
+                var m = PickRim(s_sharedRimMat, _glitchRimMat);
+                if (m != null) mats[slot++] = m;
+            }
 
             _renderers[r].sharedMaterials = mats;
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (_glitchRimMat != null) Destroy(_glitchRimMat);
+        if (_glitchGazeMat != null) Destroy(_glitchGazeMat);
+        if (_glitchDisplayMat != null) Destroy(_glitchDisplayMat);
+        if (_glitchPrepLikedMat != null) Destroy(_glitchPrepLikedMat);
+        if (_glitchPrepDislikedMat != null) Destroy(_glitchPrepDislikedMat);
     }
 
     private static void EnsureSharedMaterials()
