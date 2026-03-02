@@ -129,13 +129,15 @@ In `Assets/ScriptableObjects/DiscoBall/`, right-click > **Create > Iris > Disco 
 
 ---
 
-## 8. PSXLitGlitch Shader -- Messy/Trash Items
+## ~~8. PSXLitGlitch Shader -- Messy/Trash Items~~ ✅ DONE
 
-For items that should look glitchy when out of place (trash, askew items):
+~~For items that should look glitchy when out of place (trash, askew items):~~
 
-1. Assign `Assets/Materials/PSXLit_Glitch.mat` to the item's Renderer, OR change existing material shader to `Iris/PSXLitGlitch`
-2. Set `Glitch Intensity` slider (0 = normal PSXLit, 0.5 = moderate, 1 = heavy corruption)
-3. To drive from code: `renderer.material.SetFloat("_GlitchIntensity", value);`
+~~1. Assign `Assets/Materials/PSXLit_Glitch.mat` to the item's Renderer, OR change existing material shader to `Iris/PSXLitGlitch`~~
+~~2. Set `Glitch Intensity` slider (0 = normal PSXLit, 0.5 = moderate, 1 = heavy corruption)~~
+~~3. To drive from code: `renderer.material.SetFloat("_GlitchIntensity", value);`~~
+
+**Auto-applied:** `AuthoredMessSpawner` now applies the PSXLitGlitch shader to all procedural trash objects automatically. Optionally drag `PSXLit_Glitch.mat` into the **Trash Material** field on the spawner for explicit control. For prefab-based trash, assign the material on the prefab itself.
 
 ---
 

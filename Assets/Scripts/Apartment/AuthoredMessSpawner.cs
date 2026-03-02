@@ -36,9 +36,13 @@ public class AuthoredMessSpawner : MonoBehaviour
     [Tooltip("Layer for spawned mess objects (placeableLayer).")]
     [SerializeField] private int _objectLayer;
 
+    [Tooltip("Material for procedural trash objects. Falls back to Iris/PSXLitGlitch shader if unassigned.")]
+    [SerializeField] private Material _trashMaterial;
+
     // Track spawned objects for debug overlay
     private readonly List<string> _spawnedBlueprintNames = new();
     private readonly List<GameObject> _spawnedObjects = new();
+    private Material _glitchMatInstance;
 
     public IReadOnlyList<string> SpawnedBlueprintNames => _spawnedBlueprintNames;
 
@@ -51,11 +55,24 @@ public class AuthoredMessSpawner : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // Build glitch material instance for procedural trash
+        if (_trashMaterial != null)
+        {
+            _glitchMatInstance = new Material(_trashMaterial);
+        }
+        else
+        {
+            var shader = Shader.Find("Iris/PSXLitGlitch");
+            if (shader != null)
+                _glitchMatInstance = new Material(shader);
+        }
     }
 
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        if (_glitchMatInstance != null) Destroy(_glitchMatInstance);
     }
 
     private void Start()
@@ -260,7 +277,7 @@ public class AuthoredMessSpawner : MonoBehaviour
         }
         else
         {
-            // Procedural box
+            // Procedural box with glitch material
             go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.transform.position = position;
             go.transform.localScale = bp.objectScale;
@@ -268,7 +285,15 @@ public class AuthoredMessSpawner : MonoBehaviour
             var rend = go.GetComponent<Renderer>();
             if (rend != null)
             {
-                rend.material.color = bp.objectColor;
+                if (_glitchMatInstance != null)
+                {
+                    rend.material = new Material(_glitchMatInstance);
+                    rend.material.color = bp.objectColor;
+                }
+                else
+                {
+                    rend.material.color = bp.objectColor;
+                }
             }
         }
 

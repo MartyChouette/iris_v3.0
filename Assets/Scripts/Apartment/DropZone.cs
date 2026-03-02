@@ -64,9 +64,17 @@ public class DropZone : MonoBehaviour
         // Check if player is holding an item that matches this zone (static accessor — no scene scan)
         _playerHoldingMatch = false;
         var held = ObjectGrabber.HeldObject;
-        if (held != null && !string.IsNullOrEmpty(_zoneName)
-            && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
-            _playerHoldingMatch = true;
+        if (held != null)
+        {
+            // Name match (home zone or alt)
+            if (!string.IsNullOrEmpty(_zoneName)
+                && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
+                _playerHoldingMatch = true;
+
+            // Any trash item highlights destroy-on-deposit zones (mirrors ObjectGrabber logic)
+            if (!_playerHoldingMatch && _destroyOnDeposit && held.Category == ItemCategory.Trash)
+                _playerHoldingMatch = true;
+        }
 
         // Toggle renderer — Color.clear on opaque materials renders as a dark rectangle,
         // so we disable the renderer entirely when no matching item is held.
