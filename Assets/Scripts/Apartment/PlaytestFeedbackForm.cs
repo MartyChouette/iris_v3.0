@@ -70,6 +70,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
     private InputAction _toggleAction;
     private bool _isOpen;
     public bool IsOpen => _isOpen;
+    private bool _submittedThisSession;
     private FeedbackPayload _currentPayload;
     private Action _onCloseCallback;
 
@@ -128,7 +129,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
 
     private void OnDateEnded(DatePersonalDefinition date, float affection)
     {
-        // Small delay so DateEndScreen shows first, then pop form after they dismiss it
+        if (_submittedThisSession) return;
         StartCoroutine(OpenAfterDateEndScreen());
     }
 
@@ -153,6 +154,11 @@ public class PlaytestFeedbackForm : MonoBehaviour
     /// </summary>
     public void OpenWithCallback(Action onClose)
     {
+        if (_submittedThisSession)
+        {
+            onClose?.Invoke();
+            return;
+        }
         _onCloseCallback = onClose;
         OpenForm();
     }
@@ -214,6 +220,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _currentPayload.feedbackNegative = _negativeField.text;
         _currentPayload.bugReport = _bugField.text;
 
+        _submittedThisSession = true;
         SaveFeedback(_currentPayload);
         StartCoroutine(CaptureScreenshotAndSave());
     }
