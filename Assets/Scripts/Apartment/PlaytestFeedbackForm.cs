@@ -42,13 +42,16 @@ public class PlaytestFeedbackForm : MonoBehaviour
     }
 
     // ── Star rating questions ──
-    private const int RatingCount = 4;
+    private const int RatingCount = 7;
     private static readonly string[] RatingLabels = new[]
     {
         "How much did you enjoy playing?",
         "How did picking up and putting things down feel?",
         "How did you feel about the date?",
-        "How did you feel about the flower trimming scene?"
+        "How did you feel about the flower trimming scene?",
+        "Did you understand what actions you could take in the room?",
+        "Were the interactive items clear to you?",
+        "Was it clear which surfaces you could place objects on?"
     };
 
     // ── UI references (built at runtime) ──
@@ -204,6 +207,9 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _currentPayload.grabFeelRating = _selectedRatings[1];
         _currentPayload.dateFeelRating = _selectedRatings[2];
         _currentPayload.flowerFeelRating = _selectedRatings[3];
+        _currentPayload.actionClarityRating = _selectedRatings[4];
+        _currentPayload.itemClarityRating = _selectedRatings[5];
+        _currentPayload.surfaceClarityRating = _selectedRatings[6];
         _currentPayload.feedbackPositive = _positiveField.text;
         _currentPayload.feedbackNegative = _negativeField.text;
         _currentPayload.bugReport = _bugField.text;
@@ -367,7 +373,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         panelRT.anchorMin = new Vector2(0.5f, 0.5f);
         panelRT.anchorMax = new Vector2(0.5f, 0.5f);
         panelRT.pivot = new Vector2(0.5f, 0.5f);
-        panelRT.sizeDelta = new Vector2(700f, 950f);
+        panelRT.sizeDelta = new Vector2(700f, 1130f);
         var panelImg = panel.AddComponent<Image>();
         panelImg.color = PanelBg;
         _formPanel = panel;

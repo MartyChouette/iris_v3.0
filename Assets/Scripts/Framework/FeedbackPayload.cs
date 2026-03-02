@@ -12,6 +12,9 @@ public class FeedbackPayload
     public int grabFeelRating;        // 1-5: picking up / putting down objects
     public int dateFeelRating;        // 1-5: how the date felt
     public int flowerFeelRating;      // 1-5: flower trimming scene
+    public int actionClarityRating;   // 1-5: understood available actions
+    public int itemClarityRating;     // 1-5: interactive items were clear
+    public int surfaceClarityRating;  // 1-5: placement surfaces were clear
     public string feedbackPositive;
     public string feedbackNegative;
     public string bugReport;
