@@ -365,11 +365,13 @@ public class PlaceableObject : MonoBehaviour
         if (_rb != null)
             _rb.isKinematic = false;
 
-        // Auto-straighten disheveled items on pickup (keeps Y rotation)
-        if (_canBeDishelved && IsTilted)
+        // Auto-straighten any tilted item on pickup (keeps Y rotation)
+        Vector3 euler = transform.eulerAngles;
+        float xTilt = Mathf.Abs(Mathf.DeltaAngle(euler.x, 0f));
+        float zTilt = Mathf.Abs(Mathf.DeltaAngle(euler.z, 0f));
+        if (xTilt > 1f || zTilt > 1f)
         {
-            float yAngle = transform.eulerAngles.y;
-            transform.rotation = Quaternion.Euler(0f, yAngle, 0f);
+            transform.rotation = Quaternion.Euler(0f, euler.y, 0f);
             if (_rb != null) _rb.angularVelocity = Vector3.zero;
             Debug.Log($"[PlaceableObject] {name} auto-straightened on pickup.");
         }
