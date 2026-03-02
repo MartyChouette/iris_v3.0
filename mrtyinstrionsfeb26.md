@@ -142,4 +142,15 @@ On any `PlaceableObject` that should start tilted/crooked when messy:
 
 ---
 
+## 14. Cursor Shadow Shader — Wire for Builds
+
+The cursor shadow uses `Shader.Find("Iris/CursorShadow")` which works in the editor but gets stripped from builds. A serialized shader field was added to fix this.
+
+1. Select the GO with the `CursorWorldShadow` component
+2. Drag `Assets/Shader/CursorShadow.shader` into the **Shadow Shader** field
+
+Without this, builds fall back to Particles/Unlit (big white square).
+
+---
+
 *This doc will be updated with more instructions as the session continues.*

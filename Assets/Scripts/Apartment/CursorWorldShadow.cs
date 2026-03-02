@@ -27,6 +27,9 @@ public class CursorWorldShadow : MonoBehaviour
     [Tooltip("Cursor texture to project as shadow. If a CursorContext exists in the scene, its active texture is used instead.")]
     [SerializeField] private Texture2D _cursorTexture;
 
+    [Tooltip("Shader for the cursor shadow quad. Drag Iris/CursorShadow here so it's included in builds.")]
+    [SerializeField] private Shader _shadowShader;
+
     [Header("Smoothing")]
     [Tooltip("How quickly the shadow follows the cursor (0 = instant).")]
     [SerializeField] private float _smoothSpeed = 25f;
@@ -92,13 +95,10 @@ public class CursorWorldShadow : MonoBehaviour
         mesh.RecalculateNormals();
         mf.sharedMesh = mesh;
 
-        // Use the cursor shadow shader
-        var shader = Shader.Find("Iris/CursorShadow");
-        if (shader == null)
-        {
-            // Fallback: transparent unlit
-            shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
-        }
+        // Use serialized shader reference (survives builds), fall back to Shader.Find
+        var shader = _shadowShader;
+        if (shader == null) shader = Shader.Find("Iris/CursorShadow");
+        if (shader == null) shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
         _shadowMat = new Material(shader);
         _shadowRenderer.sharedMaterial = _shadowMat;
         _shadowRenderer.shadowCastingMode = ShadowCastingMode.Off;
