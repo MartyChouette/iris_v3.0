@@ -50,11 +50,9 @@ public class ScreenFade : MonoBehaviour
         if (canvas != null && canvas.sortingOrder < 200)
             canvas.sortingOrder = 200;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
-        }
+        // Do NOT force alpha=1 here — it deadlocks startup because
+        // NameEntryScreen needs to be visible/clickable before FadeIn is called.
+        // DayPhaseManager transitions handle FadeOut→swap→FadeIn explicitly.
     }
 
     private void OnDestroy()
