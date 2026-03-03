@@ -79,7 +79,7 @@ public class DateSessionManager : MonoBehaviour
     [SerializeField] private float fadeDuration = 0.3f;
 
     [Tooltip("Seconds to show phase title on black screen.")]
-    [SerializeField] private float phaseTitleHold = 1.0f;
+    [SerializeField] private float phaseTitleHold = 2.0f;
 
     [Header("Audio")]
     [Tooltip("SFX played when the date character arrives.")]
@@ -634,7 +634,7 @@ public class DateSessionManager : MonoBehaviour
         if (earnedFlower && _currentDate != null && !string.IsNullOrEmpty(_currentDate.flowerSceneName))
             PendingFlowerTrim = true;
 
-        // Zelda-style flower gift presentation (only if earned)
+        // 1. Zelda-style flower gift presentation (only if earned)
         if (earnedFlower && _currentDate != null && _currentDate.flowerPrefab != null
             && FlowerGiftPresenter.Instance != null)
         {
@@ -642,11 +642,30 @@ public class DateSessionManager : MonoBehaviour
                 _currentDate.flowerPrefab, _currentDate.characterName);
         }
 
+        // 2. Dismiss NPC
         DismissCharacter();
-        OnDateSessionEnded?.Invoke(_currentDate, _affection);
-        DateEndScreen.Instance?.Show(_currentDate, _affection, failed: false);
+
+        // 3. Show date grade screen and wait for Continue click
+        if (DateEndScreen.Instance != null)
+        {
+            bool dismissed = false;
+            DateEndScreen.Instance.OnDismissed += OnEndScreenDismissed;
+            DateEndScreen.Instance.Show(_currentDate, _affection, failed: false);
+
+            void OnEndScreenDismissed()
+            {
+                dismissed = true;
+                DateEndScreen.Instance.OnDismissed -= OnEndScreenDismissed;
+            }
+
+            while (!dismissed)
+                yield return null;
+        }
+
+        // 4. Now fire event → DayPhaseManager routes to FlowerTrimming (if pending) or Evening
         AutoSaveController.Instance?.PerformSave("date_succeeded");
         _state = SessionState.Idle;
+        OnDateSessionEnded?.Invoke(_currentDate, _affection);
     }
 
     private void DismissCharacter()
@@ -718,9 +737,10 @@ public class DateSessionManager : MonoBehaviour
     {
         ApplyReaction(type);
 
-        // Show labeled reaction bubble on the character
+        // Show labeled reaction bubble on the character (with item icon if available)
         var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
-        reactionUI?.ShowLabeledReaction(type, displayName);
+        Sprite itemIcon = tag != null ? tag.ReactionIcon : null;
+        reactionUI?.ShowLabeledReaction(type, displayName, itemIcon);
 
         // Accumulate during all date phases (reactions shown live)
         if (tag != null)

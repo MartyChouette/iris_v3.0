@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
@@ -40,6 +41,26 @@ public class PlaytestFeedbackForm : MonoBehaviour
         var go = new GameObject("PlaytestFeedbackForm");
         go.AddComponent<PlaytestFeedbackForm>();
     }
+
+    [Header("Google Forms")]
+    [Tooltip("Google Forms POST URL (e.g. https://docs.google.com/forms/d/e/FORM_ID/formResponse). Leave empty to skip cloud submission.")]
+    [SerializeField] private string _googleFormURL = "";
+
+    [Tooltip("Google Forms entry IDs mapped to payload fields. Format: 'entry.XXXXXXX' per field.")]
+    [SerializeField] private string _entryEnjoyment = "";
+    [SerializeField] private string _entryGrabFeel = "";
+    [SerializeField] private string _entryDateFeel = "";
+    [SerializeField] private string _entryFlowerFeel = "";
+    [SerializeField] private string _entryActionClarity = "";
+    [SerializeField] private string _entryItemClarity = "";
+    [SerializeField] private string _entrySurfaceClarity = "";
+    [SerializeField] private string _entryPositive = "";
+    [SerializeField] private string _entryNegative = "";
+    [SerializeField] private string _entryBugReport = "";
+    [SerializeField] private string _entrySessionId = "";
+    [SerializeField] private string _entryPlayTime = "";
+    [SerializeField] private string _entryDay = "";
+    [SerializeField] private string _entryPhase = "";
 
     // ── Star rating questions ──
     private const int RatingCount = 7;
@@ -222,6 +243,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
 
         _submittedThisSession = true;
         SaveFeedback(_currentPayload);
+        SubmitToGoogleForms(_currentPayload);
         StartCoroutine(CaptureScreenshotAndSave());
     }
 
@@ -237,6 +259,47 @@ public class PlaytestFeedbackForm : MonoBehaviour
         File.WriteAllText(jsonPath, json);
 
         Debug.Log($"[PlaytestFeedbackForm] Saved feedback to {jsonPath}");
+    }
+
+    private void SubmitToGoogleForms(FeedbackPayload payload)
+    {
+        if (string.IsNullOrEmpty(_googleFormURL)) return;
+
+        StartCoroutine(PostToGoogleForms(payload));
+    }
+
+    private IEnumerator PostToGoogleForms(FeedbackPayload payload)
+    {
+        var form = new WWWForm();
+
+        void Add(string entryId, string value)
+        {
+            if (!string.IsNullOrEmpty(entryId) && value != null)
+                form.AddField(entryId, value);
+        }
+
+        Add(_entryEnjoyment, payload.enjoymentRating.ToString());
+        Add(_entryGrabFeel, payload.grabFeelRating.ToString());
+        Add(_entryDateFeel, payload.dateFeelRating.ToString());
+        Add(_entryFlowerFeel, payload.flowerFeelRating.ToString());
+        Add(_entryActionClarity, payload.actionClarityRating.ToString());
+        Add(_entryItemClarity, payload.itemClarityRating.ToString());
+        Add(_entrySurfaceClarity, payload.surfaceClarityRating.ToString());
+        Add(_entryPositive, payload.feedbackPositive);
+        Add(_entryNegative, payload.feedbackNegative);
+        Add(_entryBugReport, payload.bugReport);
+        Add(_entrySessionId, payload.sessionId);
+        Add(_entryPlayTime, payload.playTimeSeconds.ToString("F0"));
+        Add(_entryDay, payload.currentDay.ToString());
+        Add(_entryPhase, payload.currentPhase);
+
+        using var request = UnityWebRequest.Post(_googleFormURL, form);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+            Debug.Log("[PlaytestFeedbackForm] Google Forms submission succeeded.");
+        else
+            Debug.LogWarning($"[PlaytestFeedbackForm] Google Forms submission failed: {request.error}");
     }
 
     private IEnumerator CaptureScreenshotAndSave()

@@ -598,8 +598,8 @@ public class DayPhaseManager : MonoBehaviour
         while (!bridge.IsSceneReady)
             yield return null;
 
-        // 5. Hold title so the player can read it (2 seconds total)
-        yield return new WaitForSeconds(2.0f);
+        // 5. Hold title so the player can read it (3 seconds total)
+        yield return new WaitForSeconds(3.0f);
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.HidePhaseTitle();
 

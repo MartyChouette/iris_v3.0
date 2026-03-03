@@ -42,6 +42,9 @@ public static class TrimmedFlowerSnapshot
         // Also clone any renderers directly on the brain root
         CloneRenderers(brain.transform, root.transform, brain.transform, recursive: false);
 
+        // Strip particle systems and fluid components so they don't produce artifacts
+        StripParticles(root);
+
         // Re-center: shift root so lowest point is at Y=0
         RecenterToGround(root);
 
@@ -123,6 +126,36 @@ public static class TrimmedFlowerSnapshot
                     : null;
             }
             cloneRend.sharedMaterials = cloneMats;
+        }
+    }
+
+    /// <summary>
+    /// Destroy all particle systems and fluid-related components on the snapshot clone
+    /// so no live emitters transfer to the apartment living plant.
+    /// </summary>
+    private static void StripParticles(GameObject root)
+    {
+        // Destroy ParticleSystems first (and their renderers)
+        foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            Object.DestroyImmediate(ps);
+        }
+
+        // Destroy ParticleSystemRenderers left behind
+        foreach (var psr in root.GetComponentsInChildren<ParticleSystemRenderer>(true))
+            Object.DestroyImmediate(psr);
+
+        // Destroy known fluid components by name (avoid hard dependency on types that may not exist)
+        foreach (var mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (mb == null) continue;
+            string typeName = mb.GetType().Name;
+            if (typeName == "SapParticleController" || typeName == "FluidSquirter"
+                || typeName == "SapDecalPool")
+            {
+                Object.DestroyImmediate(mb);
+            }
         }
     }
 

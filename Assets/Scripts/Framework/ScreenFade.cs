@@ -45,6 +45,11 @@ public class ScreenFade : MonoBehaviour
         }
         Instance = this;
 
+        // Ensure ScreenFade canvas renders above all other UI (DateEndScreen, FlowerGiftPresenter, etc.)
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas != null && canvas.sortingOrder < 200)
+            canvas.sortingOrder = 200;
+
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
@@ -88,6 +93,7 @@ public class ScreenFade : MonoBehaviour
     /// <summary>Show phase title text on the black screen.</summary>
     public void ShowPhaseTitle(string text)
     {
+        EnsurePhaseText();
         if (_phaseText != null)
         {
             _phaseText.text = text;
@@ -103,6 +109,31 @@ public class ScreenFade : MonoBehaviour
             _phaseText.text = "";
             _phaseText.gameObject.SetActive(false);
         }
+    }
+
+    /// <summary>Create _phaseText at runtime if not wired in Inspector.</summary>
+    private void EnsurePhaseText()
+    {
+        if (_phaseText != null) return;
+        if (_canvasGroup == null) return;
+
+        var go = new GameObject("PhaseTitle");
+        go.transform.SetParent(_canvasGroup.transform, false);
+
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        _phaseText = go.AddComponent<TMPro.TextMeshProUGUI>();
+        _phaseText.fontSize = 48f;
+        _phaseText.alignment = TMPro.TextAlignmentOptions.Center;
+        _phaseText.color = new Color(0.95f, 0.92f, 0.85f);
+        _phaseText.enableWordWrapping = true;
+        go.SetActive(false);
+
+        Debug.Log("[ScreenFade] Created phase title text at runtime (was null).");
     }
 
     /// <summary>

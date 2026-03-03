@@ -28,6 +28,34 @@ public class EntranceJudgmentSequence : MonoBehaviour
     [Tooltip("SFX played on a Dislike judgment (comedic sneeze).")]
     [SerializeField] private AudioClip sneezeSFX;
 
+    // Personality-driven lines when no music is playing
+    private static readonly string[] s_noMusicLines =
+    {
+        "Oh... no music?",
+        "It's quiet in here...",
+        "Why aren't we listening to music?"
+    };
+
+    // Personality-driven lines when a dirty area is noticed
+    private static readonly string[] s_dirtyKitchenLines =
+    {
+        "The kitchen could use some attention...",
+        "Is the kitchen always like this?",
+        "Maybe clean the kitchen sometime..."
+    };
+    private static readonly string[] s_dirtyLivingRoomLines =
+    {
+        "The living room is a bit messy...",
+        "You might want to tidy the living room.",
+        "The living room could use some love..."
+    };
+    private static readonly string[] s_dirtyEntranceLines =
+    {
+        "The entrance is a mess...",
+        "Your hallway could use some work.",
+        "First impressions matter... the entrance..."
+    };
+
     /// <summary>
     /// Run all 3 entrance judgments. Yields until complete.
     /// </summary>
@@ -40,6 +68,13 @@ public class EntranceJudgmentSequence : MonoBehaviour
         // --- Judgment 1: Music ---
         PlayJudgingSFX();
         var musicReaction = EvaluateMusic(date);
+        // If no music is playing, show a personality comment before the labeled reaction
+        if (musicReaction == ReactionType.Neutral && !_alwaysPositive)
+        {
+            string noMusicLine = s_noMusicLines[UnityEngine.Random.Range(0, s_noMusicLines.Length)];
+            reactionUI?.ShowText(noMusicLine, 2f);
+            yield return new WaitForSeconds(2.5f);
+        }
         if (_alwaysPositive) musicReaction = ReactionType.Like;
         reactionUI?.ShowLabeledReaction(musicReaction, "Your Music");
         DateSessionManager.Instance?.ApplyReaction(musicReaction);
@@ -84,6 +119,16 @@ public class EntranceJudgmentSequence : MonoBehaviour
         // --- Judgment 4: Cleanliness ---
         PlayJudgingSFX();
         var cleanReaction = EvaluateCleanliness();
+        // If apartment is dirty, comment on the worst area before the labeled reaction
+        if ((cleanReaction == ReactionType.Dislike || cleanReaction == ReactionType.Neutral) && !_alwaysPositive)
+        {
+            string dirtyLine = GetDirtiestAreaComment();
+            if (!string.IsNullOrEmpty(dirtyLine))
+            {
+                reactionUI?.ShowText(dirtyLine, 2f);
+                yield return new WaitForSeconds(2.5f);
+            }
+        }
         if (_alwaysPositive) cleanReaction = ReactionType.Like;
         reactionUI?.ShowLabeledReaction(cleanReaction, "Apartment Cleanliness");
         DateSessionManager.Instance?.ApplyReaction(cleanReaction);
@@ -137,5 +182,26 @@ public class EntranceJudgmentSequence : MonoBehaviour
     {
         float tidiness = TidyScorer.Instance != null ? TidyScorer.Instance.OverallTidiness : 1f;
         return ReactionEvaluator.EvaluateCleanliness(tidiness);
+    }
+
+    /// <summary>Find the dirtiest area and return a matching comment line.</summary>
+    private string GetDirtiestAreaComment()
+    {
+        if (TidyScorer.Instance == null) return null;
+
+        float kitchenT = TidyScorer.Instance.GetAreaTidiness(ApartmentArea.Kitchen);
+        float livingT = TidyScorer.Instance.GetAreaTidiness(ApartmentArea.LivingRoom);
+        float entranceT = TidyScorer.Instance.GetAreaTidiness(ApartmentArea.Entrance);
+
+        // Find dirtiest (lowest tidiness)
+        string[] lines;
+        if (kitchenT <= livingT && kitchenT <= entranceT)
+            lines = s_dirtyKitchenLines;
+        else if (livingT <= entranceT)
+            lines = s_dirtyLivingRoomLines;
+        else
+            lines = s_dirtyEntranceLines;
+
+        return lines[UnityEngine.Random.Range(0, lines.Length)];
     }
 }

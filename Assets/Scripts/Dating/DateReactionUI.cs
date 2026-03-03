@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -36,6 +37,7 @@ public class DateReactionUI : MonoBehaviour
     private static readonly string[] s_dislikeTexts = { "Not a fan...", "Yikes.", "Hard pass." };
 
     private SpriteRenderer _iconRenderer;
+    private SpriteRenderer _itemIconRenderer;
     private GameObject _bubbleGO;
     private TextMeshPro _bubbleText;
     private Coroutine _activeReaction;
@@ -187,22 +189,41 @@ public class DateReactionUI : MonoBehaviour
     /// <summary>Show a labeled reaction: topic label → reaction icon + sentiment text → fade out.</summary>
     public void ShowLabeledReaction(ReactionType type, string topicLabel)
     {
+        ShowLabeledReaction(type, topicLabel, null);
+    }
+
+    /// <summary>Show a labeled reaction with an optional item icon above the NPC's head.</summary>
+    public void ShowLabeledReaction(ReactionType type, string topicLabel, Sprite itemIcon)
+    {
         if (_activeReaction != null)
             StopCoroutine(_activeReaction);
 
-        _activeReaction = StartCoroutine(LabeledReactionSequence(type, topicLabel));
+        _activeReaction = StartCoroutine(LabeledReactionSequence(type, topicLabel, itemIcon));
     }
 
-    private IEnumerator LabeledReactionSequence(ReactionType type, string topicLabel)
+    private IEnumerator LabeledReactionSequence(ReactionType type, string topicLabel, Sprite itemIcon = null)
     {
         _bubbleGO.SetActive(true);
         EnsureBubbleText();
+        EnsureItemIconRenderer();
 
         // --- Phase 1: Topic label (0.7s) ---
         _iconRenderer.sprite = questionSprite;
         _iconRenderer.color = Color.white;
         _iconRenderer.enabled = true;
         _bubbleGO.transform.localScale = Vector3.one * 0.5f;
+
+        // Show item icon above the reaction icon if provided
+        if (itemIcon != null && _itemIconRenderer != null)
+        {
+            _itemIconRenderer.sprite = itemIcon;
+            _itemIconRenderer.color = Color.white;
+            _itemIconRenderer.enabled = true;
+        }
+        else if (_itemIconRenderer != null)
+        {
+            _itemIconRenderer.enabled = false;
+        }
 
         _bubbleText.text = topicLabel;
         _bubbleText.color = Color.white;
@@ -237,6 +258,9 @@ public class DateReactionUI : MonoBehaviour
         if (clip != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(clip);
 
+        // Screen-space emoticon flash (fire-and-forget, runs alongside bubble)
+        ShowEmoticonFlash(type);
+
         _bubbleText.text = GetRandomSentiment(type);
         _bubbleText.color = _iconRenderer.color;
         // Position text below icon
@@ -251,12 +275,16 @@ public class DateReactionUI : MonoBehaviour
         float elapsed = 0f;
         Color iconStart = _iconRenderer.color;
         Color textStart = _bubbleText.color;
+        Color itemIconStart = _itemIconRenderer != null && _itemIconRenderer.enabled
+            ? _itemIconRenderer.color : Color.clear;
         while (elapsed < fadeTime)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / fadeTime;
             _iconRenderer.color = new Color(iconStart.r, iconStart.g, iconStart.b, 1f - t);
             _bubbleText.color = new Color(textStart.r, textStart.g, textStart.b, 1f - t);
+            if (_itemIconRenderer != null && _itemIconRenderer.enabled)
+                _itemIconRenderer.color = new Color(itemIconStart.r, itemIconStart.g, itemIconStart.b, 1f - t);
             yield return null;
         }
 
@@ -264,6 +292,7 @@ public class DateReactionUI : MonoBehaviour
         _bubbleText.rectTransform.localPosition = Vector3.zero;
         _bubbleText.color = Color.white;
         _iconRenderer.enabled = true;
+        if (_itemIconRenderer != null) _itemIconRenderer.enabled = false;
         _bubbleGO.SetActive(false);
         _activeReaction = null;
     }
@@ -290,6 +319,27 @@ public class DateReactionUI : MonoBehaviour
         _bubbleText.renderer.material.renderQueue = 4001;
     }
 
+    private void EnsureItemIconRenderer()
+    {
+        if (_itemIconRenderer != null) return;
+
+        var go = new GameObject("ItemIcon");
+        go.transform.SetParent(_bubbleGO.transform, false);
+        go.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+
+        _itemIconRenderer = go.AddComponent<SpriteRenderer>();
+        _itemIconRenderer.sortingOrder = 102;
+
+        // Render through walls
+        var mat = new Material(Shader.Find("Sprites/Default"));
+        mat.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+        mat.renderQueue = 4002;
+        _itemIconRenderer.material = mat;
+
+        go.transform.localScale = Vector3.one * 0.8f;
+        _itemIconRenderer.enabled = false;
+    }
+
     private static string GetRandomSentiment(ReactionType type)
     {
         var arr = type switch
@@ -299,5 +349,89 @@ public class DateReactionUI : MonoBehaviour
             _ => s_neutralTexts
         };
         return arr[UnityEngine.Random.Range(0, arr.Length)];
+    }
+
+    // ── Screen-space emoticon flash ──────────────────────────────
+    // Brief large emoji in center of screen that scales up and fades out.
+
+    private static Canvas s_flashCanvas;
+    private Coroutine _flashCoroutine;
+
+    /// <summary>Show a brief screen-space emoticon flash for the given reaction type.</summary>
+    private void ShowEmoticonFlash(ReactionType type)
+    {
+        Sprite sprite = type switch
+        {
+            ReactionType.Like => heartSprite,
+            ReactionType.Dislike => dislikeSprite,
+            _ => neutralSprite
+        };
+        if (sprite == null) return;
+
+        if (_flashCoroutine != null)
+            StopCoroutine(_flashCoroutine);
+        _flashCoroutine = StartCoroutine(EmoticonFlashSequence(sprite, type));
+    }
+
+    private IEnumerator EmoticonFlashSequence(Sprite sprite, ReactionType type)
+    {
+        EnsureFlashCanvas();
+        if (s_flashCanvas == null) yield break;
+
+        var go = new GameObject("EmoticonFlash");
+        go.transform.SetParent(s_flashCanvas.transform, false);
+
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = new Vector2(120f, 120f);
+
+        var img = go.AddComponent<Image>();
+        img.sprite = sprite;
+        img.raycastTarget = false;
+        img.color = type switch
+        {
+            ReactionType.Like => new Color(1f, 0.4f, 0.5f, 1f),
+            ReactionType.Dislike => new Color(0.5f, 0.5f, 1f, 1f),
+            _ => new Color(1f, 1f, 1f, 1f)
+        };
+
+        // Scale up and fade out over 1 second
+        float duration = 1f;
+        float elapsed = 0f;
+        Vector3 startScale = Vector3.one * 0.5f;
+        Vector3 endScale = Vector3.one * 1.5f;
+        Color startColor = img.color;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float eased = 1f - (1f - t) * (1f - t); // ease-out quad
+
+            rt.localScale = Vector3.Lerp(startScale, endScale, eased);
+            img.color = new Color(startColor.r, startColor.g, startColor.b, 1f - eased);
+            yield return null;
+        }
+
+        Destroy(go);
+        _flashCoroutine = null;
+    }
+
+    private static void EnsureFlashCanvas()
+    {
+        if (s_flashCanvas != null) return;
+
+        var canvasGO = new GameObject("EmoticonFlashCanvas");
+        DontDestroyOnLoad(canvasGO);
+        s_flashCanvas = canvasGO.AddComponent<Canvas>();
+        s_flashCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        s_flashCanvas.sortingOrder = 150;
+
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
     }
 }

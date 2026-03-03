@@ -27,6 +27,10 @@ public class FridgeController : MonoBehaviour
     [Tooltip("Main camera used for raycasting.")]
     [SerializeField] private Camera _mainCamera;
 
+    [Header("Wall Occlusion")]
+    [Tooltip("Layer mask for walls that can block fridge clicks (prevents clicking through walls).")]
+    [SerializeField] private LayerMask _wallOcclusionLayer;
+
     [Header("Light")]
     [Tooltip("Point light inside the fridge — on when open, off when closed.")]
     [SerializeField] private Light _interiorLight;
@@ -47,6 +51,9 @@ public class FridgeController : MonoBehaviour
 
     private Quaternion _closedRotation;
     private Quaternion _openRotation;
+
+    private Coroutine _blinkCoroutine;
+    private InteractableHighlight _highlight;
 
     private void Awake()
     {
@@ -91,6 +98,10 @@ public class FridgeController : MonoBehaviour
     private void Update()
     {
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
+
+        // Start blink guide when drink phase begins and fridge is closed
+        UpdateBlinkGuide();
+
         if (_state != DoorState.Closed && _state != DoorState.Open) return;
         if (!_clickAction.WasPressedThisFrame()) return;
 
@@ -112,24 +123,31 @@ public class FridgeController : MonoBehaviour
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
         var ray = _mainCamera.ScreenPointToRay(mousePos);
 
-        if (Physics.Raycast(ray, out var hit, 20f, _fridgeLayer))
+        // Two-pass raycast: check if a wall is closer than the fridge (prevents clicking through walls)
+        if (!Physics.Raycast(ray, out var fridgeHit, 20f, _fridgeLayer))
+            return;
+
+        if (_wallOcclusionLayer.value != 0
+            && Physics.Raycast(ray, out var wallHit, 20f, _wallOcclusionLayer)
+            && wallHit.distance < fridgeHit.distance)
+            return;
+
+        if (_state == DoorState.Closed)
         {
-            if (_state == DoorState.Closed)
-            {
-                Debug.Log("[FridgeController] Fridge clicked — opening door.");
-                StartCoroutine(OpenDoorSequence());
-            }
-            else if (_state == DoorState.Open)
-            {
-                Debug.Log("[FridgeController] Fridge clicked — closing door.");
-                StartCoroutine(CloseDoorSequence());
-            }
+            Debug.Log("[FridgeController] Fridge clicked — opening door.");
+            StartCoroutine(OpenDoorSequence());
+        }
+        else if (_state == DoorState.Open)
+        {
+            Debug.Log("[FridgeController] Fridge clicked — closing door.");
+            StartCoroutine(CloseDoorSequence());
         }
     }
 
     private IEnumerator OpenDoorSequence()
     {
         _state = DoorState.Opening;
+        StopBlinkGuide();
 
         if (_openSFX != null)
             AudioManager.Instance?.PlaySFX(_openSFX);
@@ -139,6 +157,10 @@ public class FridgeController : MonoBehaviour
 
         if (_interiorLight != null)
             _interiorLight.enabled = true;
+
+        // Glow the glass so the player knows to click it next
+        var glass = Object.FindAnyObjectByType<GlassController>();
+        if (glass != null) glass.EnableGlow();
 
         SimpleDrinkManager.Instance?.ShowRecipePanel();
     }
@@ -198,5 +220,50 @@ public class FridgeController : MonoBehaviour
             yield return null;
         }
         _doorPivot.localRotation = to;
+    }
+
+    // ── Blink Guide ─────────────────────────────────────────────
+    // When it's drink phase and fridge is closed, blink the highlight
+    // so the player knows to click the fridge.
+
+    private void UpdateBlinkGuide()
+    {
+        bool shouldBlink = _state == DoorState.Closed
+            && DateSessionManager.Instance != null
+            && DateSessionManager.Instance.CurrentDatePhase == DateSessionManager.DatePhase.BackgroundJudging;
+
+        if (shouldBlink && _blinkCoroutine == null)
+        {
+            if (_highlight == null)
+                _highlight = GetComponent<InteractableHighlight>();
+            if (_highlight != null)
+                _blinkCoroutine = StartCoroutine(BlinkHighlight());
+        }
+        else if (!shouldBlink && _blinkCoroutine != null)
+        {
+            StopBlinkGuide();
+        }
+    }
+
+    private void StopBlinkGuide()
+    {
+        if (_blinkCoroutine != null)
+        {
+            StopCoroutine(_blinkCoroutine);
+            _blinkCoroutine = null;
+        }
+        if (_highlight != null)
+            _highlight.SetHighlighted(false);
+    }
+
+    private IEnumerator BlinkHighlight()
+    {
+        bool on = false;
+        while (true)
+        {
+            on = !on;
+            _highlight.SetHighlighted(on);
+            yield return new WaitForSeconds(0.5f);
+        }
     }
 }

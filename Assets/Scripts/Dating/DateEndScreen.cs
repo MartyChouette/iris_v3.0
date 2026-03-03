@@ -23,6 +23,9 @@ public class DateEndScreen : MonoBehaviour
     [SerializeField] private AudioClip goodDateSFX;
     [SerializeField] private AudioClip badDateSFX;
 
+    /// <summary>Invoked when the Continue button is clicked (after Show).</summary>
+    public event System.Action OnDismissed;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -119,6 +122,7 @@ public class DateEndScreen : MonoBehaviour
         {
             screenRoot.SetActive(false);
             Debug.Log("[DateEndScreen] Dismissed.");
+            OnDismissed?.Invoke();
         }
     }
 }

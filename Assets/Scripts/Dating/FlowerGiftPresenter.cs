@@ -153,11 +153,28 @@ public class FlowerGiftPresenter : MonoBehaviour
         if (_canvasGroup != null)
             _canvasGroup.alpha = 1f;
 
-        // Hold: bob + spin (in local space since flower is parented to camera)
+        // Hold: bob + spin + scroll zoom (in local space since flower is parented to camera)
         elapsed = 0f;
+        float zoomScale = 1f;
+        const float zoomMin = 0.5f;
+        const float zoomMax = 2.0f;
+        const float zoomStep = 0.08f;
+
         while (elapsed < _holdDuration)
         {
             elapsed += Time.deltaTime;
+
+            // Scroll-wheel zoom
+            if (UnityEngine.InputSystem.Mouse.current != null)
+            {
+                float scroll = UnityEngine.InputSystem.Mouse.current.scroll.ReadValue().y;
+                if (Mathf.Abs(scroll) > 0.01f)
+                {
+                    zoomScale += Mathf.Sign(scroll) * zoomStep;
+                    zoomScale = Mathf.Clamp(zoomScale, zoomMin, zoomMax);
+                    flowerClone.transform.localScale = Vector3.one * _presentationScale * zoomScale;
+                }
+            }
 
             if (pivot != null)
             {

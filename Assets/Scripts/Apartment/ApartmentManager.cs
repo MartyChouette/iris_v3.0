@@ -44,7 +44,7 @@ public class ApartmentManager : MonoBehaviour
 
     [Header("Zoom")]
     [Tooltip("Amount added/removed per scroll tick (FOV degrees for perspective, ortho size units for orthographic).")]
-    [SerializeField, Range(0.01f, 10f)] private float zoomStep = 0.02f;
+    [SerializeField, Range(0.001f, 10f)] private float zoomStep = 0.005f;
 
     [Tooltip("Minimum ortho size / FOV when zoomed in.")]
     [SerializeField] private float zoomMin = 1f;

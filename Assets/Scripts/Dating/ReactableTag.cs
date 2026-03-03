@@ -17,6 +17,9 @@ public class ReactableTag : MonoBehaviour
     [Tooltip("Is this currently active? (e.g. record only active when playing)")]
     [SerializeField] private bool isActive = true;
 
+    [Tooltip("Optional icon shown in the reaction bubble when the date reacts to this item.")]
+    [SerializeField] private Sprite reactionIcon;
+
     // Not serialized — always starts public at runtime.
     // BookItem.Awake and DrawerController.Start set correct initial values.
     [System.NonSerialized] private bool isPrivate = false;
@@ -28,6 +31,7 @@ public class ReactableTag : MonoBehaviour
 
     public string DisplayName => !string.IsNullOrEmpty(displayName) ? displayName : gameObject.name;
     public string[] Tags => tags;
+    public Sprite ReactionIcon => reactionIcon;
     public bool IsActive
     {
         get => isActive;

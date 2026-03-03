@@ -211,6 +211,9 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
                 if (Physics.Raycast(ray, out RaycastHit hit, 100f, _glassLayer))
                 {
                     _pourStarted = true;
+                    // Disable glass glow now that the player found it
+                    var glass = Object.FindAnyObjectByType<GlassController>();
+                    if (glass != null) glass.DisableGlow();
                     Debug.Log("[SimpleDrinkManager] Pour started (glass clicked).");
                 }
             }
