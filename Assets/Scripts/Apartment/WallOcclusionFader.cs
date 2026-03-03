@@ -42,11 +42,12 @@ public class WallOcclusionFader : MonoBehaviour
     private readonly HashSet<Renderer> _exemptThisFrame = new();
 
     private static readonly int DissolveID = Shader.PropertyToID("_DissolveAmount");
+    private int _lastAreaIndex = -1;
 
     private struct FadeState
     {
         public float current;
-        public float floor;     // AlwaysFadedWall.BaseDissolve or 0
+        public float floor;     // AlwaysFadedWall / AreaWallFade dissolve or 0
         public MaterialPropertyBlock mpb;
     }
 
@@ -77,6 +78,14 @@ public class WallOcclusionFader : MonoBehaviour
         {
             _cam = Camera.main;
             if (_cam == null) return;
+        }
+
+        // ── Refresh dissolve floors when area changes ────────────────
+        int currentArea = ApartmentManager.Instance != null ? ApartmentManager.Instance.CurrentAreaIndex : 0;
+        if (currentArea != _lastAreaIndex)
+        {
+            _lastAreaIndex = currentArea;
+            RefreshAreaFloors();
         }
 
         _hitThisFrame.Clear();
@@ -170,6 +179,53 @@ public class WallOcclusionFader : MonoBehaviour
             _trackedRenderers.Remove(rend);
     }
 
+    // ── Area change: refresh dissolve floors ────────────────────────
+
+    private void RefreshAreaFloors()
+    {
+        // Update floors for already-tracked renderers
+        _keyBuffer.Clear();
+        foreach (var kvp in _trackedRenderers)
+            _keyBuffer.Add(kvp.Key);
+
+        for (int i = 0; i < _keyBuffer.Count; i++)
+        {
+            var rend = _keyBuffer[i];
+            if (rend == null) continue;
+            var state = _trackedRenderers[rend];
+            state.floor = GetBaseDissolve(rend);
+            // If current dissolve is below the new floor, snap up
+            if (state.current < state.floor)
+                state.current = state.floor;
+            state.mpb.SetFloat(DissolveID, state.current);
+            rend.SetPropertyBlock(state.mpb);
+            _trackedRenderers[rend] = state;
+        }
+
+        // Find AreaWallFade walls not yet tracked and apply their floor immediately
+        var areaWalls = FindObjectsByType<AreaWallFade>(FindObjectsSortMode.None);
+        foreach (var aw in areaWalls)
+        {
+            var rend = aw.GetComponent<Renderer>();
+            if (rend == null) continue;
+            if (_trackedRenderers.ContainsKey(rend)) continue;
+
+            float floor = GetBaseDissolve(rend);
+            if (floor <= 0f) continue;
+
+            var state = new FadeState
+            {
+                current = floor,
+                floor = floor,
+                mpb = new MaterialPropertyBlock()
+            };
+            rend.GetPropertyBlock(state.mpb);
+            state.mpb.SetFloat(DissolveID, floor);
+            rend.SetPropertyBlock(state.mpb);
+            _trackedRenderers[rend] = state;
+        }
+    }
+
     // ── Raycast helper ──────────────────────────────────────────────
 
     private void CastToTarget(Vector3 camPos, Vector3 targetPos)
@@ -207,6 +263,16 @@ public class WallOcclusionFader : MonoBehaviour
 
     private static float GetBaseDissolve(Renderer rend)
     {
+        // Per-area dissolve takes priority
+        var areaFade = rend.GetComponentInParent<AreaWallFade>();
+        if (areaFade != null)
+        {
+            int area = ApartmentManager.Instance != null ? ApartmentManager.Instance.CurrentAreaIndex : 0;
+            float areaDissolve = areaFade.GetDissolveForArea(area);
+            if (areaDissolve > 0f) return areaDissolve;
+        }
+
+        // Fall back to always-faded marker
         var marker = rend.GetComponentInParent<AlwaysFadedWall>();
         return marker != null ? marker.BaseDissolve : 0f;
     }
