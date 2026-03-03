@@ -58,7 +58,15 @@ public static class SettingsPanelBuilder
         containerRT.pivot = new Vector2(0.5f, 0.5f);
         containerRT.sizeDelta = new Vector2(1050, 700);
 
-        // Title
+        // Content area FIRST (so title/tabs render on top in sibling order)
+        var contentArea = CreatePanel(container.transform, "ContentArea", new Color(0.12f, 0.12f, 0.15f, 1f));
+        var contentRT = contentArea.GetComponent<RectTransform>();
+        contentRT.anchorMin = new Vector2(0, 0);
+        contentRT.anchorMax = new Vector2(1, 1);
+        contentRT.offsetMin = new Vector2(10, 50);   // bottom: space for close button
+        contentRT.offsetMax = new Vector2(-10, -94);  // top: space for title + tabs
+
+        // Title (created after content so it renders on top)
         var title = CreateText(container.transform, "Title", "Settings", 28);
         var titleRT = title.GetComponent<RectTransform>();
         titleRT.anchorMin = new Vector2(0, 1);
@@ -67,7 +75,7 @@ public static class SettingsPanelBuilder
         titleRT.anchoredPosition = new Vector2(0, -8);
         titleRT.sizeDelta = new Vector2(0, 40);
 
-        // Tab bar
+        // Tab bar (created after content so it renders on top)
         var tabBar = CreatePanel(container.transform, "TabBar", new Color(0, 0, 0, 0));
         var tabBarRT = tabBar.GetComponent<RectTransform>();
         tabBarRT.anchorMin = new Vector2(0, 1);
@@ -102,18 +110,6 @@ public static class SettingsPanelBuilder
 
             tabButtons[i] = tabComp;
         }
-
-        // Tab content area (with mask so dropdowns don't overflow)
-        var contentArea = CreatePanel(container.transform, "ContentArea", PanelColor);
-        var contentRT = contentArea.GetComponent<RectTransform>();
-        contentRT.anchorMin = new Vector2(0, 0);
-        contentRT.anchorMax = new Vector2(1, 1);
-        contentRT.offsetMin = new Vector2(10, 50);   // bottom: space for close button
-        contentRT.offsetMax = new Vector2(-10, -94);  // top: space for title + tabs
-
-        // Ensure title + tabs render ABOVE content area
-        title.transform.SetAsLastSibling();
-        tabBar.transform.SetAsLastSibling();
 
         // Create tab panels
         var tabPanels = new GameObject[TabNames.Length];
@@ -315,8 +311,11 @@ public static class SettingsPanelBuilder
     {
         var go = new GameObject($"Tab_{name}");
         go.transform.SetParent(parent, false);
-        Stretch(go);
-        go.AddComponent<RectTransform>();
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
         return go;
     }
 
