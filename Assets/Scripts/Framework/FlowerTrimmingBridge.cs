@@ -165,14 +165,22 @@ public class FlowerTrimmingBridge : MonoBehaviour
         bool resultGameOver = false;
         bool gotResult = false;
 
+        // Check if the current date guarantees flower success (e.g. Paris tutorial)
+        bool guarantee = _alwaysSucceed;
+        if (!guarantee && DateSessionManager.Instance != null
+            && DateSessionManager.Instance.CurrentDate != null)
+        {
+            guarantee = DateSessionManager.Instance.CurrentDate.guaranteeFlowerSuccess;
+        }
+
         session.OnResult.AddListener((eval, score, days) =>
         {
-            if (_alwaysSucceed)
+            if (guarantee)
             {
-                resultScore = 95;
-                resultDays = 7;
+                resultScore = Mathf.Max(score, 95);
+                resultDays = Mathf.Max(days, 7);
                 resultGameOver = false;
-                Debug.Log("[FlowerTrimmingBridge] Always-succeed override applied.");
+                Debug.Log("[FlowerTrimmingBridge] Guaranteed flower success (per-character).");
             }
             else
             {

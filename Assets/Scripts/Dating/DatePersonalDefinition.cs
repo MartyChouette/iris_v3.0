@@ -84,6 +84,9 @@ public class DatePersonalDefinition : ScriptableObject
              "If empty, uses FlowerTrimmingBridge's default scene.")]
     public string flowerSceneName;
 
+    [Tooltip("If true, flower trimming always results in a high score (tutorial dates).")]
+    public bool guaranteeFlowerSuccess;
+
     // ──────────────────────────────────────────────────────────────
     // Availability
     // ──────────────────────────────────────────────────────────────
