@@ -23,6 +23,10 @@ public class FlowerTrimmingBridge : MonoBehaviour
     [Tooltip("Vertical offset applied to the flower scene so it doesn't overlap the apartment.")]
     [SerializeField] private float _sceneYOffset = 50f;
 
+    [Header("Debug")]
+    [Tooltip("Always treat flower trimming as a success (high score, max days alive, no game over).")]
+    [SerializeField] private bool _alwaysSucceed;
+
     private Action<int, int, bool> _onComplete;
     private bool _waitingForResult;
 
@@ -163,9 +167,19 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         session.OnResult.AddListener((eval, score, days) =>
         {
-            resultScore = score;
-            resultDays = days;
-            resultGameOver = eval.isGameOver;
+            if (_alwaysSucceed)
+            {
+                resultScore = 95;
+                resultDays = 7;
+                resultGameOver = false;
+                Debug.Log("[FlowerTrimmingBridge] Always-succeed override applied.");
+            }
+            else
+            {
+                resultScore = score;
+                resultDays = days;
+                resultGameOver = eval.isGameOver;
+            }
             gotResult = true;
         });
 
