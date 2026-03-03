@@ -626,8 +626,9 @@ public class DateSessionManager : MonoBehaviour
         PopulateLearnedPreferences(successEntry);
         DateHistory.Record(successEntry);
 
-        // Only award flower if affection is high enough
-        bool earnedFlower = _affection >= _flowerAffectionThreshold;
+        // Award flower if affection is high enough, OR if the date guarantees flower success (tutorial)
+        bool guaranteeFlower = _currentDate != null && _currentDate.guaranteeFlowerSuccess;
+        bool earnedFlower = guaranteeFlower || _affection >= _flowerAffectionThreshold;
 
         // Signal flower trimming if this date has a flower scene configured AND player earned it
         if (earnedFlower && _currentDate != null && !string.IsNullOrEmpty(_currentDate.flowerSceneName))
