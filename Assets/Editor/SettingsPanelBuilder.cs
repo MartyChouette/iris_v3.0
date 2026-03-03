@@ -45,16 +45,16 @@ public static class SettingsPanelBuilder
         containerRT.anchorMin = new Vector2(0.5f, 0.5f);
         containerRT.anchorMax = new Vector2(0.5f, 0.5f);
         containerRT.pivot = new Vector2(0.5f, 0.5f);
-        containerRT.sizeDelta = new Vector2(900, 600);
+        containerRT.sizeDelta = new Vector2(1050, 720);
 
         // Title
-        var title = CreateText(container.transform, "Title", "Settings", 32);
+        var title = CreateText(container.transform, "Title", "Settings", 36);
         var titleRT = title.GetComponent<RectTransform>();
         titleRT.anchorMin = new Vector2(0, 1);
         titleRT.anchorMax = new Vector2(1, 1);
         titleRT.pivot = new Vector2(0.5f, 1);
         titleRT.anchoredPosition = new Vector2(0, -10);
-        titleRT.sizeDelta = new Vector2(0, 40);
+        titleRT.sizeDelta = new Vector2(0, 50);
 
         // Tab bar
         var tabBar = CreatePanel(container.transform, "TabBar", new Color(0, 0, 0, 0));
@@ -62,8 +62,8 @@ public static class SettingsPanelBuilder
         tabBarRT.anchorMin = new Vector2(0, 1);
         tabBarRT.anchorMax = new Vector2(1, 1);
         tabBarRT.pivot = new Vector2(0.5f, 1);
-        tabBarRT.anchoredPosition = new Vector2(0, -55);
-        tabBarRT.sizeDelta = new Vector2(0, 36);
+        tabBarRT.anchoredPosition = new Vector2(0, -65);
+        tabBarRT.sizeDelta = new Vector2(0, 42);
 
         var tabBarHLG = tabBar.AddComponent<HorizontalLayoutGroup>();
         tabBarHLG.spacing = 4;
@@ -79,7 +79,7 @@ public static class SettingsPanelBuilder
             var tabBtn = tabGO.AddComponent<Button>();
             var tabComp = tabGO.AddComponent<SettingsTabButton>();
 
-            var tabLabel = CreateText(tabGO.transform, "Label", TabNames[i], 16);
+            var tabLabel = CreateText(tabGO.transform, "Label", TabNames[i], 18);
             Stretch(tabLabel);
 
             // Wire SettingsTabButton fields
@@ -97,8 +97,8 @@ public static class SettingsPanelBuilder
         var contentRT = contentArea.GetComponent<RectTransform>();
         contentRT.anchorMin = new Vector2(0, 0);
         contentRT.anchorMax = new Vector2(1, 1);
-        contentRT.offsetMin = new Vector2(10, 50);   // bottom: space for close button
-        contentRT.offsetMax = new Vector2(-10, -100); // top: space for title + tabs
+        contentRT.offsetMin = new Vector2(10, 55);   // bottom: space for close button
+        contentRT.offsetMax = new Vector2(-10, -115); // top: space for title + tabs
 
         // Create tab panels
         var tabPanels = new GameObject[TabNames.Length];
@@ -148,7 +148,7 @@ public static class SettingsPanelBuilder
 
         CreateText(tabPanels[4].transform, "ControlsInfo",
             "Rebind controls in the Controls page of the pause menu.\n\nKeyboard + Mouse is the primary input method.",
-            18);
+            22);
 
         // === Tab 5: Performance ===
         tabPanels[5] = CreateTabContent(contentArea.transform, "Performance");
@@ -167,7 +167,7 @@ public static class SettingsPanelBuilder
         closeBtnRT.anchorMax = new Vector2(0.5f, 0);
         closeBtnRT.pivot = new Vector2(0.5f, 0);
         closeBtnRT.anchoredPosition = new Vector2(0, 10);
-        closeBtnRT.sizeDelta = new Vector2(200, 40);
+        closeBtnRT.sizeDelta = new Vector2(220, 46);
 
         // Reset All button
         var resetBtn = CreateButton(container.transform, "ResetButton", "Reset All");
@@ -176,7 +176,7 @@ public static class SettingsPanelBuilder
         resetBtnRT.anchorMax = new Vector2(1, 0);
         resetBtnRT.pivot = new Vector2(1, 0);
         resetBtnRT.anchoredPosition = new Vector2(-10, 10);
-        resetBtnRT.sizeDelta = new Vector2(160, 40);
+        resetBtnRT.sizeDelta = new Vector2(180, 46);
 
         // Add SettingsPanel component
         var settingsPanel = canvasGO.AddComponent<SettingsPanel>();
@@ -306,8 +306,8 @@ public static class SettingsPanelBuilder
 
     private static void ConfigureVLG(VerticalLayoutGroup vlg)
     {
-        vlg.spacing = 8;
-        vlg.padding = new RectOffset(20, 20, 15, 15);
+        vlg.spacing = 14;
+        vlg.padding = new RectOffset(25, 25, 20, 20);
         vlg.childAlignment = TextAnchor.UpperCenter;
         vlg.childForceExpandWidth = true;
         vlg.childForceExpandHeight = false;
@@ -328,7 +328,7 @@ public static class SettingsPanelBuilder
         row.AddComponent<RectTransform>();
 
         var hlg = row.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 10;
+        hlg.spacing = 12;
         hlg.childAlignment = TextAnchor.MiddleLeft;
         hlg.childForceExpandWidth = false;
         hlg.childForceExpandHeight = true;
@@ -336,7 +336,7 @@ public static class SettingsPanelBuilder
         hlg.childControlHeight = true;
 
         var le = row.AddComponent<LayoutElement>();
-        le.preferredHeight = 36;
+        le.preferredHeight = 50;
 
         // Label
         var labelGO = new GameObject("Label");
@@ -344,11 +344,11 @@ public static class SettingsPanelBuilder
         labelGO.AddComponent<RectTransform>();
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.text = labelText;
-        tmp.fontSize = 18;
+        tmp.fontSize = 22;
         tmp.color = LabelColor;
         tmp.alignment = TextAlignmentOptions.MidlineLeft;
         var labelLE = labelGO.AddComponent<LayoutElement>();
-        labelLE.preferredWidth = 200;
+        labelLE.preferredWidth = 300;
 
         // Slider
         var sliderGO = new GameObject("Slider");
@@ -404,11 +404,11 @@ public static class SettingsPanelBuilder
         valGO.AddComponent<RectTransform>();
         var valTmp = valGO.AddComponent<TextMeshProUGUI>();
         valTmp.text = $"{defaultVal:P0}";
-        valTmp.fontSize = 16;
+        valTmp.fontSize = 18;
         valTmp.color = LabelColor;
         valTmp.alignment = TextAlignmentOptions.MidlineRight;
         var valLE = valGO.AddComponent<LayoutElement>();
-        valLE.preferredWidth = 60;
+        valLE.preferredWidth = 70;
 
         return new SliderResult { slider = slider, label = valTmp };
     }
@@ -420,7 +420,7 @@ public static class SettingsPanelBuilder
         row.AddComponent<RectTransform>();
 
         var hlg = row.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 10;
+        hlg.spacing = 12;
         hlg.childAlignment = TextAnchor.MiddleLeft;
         hlg.childForceExpandWidth = false;
         hlg.childForceExpandHeight = true;
@@ -428,7 +428,7 @@ public static class SettingsPanelBuilder
         hlg.childControlHeight = true;
 
         var le = row.AddComponent<LayoutElement>();
-        le.preferredHeight = 36;
+        le.preferredHeight = 50;
 
         // Label
         var labelGO = new GameObject("Label");
@@ -436,11 +436,11 @@ public static class SettingsPanelBuilder
         labelGO.AddComponent<RectTransform>();
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.text = labelText;
-        tmp.fontSize = 18;
+        tmp.fontSize = 22;
         tmp.color = LabelColor;
         tmp.alignment = TextAlignmentOptions.MidlineLeft;
         var labelLE = labelGO.AddComponent<LayoutElement>();
-        labelLE.preferredWidth = 200;
+        labelLE.preferredWidth = 300;
 
         // Dropdown
         var ddGO = new GameObject("Dropdown");
@@ -448,7 +448,7 @@ public static class SettingsPanelBuilder
         ddGO.AddComponent<RectTransform>();
         var ddLE = ddGO.AddComponent<LayoutElement>();
         ddLE.flexibleWidth = 1;
-        ddLE.preferredHeight = 32;
+        ddLE.preferredHeight = 40;
 
         var ddImg = ddGO.AddComponent<Image>();
         ddImg.color = SliderBgColor;
@@ -462,7 +462,7 @@ public static class SettingsPanelBuilder
         captionRT.offsetMin = new Vector2(10, 2);
         captionRT.offsetMax = new Vector2(-30, -2);
         var captionTmp = captionGO.AddComponent<TextMeshProUGUI>();
-        captionTmp.fontSize = 16;
+        captionTmp.fontSize = 18;
         captionTmp.color = LabelColor;
         captionTmp.alignment = TextAlignmentOptions.MidlineLeft;
 
@@ -504,7 +504,7 @@ public static class SettingsPanelBuilder
         itemRT.anchorMin = new Vector2(0, 1);
         itemRT.anchorMax = new Vector2(1, 1);
         itemRT.pivot = new Vector2(0.5f, 1);
-        itemRT.sizeDelta = new Vector2(0, 32);
+        itemRT.sizeDelta = new Vector2(0, 40);
         var itemToggle = itemGO.AddComponent<Toggle>();
 
         var itemBG = itemGO.AddComponent<Image>();
@@ -512,7 +512,7 @@ public static class SettingsPanelBuilder
         itemToggle.targetGraphic = itemBG;
 
         var itemLE = itemGO.AddComponent<LayoutElement>();
-        itemLE.preferredHeight = 32;
+        itemLE.preferredHeight = 40;
 
         var itemLabelGO = new GameObject("Item Label");
         itemLabelGO.transform.SetParent(itemGO.transform, false);
@@ -522,7 +522,7 @@ public static class SettingsPanelBuilder
         itemLabelRT.offsetMin = new Vector2(10, 2);
         itemLabelRT.offsetMax = new Vector2(-10, -2);
         var itemTmp = itemLabelGO.AddComponent<TextMeshProUGUI>();
-        itemTmp.fontSize = 16;
+        itemTmp.fontSize = 18;
         itemTmp.color = LabelColor;
         itemTmp.alignment = TextAlignmentOptions.MidlineLeft;
 
@@ -555,7 +555,7 @@ public static class SettingsPanelBuilder
         row.AddComponent<RectTransform>();
 
         var hlg = row.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 10;
+        hlg.spacing = 12;
         hlg.childAlignment = TextAnchor.MiddleLeft;
         hlg.childForceExpandWidth = false;
         hlg.childForceExpandHeight = true;
@@ -563,7 +563,7 @@ public static class SettingsPanelBuilder
         hlg.childControlHeight = true;
 
         var le = row.AddComponent<LayoutElement>();
-        le.preferredHeight = 36;
+        le.preferredHeight = 50;
 
         // Label
         var labelGO = new GameObject("Label");
@@ -571,27 +571,37 @@ public static class SettingsPanelBuilder
         labelGO.AddComponent<RectTransform>();
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.text = labelText;
-        tmp.fontSize = 18;
+        tmp.fontSize = 22;
         tmp.color = LabelColor;
         tmp.alignment = TextAlignmentOptions.MidlineLeft;
         var labelLE = labelGO.AddComponent<LayoutElement>();
-        labelLE.preferredWidth = 200;
+        labelLE.preferredWidth = 300;
 
-        // Toggle
+        // Toggle — square checkbox with visible border
         var toggleGO = new GameObject("Toggle");
         toggleGO.transform.SetParent(row.transform, false);
         toggleGO.AddComponent<RectTransform>();
         var toggleLE = toggleGO.AddComponent<LayoutElement>();
-        toggleLE.preferredWidth = 30;
-        toggleLE.preferredHeight = 30;
+        toggleLE.preferredWidth = 36;
+        toggleLE.preferredHeight = 36;
 
+        // Outer border (light outline around checkbox)
         var bgImg = toggleGO.AddComponent<Image>();
-        bgImg.color = SliderBgColor;
+        bgImg.color = new Color(0.55f, 0.55f, 0.6f, 1f); // visible light border
 
-        var checkGO = CreatePanel(toggleGO.transform, "Checkmark", SliderFillColor);
+        // Inner background (dark square inset)
+        var innerGO = CreatePanel(toggleGO.transform, "InnerBG", SliderBgColor);
+        var innerRT = innerGO.GetComponent<RectTransform>();
+        innerRT.anchorMin = Vector2.zero;
+        innerRT.anchorMax = Vector2.one;
+        innerRT.offsetMin = new Vector2(2, 2);
+        innerRT.offsetMax = new Vector2(-2, -2);
+
+        // Checkmark fill (square, inset from inner bg)
+        var checkGO = CreatePanel(innerGO.transform, "Checkmark", SliderFillColor);
         var checkRT = checkGO.GetComponent<RectTransform>();
-        checkRT.anchorMin = new Vector2(0.15f, 0.15f);
-        checkRT.anchorMax = new Vector2(0.85f, 0.85f);
+        checkRT.anchorMin = new Vector2(0.12f, 0.12f);
+        checkRT.anchorMax = new Vector2(0.88f, 0.88f);
         checkRT.offsetMin = Vector2.zero;
         checkRT.offsetMax = Vector2.zero;
 
@@ -619,7 +629,7 @@ public static class SettingsPanelBuilder
         colors.highlightedColor = SliderFillColor;
         btn.colors = colors;
 
-        var labelGO = CreateText(go.transform, "Label", text, 20);
+        var labelGO = CreateText(go.transform, "Label", text, 22);
         Stretch(labelGO);
 
         return go;
