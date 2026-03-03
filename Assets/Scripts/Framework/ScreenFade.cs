@@ -45,14 +45,9 @@ public class ScreenFade : MonoBehaviour
         }
         Instance = this;
 
-        // Ensure ScreenFade canvas renders above all other UI (DateEndScreen, FlowerGiftPresenter, etc.)
-        var canvas = GetComponentInParent<Canvas>();
-        if (canvas != null && canvas.sortingOrder < 200)
-            canvas.sortingOrder = 200;
-
-        // Do NOT force alpha=1 here — it deadlocks startup because
-        // NameEntryScreen needs to be visible/clickable before FadeIn is called.
-        // DayPhaseManager transitions handle FadeOut→swap→FadeIn explicitly.
+        // NOTE: Do NOT override canvas sortingOrder here. The scene builder sets
+        // ScreenFade to sortingOrder 100 and NameEntryScreen to 110 (above it).
+        // Forcing a higher order blocks NameEntryScreen clicks and deadlocks startup.
     }
 
     private void OnDestroy()
