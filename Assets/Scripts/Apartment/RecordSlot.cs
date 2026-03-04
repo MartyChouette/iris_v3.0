@@ -32,6 +32,10 @@ public class RecordSlot : MonoBehaviour
     [Tooltip("Where the playing record stands upright for display. If null, uses turntable position + offset.")]
     [SerializeField] private Transform _displayPoint;
 
+    [Header("Startup")]
+    [Tooltip("If set, this record starts on the turntable when the scene loads.")]
+    [SerializeField] private RecordItem _startingRecord;
+
     [Header("Audio")]
     [Tooltip("SFX played when a record starts playing.")]
     [SerializeField] private AudioClip _playSFX;
@@ -66,6 +70,12 @@ public class RecordSlot : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        if (_startingRecord != null)
+            SelectRecord(_startingRecord);
+    }
+
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
@@ -77,6 +87,48 @@ public class RecordSlot : MonoBehaviour
     {
         if (_isPlaying && _discVisual != null)
             _discVisual.Rotate(Vector3.up, _rotationSpeed * Time.deltaTime, Space.Self);
+    }
+
+    /// <summary>
+    /// Click-to-select: instantly loads a record from its shelf onto the turntable.
+    /// No physical grab — the record teleports to the display point and starts playing.
+    /// </summary>
+    public void SelectRecord(RecordItem recordItem)
+    {
+        if (recordItem == null || recordItem.Definition == null) return;
+
+        var held = recordItem.GetComponent<PlaceableObject>();
+
+        // Eject current record if one is loaded
+        if (_loadedRecord != null)
+            EjectRecord();
+
+        _loadedRecord = held;
+        _loadedRecordItem = recordItem;
+        _loadedHomePosition = recordItem.HomePosition;
+        _loadedHomeRotation = recordItem.HomeRotation;
+
+        // Disable physics
+        var rb = recordItem.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Disable colliders so the record doesn't interfere with raycasts
+        foreach (var col in recordItem.GetComponents<Collider>())
+            col.enabled = false;
+
+        // Teleport to display point
+        if (held != null)
+            PositionAtDisplay(held);
+        recordItem.transform.SetParent(transform);
+
+        StartPlayback();
+
+        Debug.Log($"[RecordSlot] Selected: {recordItem.Definition.title} by {recordItem.Definition.artist}");
     }
 
     /// <summary>

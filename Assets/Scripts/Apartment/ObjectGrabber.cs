@@ -289,11 +289,31 @@ public class ObjectGrabber : MonoBehaviour
                 return;
             }
 
+            // Check for turntable click — eject record
+            var clickedSlot = hit.collider.GetComponent<RecordSlot>();
+            if (clickedSlot == null)
+                clickedSlot = hit.collider.GetComponentInParent<RecordSlot>();
+            if (clickedSlot != null && clickedSlot.IsPlaying)
+            {
+                clickedSlot.EjectRecord();
+                ConsumeClick();
+                return;
+            }
+
             return;
         }
 
         if (placeable.CurrentState == PlaceableObject.State.Held)
             return;
+
+        // Records use click-to-select — no physical grab
+        var recordItem = placeable.GetComponent<RecordItem>();
+        if (recordItem != null)
+        {
+            recordItem.SelectForPlayback();
+            ConsumeClick();
+            return;
+        }
 
         ConsumeClick();
         _held = placeable;
@@ -354,24 +374,6 @@ public class ObjectGrabber : MonoBehaviour
     private void Place()
     {
         if (_held == null) return;
-
-        // ── RecordSlot check (turntable) ──
-        // If over a surface parented to a RecordSlot while holding a RecordItem, accept it
-        if (_currentSurface != null)
-        {
-            var slot = _currentSurface.GetComponentInParent<RecordSlot>();
-            if (slot != null && _held.GetComponent<RecordItem>() != null)
-            {
-                _heldRb.constraints = _originalConstraints;
-                _heldRb.linearVelocity = Vector3.zero;
-                if (slot.TryAcceptRecord(_held))
-                {
-                    PlayPlaceSFX(_held);
-                    ClearHeld();
-                    return;
-                }
-            }
-        }
 
         // ── DiscoBall check ──
         if (_currentSurface != null)

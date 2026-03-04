@@ -41,7 +41,7 @@ TagManager:
   - Turntable
   - Door
   - RecordSleeves
-  - 
+  - Walls
   m_SortingLayers:
   - name: Default
     uniqueID: 0

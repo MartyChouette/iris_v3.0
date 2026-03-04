@@ -640,12 +640,18 @@ public class ApartmentManager : MonoBehaviour
         if (hit == _hoveredHighlight) return;
 
         if (_hoveredHighlight != null)
+        {
             _hoveredHighlight.SetHighlighted(false);
+            _hoveredHighlight.SetInteractHighlighted(false);
+        }
 
         _hoveredHighlight = hit;
 
         if (_hoveredHighlight != null)
+        {
             _hoveredHighlight.SetHighlighted(true);
+            _hoveredHighlight.SetInteractHighlighted(true);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────

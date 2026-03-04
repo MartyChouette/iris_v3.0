@@ -240,11 +240,29 @@ public class WallOcclusionFader : MonoBehaviour
         else
             hitCount = Physics.RaycastNonAlloc(camPos, dir.normalized, _hitBuffer, dist, _wallLayer, QueryTriggerInteraction.Ignore);
 
+        // Find the farthest hit wall — that's the wall the target sits on/against.
+        // We exempt it so wall-mounted items don't dissolve their own wall.
+        float farthestDist = -1f;
+        Renderer farthestRend = null;
         for (int i = 0; i < hitCount; i++)
         {
             var rend = _hitBuffer[i].collider.GetComponentInParent<Renderer>();
             if (rend == null) continue;
             if (!UsesDissolvableShader(rend)) continue;
+            if (_hitBuffer[i].distance > farthestDist)
+            {
+                farthestDist = _hitBuffer[i].distance;
+                farthestRend = rend;
+            }
+        }
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            var rend = _hitBuffer[i].collider.GetComponentInParent<Renderer>();
+            if (rend == null) continue;
+            if (!UsesDissolvableShader(rend)) continue;
+            // Skip the wall closest to (behind) the target — it's the wall the target is on
+            if (rend == farthestRend) continue;
             _hitThisFrame.Add(rend);
         }
     }

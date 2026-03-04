@@ -56,6 +56,9 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("True when a disheveled rotation has been captured.")]
     [SerializeField] private bool _hasDisheveledPose;
 
+    [Tooltip("If true, starts the scene in the disheveled pose.")]
+    [SerializeField] private bool _startDishelved;
+
     [Header("Audio Overrides")]
     [Tooltip("Pickup sound override. If set, plays instead of ObjectGrabber's default.")]
     [SerializeField] private AudioClip _pickupSFXOverride;
@@ -196,36 +199,48 @@ public class PlaceableObject : MonoBehaviour
         transform.rotation = _disheveledRotation;
 
         if (_rb != null)
+        {
+            _rb.rotation = _disheveledRotation;
             _rb.angularVelocity = Vector3.zero;
+            _rb.linearVelocity = Vector3.zero;
+        }
 
         Debug.Log($"[PlaceableObject] {name} disheveled.");
     }
 
-    /// <summary>Capture current transform rotation as the disheveled pose.</summary>
-    [ContextMenu("Capture Disheveled Pose")]
+    /// <summary>Capture current rotation as the disheveled pose (rotation only, position untouched).</summary>
+    [ContextMenu("Capture Disheveled Rotation")]
     private void CaptureDisheveledPose()
     {
         _disheveledRotation = transform.rotation;
         _hasDisheveledPose = true;
-        Debug.Log($"[PlaceableObject] {name} disheveled pose captured: {transform.eulerAngles}");
+        Debug.Log($"[PlaceableObject] {name} disheveled rotation captured: {transform.eulerAngles}");
     }
 
-    /// <summary>Capture current transform as the normal/home pose.</summary>
-    [ContextMenu("Capture Normal Pose")]
+    /// <summary>Capture current rotation as the home/normal rotation (rotation only, position untouched).</summary>
+    [ContextMenu("Capture Home Rotation")]
+    private void CaptureHomeRotation()
+    {
+        _homeRotation = transform.rotation;
+        Debug.Log($"[PlaceableObject] {name} home rotation captured: {transform.eulerAngles}");
+    }
+
+    /// <summary>Capture current position + rotation as the full home pose.</summary>
+    [ContextMenu("Capture Home Position + Rotation")]
     private void CaptureNormalPose()
     {
         _homePosition = transform.position;
         _homeRotation = transform.rotation;
-        Debug.Log($"[PlaceableObject] {name} normal pose captured: pos={_homePosition}, rot={transform.eulerAngles}");
+        Debug.Log($"[PlaceableObject] {name} home pose captured: pos={_homePosition}, rot={transform.eulerAngles}");
     }
 
     /// <summary>Clear the captured disheveled pose (reverts to procedural fallback).</summary>
-    [ContextMenu("Clear Disheveled Pose")]
+    [ContextMenu("Clear Disheveled Rotation")]
     private void ClearDisheveledPose()
     {
         _hasDisheveledPose = false;
         _disheveledRotation = Quaternion.identity;
-        Debug.Log($"[PlaceableObject] {name} disheveled pose cleared.");
+        Debug.Log($"[PlaceableObject] {name} disheveled rotation cleared.");
     }
 
     /// <summary>
@@ -298,6 +313,9 @@ public class PlaceableObject : MonoBehaviour
         // Build silhouette once — stays alive so resting objects show
         // through furniture via ZTest Greater
         BuildSilhouette();
+
+        if (_startDishelved)
+            Dishevel();
     }
 
     private void Update()
