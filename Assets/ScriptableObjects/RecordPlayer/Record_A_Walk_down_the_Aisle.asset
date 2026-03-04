@@ -10,11 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c7a04ad4e28598b46af1c9d665529791, type: 3}
-  m_Name: Record_Stem_&_Leaf
+  m_Name: Record_A_Walk_down_the_Aisle
   m_EditorClassIdentifier: Assembly-CSharp::RecordDefinition
-  title: Stem & Leaf
-  artist: Chlorophyll
-  labelColor: {r: 0.2, g: 0.6, b: 0.3, a: 1}
+  title: A Walk down the Aisle
+  artist: baegel
+  genre: Wedding
+  description:
+  labelColor: {r: 0.9, g: 0.85, b: 0.6, a: 1}
+  coverColor: {r: 0.95, g: 0.92, b: 0.85, a: 1}
   moodValue: 0.3
-  musicClip: {fileID: 0}
+  musicClip: {fileID: 8300000, guid: 0aef1d85ec33f1442aae21638a77773f, type: 3}
   volume: 0.7

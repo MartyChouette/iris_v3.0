@@ -232,7 +232,22 @@ Shader "Iris/NatureBox"
 
             half4 frag(Varyings input) : SV_Target
             {
-                float3 viewDir = normalize(input.positionWS - _WorldSpaceCameraPos);
+                float3 viewDir;
+                if (unity_OrthoParams.w > 0.5)
+                {
+                    // Orthographic: all rays are parallel, so reconstruct a fake
+                    // perspective viewDir from screen position so the sky still
+                    // renders with proper gradient/clouds/weather.
+                    float2 ndc = (input.positionCS.xy / _ScreenParams.xy) * 2.0 - 1.0;
+                    float3 forward = float3(UNITY_MATRIX_V._m20, UNITY_MATRIX_V._m21, UNITY_MATRIX_V._m22);
+                    float3 right   = float3(UNITY_MATRIX_V._m00, UNITY_MATRIX_V._m01, UNITY_MATRIX_V._m02);
+                    float3 up      = float3(UNITY_MATRIX_V._m10, UNITY_MATRIX_V._m11, UNITY_MATRIX_V._m12);
+                    viewDir = normalize(-forward + right * ndc.x * 0.8 + up * ndc.y * 0.8);
+                }
+                else
+                {
+                    viewDir = normalize(input.positionWS - _WorldSpaceCameraPos);
+                }
 
                 // ── Pixelation: quantize view direction in spherical coords ──
                 if (_PixelDensity > 0.0)

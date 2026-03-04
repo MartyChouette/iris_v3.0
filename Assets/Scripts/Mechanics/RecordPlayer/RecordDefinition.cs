@@ -10,6 +10,13 @@ public class RecordDefinition : ScriptableObject
     [Tooltip("Artist or band name.")]
     public string artist = "Unknown";
 
+    [Tooltip("Genre (e.g. DnB, K-pop, Lo-fi, Sexy, Wedding).")]
+    public string genre = "";
+
+    [Tooltip("Flavor text — Nema's thoughts on this record.")]
+    [TextArea(2, 4)]
+    public string description = "";
+
     [Header("Visuals")]
     [Tooltip("Color of the record label (center circle).")]
     public Color labelColor = new Color(0.8f, 0.2f, 0.2f);

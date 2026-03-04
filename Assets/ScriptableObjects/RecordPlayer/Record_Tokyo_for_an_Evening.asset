@@ -10,11 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c7a04ad4e28598b46af1c9d665529791, type: 3}
-  m_Name: Record_Petal_Rain
+  m_Name: Record_Tokyo_for_an_Evening
   m_EditorClassIdentifier: Assembly-CSharp::RecordDefinition
-  title: Petal Rain
-  artist: The Pollens
-  labelColor: {r: 0.8, g: 0.2, b: 0.2, a: 1}
-  moodValue: 0.3
-  musicClip: {fileID: 0}
+  title: Tokyo for an Evening
+  artist: Sarah, the Illstrumentalist
+  genre: Sexy
+  description:
+  labelColor: {r: 0.7, g: 0.15, b: 0.2, a: 1}
+  coverColor: {r: 0.4, g: 0.1, b: 0.15, a: 1}
+  moodValue: 0.5
+  musicClip: {fileID: 8300000, guid: ecf0c76bc3cc3c64bb8350d8a2e6e2fd, type: 3}
   volume: 0.7
