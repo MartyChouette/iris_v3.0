@@ -639,13 +639,9 @@ public class ObjectGrabber : MonoBehaviour
         Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        // During dolly animation, keep object on screen-space depth plane
-        // so it travels with the cursor instead of clinging to the old room
-        bool dollying = ApartmentManager.Instance != null && ApartmentManager.Instance.IsTransitioning;
-
         bool foundSurface = false;
 
-        if (!dollying && Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
         {
             var surface = hit.collider.GetComponentInParent<PlacementSurface>();
             bool surfaceValid = surface != null
