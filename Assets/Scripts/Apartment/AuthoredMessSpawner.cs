@@ -63,7 +63,8 @@ public class AuthoredMessSpawner : MonoBehaviour
         }
         else
         {
-            var shader = Shader.Find("Iris/PSXLitGlitch");
+            var shader = Shader.Find("Iris/PSXLit");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader != null)
                 _glitchMatInstance = new Material(shader);
         }
