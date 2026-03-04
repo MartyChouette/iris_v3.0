@@ -61,14 +61,28 @@ public class GrabPull : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        if (!cam) cam = Camera.main;
+    }
+
+    /// <summary>
+    /// Lazily resolve the active camera. Handles additive scene loading where
+    /// Camera.main may point to a different scene's camera during Awake.
+    /// </summary>
+    private Camera ActiveCam
+    {
+        get
+        {
+            if (cam != null && cam.enabled) return cam;
+            cam = Camera.main;
+            return cam;
+        }
     }
 
     void Update()
     {
         if (Input.GetKeyDown(grabKey))
         {
-            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (ActiveCam == null) return;
+            var ray = ActiveCam.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out var hit) && hit.rigidbody == rb)
             {
                 grabbing = true;
@@ -112,7 +126,8 @@ public class GrabPull : MonoBehaviour
         }
 
         // project cursor onto object plane for a stable target
-        var ray = cam.ScreenPointToRay(Input.mousePosition);
+        if (ActiveCam == null) { grabbing = false; return; }
+        var ray = ActiveCam.ScreenPointToRay(Input.mousePosition);
         var plane = new Plane(-cam.transform.forward, rb.worldCenterOfMass);
         if (plane.Raycast(ray, out float enter))
             grabWorld = ray.GetPoint(enter);

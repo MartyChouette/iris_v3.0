@@ -16,6 +16,13 @@ public class LivingFlowerPlantManager : MonoBehaviour
     [Tooltip("Pre-placed transforms where living plants can be spawned.")]
     [SerializeField] private Transform[] _plantSlots;
 
+    [Header("Layer & Material")]
+    [Tooltip("Layer index for spawned plants (must match ObjectGrabber's placeableLayer mask).")]
+    [SerializeField] private int _plantLayer;
+
+    [Tooltip("Material for pot/soil/procedural parts. Falls back to Shader.Find if unassigned.")]
+    [SerializeField] private Material _fallbackMaterial;
+
     private readonly List<LivingFlowerPlant> _activePlants = new();
     private int _nextSlotIndex;
 
@@ -217,7 +224,7 @@ public class LivingFlowerPlantManager : MonoBehaviour
     /// Add pot (brown cube) and soil (dark disc) as children of the given parent.
     /// Strips auto-generated colliders from primitives so the root BoxCollider is authoritative.
     /// </summary>
-    private static void CreatePotWithSoil(GameObject parent)
+    private void CreatePotWithSoil(GameObject parent)
     {
         // Pot (brown cube)
         var pot = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -228,12 +235,7 @@ public class LivingFlowerPlantManager : MonoBehaviour
         Object.Destroy(pot.GetComponent<Collider>());
         var potRend = pot.GetComponent<Renderer>();
         if (potRend != null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
-            mat.color = new Color(0.55f, 0.35f, 0.20f);
-            potRend.sharedMaterial = mat;
-        }
+            potRend.sharedMaterial = GetSafeMaterial(new Color(0.55f, 0.35f, 0.20f));
 
         // Soil (dark brown disc sitting on top of pot)
         var soil = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -244,20 +246,19 @@ public class LivingFlowerPlantManager : MonoBehaviour
         Object.Destroy(soil.GetComponent<Collider>());
         var soilRend = soil.GetComponent<Renderer>();
         if (soilRend != null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
-            mat.color = new Color(0.25f, 0.15f, 0.08f);
-            soilRend.sharedMaterial = mat;
-        }
+            soilRend.sharedMaterial = GetSafeMaterial(new Color(0.25f, 0.15f, 0.08f));
     }
 
     /// <summary>
     /// Make a plant GO grabbable: kinematic Rigidbody + auto-sized BoxCollider + PlaceableObject.
     /// Must be called AFTER all child visuals are parented.
     /// </summary>
-    private static void MakePlaceable(GameObject go)
+    private void MakePlaceable(GameObject go)
     {
+        // Set layer on GO + all children so ObjectGrabber raycast can hit it
+        if (_plantLayer > 0)
+            SetLayerRecursive(go, _plantLayer);
+
         // Rigidbody first (PlaceableObject requires it)
         var rb = go.GetComponent<Rigidbody>();
         if (rb == null) rb = go.AddComponent<Rigidbody>();
@@ -290,7 +291,31 @@ public class LivingFlowerPlantManager : MonoBehaviour
         go.AddComponent<InteractableHighlight>();
     }
 
-    private static GameObject CreateProceduralPlant(string characterName)
+    private static void SetLayerRecursive(GameObject go, int layer)
+    {
+        go.layer = layer;
+        foreach (Transform child in go.transform)
+            SetLayerRecursive(child.gameObject, layer);
+    }
+
+    private Material GetSafeMaterial(Color color)
+    {
+        if (_fallbackMaterial != null)
+        {
+            var mat = new Material(_fallbackMaterial);
+            mat.color = color;
+            return mat;
+        }
+
+        var shader = Shader.Find("Universal Render Pipeline/Lit")
+                     ?? Shader.Find("Standard")
+                     ?? Shader.Find("Sprites/Default");
+        var fallback = new Material(shader);
+        fallback.color = color;
+        return fallback;
+    }
+
+    private GameObject CreateProceduralPlant(string characterName)
     {
         var plantGO = new GameObject($"LivingPlant_{characterName}");
 
@@ -305,12 +330,7 @@ public class LivingFlowerPlantManager : MonoBehaviour
         Object.Destroy(stem.GetComponent<Collider>());
         var stemRend = stem.GetComponent<Renderer>();
         if (stemRend != null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
-            mat.color = new Color(0.3f, 0.7f, 0.2f);
-            stemRend.sharedMaterial = mat;
-        }
+            stemRend.sharedMaterial = GetSafeMaterial(new Color(0.3f, 0.7f, 0.2f));
 
         // Flower head (colored sphere)
         var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -322,13 +342,9 @@ public class LivingFlowerPlantManager : MonoBehaviour
         var headRend = head.GetComponent<Renderer>();
         if (headRend != null)
         {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Standard"));
-            // Vary color by character name hash for visual variety
             int hash = characterName != null ? characterName.GetHashCode() : 0;
             float hue = Mathf.Abs(hash % 360) / 360f;
-            mat.color = Color.HSVToRGB(hue, 0.6f, 0.9f);
-            headRend.sharedMaterial = mat;
+            headRend.sharedMaterial = GetSafeMaterial(Color.HSVToRGB(hue, 0.6f, 0.9f));
         }
 
         return plantGO;

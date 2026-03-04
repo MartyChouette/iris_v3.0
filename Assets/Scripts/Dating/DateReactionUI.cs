@@ -56,10 +56,14 @@ public class DateReactionUI : MonoBehaviour
         _iconRenderer.sortingOrder = 100;
 
         // Render through walls so reactions are always visible
-        var spriteMat = new Material(Shader.Find("Sprites/Default"));
-        spriteMat.SetInt("_ZTest", (int)CompareFunction.Always);
-        spriteMat.renderQueue = 4000;
-        _iconRenderer.material = spriteMat;
+        var spriteShader = Shader.Find("Sprites/Default");
+        if (spriteShader != null)
+        {
+            var spriteMat = new Material(spriteShader);
+            spriteMat.SetInt("_ZTest", (int)CompareFunction.Always);
+            spriteMat.renderQueue = 4000;
+            _iconRenderer.material = spriteMat;
+        }
 
         _bubbleGO.SetActive(false);
 
@@ -315,7 +319,7 @@ public class DateReactionUI : MonoBehaviour
         _bubbleText.sortingOrder = 101;
 
         // Render text through walls
-        _bubbleText.renderer.material.SetInt("_ZTestMode", (int)CompareFunction.Always);
+        _bubbleText.renderer.material.SetInt("unity_GUIZTestMode", (int)CompareFunction.Always);
         _bubbleText.renderer.material.renderQueue = 4001;
     }
 
@@ -331,10 +335,14 @@ public class DateReactionUI : MonoBehaviour
         _itemIconRenderer.sortingOrder = 102;
 
         // Render through walls
-        var mat = new Material(Shader.Find("Sprites/Default"));
-        mat.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
-        mat.renderQueue = 4002;
-        _itemIconRenderer.material = mat;
+        var itemShader = Shader.Find("Sprites/Default");
+        if (itemShader != null)
+        {
+            var mat = new Material(itemShader);
+            mat.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+            mat.renderQueue = 4002;
+            _itemIconRenderer.material = mat;
+        }
 
         go.transform.localScale = Vector3.one * 0.8f;
         _itemIconRenderer.enabled = false;

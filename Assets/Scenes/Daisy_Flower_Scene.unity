@@ -697,8 +697,6 @@ MonoBehaviour:
   allowedWithered: 0
   allowedMissing: 1
   scoreWeight: 0.1
-  idealLocalPosition: {x: 0, y: 0, z: 0}
-  idealLocalEuler: {x: 0, y: 0, z: 0}
   session: {fileID: 6656573071170535816}
   brain: {fileID: 8426878410151901396}
   xyJoint: {fileID: 252842258}
@@ -720,7 +718,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Intensity: 1
   Mass: 10
-  stiffness: 1
+  stiffness: 0.85
   damping: 0.75
   dragRadius: 3
   dragStrength: 1
@@ -733,6 +731,7 @@ MonoBehaviour:
   driveRigidbodyFromDrag: 1
   dragAcceleration: 40
   hardMaxSpeed: 15
+  passiveMode: 0
   coupledStem: {fileID: 1847974104}
   stemAttachPoint: {fileID: 456363685}
   stemTugRadius: 0.25
@@ -8025,8 +8024,6 @@ MonoBehaviour:
   allowedWithered: 0
   allowedMissing: 1
   scoreWeight: 0.1
-  idealLocalPosition: {x: 0, y: 0, z: 0}
-  idealLocalEuler: {x: 0, y: 0, z: 0}
   session: {fileID: 6656573071170535816}
   brain: {fileID: 8426878410151901396}
   xyJoint: {fileID: 774411319}
@@ -8048,7 +8045,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Intensity: 1
   Mass: 10
-  stiffness: 1
+  stiffness: 0.75
   damping: 0.75
   dragRadius: 3
   dragStrength: 1
@@ -8061,6 +8058,7 @@ MonoBehaviour:
   driveRigidbodyFromDrag: 1
   dragAcceleration: 40
   hardMaxSpeed: 15
+  passiveMode: 0
   coupledStem: {fileID: 1847974104}
   stemAttachPoint: {fileID: 456363685}
   stemTugRadius: 0.25
@@ -9316,9 +9314,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6b6354d8da4ba74fa3e30f9f157b023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenuController
-  pauseAction: {fileID: 6953569989913481401, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  pageLeftAction: {fileID: 1575014813357501299, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  pageRightAction: {fileID: -5585314136318662622, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   pauseRoot: {fileID: 1897234333}
   pageTitleLabel: {fileID: 1471385849}
   pageIndexLabel: {fileID: 0}
@@ -9333,7 +9328,6 @@ MonoBehaviour:
     displayName: System Menu
     root: {fileID: 818133447}
   optionsPanel: {fileID: 0}
-  manageCursor: 1
   debugLogs: 0
 --- !u!1 &1073396782
 GameObject:
@@ -9347,9 +9341,7 @@ GameObject:
   - component: {fileID: 1073396785}
   - component: {fileID: 1073396784}
   - component: {fileID: 1073396783}
-  - component: {fileID: 1073396787}
   - component: {fileID: 1073396789}
-  - component: {fileID: 1073396788}
   m_Layer: 8
   m_Name: Plane
   m_TagString: Untagged
@@ -9386,7 +9378,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1073396782}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -9445,36 +9437,12 @@ Transform:
   m_GameObject: {fileID: 1073396782}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.66, z: 0}
+  m_LocalPosition: {x: 0, y: -9.63, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1073396787
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1073396782}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6757b231cedd544c583ef8aeaf773b2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Obi::Obi.ObiCollider
---- !u!114 &1073396788
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1073396782}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62359d80fdc0e4315ab6331b78ec5b90, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Obi::Obi.ObiRigidbody
 --- !u!54 &1073396789
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -10456,6 +10424,7 @@ MonoBehaviour:
     particleCount: 15
     particleSize: 0.03
     lifetime: 0.6
+  followDripDuration: 2
   sapColor: {r: 0.2, g: 0.8, b: 0.1, a: 1}
   sapColorOverLifetime:
     serializedVersion: 2
@@ -12397,7 +12366,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Intensity: 1
   Mass: 10
-  stiffness: 1
+  stiffness: 0.85
   damping: 0.75
   dragRadius: 3
   dragStrength: 1
@@ -12410,6 +12379,7 @@ MonoBehaviour:
   driveRigidbodyFromDrag: 1
   dragAcceleration: 40
   hardMaxSpeed: 15
+  passiveMode: 0
   coupledStem: {fileID: 1847974104}
   stemAttachPoint: {fileID: 1380600916}
   stemTugRadius: 0.25
@@ -14168,8 +14138,6 @@ MonoBehaviour:
   allowedWithered: 0
   allowedMissing: 1
   scoreWeight: 0.1
-  idealLocalPosition: {x: 0, y: 0, z: 0}
-  idealLocalEuler: {x: 0, y: 0, z: 0}
   session: {fileID: 6656573071170535816}
   brain: {fileID: 8426878410151901396}
   xyJoint: {fileID: 1765484911}
@@ -14465,13 +14433,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 3469287837255199003}
     - target: {fileID: 7479550042126984047, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: parts.Array.size
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 7479550042126984047, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: 'parts.Array.data[0]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3469287837255199003}
     - target: {fileID: 7479550042126984047, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: 'parts.Array.data[1]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 252842256}
+    - target: {fileID: 7479550042126984047, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
+      propertyPath: 'parts.Array.data[13]'
+      value: 
+      objectReference: {fileID: 774411317}
     - target: {fileID: 7647817696482133021, guid: 8095a0ae50f1ef547bd78b6d12c98fcd, type: 3}
       propertyPath: preferDeterministicSapDirection
       value: 0

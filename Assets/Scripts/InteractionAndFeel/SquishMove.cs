@@ -90,10 +90,22 @@ public class SquishMove : MonoBehaviour
 
     // ────────────────────────── Unity lifecycle ──────────────────────────
 
+    /// <summary>
+    /// Lazily resolve the active camera. Handles additive scene loading where
+    /// Camera.main may point to a different scene's camera during Awake.
+    /// </summary>
+    private Camera ActiveCam
+    {
+        get
+        {
+            if (cam != null && cam.enabled) return cam;
+            cam = Camera.main;
+            return cam;
+        }
+    }
+
     void Awake()
     {
-        cam = Camera.main;
-
         if (!TryGetComponent(out rb))
         {
             if (addRigidbodyIfMissing)
@@ -168,7 +180,8 @@ public class SquishMove : MonoBehaviour
         // ───── Begin drag ─────
         if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (ActiveCam == null) return;
+            Ray ray = ActiveCam.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
             {
                 planeZ = hit.point.z;
@@ -205,7 +218,8 @@ public class SquishMove : MonoBehaviour
         // ───── Dragging ─────
         if (Input.GetMouseButton(0) && isDragging)
         {
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (ActiveCam == null) { isDragging = false; return; }
+            Ray ray = ActiveCam.ScreenPointToRay(Input.mousePosition);
             if (dragPlane.Raycast(ray, out float enter))
             {
                 Vector3 newPoint = ray.GetPoint(enter);

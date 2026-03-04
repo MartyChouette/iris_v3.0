@@ -132,12 +132,17 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         // Offset all root objects so the flower scene doesn't overlap the apartment
         Vector3 offset = new Vector3(0f, _sceneYOffset, 0f);
-        foreach (var root in flowerScene.GetRootGameObjects())
+        var roots = flowerScene.GetRootGameObjects();
+        Debug.Log($"[FlowerTrimmingBridge] Scene '{sceneName}' loaded with {roots.Length} root objects, offsetting by Y={_sceneYOffset}.");
+        foreach (var root in roots)
+        {
             root.transform.position += offset;
+            Debug.Log($"[FlowerTrimmingBridge]   root: '{root.name}' → {root.transform.position}");
+        }
 
         // Find the FlowerSessionController in the loaded scene
         FlowerSessionController session = null;
-        foreach (var root in flowerScene.GetRootGameObjects())
+        foreach (var root in roots)
         {
             session = root.GetComponentInChildren<FlowerSessionController>();
             if (session != null) break;
@@ -151,6 +156,29 @@ public class FlowerTrimmingBridge : MonoBehaviour
             _onComplete?.Invoke(0, 0, true);
             yield break;
         }
+
+        // Log flower brain state for diagnostics
+        if (session.brain != null)
+        {
+            var renderers = session.brain.GetComponentsInChildren<Renderer>();
+            Debug.Log($"[FlowerTrimmingBridge] FlowerGameBrain found on '{session.brain.name}' with {renderers.Length} renderers.");
+        }
+        else
+        {
+            Debug.LogWarning("[FlowerTrimmingBridge] FlowerSessionController.brain is NULL — no flower model!");
+        }
+
+        // Log flower scene camera
+        Camera flowerCam = null;
+        foreach (var root in roots)
+        {
+            flowerCam = root.GetComponentInChildren<Camera>();
+            if (flowerCam != null) break;
+        }
+        if (flowerCam != null)
+            Debug.Log($"[FlowerTrimmingBridge] Flower camera: '{flowerCam.name}' at {flowerCam.transform.position}, enabled={flowerCam.enabled}");
+        else
+            Debug.LogWarning("[FlowerTrimmingBridge] No camera found in flower scene!");
 
         // Reset session state in case the scene was previously played standalone
         session.sessionEnded = false;

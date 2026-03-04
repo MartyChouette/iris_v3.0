@@ -53,10 +53,18 @@ public class SquishMesh : MonoBehaviour
     private List<int> draggedVertices = new List<int>();
     private Dictionary<int, Vector3> dragOffsets = new Dictionary<int, Vector3>();
 
+    private Camera ActiveCam
+    {
+        get
+        {
+            if (cam != null && cam.enabled) return cam;
+            cam = Camera.main;
+            return cam;
+        }
+    }
+
     void Start()
     {
-        cam = Camera.main;
-
         OriginalMesh = GetComponent<MeshFilter>().sharedMesh;
         MeshClone = Instantiate(OriginalMesh);
         GetComponent<MeshFilter>().sharedMesh = MeshClone;
@@ -71,7 +79,8 @@ public class SquishMesh : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (ActiveCam == null) return;
+            Ray ray = ActiveCam.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
             {
                 dragPlane = new Plane(Vector3.up, hit.point);
@@ -99,7 +108,8 @@ public class SquishMesh : MonoBehaviour
 
         if (Input.GetMouseButton(0) && isDragging)
         {
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (ActiveCam == null) return;
+            Ray ray = ActiveCam.ScreenPointToRay(Input.mousePosition);
             if (dragPlane.Raycast(ray, out float enter))
             {
                 currentDragPoint = ray.GetPoint(enter);

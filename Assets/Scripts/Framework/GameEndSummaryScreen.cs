@@ -211,18 +211,19 @@ public class GameEndSummaryScreen : MonoBehaviour
     {
         TimeScaleManager.ClearAll();
 
-        // Try both casings — file is mainmenu.unity but references may vary
-        if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu.unity") >= 0)
+        // Try known main menu scene names, then fall back to build index 0
+        if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu_nemahead.unity") >= 0)
+        {
+            SceneManager.LoadScene("mainmenu_nemahead");
+        }
+        else if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu.unity") >= 0)
         {
             SceneManager.LoadScene("mainmenu");
         }
-        else if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/MainMenu.unity") >= 0)
-        {
-            SceneManager.LoadScene("MainMenu");
-        }
         else
         {
-            Debug.LogWarning("[GameEndSummaryScreen] No mainmenu scene in build settings — staying here.");
+            Debug.Log("[GameEndSummaryScreen] Loading menu via build index 0.");
+            SceneManager.LoadScene(0);
         }
     }
 

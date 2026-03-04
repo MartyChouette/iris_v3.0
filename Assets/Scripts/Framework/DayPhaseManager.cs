@@ -684,17 +684,18 @@ public class DayPhaseManager : MonoBehaviour
         {
             // Fallback: return to main menu directly
             TimeScaleManager.ClearAll();
-            if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu.unity") >= 0)
+            if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu_nemahead.unity") >= 0)
+            {
+                SceneManager.LoadScene("mainmenu_nemahead");
+            }
+            else if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu.unity") >= 0)
             {
                 SceneManager.LoadScene("mainmenu");
             }
-            else if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/MainMenu.unity") >= 0)
-            {
-                SceneManager.LoadScene("MainMenu");
-            }
             else
             {
-                Debug.LogWarning("[DayPhaseManager] No mainmenu scene in build settings — staying on end screen.");
+                Debug.Log("[DayPhaseManager] Loading menu via build index 0.");
+                SceneManager.LoadScene(0);
             }
         }
     }

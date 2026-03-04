@@ -130,13 +130,6 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _toggleAction?.Dispose();
     }
 
-    private void Start()
-    {
-        // Subscribe to date end — show form when continue is clicked
-        if (DateSessionManager.Instance != null)
-            DateSessionManager.Instance.OnDateSessionEnded.AddListener(OnDateEnded);
-    }
-
     private void Update()
     {
         bool pressed = _toggleAction.WasPressedThisFrame() || Input.GetKeyDown(KeyCode.F8);
@@ -145,27 +138,6 @@ public class PlaytestFeedbackForm : MonoBehaviour
         if (_isOpen)
             CloseForm();
         else
-            OpenForm();
-    }
-
-    private void OnDateEnded(DatePersonalDefinition date, float affection)
-    {
-        if (_submittedThisSession) return;
-        StartCoroutine(OpenAfterDateEndScreen());
-    }
-
-    private IEnumerator OpenAfterDateEndScreen()
-    {
-        // Wait for DateEndScreen to be dismissed
-        while (DateEndScreen.Instance != null && DateEndScreen.Instance.IsShowing)
-        {
-            yield return null;
-        }
-
-        // Extra beat so it doesn't feel jarring
-        yield return new WaitForSecondsRealtime(0.5f);
-
-        if (!_isOpen)
             OpenForm();
     }
 

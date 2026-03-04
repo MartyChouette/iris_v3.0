@@ -81,6 +81,7 @@ public class MainMenuManager : MonoBehaviour
     // ── Scene preloading ──────────────────────────────────────────
     private AsyncOperation _preloadOp;
     private int _targetSceneIndex;
+    private static bool s_needsCleanup;
 
     // ═══════════════════════════════════════════════════════════════
     // Lifecycle
@@ -126,20 +127,39 @@ public class MainMenuManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             ScreenFade.Instance.FadeIn(_fadeDuration);
 
+        // Compute target scene index eagerly so ActivateLoad() always has the right value,
+        // even if the preload coroutine hasn't finished yet.
+        _targetSceneIndex = _apartmentSceneIndex >= 0
+            ? _apartmentSceneIndex
+            : SceneManager.GetActiveScene().buildIndex + 1;
+
         // Preload apartment scene in the background while player browses menu
         PreloadApartmentScene();
     }
 
     private void PreloadApartmentScene()
     {
-        _targetSceneIndex = _apartmentSceneIndex >= 0
-            ? _apartmentSceneIndex
-            : SceneManager.GetActiveScene().buildIndex + 1;
+        StartCoroutine(PreloadAfterCleanup());
+    }
+
+    private IEnumerator PreloadAfterCleanup()
+    {
+        // Wait a frame for the scene to fully settle
+        yield return null;
+
+        // Only run expensive cleanup when returning from a previous game session.
+        // On first launch there's nothing to clean up and this would delay preloading.
+        if (s_needsCleanup)
+        {
+            yield return Resources.UnloadUnusedAssets();
+            System.GC.Collect();
+        }
+        s_needsCleanup = true;
 
         if (_targetSceneIndex < 0 || _targetSceneIndex >= SceneManager.sceneCountInBuildSettings)
         {
             Debug.LogWarning($"[MainMenuManager] Cannot preload scene index {_targetSceneIndex}.");
-            return;
+            yield break;
         }
 
         _preloadOp = SceneManager.LoadSceneAsync(_targetSceneIndex);
