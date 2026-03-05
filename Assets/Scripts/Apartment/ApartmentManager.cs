@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
@@ -16,6 +17,9 @@ public class ApartmentManager : MonoBehaviour
     [Header("Areas")]
     [Tooltip("Ordered list of apartment areas. A/D cycles through these.")]
     [SerializeField] private ApartmentAreaDefinition[] areas;
+
+    [Tooltip("Which area index to start on (0=Kitchen, 1=Living Room, etc.).")]
+    [SerializeField] private int _startAreaIndex = 1;
 
     [Header("Cameras")]
     [Tooltip("Cinemachine camera used for browsing. Controlled directly by ApartmentManager.")]
@@ -44,7 +48,7 @@ public class ApartmentManager : MonoBehaviour
 
     [Header("Zoom")]
     [Tooltip("Amount added/removed per scroll tick (FOV degrees for perspective, ortho size units for orthographic).")]
-    [SerializeField, Range(0.001f, 10f)] private float zoomStep = 0.005f;
+    [SerializeField, Range(0.001f, 1f)] private float zoomStep = 0.1f;
 
     [Tooltip("Minimum ortho size / FOV when zoomed in.")]
     [SerializeField] private float zoomMin = 1f;
@@ -141,6 +145,7 @@ public class ApartmentManager : MonoBehaviour
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
+    private readonly List<InteractableHighlight> _proximityHighlights = new();
     private Camera _cachedMainCamera;
 
     private void Awake()
@@ -214,8 +219,8 @@ public class ApartmentManager : MonoBehaviour
         if (objectGrabber != null)
             objectGrabber.SetEnabled(true);
 
-        _currentAreaIndex = 0;
-        ApplyCameraImmediate(areas[0]);
+        _currentAreaIndex = Mathf.Clamp(_startAreaIndex, 0, areas.Length - 1);
+        ApplyCameraImmediate(areas[_currentAreaIndex]);
 
         // Restore smooth blend after the initial hard cut
         if (brain != null)
@@ -427,8 +432,10 @@ public class ApartmentManager : MonoBehaviour
             _currentZoom = isOrtho ? lens.OrthographicSize : lens.FieldOfView;
         }
 
-        // Scroll up = zoom in (smaller value), scroll down = zoom out
-        _currentZoom = Mathf.Clamp(_currentZoom - Mathf.Sign(scroll) * zoomStep, zoomMin, zoomMax);
+        // Normalize scroll — Unity reports ~120 per tick on most mice.
+        // Use only ±1 tick and apply zoomStep for consistent feel.
+        float normalizedScroll = Mathf.Clamp(scroll / 120f, -1f, 1f);
+        _currentZoom = Mathf.Clamp(_currentZoom - normalizedScroll * zoomStep, zoomMin, zoomMax);
     }
 
     private void HandlePanInput()
@@ -622,6 +629,21 @@ public class ApartmentManager : MonoBehaviour
     // Hover Highlight
     // ──────────────────────────────────────────────────────────────
 
+    [Tooltip("Angular radius in degrees for hover detection. Scales naturally with distance.")]
+    private const float HoverAngle = 1.5f;
+    private const float ProximityAngle = 4f;
+
+    /// <summary>
+    /// Angular distance (degrees) between the ray direction and the direction to the point.
+    /// Scales naturally with distance — far objects are just as easy to hover as near ones.
+    /// </summary>
+    private static float AngleToRay(Ray ray, Vector3 point)
+    {
+        Vector3 toPoint = point - ray.origin;
+        if (toPoint.sqrMagnitude < 0.0001f) return 0f;
+        return Vector3.Angle(ray.direction, toPoint);
+    }
+
     private void UpdateHoverHighlight()
     {
         if (_cachedMainCamera == null) _cachedMainCamera = UnityEngine.Camera.main;
@@ -631,26 +653,67 @@ public class ApartmentManager : MonoBehaviour
         Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
         Ray ray = cam.ScreenPointToRay(mousePos);
 
+        // ── Find nearest InteractableHighlight to the cursor ray ──
+        // Scans all registered highlights (placeables, plants, etc.).
         InteractableHighlight hit = null;
-        if (Physics.Raycast(ray, out RaycastHit hitInfo, 50f))
         {
-            hit = hitInfo.collider.GetComponentInParent<InteractableHighlight>();
+            float bestAngle = HoverAngle;
+            var allHighlights = InteractableHighlight.All;
+            for (int i = 0; i < allHighlights.Count; i++)
+            {
+                var hl = allHighlights[i];
+                if (hl == null) continue;
+
+                float angle = AngleToRay(ray, hl.transform.position);
+                if (angle < bestAngle)
+                {
+                    bestAngle = angle;
+                    hit = hl;
+                }
+            }
         }
 
-        if (hit == _hoveredHighlight) return;
-
-        if (_hoveredHighlight != null)
+        // ── Direct hover (strongest highlight) ──
+        if (hit != _hoveredHighlight)
         {
-            _hoveredHighlight.SetHighlighted(false);
-            _hoveredHighlight.SetInteractHighlighted(false);
+            if (_hoveredHighlight != null)
+            {
+                _hoveredHighlight.SetHighlighted(false);
+                _hoveredHighlight.SetInteractHighlighted(false);
+            }
+
+            _hoveredHighlight = hit;
+
+            if (_hoveredHighlight != null)
+            {
+                _hoveredHighlight.SetHighlighted(true);
+                _hoveredHighlight.SetInteractHighlighted(true);
+            }
         }
 
-        _hoveredHighlight = hit;
-
-        if (_hoveredHighlight != null)
+        // ── Proximity: subtle interactable glow on nearby objects ──
+        for (int i = _proximityHighlights.Count - 1; i >= 0; i--)
         {
-            _hoveredHighlight.SetHighlighted(true);
-            _hoveredHighlight.SetInteractHighlighted(true);
+            var ph = _proximityHighlights[i];
+            if (ph != null && ph != _hoveredHighlight)
+                ph.SetInteractHighlighted(false);
+        }
+        _proximityHighlights.Clear();
+
+        {
+            var allHighlights = InteractableHighlight.All;
+            for (int i = 0; i < allHighlights.Count; i++)
+            {
+                var hl = allHighlights[i];
+                if (hl == null || hl == _hoveredHighlight) continue;
+
+                float angle = AngleToRay(ray, hl.transform.position);
+                if (angle < ProximityAngle)
+                {
+                    hl.SetInteractHighlighted(true);
+                    _proximityHighlights.Add(hl);
+                }
+            }
         }
     }
 

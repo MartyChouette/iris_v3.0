@@ -1,24 +1,29 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Toggleable rim-light overlay material on the object's renderers.
+/// Toggleable highlight overlay on the object's renderers using Iris/Highlight shader.
 /// Supports compound objects (multiple child renderers) as well as single-renderer objects.
 /// Three independent layers:
 ///   1. Display (warm peach, "public item" indicator — always-on background glow)
 ///   2. Gaze (amber, NPC focus)
 ///   3. Hover (warm ivory, player mouse — strongest, on top)
 /// All can be active simultaneously — additive blend means stronger highlights overpower subtle ones.
-/// Attach to any clickable object (books, records, placeables, pots, etc.).
+/// Attach to any clickable object (books, records, placeables, pots, plants, etc.).
 /// </summary>
 public class InteractableHighlight : MonoBehaviour
 {
-    [Tooltip("Drag Iris/RimLight shader here so it's included in builds.")]
-    [SerializeField] private Shader _rimShader;
+    // ── Static registry (like PlaceableObject.All) ───────────────
+    private static readonly List<InteractableHighlight> s_all = new();
+    public static IReadOnlyList<InteractableHighlight> All => s_all;
+
+    [Tooltip("Drag Iris/Highlight shader here so it's included in builds.")]
+    [SerializeField] private Shader _highlightShader;
 
     [Tooltip("Drag Iris/PSXInteractable shader here so it's included in builds.")]
     [SerializeField] private Shader _interactShader;
 
-    private static Shader s_cachedRimShader;
+    private static Shader s_cachedHighlightShader;
     private static Shader s_cachedInteractShader;
     private static Material s_sharedRimMat;
     private static Material s_sharedGazeMat;
@@ -27,8 +32,8 @@ public class InteractableHighlight : MonoBehaviour
     private static Material s_sharedPrepDislikedMat;
     private static Material s_sharedInteractMat;
 
-    /// <summary>Cached Iris/RimLight shader. Available for other scripts (e.g. GlassController).</summary>
-    public static Shader RimShader => s_cachedRimShader;
+    /// <summary>Cached Iris/Highlight shader. Available for other scripts.</summary>
+    public static Shader HighlightShader => s_cachedHighlightShader;
 
     private Renderer[] _renderers;
     private Material[][] _baseMaterialArrays;
@@ -61,10 +66,10 @@ public class InteractableHighlight : MonoBehaviour
         if (_renderers.Length == 0) return;
 
         // Cache shaders from serialized ref (survives builds) or Shader.Find fallback
-        if (s_cachedRimShader == null)
+        if (s_cachedHighlightShader == null)
         {
-            s_cachedRimShader = _rimShader;
-            if (s_cachedRimShader == null) s_cachedRimShader = Shader.Find("Iris/RimLight");
+            s_cachedHighlightShader = _highlightShader;
+            if (s_cachedHighlightShader == null) s_cachedHighlightShader = Shader.Find("Iris/Highlight");
         }
         if (s_cachedInteractShader == null)
         {
@@ -73,6 +78,10 @@ public class InteractableHighlight : MonoBehaviour
         }
 
         EnsureSharedMaterials();
+
+        // Swap base materials to PSXLit so interactables always have the retro shader,
+        // even if spawned after PSXRenderController's initial scene-wide swap.
+        SwapToPSXLit();
 
         // Cache base materials per renderer (no overlays)
         _baseMaterialArrays = new Material[_renderers.Length][];
@@ -83,8 +92,11 @@ public class InteractableHighlight : MonoBehaviour
         DetectGlitch();
     }
 
+    private void OnEnable() => s_all.Add(this);
+    private void OnDisable() => s_all.Remove(this);
+
     /// <summary>
-    /// Toggle hover rim light (warm ivory) on or off.
+    /// Toggle hover highlight (warm ivory) on or off.
     /// </summary>
     public void SetHighlighted(bool on)
     {
@@ -311,78 +323,101 @@ public class InteractableHighlight : MonoBehaviour
         if (_glitchInteractMat != null) Destroy(_glitchInteractMat);
     }
 
+    private static readonly System.Collections.Generic.HashSet<string> s_swappableShaders =
+        new System.Collections.Generic.HashSet<string>
+    {
+        "Universal Render Pipeline/Lit",
+        "Universal Render Pipeline/Simple Lit",
+        "Standard"
+    };
+
+    private static Shader s_cachedPSXLitShader;
+
+    private void SwapToPSXLit()
+    {
+        if (PSXRenderController.Instance == null || !PSXRenderController.Instance.enabled) return;
+
+        if (s_cachedPSXLitShader == null) s_cachedPSXLitShader = Shader.Find("Iris/PSXLit");
+        var psxShader = s_cachedPSXLitShader;
+        if (psxShader == null) return;
+
+        for (int r = 0; r < _renderers.Length; r++)
+        {
+            if (_renderers[r] == null) continue;
+            foreach (var mat in _renderers[r].sharedMaterials)
+            {
+                if (mat == null || mat.shader == null) continue;
+                if (s_swappableShaders.Contains(mat.shader.name))
+                    mat.shader = psxShader;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper: create a highlight material with given fill + rim colors.
+    /// _HighlightColor.a = flat fill alpha, _RimColor.a = rim edge alpha.
+    /// </summary>
+    private static Material MakeHighlightMat(Color fillColor, Color rimColor, float rimPower,
+                                              float pulseSpeed = 2f, float pulseAmount = 0.1f)
+    {
+        var shader = s_cachedHighlightShader;
+        if (shader == null) return null;
+        var mat = new Material(shader);
+        mat.SetColor("_HighlightColor", fillColor);
+        mat.SetColor("_RimColor", rimColor);
+        mat.SetFloat("_RimPower", rimPower);
+        mat.SetFloat("_PulseSpeed", pulseSpeed);
+        mat.SetFloat("_PulseAmount", pulseAmount);
+        return mat;
+    }
+
     private static void EnsureSharedMaterials()
     {
         if (s_sharedRimMat == null)
         {
-            var shader = s_cachedRimShader;
-            if (shader == null)
-            {
-                Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found.");
-            }
-            else
-            {
-                s_sharedRimMat = new Material(shader);
-                s_sharedRimMat.SetColor("_RimColor", new Color(1f, 0.95f, 0.85f, 0.5f));
-                s_sharedRimMat.SetFloat("_RimPower", 3.0f);
-                s_sharedRimMat.SetFloat("_RimIntensity", 0.85f);
-            }
+            // Hover — warm ivory, fill + rim, gentle pulse
+            s_sharedRimMat = MakeHighlightMat(
+                new Color(1f, 0.95f, 0.85f, 0.25f),   // fill: warm ivory, 25% fill
+                new Color(1f, 0.95f, 0.85f, 0.5f),     // rim: same tone, stronger at edges
+                2.5f, 2f, 0.1f);
+            if (s_sharedRimMat == null)
+                Debug.LogWarning("[InteractableHighlight] Iris/Highlight shader not found.");
         }
 
         if (s_sharedGazeMat == null)
         {
-            var shader = s_cachedRimShader;
-            if (shader == null)
-            {
-                Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found for gaze material.");
-            }
-            else
-            {
-                s_sharedGazeMat = new Material(shader);
-                s_sharedGazeMat.SetColor("_RimColor", new Color(1f, 0.75f, 0.2f, 0.5f));
-                s_sharedGazeMat.SetFloat("_RimPower", 3.0f);
-                s_sharedGazeMat.SetFloat("_RimIntensity", 0.8f);
-            }
+            // Gaze — amber, NPC focus
+            s_sharedGazeMat = MakeHighlightMat(
+                new Color(1f, 0.75f, 0.2f, 0.2f),
+                new Color(1f, 0.75f, 0.2f, 0.45f),
+                2.5f, 1.5f, 0.08f);
         }
 
         if (s_sharedDisplayMat == null)
         {
-            var shader = s_cachedRimShader;
-            if (shader == null)
-            {
-                Debug.LogWarning("[InteractableHighlight] Iris/RimLight shader not found for display material.");
-            }
-            else
-            {
-                s_sharedDisplayMat = new Material(shader);
-                s_sharedDisplayMat.SetColor("_RimColor", new Color(1f, 0.85f, 0.65f, 0.35f));
-                s_sharedDisplayMat.SetFloat("_RimPower", 3.8f);
-                s_sharedDisplayMat.SetFloat("_RimIntensity", 0.35f);
-            }
+            // Display — warm peach, subtle public item indicator
+            s_sharedDisplayMat = MakeHighlightMat(
+                new Color(1f, 0.85f, 0.65f, 0.12f),
+                new Color(1f, 0.85f, 0.65f, 0.3f),
+                3.0f, 1f, 0.05f);
         }
 
         if (s_sharedPrepLikedMat == null)
         {
-            var shader = s_cachedRimShader;
-            if (shader != null)
-            {
-                s_sharedPrepLikedMat = new Material(shader);
-                s_sharedPrepLikedMat.SetColor("_RimColor", new Color(0.3f, 0.9f, 0.4f, 0.6f));
-                s_sharedPrepLikedMat.SetFloat("_RimPower", 2.5f);
-                s_sharedPrepLikedMat.SetFloat("_RimIntensity", 0.7f);
-            }
+            // Prep liked — green
+            s_sharedPrepLikedMat = MakeHighlightMat(
+                new Color(0.3f, 0.9f, 0.4f, 0.2f),
+                new Color(0.3f, 0.9f, 0.4f, 0.45f),
+                2.5f, 1.5f, 0.08f);
         }
 
         if (s_sharedPrepDislikedMat == null)
         {
-            var shader = s_cachedRimShader;
-            if (shader != null)
-            {
-                s_sharedPrepDislikedMat = new Material(shader);
-                s_sharedPrepDislikedMat.SetColor("_RimColor", new Color(0.95f, 0.3f, 0.3f, 0.6f));
-                s_sharedPrepDislikedMat.SetFloat("_RimPower", 2.5f);
-                s_sharedPrepDislikedMat.SetFloat("_RimIntensity", 0.7f);
-            }
+            // Prep disliked — red
+            s_sharedPrepDislikedMat = MakeHighlightMat(
+                new Color(0.95f, 0.3f, 0.3f, 0.2f),
+                new Color(0.95f, 0.3f, 0.3f, 0.45f),
+                2.5f, 1.5f, 0.08f);
         }
 
         if (s_sharedInteractMat == null)

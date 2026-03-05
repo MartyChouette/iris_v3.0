@@ -17,5 +17,5 @@ MonoBehaviour:
   stationType: 1
   cameraPosition: {x: -3.5340323, y: 3.0146494, z: 1.6759546}
   cameraRotation: {x: 19.804153, y: 110.85506, z: -0.0031914776}
-  cameraFOV: 60
+  cameraFOV: 100
   browseBlendDuration: 0.8

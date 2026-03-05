@@ -20,7 +20,7 @@ public class ObjectGrabber : MonoBehaviour
 
     [Header("Grid Snap")]
     [Tooltip("Grid cell size in world units.")]
-    [SerializeField] private float gridSize = 0.09f;
+    [SerializeField] private float gridSize = 0.11f;
 
     public float GridSize
     {
@@ -357,6 +357,14 @@ public class ObjectGrabber : MonoBehaviour
 
         placeable.OnPickedUp();
 
+        // Keep interactable highlight while held
+        var heldHL = placeable.GetComponent<InteractableHighlight>();
+        if (heldHL != null)
+        {
+            heldHL.SetHighlighted(true);
+            heldHL.SetInteractHighlighted(true);
+        }
+
         // Book hidden item check
         var bookItem = placeable.GetComponent<BookItem>();
         if (bookItem != null) bookItem.OnBookPickedUp();
@@ -427,6 +435,14 @@ public class ObjectGrabber : MonoBehaviour
         // Wall items only on walls, table items only on tables
         if (_currentSurface.IsVertical && !_held.CanWallMount) return;
         if (!_currentSurface.IsVertical && _held.WallOnly) return;
+
+        // Trash only on floor or trash cans
+        if (_held.Category == ItemCategory.Trash)
+        {
+            var zone = _currentSurface.GetComponent<DropZone>();
+            bool isTrashCan = zone != null && zone.DestroyOnDeposit;
+            if (!_currentSurface.IsFloor && !isTrashCan) return;
+        }
 
         // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
         // detection — the rigidbody can overshoot through thin wall triggers.
@@ -621,6 +637,17 @@ public class ObjectGrabber : MonoBehaviour
 
     private void ClearHeld()
     {
+        // Turn off held highlight
+        if (_held != null)
+        {
+            var hl = _held.GetComponent<InteractableHighlight>();
+            if (hl != null)
+            {
+                hl.SetHighlighted(false);
+                hl.SetInteractHighlighted(false);
+            }
+        }
+
         _held = null;
         _heldRb = null;
         _currentSurface = null;
@@ -641,19 +668,27 @@ public class ObjectGrabber : MonoBehaviour
 
         bool foundSurface = false;
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, surfaceLayer))
+        // RaycastAll so the ray can pass through nearer surfaces to reach
+        // ones further away (e.g. coffee table in living room from kitchen camera).
+        var hits = Physics.RaycastAll(ray, 100f, surfaceLayer);
+        if (hits.Length > 0)
         {
-            var surface = hit.collider.GetComponentInParent<PlacementSurface>();
-            bool surfaceValid = surface != null
-                && (!surface.IsVertical || _held.CanWallMount)
-                && (surface.IsVertical || !_held.WallOnly);
-            if (surfaceValid)
+            // Sort by distance so we prefer nearer valid surfaces
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            for (int h = 0; h < hits.Length; h++)
             {
+                var surface = hits[h].collider.GetComponentInParent<PlacementSurface>();
+                bool surfaceValid = surface != null
+                    && (!surface.IsVertical || _held.CanWallMount)
+                    && (surface.IsVertical || !_held.WallOnly);
+                if (!surfaceValid) continue;
+
                 _currentSurface = surface;
                 _lastValidSurface = surface;
                 _isOnWall = surface.IsVertical;
 
-                var hitResult = surface.ProjectOntoSurface(hit.point);
+                var hitResult = surface.ProjectOntoSurface(hits[h].point);
                 Vector3 pos = _gridSnap
                     ? surface.SnapToGrid(hitResult.worldPosition, gridSize)
                     : hitResult.worldPosition;
@@ -672,6 +707,7 @@ public class ObjectGrabber : MonoBehaviour
                     _held.AlignToWall(hitResult.surfaceNormal, _wallRotation);
 
                 foundSurface = true;
+                break;
             }
         }
 
@@ -697,6 +733,10 @@ public class ObjectGrabber : MonoBehaviour
     private void ClampGrabTargetToWalls()
     {
         if (_heldRb == null) return;
+
+        // Skip wall clamping when item is snapped to a valid surface —
+        // allows cross-room placement (e.g. coffee table from kitchen).
+        if (_currentSurface != null) return;
 
         const float margin = 0.05f;
 
@@ -843,6 +883,14 @@ public class ObjectGrabber : MonoBehaviour
 
         bool canPlace = (!_currentSurface.IsVertical || _held.CanWallMount)
             && (_currentSurface.IsVertical || !_held.WallOnly);
+
+        // Trash items only show valid on floor surfaces and trash cans (DropZone with DestroyOnDeposit)
+        if (canPlace && _held.Category == ItemCategory.Trash)
+        {
+            var zone = _currentSurface.GetComponent<DropZone>();
+            bool isTrashCan = zone != null && zone.DestroyOnDeposit;
+            canPlace = _currentSurface.IsFloor || isTrashCan;
+        }
 
         _shadowMat.color = canPlace ? s_shadowValid : s_shadowInvalid;
         _shadowGO.transform.position = shadowPos;

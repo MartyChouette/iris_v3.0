@@ -94,6 +94,10 @@ public class CameraTestController : MonoBehaviour
         _clearPresetAction.Disable();
     }
 
+    [Header("Visibility")]
+    [Tooltip("How many preset buttons to show (hides the rest). 0 = show all.")]
+    [SerializeField] private int _visiblePresetCount = 2;
+
     private void Start()
     {
         if (presetButtons != null)
@@ -103,6 +107,10 @@ public class CameraTestController : MonoBehaviour
                 if (presetButtons[i] == null) continue;
                 int index = i;
                 presetButtons[i].onClick.AddListener(() => ApplyPreset(index));
+
+                // Hide buttons beyond the visible count (V4–V9 hidden by default)
+                if (_visiblePresetCount > 0 && i >= _visiblePresetCount)
+                    presetButtons[i].gameObject.SetActive(false);
             }
         }
 
