@@ -130,14 +130,48 @@ public class FlowerTrimmingBridge : MonoBehaviour
             yield break;
         }
 
-        // Offset all root objects so the flower scene doesn't overlap the apartment
+        // Offset all root objects so the flower scene doesn't overlap the apartment.
+        // Physics must be frozen BEFORE moving — otherwise joints interpret the
+        // sudden position change as a break and the flower rips apart on load.
         Vector3 offset = new Vector3(0f, _sceneYOffset, 0f);
         var roots = flowerScene.GetRootGameObjects();
         Debug.Log($"[FlowerTrimmingBridge] Scene '{sceneName}' loaded with {roots.Length} root objects, offsetting by Y={_sceneYOffset}.");
+
+        // 1) Freeze all rigidbodies before moving
+        var allBodies = new System.Collections.Generic.List<Rigidbody>();
+        foreach (var root in roots)
+        {
+            foreach (var rb in root.GetComponentsInChildren<Rigidbody>())
+            {
+                if (rb == null) continue;
+                rb.isKinematic = true;
+                allBodies.Add(rb);
+            }
+        }
+
+        // 2) Move roots
         foreach (var root in roots)
         {
             root.transform.position += offset;
             Debug.Log($"[FlowerTrimmingBridge]   root: '{root.name}' → {root.transform.position}");
+        }
+
+        // 3) Teleport rigidbodies to their new transform positions so physics is in sync
+        foreach (var rb in allBodies)
+        {
+            if (rb == null) continue;
+            rb.position = rb.transform.position;
+            rb.rotation = rb.transform.rotation;
+        }
+
+        // 4) Unfreeze after one physics step (let joints settle at new positions)
+        yield return new WaitForFixedUpdate();
+        foreach (var rb in allBodies)
+        {
+            if (rb == null) continue;
+            rb.isKinematic = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
 
         // Find the FlowerSessionController in the loaded scene
@@ -279,17 +313,20 @@ public class FlowerTrimmingBridge : MonoBehaviour
         string grade = DateOutcomeCapture.LastOutcome.flowerGrade;
         DateHistory.UpdateFlowerResult(resultScore, resultDays, grade);
 
-        // Spawn living plant in apartment (if score earned any days alive)
-        if (resultDays > 0 && LivingFlowerPlantManager.Instance != null)
-        {
-            string charName = DateOutcomeCapture.LastOutcome.characterName;
-            LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays, trimmedVisual);
-        }
-        else if (trimmedVisual != null)
-        {
-            // No days alive — discard the snapshot
+        // TODO: Living plant spawning disabled for vertical slice — re-enable later
+        // // Spawn living plant in apartment (if score earned any days alive)
+        // if (resultDays > 0 && LivingFlowerPlantManager.Instance != null)
+        // {
+        //     string charName = DateOutcomeCapture.LastOutcome.characterName;
+        //     LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays, trimmedVisual);
+        // }
+        // else if (trimmedVisual != null)
+        // {
+        //     // No days alive — discard the snapshot
+        //     UnityEngine.Object.Destroy(trimmedVisual);
+        // }
+        if (trimmedVisual != null)
             UnityEngine.Object.Destroy(trimmedVisual);
-        }
 
         // NOTE: Apartment camera is restored by DayPhaseManager after its fade-to-black,
         // not here — restoring here would cause a brief flash before the DPM fade starts.
