@@ -108,12 +108,21 @@ public class FlowerTrimmingBridge : MonoBehaviour
             _apartmentListener = _apartmentCamera.GetComponent<AudioListener>();
         }
 
+        // ── PHYSICS-SAFE SCENE OFFSET ──────────────────────────────────
+        // Pause physics entirely so no simulation runs at the original (0,0,0)
+        // positions. Without this, joints and rigidbodies simulate at wrong
+        // positions during/after the offset move, causing the flower to rip
+        // apart — especially in builds where frame timing differs from editor.
+        var prevSimMode = Physics.simulationMode;
+        Physics.simulationMode = SimulationMode.Script;
+
         // Load the flower trimming scene additively
         var loadOp = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
         if (loadOp == null)
         {
             Debug.LogError($"[FlowerTrimmingBridge] Failed to load scene '{sceneName}'. " +
                            "Is it added to Build Settings?");
+            Physics.simulationMode = prevSimMode;
             _waitingForResult = false;
             _onComplete?.Invoke(0, 0, true);
             yield break;
@@ -125,54 +134,66 @@ public class FlowerTrimmingBridge : MonoBehaviour
         if (!flowerScene.IsValid())
         {
             Debug.LogError("[FlowerTrimmingBridge] Flower scene not valid after load.");
+            Physics.simulationMode = prevSimMode;
             _waitingForResult = false;
             _onComplete?.Invoke(0, 0, true);
             yield break;
         }
 
-        // Offset all root objects so the flower scene doesn't overlap the apartment.
-        // Physics must be frozen BEFORE moving — otherwise joints interpret the
-        // sudden position change as a break and the flower rips apart on load.
+        // Wait one frame so all Start() methods run and joints are created.
+        yield return null;
+
         Vector3 offset = new Vector3(0f, _sceneYOffset, 0f);
         var roots = flowerScene.GetRootGameObjects();
         Debug.Log($"[FlowerTrimmingBridge] Scene '{sceneName}' loaded with {roots.Length} root objects, offsetting by Y={_sceneYOffset}.");
 
-        // 1) Freeze all rigidbodies before moving
-        var allBodies = new System.Collections.Generic.List<Rigidbody>();
-        foreach (var root in roots)
-        {
-            foreach (var rb in root.GetComponentsInChildren<Rigidbody>())
-            {
-                if (rb == null) continue;
-                rb.isKinematic = true;
-                allBodies.Add(rb);
-            }
-        }
+        // Suppress joint breaks during the move
+        XYTetherJoint.SetCutBreakSuppressed(true);
 
-        // 2) Move roots
+        // 1) Move all root objects
         foreach (var root in roots)
         {
             root.transform.position += offset;
             Debug.Log($"[FlowerTrimmingBridge]   root: '{root.name}' → {root.transform.position}");
         }
 
-        // 3) Teleport rigidbodies to their new transform positions so physics is in sync
-        foreach (var rb in allBodies)
+        // 2) Sync rigidbody positions to match moved transforms
+        foreach (var root in roots)
         {
-            if (rb == null) continue;
-            rb.position = rb.transform.position;
-            rb.rotation = rb.transform.rotation;
+            foreach (var rb in root.GetComponentsInChildren<Rigidbody>())
+            {
+                if (rb == null) continue;
+                rb.position = rb.transform.position;
+                rb.rotation = rb.transform.rotation;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
         }
 
-        // 4) Unfreeze after one physics step (let joints settle at new positions)
-        yield return new WaitForFixedUpdate();
-        foreach (var rb in allBodies)
+        // 3) Recreate all XYTetherJoint joints at the new positions.
+        //    Toggle off→on: OnDisable destroys the joint, OnEnable recreates it
+        //    with anchors/rest baseline computed from the moved transforms.
+        foreach (var root in roots)
         {
-            if (rb == null) continue;
-            rb.isKinematic = false;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            foreach (var xy in root.GetComponentsInChildren<XYTetherJoint>())
+            {
+                xy.enabled = false;
+                xy.enabled = true;
+            }
         }
+
+        // 4) Flush transform changes into the physics engine
+        Physics.SyncTransforms();
+
+        // 5) Resume normal physics simulation
+        Physics.simulationMode = prevSimMode;
+
+        // 6) Let joints settle for a couple of physics steps before gameplay
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+
+        // 7) Unsuppress joint breaks
+        XYTetherJoint.SetCutBreakSuppressed(false);
 
         // Find the FlowerSessionController in the loaded scene
         FlowerSessionController session = null;
