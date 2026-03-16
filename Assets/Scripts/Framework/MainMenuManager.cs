@@ -81,7 +81,6 @@ public class MainMenuManager : MonoBehaviour
     // ── Scene preloading ──────────────────────────────────────────
     private AsyncOperation _preloadOp;
     private int _targetSceneIndex;
-    private static bool s_needsCleanup;
 
     // ═══════════════════════════════════════════════════════════════
     // Lifecycle
@@ -102,7 +101,14 @@ public class MainMenuManager : MonoBehaviour
         // Wire button listeners at runtime
         if (_demoButton != null) _demoButton.onClick.AddListener(OnDemoClicked);
         if (_showcaseButton != null) _showcaseButton.onClick.AddListener(OnShowcaseClicked);
-        if (_fullButton != null) _fullButton.onClick.AddListener(OnFullClicked);
+
+        // Infinite mode disabled — not yet implemented
+        if (_fullButton != null)
+        {
+            _fullButton.interactable = false;
+            var fullLabel = _fullButton.GetComponentInChildren<TMP_Text>();
+            if (fullLabel != null) fullLabel.color = new Color(0.4f, 0.4f, 0.4f, 0.5f);
+        }
 
         if (_newGameButton != null) _newGameButton.onClick.AddListener(OnNewGame);
         if (_continueButton != null) _continueButton.onClick.AddListener(OnContinue);
@@ -139,22 +145,13 @@ public class MainMenuManager : MonoBehaviour
 
     private void PreloadApartmentScene()
     {
-        StartCoroutine(PreloadAfterCleanup());
+        StartCoroutine(PreloadCoroutine());
     }
 
-    private IEnumerator PreloadAfterCleanup()
+    private IEnumerator PreloadCoroutine()
     {
         // Wait a frame for the scene to fully settle
         yield return null;
-
-        // Only run expensive cleanup when returning from a previous game session.
-        // On first launch there's nothing to clean up and this would delay preloading.
-        if (s_needsCleanup)
-        {
-            yield return Resources.UnloadUnusedAssets();
-            System.GC.Collect();
-        }
-        s_needsCleanup = true;
 
         if (_targetSceneIndex < 0 || _targetSceneIndex >= SceneManager.sceneCountInBuildSettings)
         {

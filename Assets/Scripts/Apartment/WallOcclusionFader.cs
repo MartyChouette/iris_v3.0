@@ -44,6 +44,9 @@ public class WallOcclusionFader : MonoBehaviour
     private static readonly int DissolveID = Shader.PropertyToID("_DissolveAmount");
     private int _lastAreaIndex = -1;
 
+    /// <summary>Dissolve threshold above which a wall's collider is disabled (raycasts pass through).</summary>
+    private const float ColliderDisableThreshold = 0.3f;
+
     private struct FadeState
     {
         public float current;
@@ -59,13 +62,14 @@ public class WallOcclusionFader : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Clean up any driven dissolve values
+        // Clean up any driven dissolve values and re-enable colliders
         foreach (var kvp in _trackedRenderers)
         {
             if (kvp.Key != null)
             {
                 kvp.Value.mpb.SetFloat(DissolveID, kvp.Value.floor);
                 kvp.Key.SetPropertyBlock(kvp.Value.mpb);
+                SetWallCollider(kvp.Key, true);
             }
         }
         _trackedRenderers.Clear();
@@ -149,6 +153,9 @@ public class WallOcclusionFader : MonoBehaviour
             state.mpb.SetFloat(DissolveID, state.current);
             rend.SetPropertyBlock(state.mpb);
             _trackedRenderers[rend] = state;
+
+            // Disable wall collider so raycasts pass through faded walls
+            SetWallCollider(rend, state.current < ColliderDisableThreshold);
         }
 
         // ── Fade out renderers that are no longer hit ───────────────
@@ -170,6 +177,9 @@ public class WallOcclusionFader : MonoBehaviour
             state.mpb.SetFloat(DissolveID, state.current);
             rend.SetPropertyBlock(state.mpb);
             _trackedRenderers[rend] = state;
+
+            // Re-enable wall collider as it fades back in
+            SetWallCollider(rend, state.current < ColliderDisableThreshold);
 
             if (Mathf.Approximately(state.current, state.floor))
                 _removeList.Add(rend);
@@ -277,6 +287,22 @@ public class WallOcclusionFader : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Enable or disable all colliders on a wall renderer's GameObject.
+    /// When a wall is sufficiently dissolved, its colliders are disabled
+    /// so pickup/cleaning raycasts pass through to items behind it.
+    /// </summary>
+    private static void SetWallCollider(Renderer rend, bool enabled)
+    {
+        if (rend == null) return;
+        var colliders = rend.GetComponentsInParent<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null)
+                colliders[i].enabled = enabled;
+        }
     }
 
     private static float GetBaseDissolve(Renderer rend)

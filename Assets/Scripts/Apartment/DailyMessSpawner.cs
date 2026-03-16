@@ -41,13 +41,16 @@ public class DailyMessSpawner : MonoBehaviour
 
     private void Start()
     {
-        // Auto-spawn when DayPhaseManager isn't driving the flow (e.g. jumping
-        // directly into the apartment scene from the editor).
+        // Only auto-spawn when DayPhaseManager explicitly isn't present AND
+        // we're in a build. In-editor without DPM means the designer is
+        // hand-placing items — don't scramble them.
+#if !UNITY_EDITOR
         if (DayPhaseManager.Instance == null)
         {
             Debug.Log("[DailyMessSpawner] No DayPhaseManager — auto-spawning mess.");
             SpawnDailyMess();
         }
+#endif
     }
 
     /// <summary>

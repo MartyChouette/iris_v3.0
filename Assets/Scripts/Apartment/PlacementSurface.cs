@@ -36,6 +36,12 @@ public class PlacementSurface : MonoBehaviour
     [Tooltip("Layer index for the auto-generated raycast trigger.")]
     [SerializeField] private int surfaceLayerIndex = 0;
 
+    [Tooltip("Mark as floor — trash items can be placed here.")]
+    [SerializeField] private bool _isFloor;
+
+    /// <summary>True if this surface is marked as a floor.</summary>
+    public bool IsFloor => _isFloor;
+
     /// <summary>World-space surface normal based on orientation axis.</summary>
     public Vector3 SurfaceNormal =>
         normalAxis == SurfaceAxis.Up ? transform.up : transform.forward;

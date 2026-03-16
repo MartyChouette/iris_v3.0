@@ -30,10 +30,26 @@ public class RecordDefinition : ScriptableObject
     public float moodValue = 0.3f;
 
     [Header("Audio")]
-    [Tooltip("Music clip to play. Can be null for silent placeholder.")]
-    public AudioClip musicClip;
+    [Tooltip("Path to music clip in Resources folder (e.g. 'Music/MyTrack'). Loaded on demand to avoid bloating scene load.")]
+    public string musicClipPath;
 
     [Tooltip("Playback volume (0-1).")]
     [Range(0f, 1f)]
     public float volume = 0.7f;
+
+    private AudioClip _cachedClip;
+
+    /// <summary>
+    /// Lazy-loads the music clip from Resources on first access.
+    /// Avoids loading all record audio during scene deserialization.
+    /// </summary>
+    public AudioClip MusicClip
+    {
+        get
+        {
+            if (_cachedClip == null && !string.IsNullOrEmpty(musicClipPath))
+                _cachedClip = Resources.Load<AudioClip>(musicClipPath);
+            return _cachedClip;
+        }
+    }
 }

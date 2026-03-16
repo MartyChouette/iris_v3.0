@@ -33,6 +33,10 @@ public class ShaderCollection : ScriptableObject
         // Force-load at startup so all shader references are alive before any Shader.Find() calls
         var inst = Instance;
         if (inst != null)
+        {
             Debug.Log($"[ShaderCollection] Loaded {inst.shaders.Length} shaders.");
+            // Pre-compile all shader variants to avoid first-frame hitches in builds
+            Shader.WarmupAllShaders();
+        }
     }
 }

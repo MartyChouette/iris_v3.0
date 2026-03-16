@@ -440,17 +440,19 @@ public class CleaningManager : MonoBehaviour
     // ── Helpers ──────────────────────────────────────────────────────
 
     /// <summary>
-    /// Convert world-space raycast hit to 0–1 UV on the stain surface.
+    /// Convert world-space raycast hit to UV on the stain surface.
     /// Used instead of hitInfo.textureCoord because BoxColliders don't provide UVs.
     /// The stain parent is rotated Euler(90,0,0) with local XY spanning -0.3..0.3 (scale 0.6).
+    /// NOT clamped — the collider is larger than the visual so the brush center can
+    /// overshoot the edge. Wipe() already bounds-checks pixel coordinates.
     /// </summary>
     private static Vector2 HitToUV(RaycastHit hit, Transform surfaceTransform)
     {
         Vector3 local = surfaceTransform.InverseTransformPoint(hit.point);
         // DirtQuad is 0.6 x 0.6 in local XY, centered at origin
         return new Vector2(
-            Mathf.Clamp01((local.x / 0.6f) + 0.5f),
-            Mathf.Clamp01((local.y / 0.6f) + 0.5f)
+            (local.x / 0.6f) + 0.5f,
+            (local.y / 0.6f) + 0.5f
         );
     }
 

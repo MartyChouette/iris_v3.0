@@ -184,6 +184,10 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         if (recipeSelectSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(recipeSelectSFX);
 
+        // Glow the glass so the player knows to click it to pour
+        var glass = Object.FindAnyObjectByType<GlassController>();
+        if (glass != null) glass.EnableGlow();
+
         Debug.Log($"[SimpleDrinkManager] Selected recipe: {_activeRecipe.drinkName}");
     }
 

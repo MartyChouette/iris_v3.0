@@ -57,10 +57,15 @@ public class AutoSaveController : MonoBehaviour
     /// <summary>Trigger a save with a reason tag for debugging.</summary>
     public void PerformSave(string reason = "manual")
     {
+#if UNITY_EDITOR
+        Debug.Log($"[AutoSaveController] Save skipped in editor ({reason}).");
+        return;
+#else
         var data = GatherSaveData();
         SaveManager.SaveGame(data);
         ShowIndicator();
         Debug.Log($"[AutoSaveController] Auto-saved slot {SaveManager.ActiveSlot} ({reason}).");
+#endif
     }
 
     private IrisSaveData GatherSaveData()

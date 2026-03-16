@@ -814,6 +814,7 @@ MonoBehaviour:
     m_Extent: {x: 7, y: 0.05, z: 9}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!65 &43062313
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1016,15 +1017,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.878
+      value: -1.327
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.846
+      value: 1.612
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 5.347
+      value: 4.939
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1096,7 +1097,7 @@ Transform:
   m_GameObject: {fileID: 64240808}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.72126144, z: -0, w: 0.692663}
-  m_LocalPosition: {x: 1.89, y: 1.11, z: -4.26}
+  m_LocalPosition: {x: 1.89, y: 0.982, z: -4.611}
   m_LocalScale: {x: 0.1, y: 0.2, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1114,7 +1115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &64240811
 MonoBehaviour:
@@ -2510,6 +2511,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 9.8, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &158490887
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3305,128 +3307,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 208469183}
   m_CullTransparentMesh: 1
---- !u!21 &232158501
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Universal Render Pipeline/Lit
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendModePreserveSpecular: 1
-    - _BumpScale: 1
-    - _ClearCoatMask: 0
-    - _ClearCoatSmoothness: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DetailAlbedoMapScale: 1
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _EnvironmentReflections: 1
-    - _GlossMapScale: 0
-    - _Glossiness: 0
-    - _GlossyReflections: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _Smoothness: 0.5
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _WorkflowMode: 1
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
-    - _Color: {r: 0.85, g: 0.82, b: 0.75, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!21 &238431451
 Material:
   serializedVersion: 8
@@ -4050,13 +3930,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 280605118}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.063, y: 1.5, z: -1.55}
+  m_LocalRotation: {x: 0, y: -0.9999978, z: -0, w: -0.0021058072}
+  m_LocalPosition: {x: 2.116, y: 1.5, z: -1.582}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 692304272}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -180.241, z: 0}
 --- !u!114 &280605121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4331,7 +4211,7 @@ Transform:
   m_GameObject: {fileID: 294380039}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000055512643, y: 0.021204239, z: -0.0026174001, w: -0.9997718}
-  m_LocalPosition: {x: 7.144, y: 1.019, z: -7.961}
+  m_LocalPosition: {x: 6.568, y: 1.019, z: -7.961}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4879,7 +4759,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &334276203
 MonoBehaviour:
@@ -5065,7 +4945,7 @@ Transform:
   m_GameObject: {fileID: 334944752}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.71251726, z: -0, w: 0.70165473}
-  m_LocalPosition: {x: 0.4374895, y: 0, z: -0.08884084}
+  m_LocalPosition: {x: 0.436, y: 0, z: -0.423}
   m_LocalScale: {x: 0.7, y: 1.8, z: 0.35}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5084,7 +4964,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &334944755
 MeshRenderer:
@@ -6299,6 +6179,7 @@ MonoBehaviour:
     m_Extent: {x: 7, y: 0.05, z: 9}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 1
 --- !u!65 &435676709
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8223,7 +8104,7 @@ Transform:
   m_GameObject: {fileID: 519574548}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.72189873, z: -0, w: 0.6919988}
-  m_LocalPosition: {x: 4.174, y: 1.09, z: -3.642}
+  m_LocalPosition: {x: 4.173, y: 1.09, z: -2.952}
   m_LocalScale: {x: 0.1, y: 0.12, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8241,7 +8122,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &519574551
 MeshRenderer:
@@ -8393,7 +8274,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &523184700
 MonoBehaviour:
@@ -8479,7 +8360,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1728195597}
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9151,7 +9032,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &568684338
 MonoBehaviour:
@@ -9237,7 +9118,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1758074966}
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9335,14 +9216,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 570162940}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: -0.9999978, z: -0, w: -0.0021058072}
+  m_LocalPosition: {x: 5.186, y: 0, z: -3.119}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 589631890}
   m_Father: {fileID: 692304272}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -180.241, z: 0}
 --- !u!114 &570162942
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10445,6 +10326,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &639744642
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11659,8 +11541,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 692304269}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.99984753, z: -0, w: 0.017462142}
-  m_LocalPosition: {x: 6.019, y: 0, z: -6.313}
+  m_LocalRotation: {x: -0, y: 0.99999994, z: -0, w: -0.00038747594}
+  m_LocalPosition: {x: 5.933715, y: 0, z: -5.744}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11670,7 +11552,7 @@ Transform:
   - {fileID: 519574549}
   - {fileID: 570162941}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 177.999, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180.044, z: 0}
 --- !u!64 &694223313
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -13286,128 +13168,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!21 &768382288
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Universal Render Pipeline/Lit
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendModePreserveSpecular: 1
-    - _BumpScale: 1
-    - _ClearCoatMask: 0
-    - _ClearCoatSmoothness: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DetailAlbedoMapScale: 1
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _EnvironmentReflections: 1
-    - _GlossMapScale: 0
-    - _Glossiness: 0
-    - _GlossyReflections: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _Smoothness: 0.5
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _WorkflowMode: 1
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 0.55, g: 0.62, b: 0.45, a: 1}
-    - _Color: {r: 0.54999995, g: 0.62, b: 0.45, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &774415148
 GameObject:
   m_ObjectHideFlags: 0
@@ -13654,6 +13414,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 8.24, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &788164271
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -14001,7 +13762,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &845707210
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14026,7 +13787,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &845707212
 MeshRenderer:
@@ -14466,6 +14227,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &878294348
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -14601,6 +14363,7 @@ MonoBehaviour:
   - {fileID: 1214550549}
   activeButtonColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.9}
   inactiveButtonColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.85}
+  _visiblePresetCount: 2
 --- !u!4 &880398091
 Transform:
   m_ObjectHideFlags: 0
@@ -14834,7 +14597,7 @@ Transform:
   m_GameObject: {fileID: 903626761}
   serializedVersion: 2
   m_LocalRotation: {x: -0.009699977, y: -0.72119826, z: 0.009299978, w: 0.69259834}
-  m_LocalPosition: {x: 3.404, y: 1.93, z: -5.249}
+  m_LocalPosition: {x: 3.161, y: 2.683, z: 2.334}
   m_LocalScale: {x: 0.3, y: 0.22, z: 0.02}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14852,7 +14615,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &903626764
 MonoBehaviour:
@@ -14895,15 +14658,15 @@ MonoBehaviour:
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
-  _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
-  _hasDisheveledPose: 0
+  _disheveledRotation: {x: -0.009699977, y: -0.72119826, z: 0.009299978, w: 0.69259834}
+  _hasDisheveledPose: 1
   _startDishelved: 0
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.009699977, y: -0.72119826, z: 0.009299978, w: 0.69259834}
 --- !u!54 &903626766
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -15059,7 +14822,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &904319850
 MonoBehaviour:
@@ -15145,7 +14908,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 232158501}
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -15287,6 +15050,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 0
+  _isFloor: 0
 --- !u!65 &910334821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15387,7 +15151,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &910335305
 Transform:
   m_ObjectHideFlags: 0
@@ -15434,7 +15198,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &910335308
 MonoBehaviour:
@@ -15743,7 +15507,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &919967257
 MonoBehaviour:
@@ -15895,6 +15659,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 9.8, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &925438251
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -17266,7 +17031,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1026028949
 MonoBehaviour:
@@ -17422,128 +17187,6 @@ MonoBehaviour:
   isActive: 1
   reactionIcon: {fileID: 0}
   smellAmount: 0
---- !u!21 &1027615496
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Universal Render Pipeline/Lit
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendModePreserveSpecular: 1
-    - _BumpScale: 1
-    - _ClearCoatMask: 0
-    - _ClearCoatSmoothness: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DetailAlbedoMapScale: 1
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _EnvironmentReflections: 1
-    - _GlossMapScale: 0
-    - _Glossiness: 0
-    - _GlossyReflections: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _Smoothness: 0.5
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _WorkflowMode: 1
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 0.8, g: 0.2, b: 0.3, a: 1}
-    - _Color: {r: 0.8, g: 0.19999996, b: 0.29999998, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1028913338
 GameObject:
   m_ObjectHideFlags: 0
@@ -18194,6 +17837,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 0
+  _isFloor: 0
 --- !u!23 &1053943096
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -20169,6 +19813,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1192554163
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -21409,6 +21054,7 @@ MonoBehaviour:
     m_Extent: {x: 0.49, y: 0.5, z: 0.49}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1259265360
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -21958,13 +21604,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1272185915}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.69801944, z: -0, w: 0.7160788}
+  m_LocalRotation: {x: -0, y: -0.697365, z: -0, w: 0.7167162}
   m_LocalPosition: {x: 2.9641314, y: 1.232, z: 1.6419828}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1934607702}
-  m_LocalEulerAnglesHint: {x: 0, y: -88.537, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -88.432, z: 0}
 --- !u!114 &1272185917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21977,7 +21623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1272185918
 MonoBehaviour:
@@ -22063,7 +21709,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1027615496}
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -22761,6 +22407,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.5, z: 0.5}
   normalAxis: 1
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1327611587
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -23904,6 +23551,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1398840524
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -25095,6 +24743,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1450394870
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -25225,6 +24874,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1451478096
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -25632,6 +25282,7 @@ MonoBehaviour:
     m_Extent: {x: 4, y: 1, z: 0.025}
   normalAxis: 1
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!1 &1465105550
 GameObject:
   m_ObjectHideFlags: 0
@@ -26063,13 +25714,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1495409209}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.71251726, z: -0, w: 0.70165473}
-  m_LocalPosition: {x: 2.97551, y: 0.9, z: -1.5641527}
+  m_LocalRotation: {x: -0, y: -0.70315564, z: -0, w: 0.711036}
+  m_LocalPosition: {x: 2.203, y: 0.9, z: -0.559}
   m_LocalScale: {x: 0.7, y: 1.8, z: 0.35}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 692304272}
-  m_LocalEulerAnglesHint: {x: 0, y: 90.88, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -89.361, z: 0}
 --- !u!23 &1495409211
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -26728,7 +26379,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1539162960
 Transform:
   m_ObjectHideFlags: 0
@@ -26775,7 +26426,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1539162963
 MonoBehaviour:
@@ -26984,7 +26635,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1548534656
 MonoBehaviour:
@@ -28645,6 +28296,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3228b2d86108baa478dfabb836136581, type: 2}
   - {fileID: 11400000, guid: bc4082807de2d5747b47722ee6ada966, type: 2}
   - {fileID: 11400000, guid: 514525afa9ee4ee4facd234b44b3133c, type: 2}
+  _startAreaIndex: 1
   browseCamera: {fileID: 1563546261}
   brain: {fileID: 0}
   transitionSpeed: 5
@@ -29123,6 +28775,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1657533974
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -29674,6 +29327,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 9.8, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1701245796
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -30231,128 +29885,6 @@ Material:
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &1728195597
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Universal Render Pipeline/Lit
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendModePreserveSpecular: 1
-    - _BumpScale: 1
-    - _ClearCoatMask: 0
-    - _ClearCoatSmoothness: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DetailAlbedoMapScale: 1
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _EnvironmentReflections: 1
-    - _GlossMapScale: 0
-    - _Glossiness: 0
-    - _GlossyReflections: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _Smoothness: 0.5
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _WorkflowMode: 1
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 0.85, g: 0.55, b: 0.7, a: 1}
-    - _Color: {r: 0.85, g: 0.54999995, b: 0.7, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1728368093
 GameObject:
   m_ObjectHideFlags: 0
@@ -30632,6 +30164,7 @@ MonoBehaviour:
     m_Extent: {x: 0.5, y: 0.05, z: 0.5}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &1729295895
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -30828,128 +30361,6 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0.92, g: 0.92, b: 0.9, a: 1}
     - _Color: {r: 0.92, g: 0.92, b: 0.9, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
---- !u!21 &1758074966
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Universal Render Pipeline/Lit
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendModePreserveSpecular: 1
-    - _BumpScale: 1
-    - _ClearCoatMask: 0
-    - _ClearCoatSmoothness: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DetailAlbedoMapScale: 1
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _EnvironmentReflections: 1
-    - _GlossMapScale: 0
-    - _Glossiness: 0
-    - _GlossyReflections: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _Smoothness: 0.5
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _WorkflowMode: 1
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 0.7, g: 0.3, b: 0.3, a: 1}
-    - _Color: {r: 0.7, g: 0.29999998, b: 0.29999998, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
@@ -31195,7 +30606,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1801888353
 MonoBehaviour:
@@ -31830,7 +31241,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1848525545
 MonoBehaviour:
@@ -31916,7 +31327,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 768382288}
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -32603,7 +32014,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &1922547504
 MeshRenderer:
@@ -33077,7 +32488,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1952427872
 Transform:
   m_ObjectHideFlags: 0
@@ -33124,7 +32535,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1952427875
 MonoBehaviour:
@@ -34316,8 +33727,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2010749588}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.713, y: 0.9, z: -1.478}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.063, y: 0.9, z: -0.818}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -35734,7 +35145,7 @@ Transform:
   m_GameObject: {fileID: 2125830189}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.15, y: 0.2, z: 0.19999981}
+  m_LocalPosition: {x: 0.904, y: 0.2, z: 0.788}
   m_LocalScale: {x: 0.18, y: 0.06, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -35771,7 +35182,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &2125830193
 MonoBehaviour:
@@ -37808,7 +37219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!4 &2312486340319271199
 Transform:
@@ -37849,13 +37260,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4006675188290007892}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2795721, y: 0.6494918, z: -0.64949155, w: 0.27957216}
-  m_LocalPosition: {x: 1.418, y: 1.1678617, z: 8.344}
+  m_LocalRotation: {x: 0.5068401, y: 0.493065, z: -0.49306476, w: 0.5068404}
+  m_LocalPosition: {x: 1.382, y: 1.1678617, z: 8.313}
   m_LocalScale: {x: 2.0157468, y: 5.7163897, z: 8.125728}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450653414306598}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: -88.421}
 --- !u!1 &2367606442983922659
 GameObject:
   m_ObjectHideFlags: 0
@@ -38325,6 +37736,7 @@ GameObject:
   - component: {fileID: 411929906}
   - component: {fileID: 8951416641511673850}
   - component: {fileID: 8951416641511673851}
+  - component: {fileID: 8951416641511673852}
   m_Layer: 19
   m_Name: spikey_plant
   m_TagString: Untagged
@@ -38590,7 +38002,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &3811760429535865316
 MonoBehaviour:
@@ -38728,7 +38140,6 @@ GameObject:
   - component: {fileID: 319542545}
   - component: {fileID: 6358458495724261079}
   - component: {fileID: 6358458495724261078}
-  - component: {fileID: 6358458495724261080}
   m_Layer: 15
   m_Name: books.001
   m_TagString: Untagged
@@ -38887,6 +38298,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 543450653414306598}
     m_Modifications:
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _homeRotation.w
+      value: 0.42352346
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _homeRotation.x
+      value: 0.02371151
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _homeRotation.y
+      value: 0.9055069
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _homeRotation.z
+      value: 0.011090342
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _useSpawnAsHome
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7044222363501929527, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
       propertyPath: m_Name
       value: milk box_used_deshevled
@@ -39306,45 +38737,49 @@ PrefabInstance:
       propertyPath: m_Name
       value: milk box_unused
       objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _useSpawnAsHome
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.883
+      value: 1.8830484
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.0488236
+      value: 1.0488251
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 6.618
+      value: 6.6182637
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071067
+      value: 0.7030455
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.7071068
+      value: -0.71114427
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0.0007190108
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0.0007378756
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: -90.666
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 10.199005
       objectReference: {fileID: 0}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: -10.1970215
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -39507,6 +38942,7 @@ GameObject:
   - component: {fileID: 379179670}
   - component: {fileID: 5535986354380516942}
   - component: {fileID: 5535986354380516941}
+  - component: {fileID: 5535986354380516943}
   m_Layer: 19
   m_Name: plant.cactus
   m_TagString: Untagged
@@ -39721,7 +39157,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 91
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!33 &5535986354380516940
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -39755,8 +39191,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
+--- !u!114 &5535986354380516943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5025238299590533204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1d92a0b32c32b14dae1b8e91f7eceef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReactableTag
+  displayName: 
+  tags:
+  - plants
+  isActive: 1
+  reactionIcon: {fileID: 0}
+  smellAmount: 0
 --- !u!33 &5558298820962645057
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -39868,7 +39322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &5589878413021733295
 GameObject:
@@ -40018,6 +39472,7 @@ MonoBehaviour:
     m_Extent: {x: 0.01, y: 0.01, z: 0.01}
   normalAxis: 0
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!23 &5786428869326542528
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -40111,7 +39566,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4411884025923965736, guid: 70920a758af76c44db7688329e14505a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.0887988
+      value: -3.854
       objectReference: {fileID: 0}
     - target: {fileID: 4411884025923965736, guid: 70920a758af76c44db7688329e14505a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -40119,7 +39574,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4411884025923965736, guid: 70920a758af76c44db7688329e14505a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.523923
+      value: 4.528
       objectReference: {fileID: 0}
     - target: {fileID: 4411884025923965736, guid: 70920a758af76c44db7688329e14505a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -40427,7 +39882,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &6163448132650023534
 GameObject:
@@ -40589,7 +40044,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &6358458495724261077
 MeshFilter:
@@ -40622,15 +40077,15 @@ MonoBehaviour:
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
-  _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
-  _hasDisheveledPose: 0
-  _startDishelved: 0
+  _disheveledRotation: {x: 0.65725005, y: 0.26081097, z: -0.26081085, w: 0.6572502}
+  _hasDisheveledPose: 1
+  _startDishelved: 1
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
-  _useSpawnAsHome: 0
-  _homePosition: {x: 0, y: 0, z: 0}
+  _useSpawnAsHome: 1
+  _homePosition: {x: 1.382, y: 1.167862, z: 8.313}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: 0.7070278, y: -0.010560274, z: 0.010560244, w: 0.70702815}
 --- !u!54 &6358458495724261079
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -40658,26 +40113,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &6358458495724261080
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4006675188290007892}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3c2de6c98d084b428882bb87c578e97, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WallOcclusionFader
-  _wallLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  _maxRayDistance: 50
-  _rayRadius: 0.15
-  _fadeInDuration: 0.2
-  _fadeOutDuration: 0.4
-  _targetDissolve: 0.85
 --- !u!4 &6490625522816450275
 Transform:
   m_ObjectHideFlags: 0
@@ -40737,7 +40172,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &6510876032257490167
 GameObject:
@@ -40808,10 +40243,10 @@ MonoBehaviour:
   _startDishelved: 0
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
-  _useSpawnAsHome: 0
+  _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0.70710677, y: 0, z: 0, w: -0.70710677}
+  _homeRotation: {x: 0.49942014, y: 0.50057936, z: 0.50057936, w: -0.49942014}
 --- !u!54 &6736070936335078369
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -40851,7 +40286,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &6758570034835759716
 GameObject:
@@ -40953,7 +40388,7 @@ Transform:
   m_GameObject: {fileID: 1574461734533599521}
   serializedVersion: 2
   m_LocalRotation: {x: -9.553427e-16, y: -0.000000021855694, z: 1, w: 0.00000004371139}
-  m_LocalPosition: {x: -1.8260713, y: 2.916123, z: 2.3662882}
+  m_LocalPosition: {x: -13.98, y: 2.916123, z: 2.39}
   m_LocalScale: {x: 283.05386, y: 214.34128, z: 8.580448}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -40973,7 +40408,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AreaWallFade
   _areaDissolves:
   - areaIndex: 0
-    dissolveAmount: 0.725
+    dissolveAmount: 0.984
+  - areaIndex: 1
+    dissolveAmount: 0.984
+  - areaIndex: 2
+    dissolveAmount: 0.984
 --- !u!1 &6940932630015012401
 GameObject:
   m_ObjectHideFlags: 0
@@ -43628,7 +43067,7 @@ MonoBehaviour:
   _startDishelved: 0
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
-  _useSpawnAsHome: 0
+  _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
   _homeRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -43671,7 +43110,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &7600488553096381212
 MeshFilter:
@@ -43815,7 +43254,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &7762067042467182300
 MeshRenderer:
@@ -43932,6 +43371,7 @@ MonoBehaviour:
     m_Extent: {x: 0.01, y: 0.02, z: 0.012}
   normalAxis: 1
   surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!4 &7842392388513538146
 Transform:
   m_ObjectHideFlags: 0
@@ -44065,7 +43505,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &8001171641197722770
 MeshFilter:
@@ -44754,7 +44194,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &8897240367097547895
 MeshFilter:
@@ -44843,8 +44283,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 4800000, guid: 548fcadffd017d043981a3fde85ade4a, type: 3}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
+--- !u!114 &8951416641511673852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3318655636738545017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1d92a0b32c32b14dae1b8e91f7eceef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReactableTag
+  displayName: 
+  tags:
+  - plant
+  isActive: 1
+  reactionIcon: {fileID: 0}
+  smellAmount: 0
 --- !u!23 &8992892570876034321
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -45137,7 +44595,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &9151970196485579308
 GameObject:
@@ -45266,7 +44724,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _rimShader: {fileID: 0}
+  _highlightShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &9156988147770989391
 MeshFilter:

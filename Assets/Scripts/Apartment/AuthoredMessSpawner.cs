@@ -85,7 +85,13 @@ public class AuthoredMessSpawner : MonoBehaviour
         bool dpmPastMorning = dpmPresent
             && DayPhaseManager.Instance.CurrentPhase != DayPhaseManager.DayPhase.Morning;
 
+#if UNITY_EDITOR
+        // In-editor without DPM means the designer is hand-placing items —
+        // don't auto-spawn messes that scramble the scene.
+        if (dpmPastMorning)
+#else
         if (!dpmPresent || dpmPastMorning)
+#endif
         {
             Debug.Log("[AuthoredMessSpawner] Auto-spawning mess (no DPM or already past morning).");
             SpawnDailyMess();

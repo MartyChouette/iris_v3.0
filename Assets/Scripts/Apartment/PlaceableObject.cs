@@ -273,6 +273,10 @@ public class PlaceableObject : MonoBehaviour
     private void OnEnable() => s_all.Add(this);
     private void OnDisable() => s_all.Remove(this);
 
+    // Cached shader lookups (avoid per-object Shader.Find)
+    private static Shader s_silhouetteShader;
+    private static bool s_silhouetteShaderCached;
+
     private void Awake()
     {
         _renderer = GetComponent<Renderer>();
@@ -283,25 +287,18 @@ public class PlaceableObject : MonoBehaviour
             _originalColor = _instanceMat.color;
         }
 
-        // Build silhouette material once (reused each pickup)
-        var silShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
-        if (silShader == null) silShader = Shader.Find("Sprites/Default");
-        if (silShader != null)
-        {
-            _silhouetteMat = new Material(silShader);
-            _silhouetteMat.SetFloat("_Surface", 1f); // Transparent
-            _silhouetteMat.SetFloat("_Blend", 0f);   // Alpha
-            _silhouetteMat.SetInt("_ZTest", (int)CompareFunction.Greater);
-            _silhouetteMat.renderQueue = 3100;
-        }
-
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
         _rb = GetComponent<Rigidbody>();
         _colliders = GetComponents<Collider>();
 
-        // Auto-capture spawn position/rotation as home
-        if (_useSpawnAsHome && _homePosition == Vector3.zero)
+        // Ensure every placeable has an InteractableHighlight for hover/proximity effects
+        // (skip plants — they have their own watering interaction)
+        if (GetComponent<InteractableHighlight>() == null && GetComponent<WaterablePlant>() == null)
+            gameObject.AddComponent<InteractableHighlight>();
+
+        // Auto-capture spawn position/rotation as home whenever unset
+        if (_homePosition == Vector3.zero)
         {
             _homePosition = transform.position;
             _homeRotation = transform.rotation;
@@ -310,12 +307,35 @@ public class PlaceableObject : MonoBehaviour
 
     private void Start()
     {
-        // Build silhouette once — stays alive so resting objects show
-        // through furniture via ZTest Greater
-        BuildSilhouette();
-
         if (_startDishelved)
             Dishevel();
+    }
+
+    /// <summary>
+    /// Lazy-init silhouette material and mesh on first pickup (not Awake).
+    /// Avoids 2 material allocations + Shader.Find + GO creation per object at scene load.
+    /// </summary>
+    private void EnsureSilhouette()
+    {
+        if (_silhouetteMat != null) return;
+
+        if (!s_silhouetteShaderCached)
+        {
+            s_silhouetteShaderCached = true;
+            s_silhouetteShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (s_silhouetteShader == null) s_silhouetteShader = Shader.Find("Sprites/Default");
+        }
+
+        if (s_silhouetteShader != null)
+        {
+            _silhouetteMat = new Material(s_silhouetteShader);
+            _silhouetteMat.SetFloat("_Surface", 1f);
+            _silhouetteMat.SetFloat("_Blend", 0f);
+            _silhouetteMat.SetInt("_ZTest", (int)CompareFunction.Greater);
+            _silhouetteMat.renderQueue = 3100;
+        }
+
+        BuildSilhouette();
     }
 
     private void Update()
@@ -400,6 +420,9 @@ public class PlaceableObject : MonoBehaviour
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
         IsAtHome = false;
+
+        // Lazy-init silhouette on first pickup (deferred from scene load)
+        EnsureSilhouette();
 
         // If we were stored in a drawer, notify the drawer
         var drawer = GetComponentInParent<DrawerController>();

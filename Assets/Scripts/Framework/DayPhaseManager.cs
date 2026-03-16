@@ -267,6 +267,11 @@ public class DayPhaseManager : MonoBehaviour
 
         _nudgeHideCoroutine = StartCoroutine(HideNudgeAfterDelay(5f));
 
+        // If the menu music is still playing (player hasn't put on a record),
+        // fade it out as a subtle hint to choose something.
+        if (MusicDirector.Instance != null && MusicDirector.Instance.IsMenuMusicPlaying)
+            MusicDirector.Instance.FadeOutMenuMusic();
+
         Debug.Log("[DayPhaseManager] Date arrival nudge shown.");
     }
 
@@ -614,7 +619,7 @@ public class DayPhaseManager : MonoBehaviour
         while (!trimmingComplete)
             yield return null;
 
-        // 8. Fade to black, unload flower scene, transition to Evening
+        // 8. Fade to black, unload flower scene, go straight to end of day
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
@@ -622,18 +627,15 @@ public class DayPhaseManager : MonoBehaviour
         if (bridge != null)
             bridge.RestoreApartmentCamera();
 
-        // 9. Enter Evening phase
+        // 9. Skip Evening free-roam — go straight to bed (advances day or ends game)
         _currentPhase = DayPhase.Evening;
-        Debug.Log("[DayPhaseManager] Phase → Evening (after flower trimming)");
-
-        if (_goToBedPanel != null)
-            _goToBedPanel.SetActive(true);
-
+        Debug.Log("[DayPhaseManager] Phase → Evening (after flower trimming) — skipping to GoToBed");
         OnPhaseChanged?.Invoke((int)DayPhase.Evening);
 
-        // 10. Fade in from black
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+        if (GameClock.Instance != null)
+            GameClock.Instance.GoToBed();
+        else
+            Debug.LogWarning("[DayPhaseManager] No GameClock — cannot advance day after flower trimming.");
     }
 
     // ═══════════════════════════════════════════════════════════════

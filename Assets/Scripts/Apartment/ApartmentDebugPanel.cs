@@ -136,9 +136,11 @@ public class ApartmentDebugPanel : MonoBehaviour
         // Title
         AddLabel(_panelGO.transform, "DEBUG (F3)", FontSize + 2f, FontStyles.Bold);
 
-        // Grid snap slider
+        // Grid snap slider — read current value from ObjectGrabber so we don't overwrite it
+        var initGrabber = Object.FindAnyObjectByType<ObjectGrabber>();
+        float initGrid = initGrabber != null ? initGrabber.GridSize : 0.11f;
         AddSliderRow(_panelGO.transform, "Grid Size", 0.05f, 1.0f,
-            ObjectGrabber.IsHoldingObject ? 0.3f : 0.3f,
+            initGrid,
             val =>
             {
                 // Find the ObjectGrabber in the scene

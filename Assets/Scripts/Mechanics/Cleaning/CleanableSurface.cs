@@ -203,17 +203,41 @@ public class CleanableSurface : MonoBehaviour
 
     // ── Lifecycle ───────────────────────────────────────────────────
 
+    /// <summary>How much bigger the collider is than the visual quad (forgiving edge).</summary>
+    private const float ColliderPadding = 1.4f;
+
+    private bool _colliderExpanded;
+
     void Awake()
     {
-        if (_definition == null)
-        {
-            Debug.LogError("[CleanableSurface] No SpillDefinition assigned.");
-            return;
-        }
+        // Expand collider so the sponge doesn't "catch" at the visual edge —
+        // cursor can overshoot and still register hits for smooth scrubbing.
+        ExpandCollider();
 
-        _textureSize = _definition.textureSize;
-        GenerateDirtTexture();
-        GenerateWetTexture();
+        // Defer texture generation to OnEnable/Regenerate — stain slots start
+        // inactive and get activated by AuthoredMessSpawner, so generating
+        // textures in Awake wastes time on stains that may never be used.
+    }
+
+    void OnEnable()
+    {
+        ExpandCollider();
+        // Generate textures on first activation (lazy init)
+        if (_dirtTex == null && _definition != null)
+        {
+            _textureSize = _definition.textureSize;
+            GenerateDirtTexture();
+            GenerateWetTexture();
+        }
+    }
+
+    private void ExpandCollider()
+    {
+        if (_colliderExpanded) return;
+        _colliderExpanded = true;
+        var box = GetComponent<BoxCollider>();
+        if (box != null)
+            box.size = new Vector3(box.size.x * ColliderPadding, box.size.y * ColliderPadding, box.size.z);
     }
 
     void Update()
@@ -395,5 +419,6 @@ public class CleanableSurface : MonoBehaviour
         mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
 
         rend.sharedMaterial = mat;
+        rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
     }
 }

@@ -568,19 +568,20 @@ public class NewspaperManager : MonoBehaviour, IStationManager
             "555-0000", phoneFontSize, FontStyles.Italic, TextAlignmentOptions.Left);
         var phoneTMP = phoneGO.GetComponent<TMP_Text>();
 
-        // Hold-to-select progress bar
+        // Hold-to-select progress fill — covers the full ad slot with a tinted overlay
         var fillGO = new GameObject($"{prefix}_Fill");
         fillGO.transform.SetParent(containerRT, false);
         var fillRT = fillGO.AddComponent<RectTransform>();
         fillRT.anchorMin = Vector2.zero;
-        fillRT.anchorMax = new Vector2(1f, 0f);
+        fillRT.anchorMax = Vector2.one;
         fillRT.offsetMin = Vector2.zero;
-        fillRT.offsetMax = new Vector2(0f, 4f);
+        fillRT.offsetMax = Vector2.zero;
         fillRT.localScale = Vector3.one;
         var fillImg = fillGO.AddComponent<Image>();
-        fillImg.color = new Color(0.2f, 0.6f, 1f, 0.7f);
+        fillImg.color = new Color(0.85f, 0.75f, 0.55f, 0.35f);
         fillImg.type = Image.Type.Filled;
-        fillImg.fillMethod = Image.FillMethod.Horizontal;
+        fillImg.fillMethod = Image.FillMethod.Vertical;
+        fillImg.fillOrigin = (int)Image.OriginVertical.Bottom;
         fillImg.fillAmount = 0f;
         fillImg.raycastTarget = false;
         fillGO.SetActive(false);

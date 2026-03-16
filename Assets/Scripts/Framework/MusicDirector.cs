@@ -102,6 +102,19 @@ public class MusicDirector : MonoBehaviour
     /// </summary>
     public bool IsCrossFading => _isCrossFading;
 
+    /// <summary>
+    /// True if the menu song is still the active music track (no record selected yet).
+    /// </summary>
+    public bool IsMenuMusicPlaying
+    {
+        get
+        {
+            if (_menuSong == null || AudioManager.Instance == null) return false;
+            var src = AudioManager.Instance.musicSource;
+            return src != null && src.isPlaying && src.clip == _menuSong;
+        }
+    }
+
     private IEnumerator CrossFadeOut()
     {
         _isCrossFading = true;

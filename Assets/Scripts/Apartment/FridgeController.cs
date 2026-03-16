@@ -161,10 +161,6 @@ public class FridgeController : MonoBehaviour
         if (_interiorLight != null)
             _interiorLight.enabled = true;
 
-        // Glow the glass so the player knows to click it next
-        var glass = Object.FindAnyObjectByType<GlassController>();
-        if (glass != null) glass.EnableGlow();
-
         SimpleDrinkManager.Instance?.ShowRecipePanel();
     }
 
@@ -225,24 +221,28 @@ public class FridgeController : MonoBehaviour
         _doorPivot.localRotation = to;
     }
 
-    // ── Blink Guide ─────────────────────────────────────────────
-    // When it's drink phase and fridge is closed, blink the highlight
-    // so the player knows to click the fridge.
+    // ── Rim Guide ─────────────────────────────────────────────
+    // During drink phase (BackgroundJudging), steady rimlight on
+    // the fridge until the player selects a recipe.
+
+    private bool _guideActive;
 
     private void UpdateBlinkGuide()
     {
-        bool shouldBlink = _state == DoorState.Closed
-            && DateSessionManager.Instance != null
-            && DateSessionManager.Instance.CurrentDatePhase == DateSessionManager.DatePhase.BackgroundJudging;
+        bool shouldGuide = DateSessionManager.Instance != null
+            && DateSessionManager.Instance.CurrentDatePhase == DateSessionManager.DatePhase.BackgroundJudging
+            && (SimpleDrinkManager.Instance == null || SimpleDrinkManager.Instance.CurrentState == SimpleDrinkManager.State.ChoosingRecipe)
+            && (SimpleDrinkManager.Instance == null || SimpleDrinkManager.Instance.ActiveRecipe == null);
 
-        if (shouldBlink && _blinkCoroutine == null)
+        if (shouldGuide && !_guideActive)
         {
             if (_highlight == null)
                 _highlight = GetComponent<InteractableHighlight>();
             if (_highlight != null)
-                _blinkCoroutine = StartCoroutine(BlinkHighlight());
+                _highlight.SetHighlighted(true);
+            _guideActive = true;
         }
-        else if (!shouldBlink && _blinkCoroutine != null)
+        else if (!shouldGuide && _guideActive)
         {
             StopBlinkGuide();
         }
@@ -250,23 +250,8 @@ public class FridgeController : MonoBehaviour
 
     private void StopBlinkGuide()
     {
-        if (_blinkCoroutine != null)
-        {
-            StopCoroutine(_blinkCoroutine);
-            _blinkCoroutine = null;
-        }
         if (_highlight != null)
             _highlight.SetHighlighted(false);
-    }
-
-    private IEnumerator BlinkHighlight()
-    {
-        bool on = false;
-        while (true)
-        {
-            on = !on;
-            _highlight.SetHighlighted(on);
-            yield return new WaitForSeconds(0.5f);
-        }
+        _guideActive = false;
     }
 }

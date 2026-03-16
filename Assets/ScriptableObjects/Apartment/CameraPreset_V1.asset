@@ -40,13 +40,13 @@ MonoBehaviour:
     lightIntensityMultiplier: 0.5
     lightColorTint: {r: 0, g: 1, b: 0.9771137, a: 0}
   - areaLabel: Living Room
-    position: {x: -3.5340323, y: 3.0146494, z: 1.6759546}
-    rotation: {x: 19.804153, y: 110.85506, z: -0.0031914776}
+    position: {x: -3.4902325, y: 2.557436, z: 1.4501691}
+    rotation: {x: 19.001637, y: 103.83878, z: 0.29344368}
     lens:
-      FieldOfView: 60
-      OrthographicSize: 1.4276922
-      NearClipPlane: 0.01
-      FarClipPlane: 2855.3843
+      FieldOfView: 3.0054188
+      OrthographicSize: 1.9705063
+      NearClipPlane: 0.03
+      FarClipPlane: 10000
       Dutch: 0
       ModeOverride: 1
       PhysicalProperties:

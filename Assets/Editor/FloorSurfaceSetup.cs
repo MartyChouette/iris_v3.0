@@ -24,6 +24,7 @@ public static class FloorSurfaceSetup
         bounds.FindPropertyRelative("m_Extent").vector3Value = new Vector3(7f, 0.05f, 9f);
         so.FindProperty("normalAxis").enumValueIndex = 0; // Up
         so.FindProperty("surfaceLayerIndex").intValue = 22;
+        so.FindProperty("_isFloor").boolValue = true;
         so.ApplyModifiedProperties();
 
         Undo.RegisterCreatedObjectUndo(go, "Add Floor Placement Surface");

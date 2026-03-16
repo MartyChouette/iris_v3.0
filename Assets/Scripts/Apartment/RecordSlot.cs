@@ -263,9 +263,10 @@ public class RecordSlot : MonoBehaviour
         if (_labelMat != null)
             _labelMat.color = def.labelColor;
 
-        // Play music
-        if (def.musicClip != null)
-            AudioManager.Instance?.PlayMusic(def.musicClip, def.volume);
+        // Play music (lazy-loaded from Resources to avoid scene load bloat)
+        var clip = def.MusicClip;
+        if (clip != null)
+            AudioManager.Instance?.PlayMusic(clip, def.volume);
 
         // Feed mood machine
         MoodMachine.Instance?.SetSource("Music", def.moodValue);
