@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c30e0b325b6dc347ab826bb734f98c6, type: 3}
+  m_Name: DiscordWebhookConfig
+  m_EditorClassIdentifier: Assembly-CSharp::DiscordWebhookConfig
+  _bugReportWebhookURL: https://discord.com/api/webhooks/1483529415987302624/1tUHB2b39i2nZOD9EwYner9cMA5UPzMmbgjPC7O59GZat54DcUY_ah_HciN5fOni5Jdb
+  _feedbackWebhookURL: https://discord.com/api/webhooks/1483529216883691610/vxb9oviyMyRZBWYU-5nLthhJMSYeacp516jHa-G9eOUnlYI_MjVf0ZuVXSYjJLRM_J85
