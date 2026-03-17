@@ -330,10 +330,21 @@ public class PlaytestFeedbackForm : MonoBehaviour
 
     private IEnumerator SubmitToDiscord(FeedbackPayload payload, byte[] screenshot)
     {
-        string webhookUrl = DiscordWebhookConfig.Instance != null
-            ? DiscordWebhookConfig.Instance.FeedbackWebhookURL
-            : "";
-        if (string.IsNullOrEmpty(webhookUrl) || payload == null) yield break;
+        var config = DiscordWebhookConfig.Instance;
+        string webhookUrl = config != null ? config.FeedbackWebhookURL : "";
+
+        if (string.IsNullOrEmpty(webhookUrl))
+        {
+            Debug.Log("[PlaytestFeedbackForm] No feedback webhook URL — skipping Discord.");
+            yield break;
+        }
+        if (payload == null)
+        {
+            Debug.LogWarning("[PlaytestFeedbackForm] Payload is null — skipping Discord.");
+            yield break;
+        }
+
+        Debug.Log("[PlaytestFeedbackForm] Submitting feedback to Discord...");
 
         var fields = new List<(string name, string value, bool inline)>
         {
@@ -353,7 +364,11 @@ public class PlaytestFeedbackForm : MonoBehaviour
         if (!string.IsNullOrEmpty(payload.bugReport))
             fields.Add(("Bugs Noted", payload.bugReport, false));
 
-        string footer = $"Session: {payload.sessionId?.Substring(0, 8) ?? "?"}" +
+        string sessionShort = "?";
+        if (!string.IsNullOrEmpty(payload.sessionId) && payload.sessionId.Length >= 8)
+            sessionShort = payload.sessionId.Substring(0, 8);
+
+        string footer = $"Session: {sessionShort}" +
             $" | Day {payload.currentDay} | {payload.playTimeSeconds / 60f:F1}m played" +
             $" | Build {payload.buildVersion}";
 
