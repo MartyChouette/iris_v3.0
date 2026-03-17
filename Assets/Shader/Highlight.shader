@@ -25,6 +25,15 @@ Shader "Iris/Highlight"
             ZWrite Off
             Cull Back
 
+            // Prevent additive overdraw on complex geometry:
+            // first fragment at each pixel writes 200, subsequent fragments are discarded.
+            Stencil
+            {
+                Ref 200
+                Comp NotEqual
+                Pass Replace
+            }
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
