@@ -290,16 +290,19 @@ public class PlaytestFeedbackForm : MonoBehaviour
         string stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         string pngPath = Path.Combine(folder, $"feedback_{stamp}.png");
 
-        byte[] screenshotBytes = null;
+        byte[] discordScreenshot = null;
         try
         {
             var tex = ScreenCapture.CaptureScreenshotAsTexture();
             if (tex != null)
             {
-                screenshotBytes = tex.EncodeToPNG();
-                File.WriteAllBytes(pngPath, screenshotBytes);
-                Destroy(tex);
+                byte[] pngBytes = tex.EncodeToPNG();
+                File.WriteAllBytes(pngPath, pngBytes);
                 Debug.Log($"[PlaytestFeedbackForm] Screenshot saved to {pngPath}");
+
+                // Encode as JPEG for Discord (much smaller upload)
+                discordScreenshot = tex.EncodeToJPG(75);
+                Destroy(tex);
             }
         }
         catch (Exception e)
@@ -308,7 +311,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         }
 
         // Post to Discord
-        yield return StartCoroutine(SubmitToDiscord(_currentPayload, screenshotBytes));
+        yield return StartCoroutine(SubmitToDiscord(_currentPayload, discordScreenshot));
 
         // Show confirmation
         _canvasRoot.SetActive(true);

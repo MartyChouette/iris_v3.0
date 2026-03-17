@@ -13,7 +13,10 @@ using UnityEngine;
 /// </summary>
 public static class DiscordWebhookService
 {
-    private static readonly HttpClient s_client = new HttpClient();
+    private static readonly HttpClient s_client = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(15)
+    };
 
     /// <summary>
     /// Post a rich embed to a Discord webhook, optionally with a screenshot attachment.
@@ -57,8 +60,8 @@ public static class DiscordWebhookService
 
                     var fileContent = new ByteArrayContent(screenshotPng);
                     fileContent.Headers.ContentType =
-                        new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
-                    multipart.Add(fileContent, "file", "screenshot.png");
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                    multipart.Add(fileContent, "file", "screenshot.jpg");
 
                     response = await s_client.PostAsync(webhookUrl, multipart);
                 }

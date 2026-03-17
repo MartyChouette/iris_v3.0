@@ -134,7 +134,7 @@ public class BugReportForm : MonoBehaviour
             var tex = ScreenCapture.CaptureScreenshotAsTexture();
             if (tex != null)
             {
-                _pendingScreenshot = tex.EncodeToPNG();
+                _pendingScreenshot = tex.EncodeToJPG(75);
                 Destroy(tex);
             }
         }
@@ -260,8 +260,8 @@ public class BugReportForm : MonoBehaviour
         // Save screenshot
         if (_pendingScreenshot != null && _pendingScreenshot.Length > 0)
         {
-            string pngPath = Path.Combine(folder, $"bug_{stamp}.png");
-            File.WriteAllBytes(pngPath, _pendingScreenshot);
+            string imgPath = Path.Combine(folder, $"bug_{stamp}.jpg");
+            File.WriteAllBytes(imgPath, _pendingScreenshot);
         }
 
         // Save JSON
