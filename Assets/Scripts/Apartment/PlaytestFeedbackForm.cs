@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -219,6 +220,11 @@ public class PlaytestFeedbackForm : MonoBehaviour
         StartCoroutine(CaptureScreenshotAndSave());
     }
 
+    private string FormatStars(int rating)
+    {
+        return rating > 0 ? $"{rating}/5" : "skipped";
+    }
+
     private void SaveFeedback(FeedbackPayload payload)
     {
         string folder = Path.Combine(Application.persistentDataPath, "PlaytestFeedback");
@@ -284,13 +290,14 @@ public class PlaytestFeedbackForm : MonoBehaviour
         string stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         string pngPath = Path.Combine(folder, $"feedback_{stamp}.png");
 
+        byte[] screenshotBytes = null;
         try
         {
             var tex = ScreenCapture.CaptureScreenshotAsTexture();
             if (tex != null)
             {
-                byte[] bytes = tex.EncodeToPNG();
-                File.WriteAllBytes(pngPath, bytes);
+                screenshotBytes = tex.EncodeToPNG();
+                File.WriteAllBytes(pngPath, screenshotBytes);
                 Destroy(tex);
                 Debug.Log($"[PlaytestFeedbackForm] Screenshot saved to {pngPath}");
             }
@@ -299,6 +306,9 @@ public class PlaytestFeedbackForm : MonoBehaviour
         {
             Debug.LogWarning($"[PlaytestFeedbackForm] Screenshot failed: {e.Message}");
         }
+
+        // Post to Discord
+        yield return StartCoroutine(SubmitToDiscord(_currentPayload, screenshotBytes));
 
         // Show confirmation
         _canvasRoot.SetActive(true);
@@ -316,6 +326,45 @@ public class PlaytestFeedbackForm : MonoBehaviour
         cb?.Invoke();
 
         Debug.Log("[PlaytestFeedbackForm] Submitted and closed.");
+    }
+
+    private IEnumerator SubmitToDiscord(FeedbackPayload payload, byte[] screenshot)
+    {
+        string webhookUrl = DiscordWebhookConfig.Instance != null
+            ? DiscordWebhookConfig.Instance.FeedbackWebhookURL
+            : "";
+        if (string.IsNullOrEmpty(webhookUrl) || payload == null) yield break;
+
+        var fields = new List<(string name, string value, bool inline)>
+        {
+            ("Enjoyment", FormatStars(payload.enjoymentRating), true),
+            ("Object Grab", FormatStars(payload.grabFeelRating), true),
+            ("Date Feel", FormatStars(payload.dateFeelRating), true),
+            ("Flower Trim", FormatStars(payload.flowerFeelRating), true),
+            ("Action Clarity", FormatStars(payload.actionClarityRating), true),
+            ("Item Clarity", FormatStars(payload.itemClarityRating), true),
+            ("Surface Clarity", FormatStars(payload.surfaceClarityRating), true),
+        };
+
+        if (!string.IsNullOrEmpty(payload.feedbackPositive))
+            fields.Add(("Enjoyed", payload.feedbackPositive, false));
+        if (!string.IsNullOrEmpty(payload.feedbackNegative))
+            fields.Add(("Frustrating", payload.feedbackNegative, false));
+        if (!string.IsNullOrEmpty(payload.bugReport))
+            fields.Add(("Bugs Noted", payload.bugReport, false));
+
+        string footer = $"Session: {payload.sessionId?.Substring(0, 8) ?? "?"}" +
+            $" | Day {payload.currentDay} | {payload.playTimeSeconds / 60f:F1}m played" +
+            $" | Build {payload.buildVersion}";
+
+        yield return StartCoroutine(DiscordWebhookService.PostEmbed(
+            webhookUrl,
+            "Playtest Feedback",
+            null,
+            0xF5C542, // gold
+            fields.ToArray(),
+            footer,
+            screenshot));
     }
 
     // ═══════════════════════════════════════
