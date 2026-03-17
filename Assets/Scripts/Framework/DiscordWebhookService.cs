@@ -1,14 +1,20 @@
+using System;
 using System.Collections;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 
 /// <summary>
 /// Static utility for posting rich embeds + file attachments to Discord webhooks.
+/// Uses System.Net.Http.HttpClient instead of UnityWebRequest to avoid
+/// Unity 6's curl HTTP/2 PROTOCOL_ERROR with Discord's API.
 /// Call via StartCoroutine on any MonoBehaviour.
 /// </summary>
 public static class DiscordWebhookService
 {
+    private static readonly HttpClient s_client = new HttpClient();
+
     /// <summary>
     /// Post a rich embed to a Discord webhook, optionally with a screenshot attachment.
     /// </summary>
@@ -21,40 +27,69 @@ public static class DiscordWebhookService
         string footerText,
         byte[] screenshotPng = null)
     {
-        if (string.IsNullOrEmpty(webhookUrl)) yield break;
+        if (string.IsNullOrEmpty(webhookUrl))
+        {
+            Debug.LogWarning("[DiscordWebhook] No webhook URL configured — skipping.");
+            yield break;
+        }
 
-        string timestamp = System.DateTime.UtcNow.ToString("o");
+        string timestamp = DateTime.UtcNow.ToString("o");
         string json = BuildEmbedJson(title, description, color, fields, footerText, timestamp);
 
-        UnityWebRequest request;
+        Debug.Log($"[DiscordWebhook] Posting to Discord... " +
+            $"(screenshot: {(screenshotPng != null ? $"{screenshotPng.Length / 1024}KB" : "none")})");
 
-        if (screenshotPng != null && screenshotPng.Length > 0)
+        bool done = false;
+        bool success = false;
+        string error = null;
+
+        // Run on background thread to avoid blocking Unity main thread
+        Task.Run(async () =>
         {
-            // Multipart: payload_json + file attachment
-            var form = new WWWForm();
-            form.AddField("payload_json", json);
-            form.AddBinaryData("file", screenshotPng, "screenshot.png", "image/png");
-            request = UnityWebRequest.Post(webhookUrl, form);
-        }
+            try
+            {
+                HttpResponseMessage response;
+
+                if (screenshotPng != null && screenshotPng.Length > 0)
+                {
+                    var multipart = new MultipartFormDataContent();
+                    multipart.Add(new StringContent(json), "payload_json");
+
+                    var fileContent = new ByteArrayContent(screenshotPng);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+                    multipart.Add(fileContent, "file", "screenshot.png");
+
+                    response = await s_client.PostAsync(webhookUrl, multipart);
+                }
+                else
+                {
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    response = await s_client.PostAsync(webhookUrl, content);
+                }
+
+                success = response.IsSuccessStatusCode;
+                if (!success)
+                    error = $"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
+            finally
+            {
+                done = true;
+            }
+        });
+
+        // Wait for background task to complete
+        while (!done)
+            yield return null;
+
+        if (success)
+            Debug.Log("[DiscordWebhook] Post succeeded.");
         else
-        {
-            // JSON only
-            var bodyBytes = Encoding.UTF8.GetBytes(json);
-            request = new UnityWebRequest(webhookUrl, "POST");
-            request.uploadHandler = new UploadHandlerRaw(bodyBytes);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-        }
-
-        using (request)
-        {
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-                Debug.Log("[DiscordWebhook] Post succeeded.");
-            else
-                Debug.LogWarning($"[DiscordWebhook] Post failed: {request.error} — {request.downloadHandler?.text}");
-        }
+            Debug.LogWarning($"[DiscordWebhook] Post failed: {error}");
     }
 
     private static string BuildEmbedJson(
