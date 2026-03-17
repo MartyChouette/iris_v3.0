@@ -145,7 +145,7 @@ public class ApartmentManager : MonoBehaviour
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
-    private readonly List<InteractableHighlight> _proximityHighlights = new();
+    // _proximityHighlights removed — proximity highlight stage dropped
     private Camera _cachedMainCamera;
 
     private void Awake()
@@ -631,7 +631,6 @@ public class ApartmentManager : MonoBehaviour
 
     [Tooltip("Angular radius in degrees for hover detection. Scales naturally with distance.")]
     private const float HoverAngle = 1.5f;
-    private const float ProximityAngle = 4f;
 
     /// <summary>
     /// Angular distance (degrees) between the ray direction and the direction to the point.
@@ -677,43 +676,12 @@ public class ApartmentManager : MonoBehaviour
         if (hit != _hoveredHighlight)
         {
             if (_hoveredHighlight != null)
-            {
                 _hoveredHighlight.SetHighlighted(false);
-                _hoveredHighlight.SetInteractHighlighted(false);
-            }
 
             _hoveredHighlight = hit;
 
             if (_hoveredHighlight != null)
-            {
                 _hoveredHighlight.SetHighlighted(true);
-                _hoveredHighlight.SetInteractHighlighted(true);
-            }
-        }
-
-        // ── Proximity: subtle interactable glow on nearby objects ──
-        for (int i = _proximityHighlights.Count - 1; i >= 0; i--)
-        {
-            var ph = _proximityHighlights[i];
-            if (ph != null && ph != _hoveredHighlight)
-                ph.SetInteractHighlighted(false);
-        }
-        _proximityHighlights.Clear();
-
-        {
-            var allHighlights = InteractableHighlight.All;
-            for (int i = 0; i < allHighlights.Count; i++)
-            {
-                var hl = allHighlights[i];
-                if (hl == null || hl == _hoveredHighlight) continue;
-
-                float angle = AngleToRay(ray, hl.transform.position);
-                if (angle < ProximityAngle)
-                {
-                    hl.SetInteractHighlighted(true);
-                    _proximityHighlights.Add(hl);
-                }
-            }
         }
     }
 

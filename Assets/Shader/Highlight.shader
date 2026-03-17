@@ -67,7 +67,9 @@ Shader "Iris/Highlight"
             Varyings vert(Attributes input)
             {
                 Varyings output;
-                VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                // Slight normal offset to prevent z-fighting with base mesh
+                float3 offsetPos = input.positionOS.xyz + normalize(input.normalOS) * 0.001;
+                VertexPositionInputs posInputs = GetVertexPositionInputs(offsetPos);
                 float4 clipPos = posInputs.positionCS;
 
                 // PSX vertex snapping (matches PSXLit)

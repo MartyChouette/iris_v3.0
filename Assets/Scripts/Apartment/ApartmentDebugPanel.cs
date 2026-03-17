@@ -59,6 +59,10 @@ public class ApartmentDebugPanel : MonoBehaviour
             _panelGO.SetActive(_visible);
         }
 
+        // F5 cycles highlight style
+        if (Input.GetKeyDown(KeyCode.F5))
+            InteractableHighlight.CycleStyle();
+
         if (_visible)
             UpdateInfo();
     }
