@@ -4,6 +4,9 @@ using UnityEngine;
 /// Makes an item pairable with another item. Shoes pair with a specific partner
 /// (side-by-side), dishes and bowls pair with any of the same category (stacked).
 /// When paired, the secondary item parents to the primary and they move as one.
+///
+/// For SpecificPartner mode (shoes): when one shoe is picked up, the partner
+/// flashes its highlight so the player can find it easily.
 /// </summary>
 public class PairableItem : MonoBehaviour
 {
@@ -40,13 +43,48 @@ public class PairableItem : MonoBehaviour
     private bool _isPaired;
     private PairableItem _pairedChild; // the item that was snapped TO this one
     private PlaceableObject _placeable;
+    private bool _partnerHighlightActive;
 
     public bool IsPaired => _isPaired;
     public PairableItem PairedChild => _pairedChild;
+    public PairMode Mode => _pairMode;
+    public PairableItem SpecificPartner => _specificPartner;
 
     private void Awake()
     {
         _placeable = GetComponent<PlaceableObject>();
+    }
+
+    /// <summary>
+    /// Called when this item is picked up. If it has a specific partner, flash that partner's highlight.
+    /// </summary>
+    public void OnPickedUp()
+    {
+        if (_isPaired) return;
+        if (_pairMode != PairMode.SpecificPartner || _specificPartner == null) return;
+        if (_specificPartner._isPaired) return;
+
+        var partnerHL = _specificPartner.GetComponent<InteractableHighlight>();
+        if (partnerHL != null)
+        {
+            partnerHL.SetHighlighted(true);
+            _partnerHighlightActive = true;
+        }
+    }
+
+    /// <summary>
+    /// Called when this item is put down or pairing completes. Stop flashing partner.
+    /// </summary>
+    public void OnPutDown()
+    {
+        if (!_partnerHighlightActive) return;
+        if (_specificPartner == null) return;
+
+        var partnerHL = _specificPartner.GetComponent<InteractableHighlight>();
+        if (partnerHL != null)
+            partnerHL.SetHighlighted(false);
+
+        _partnerHighlightActive = false;
     }
 
     /// <summary>
@@ -74,6 +112,9 @@ public class PairableItem : MonoBehaviour
     public void SnapPair(PairableItem held)
     {
         if (held == null) return;
+
+        // Stop partner highlight since we're pairing now
+        held.OnPutDown();
 
         _isPaired = true;
         held._isPaired = true;

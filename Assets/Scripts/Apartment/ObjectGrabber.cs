@@ -397,6 +397,10 @@ public class ObjectGrabber : MonoBehaviour
         ConsumeClick();
         _held = placeable;
 
+        // Flash partner highlight for pairable items (shoes)
+        var pairable = placeable.GetComponent<PairableItem>();
+        if (pairable != null) pairable.OnPickedUp();
+
         // Cache collider bounds BEFORE disabling — used for shadow size + surface offset
         var pickupCol = placeable.GetComponent<Collider>();
         if (pickupCol != null)
@@ -748,9 +752,13 @@ public class ObjectGrabber : MonoBehaviour
 
     private void ClearHeld()
     {
-        // Turn off held highlight
         if (_held != null)
         {
+            // Stop partner highlight flash
+            var pairable = _held.GetComponent<PairableItem>();
+            if (pairable != null) pairable.OnPutDown();
+
+            // Turn off held highlight
             var hl = _held.GetComponent<InteractableHighlight>();
             if (hl != null)
             {
