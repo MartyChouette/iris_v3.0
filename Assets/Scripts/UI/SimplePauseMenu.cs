@@ -98,6 +98,8 @@ public class SimplePauseMenu : MonoBehaviour
     /// <summary>Opens the settings panel and hides the pause menu buttons.</summary>
     public void OpenSettings()
     {
+        if (_settingsPanel == null)
+            _settingsPanel = FindAnyObjectByType<SettingsPanel>();
         if (_settingsPanel == null) return;
 
         _settingsPanel.Open();
