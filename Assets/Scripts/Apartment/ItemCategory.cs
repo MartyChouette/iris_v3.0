@@ -1,13 +1,13 @@
 /// <summary>
-/// Classifies apartment objects for tidiness scoring and drop-zone matching.
+/// Classifies apartment objects for tidiness scoring, drop-zone matching, and pairing.
 /// </summary>
 public enum ItemCategory
 {
     General,
     Trash,
     Dish,
+    Bowl,
     Shoe,
-    Coat,
     Hat,
     Record,
     Book

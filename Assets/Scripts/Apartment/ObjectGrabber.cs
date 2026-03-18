@@ -188,6 +188,13 @@ public class ObjectGrabber : MonoBehaviour
                     return;
                 }
 
+                // If holding a pairable item, check if clicking its match → snap pair
+                if (TryPairWithClicked())
+                {
+                    ConsumeClick();
+                    return;
+                }
+
                 // If holding a plate, check if clicking another plate → join stack
                 if (TryStackOntoClickedPlate())
                 {
@@ -534,6 +541,38 @@ public class ObjectGrabber : MonoBehaviour
     /// While holding a plate, raycast for another plate under the cursor.
     /// If found, join the clicked plate onto the held stack (or vice versa).
     /// </summary>
+    private bool TryPairWithClicked()
+    {
+        if (_held == null) return false;
+
+        var heldPairable = _held.GetComponent<PairableItem>();
+        if (heldPairable == null || heldPairable.IsPaired) return false;
+
+        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Ray ray = cam.ScreenPointToRay(screenPos);
+
+        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
+            return false;
+
+        var clickedPairable = hit.collider.GetComponent<PairableItem>();
+        if (clickedPairable == null)
+            clickedPairable = hit.collider.GetComponentInParent<PairableItem>();
+        if (clickedPairable == null || clickedPairable == heldPairable) return false;
+
+        if (!clickedPairable.CanPairWith(heldPairable)) return false;
+
+        // Release held item from grabber
+        _heldRb.constraints = _originalConstraints;
+        _heldRb.linearVelocity = Vector3.zero;
+
+        // Snap pair
+        clickedPairable.SnapPair(heldPairable);
+
+        PlayPlaceSFX(_held);
+        ClearHeld();
+        return true;
+    }
+
     private bool TryStackOntoClickedPlate()
     {
         var heldStack = _held.GetComponent<StackablePlate>();
