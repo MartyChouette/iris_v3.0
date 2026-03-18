@@ -1116,6 +1116,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &64240811
 MonoBehaviour:
@@ -4760,6 +4762,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &334276203
 MonoBehaviour:
@@ -4965,6 +4969,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &334944755
 MeshRenderer:
@@ -8123,6 +8129,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &519574551
 MeshRenderer:
@@ -8275,6 +8283,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &523184700
 MonoBehaviour:
@@ -9033,6 +9043,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &568684338
 MonoBehaviour:
@@ -13788,6 +13800,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &845707212
 MeshRenderer:
@@ -14616,6 +14630,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &903626764
 MonoBehaviour:
@@ -14823,6 +14839,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &904319850
 MonoBehaviour:
@@ -15199,6 +15217,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &910335308
 MonoBehaviour:
@@ -15508,6 +15528,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &919967257
 MonoBehaviour:
@@ -17032,6 +17054,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1026028949
 MonoBehaviour:
@@ -19152,6 +19176,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1129428660}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1145229478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1145229480}
+  m_Layer: 0
+  m_Name: Window_Big
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1145229480
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1145229478}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.4066569, y: 0, z: 0, w: 0.913581}
+  m_LocalPosition: {x: 0.25, y: 2.6, z: 3.2}
+  m_LocalScale: {x: 2, y: 3.43, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1715459656}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: -47.99, y: 0, z: 0}
 --- !u!1 &1150571148
 GameObject:
   m_ObjectHideFlags: 0
@@ -21624,6 +21680,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1272185918
 MonoBehaviour:
@@ -26427,6 +26485,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1539162963
 MonoBehaviour:
@@ -26636,6 +26696,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1548534656
 MonoBehaviour:
@@ -29406,6 +29468,139 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701245793}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1715459655
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1715459656}
+  - component: {fileID: 1715459659}
+  - component: {fileID: 1715459658}
+  - component: {fileID: 1715459657}
+  - component: {fileID: 1715459660}
+  m_Layer: 0
+  m_Name: Quad
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1715459656
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715459655}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.6684022, y: -0.051891036, z: 0.4583271, w: 0.58350855}
+  m_LocalPosition: {x: -0.000000022351742, y: 0, z: 0}
+  m_LocalScale: {x: 2.03, y: 7.86, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1145229480}
+  m_LocalEulerAnglesHint: {x: 124.147, y: -100.375, z: -56.02899}
+--- !u!64 &1715459657
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715459655}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1715459658
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715459655}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1715459659
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715459655}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1715459660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715459655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5f4c67f73f9e7e4998f7480688a50a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VolumetricLightShaft
+  _baseColor: {r: 1, g: 0.97, b: 0.92, a: 0.12}
+  _intensity: 1
+  _fadeEnd: 0.8
+  _noiseAmount: 0.3
+  _noiseScale: 3
+  _noiseSpeed: 0.3
+  _minLightIntensity: 0.3
 --- !u!1 &1716264111
 GameObject:
   m_ObjectHideFlags: 0
@@ -30556,6 +30751,69 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6611601691171728970, guid: 5292c727fa375a94fbbe8573e7178595, type: 3}
+--- !u!1 &1794186461
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1794186463}
+  - component: {fileID: 1794186462}
+  m_Layer: 0
+  m_Name: AtmosphereManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1794186462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794186461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be88655a7c39b884ea6767591ca045f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AtmosphereController
+  _shadowTint: {r: 0.75, g: 0.92, b: 1, a: 1}
+  _highlightTint: {r: 1, g: 0.95, b: 0.85, a: 1}
+  _saturation: -25
+  _contrast: 12
+  _postExposure: 0.3
+  _bloomThreshold: 0.7
+  _bloomIntensity: 0.6
+  _bloomScatter: 0.75
+  _bloomTint: {r: 0.9, g: 0.93, b: 1, a: 1}
+  _vignetteIntensity: 0.3
+  _vignetteSmoothness: 0.4
+  _grainIntensity: 0.15
+  _enableDust: 1
+  _dustMaxParticles: 200
+  _dustEmissionRate: 12
+  _dustVolume: {x: 12, y: 3, z: 12}
+  _dustSizeMin: 0.004
+  _dustSizeMax: 0.012
+  _dustColor: {r: 1, g: 0.97, b: 0.92, a: 0.2}
+--- !u!4 &1794186463
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794186461}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.42978, y: 0.45788, z: -0.00818}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1801888350
 GameObject:
   m_ObjectHideFlags: 0
@@ -30607,6 +30865,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1801888353
 MonoBehaviour:
@@ -31242,6 +31502,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1848525545
 MonoBehaviour:
@@ -32015,6 +32277,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &1922547504
 MeshRenderer:
@@ -32536,6 +32800,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &1952427875
 MonoBehaviour:
@@ -35183,6 +35449,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &2125830193
 MonoBehaviour:
@@ -37220,6 +37488,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!4 &2312486340319271199
 Transform:
@@ -38003,6 +38273,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &3811760429535865316
 MonoBehaviour:
@@ -39192,6 +39464,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &5535986354380516943
 MonoBehaviour:
@@ -39323,6 +39597,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &5589878413021733295
 GameObject:
@@ -39883,6 +40159,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &6163448132650023534
 GameObject:
@@ -40045,6 +40323,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &6358458495724261077
 MeshFilter:
@@ -40173,6 +40453,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &6510876032257490167
 GameObject:
@@ -40287,6 +40569,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &6758570034835759716
 GameObject:
@@ -43111,6 +43395,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &7600488553096381212
 MeshFilter:
@@ -43255,6 +43541,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!23 &7762067042467182300
 MeshRenderer:
@@ -43506,6 +43794,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &8001171641197722770
 MeshFilter:
@@ -44194,8 +44484,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3921d45efb345be428ab4ac1b748574f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
-  _highlightShader: {fileID: 0}
-  _interactShader: {fileID: 0}
+  _highlightShader: {fileID: 4800000, guid: 7c75dae07c943734f9ca85462ecf13df, type: 3}
+  _outlineShader: {fileID: 4800000, guid: 53304a462bedc884193752a37307cab4, type: 3}
+  _overlayShader: {fileID: 4800000, guid: 77ebec38f41a0d944962bb0ed94f7103, type: 3}
+  _interactShader: {fileID: 4800000, guid: 3d344023e93ddb14f876a56d4b50295d, type: 3}
 --- !u!33 &8897240367097547895
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -44284,6 +44576,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!114 &8951416641511673852
 MonoBehaviour:
@@ -44596,6 +44890,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!1 &9151970196485579308
 GameObject:
@@ -44725,6 +45021,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
   _highlightShader: {fileID: 0}
+  _outlineShader: {fileID: 0}
+  _overlayShader: {fileID: 0}
   _interactShader: {fileID: 0}
 --- !u!33 &9156988147770989391
 MeshFilter:
@@ -44807,3 +45105,5 @@ SceneRoots:
   - {fileID: 1949121104}
   - {fileID: 43062314}
   - {fileID: 435676710}
+  - {fileID: 1794186463}
+  - {fileID: 1145229480}

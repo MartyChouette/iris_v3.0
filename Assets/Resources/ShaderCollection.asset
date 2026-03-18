@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 3}
   m_Name: ShaderCollection
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   shaders:
   - {fileID: 4800000, guid: 73f2b341f32221d4ea251313f2a4198b, type: 3}
   - {fileID: 4800000, guid: 26f490ad90348934dbbbbfc3061f991b, type: 3}
@@ -29,3 +29,6 @@ MonoBehaviour:
   - {fileID: 4800000, guid: 0e0f6027b76b76a45a9ea24bcaa3527a, type: 3}
   - {fileID: 4800000, guid: 64d7db3caf3ca644a8b339524d541244, type: 3}
   - {fileID: 4800000, guid: 7c75dae07c943734f9ca85462ecf13df, type: 3}
+  - {fileID: 4800000, guid: 53304a462bedc884193752a37307cab4, type: 3}
+  - {fileID: 4800000, guid: 77ebec38f41a0d944962bb0ed94f7103, type: 3}
+  - {fileID: 4800000, guid: 2a6f94b15fabe9740a271051672dfc68, type: 3}
