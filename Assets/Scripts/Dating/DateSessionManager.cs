@@ -280,7 +280,7 @@ public class DateSessionManager : MonoBehaviour
             yield return ScreenFade.Instance.FadeOut(fadeDuration);
 
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("First Impressions");
+            ScreenFade.Instance.ShowPhaseTitle("Impressions");
 
         yield return new WaitForSeconds(phaseTitleHold);
 
@@ -338,7 +338,7 @@ public class DateSessionManager : MonoBehaviour
 
         // Phase title
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Making Drinks");
+            ScreenFade.Instance.ShowPhaseTitle("Drinks");
 
         yield return new WaitForSeconds(phaseTitleHold);
 
@@ -387,7 +387,7 @@ public class DateSessionManager : MonoBehaviour
 
         // Phase title
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Getting Comfortable");
+            ScreenFade.Instance.ShowPhaseTitle("Warming Up");
 
         yield return new WaitForSeconds(phaseTitleHold);
 

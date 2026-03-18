@@ -590,7 +590,7 @@ public class DayPhaseManager : MonoBehaviour
 
         // 2. Show phase title
         if (ScreenFade.Instance != null)
-            ScreenFade.Instance.ShowPhaseTitle("Flower Trimming");
+            ScreenFade.Instance.ShowPhaseTitle("Trimming");
 
         // 3. Begin scene load while still black — camera will activate off-screen
         bool trimmingComplete = false;
