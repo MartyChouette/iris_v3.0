@@ -21,11 +21,11 @@ public static class SettingsPanelBuilder
     private static readonly string[] TabNames = { "Visual", "Audio", "Motion", "Timing", "Controls", "Performance" };
 
     // Layout constants — tuned for PSX blocky font
-    private const int TabFontSize = 14;
-    private const int LabelFontSize = 20;
-    private const int ValueFontSize = 16;
-    private const int CaptionFontSize = 16;
-    private const float RowHeight = 44f;
+    private const int TabFontSize = 17;
+    private const int LabelFontSize = 24;
+    private const int ValueFontSize = 19;
+    private const int CaptionFontSize = 19;
+    private const float RowHeight = 53f;
     private const float LabelWidth = 240f;
     private const float RowSpacing = 10f;
     private const float CheckboxSize = 34f;
@@ -56,7 +56,7 @@ public static class SettingsPanelBuilder
         containerRT.anchorMin = new Vector2(0.5f, 0.5f);
         containerRT.anchorMax = new Vector2(0.5f, 0.5f);
         containerRT.pivot = new Vector2(0.5f, 0.5f);
-        containerRT.sizeDelta = new Vector2(1050, 700);
+        containerRT.sizeDelta = new Vector2(1260, 840);
 
         // Title (first in hierarchy = renders behind everything)
         var title = CreateText(container.transform, "Title", "Settings", 28);
