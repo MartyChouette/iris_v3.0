@@ -76,13 +76,13 @@ public static class SettingsPanelBuilder
         contentRT.anchorMin = new Vector2(0, 0);
         contentRT.anchorMax = new Vector2(1, 1);
         contentRT.offsetMin = new Vector2(10, 50);   // bottom: space for close button
-        contentRT.offsetMax = new Vector2(-10, -90);  // top: tabs peek out above
+        contentRT.offsetMax = new Vector2(-10, -104);  // top: tabs peek out above
         var tabBarRT = tabBar.GetComponent<RectTransform>();
         tabBarRT.anchorMin = new Vector2(0, 1);
         tabBarRT.anchorMax = new Vector2(1, 1);
         tabBarRT.pivot = new Vector2(0.5f, 1);
-        tabBarRT.anchoredPosition = new Vector2(0, -52);
-        tabBarRT.sizeDelta = new Vector2(0, 36);
+        tabBarRT.anchoredPosition = new Vector2(0, -50);
+        tabBarRT.sizeDelta = new Vector2(0, 48);
 
         var tabBarHLG = tabBar.AddComponent<HorizontalLayoutGroup>();
         tabBarHLG.spacing = 4;
@@ -472,7 +472,7 @@ public static class SettingsPanelBuilder
         ddGO.AddComponent<RectTransform>();
         var ddLE = ddGO.AddComponent<LayoutElement>();
         ddLE.flexibleWidth = 1;
-        ddLE.preferredHeight = 36;
+        ddLE.preferredHeight = 48;
 
         var ddImg = ddGO.AddComponent<Image>();
         ddImg.color = SliderBgColor;
@@ -497,7 +497,7 @@ public static class SettingsPanelBuilder
         templateRT.anchorMax = new Vector2(1, 0);
         templateRT.pivot = new Vector2(0.5f, 1);
         templateRT.anchoredPosition = Vector2.zero;
-        templateRT.sizeDelta = new Vector2(0, 180);
+        templateRT.sizeDelta = new Vector2(0, 280);
 
         var viewport = CreatePanel(templateGO.transform, "Viewport", new Color(0, 0, 0, 0));
         Stretch(viewport);
@@ -528,7 +528,7 @@ public static class SettingsPanelBuilder
         itemRT.anchorMin = new Vector2(0, 1);
         itemRT.anchorMax = new Vector2(1, 1);
         itemRT.pivot = new Vector2(0.5f, 1);
-        itemRT.sizeDelta = new Vector2(0, 34);
+        itemRT.sizeDelta = new Vector2(0, 46);
         var itemToggle = itemGO.AddComponent<Toggle>();
 
         var itemBG = itemGO.AddComponent<Image>();
