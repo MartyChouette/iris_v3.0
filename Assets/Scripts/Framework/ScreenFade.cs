@@ -108,25 +108,36 @@ public class ScreenFade : MonoBehaviour
     private void EnsurePhaseText()
     {
         if (_phaseText != null) return;
-        if (_canvasGroup == null) return;
 
-        var go = new GameObject("PhaseTitle");
-        go.transform.SetParent(_canvasGroup.transform, false);
+        // Create on a separate canvas ABOVE the fade overlay so text is always visible
+        var canvasGO = new GameObject("PhaseTitleCanvas");
+        canvasGO.transform.SetParent(transform, false);
 
-        var rt = go.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0f, 0f);
-        rt.anchorMax = new Vector2(1f, 1f);
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 105; // above ScreenFade (100)
+
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        var textGO = new GameObject("PhaseTitle");
+        textGO.transform.SetParent(canvasGO.transform, false);
+
+        var rt = textGO.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
 
-        _phaseText = go.AddComponent<TMPro.TextMeshProUGUI>();
+        _phaseText = textGO.AddComponent<TMPro.TextMeshProUGUI>();
         _phaseText.fontSize = 48f;
         _phaseText.alignment = TMPro.TextAlignmentOptions.Center;
         _phaseText.color = new Color(0.95f, 0.92f, 0.85f);
         _phaseText.enableWordWrapping = true;
-        go.SetActive(false);
+        textGO.SetActive(false);
 
-        Debug.Log("[ScreenFade] Created phase title text at runtime (was null).");
+        Debug.Log("[ScreenFade] Created phase title on overlay canvas (sortingOrder 105).");
     }
 
     /// <summary>
