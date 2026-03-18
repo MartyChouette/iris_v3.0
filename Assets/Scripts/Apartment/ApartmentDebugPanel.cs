@@ -303,6 +303,24 @@ public class ApartmentDebugPanel : MonoBehaviour
             _ => OnHighlightParamChanged(), out _hlRimLabel);
         _hlRimSlider = GetLastSlider(contentParent);
 
+        TMP_Text hlSnapLabel, hlSnapResLabel, hlOffsetLabel, hlJitterLabel;
+
+        AddSliderRow(contentParent, "HL Snap Res", 0f, 500f, 160f,
+            val => { InteractableHighlight.HLSnapEnabled = val > 1f;
+                     InteractableHighlight.HLSnapRes = val;
+                     hlSnapResLabel.text = val > 1f ? $"HL Snap: {val:F0}" : "HL Snap: OFF"; },
+            out hlSnapResLabel);
+
+        AddSliderRow(contentParent, "HL Offset", 0f, 0.02f, 0.001f,
+            val => { InteractableHighlight.HLNormalOffset = val;
+                     hlOffsetLabel.text = $"HL Offset: {val:F3}"; },
+            out hlOffsetLabel);
+
+        AddSliderRow(contentParent, "HL Jitter", 0f, 0.02f, 0f,
+            val => { InteractableHighlight.HLJitter = val;
+                     hlJitterLabel.text = $"HL Jitter: {val:F3}"; },
+            out hlJitterLabel);
+
         // ── Grab Feel ──
         AddSeparator(contentParent);
         _grabFeelLabel = AddLabel(contentParent, $"Grab: {ObjectGrabber.CurrentFeel} (F6)",

@@ -51,6 +51,9 @@ Shader "Iris/HighlightOverlay"
                 float4 positionCS : SV_POSITION;
             };
 
+            float4 _HighlightSnapResolution;
+            float  _HighlightJitter;
+            float  _HighlightNormalOffset;
             float4 _VertexSnapResolution;
 
             CBUFFER_START(UnityPerMaterial)
@@ -59,17 +62,27 @@ Shader "Iris/HighlightOverlay"
                 half   _PulseAmount;
             CBUFFER_END
 
+            float hashVert(float3 p) { return frac(sin(dot(p, float3(127.1, 311.7, 74.7))) * 43758.5453); }
+
             Varyings vert(Attributes input)
             {
                 Varyings output;
 
-                // Slight normal offset to prevent z-fighting
-                float3 pos = input.positionOS.xyz + normalize(input.normalOS) * 0.001;
+                float3 norm = normalize(input.normalOS);
+                float offset = _HighlightNormalOffset > 0 ? _HighlightNormalOffset : 0.001;
+                float3 pos = input.positionOS.xyz + norm * offset;
+
+                if (_HighlightJitter > 0)
+                {
+                    float jit = hashVert(input.positionOS.xyz + _Time.y * 3.0) * 2.0 - 1.0;
+                    pos += norm * jit * _HighlightJitter;
+                }
+
                 VertexPositionInputs posInputs = GetVertexPositionInputs(pos);
                 float4 clipPos = posInputs.positionCS;
 
-                // PSX vertex snapping
-                float2 snapRes = _VertexSnapResolution.xy;
+                float2 snapRes = _HighlightSnapResolution.xy;
+                if (snapRes.x <= 0) snapRes = _VertexSnapResolution.xy;
                 if (snapRes.x > 0 && snapRes.y > 0)
                 {
                     clipPos.xy = floor(clipPos.xy / clipPos.w * snapRes + 0.5)

@@ -42,7 +42,10 @@ Shader "Iris/HighlightOutline"
                 float4 positionCS : SV_POSITION;
             };
 
-            float4 _VertexSnapResolution;
+            // Global highlight params (set by InteractableHighlight.ApplyGlobalShaderParams)
+            float4 _HighlightSnapResolution; // xy = snap res (0 = off)
+            float  _HighlightJitter;         // vertex noise amount
+            float4 _VertexSnapResolution;    // fallback from PSXRenderController
 
             CBUFFER_START(UnityPerMaterial)
                 half4  _OutlineColor;
@@ -51,17 +54,29 @@ Shader "Iris/HighlightOutline"
                 half   _PulseAmount;
             CBUFFER_END
 
+            // Simple vertex hash for jitter
+            float hashVert(float3 p) { return frac(sin(dot(p, float3(127.1, 311.7, 74.7))) * 43758.5453); }
+
             Varyings vert(Attributes input)
             {
                 Varyings output;
 
-                // Extrude along normal in object space
-                float3 extruded = input.positionOS.xyz + normalize(input.normalOS) * _OutlineWidth;
+                float3 norm = normalize(input.normalOS);
+                float3 extruded = input.positionOS.xyz + norm * _OutlineWidth;
+
+                // Vertex jitter (hand-drawn wobble)
+                if (_HighlightJitter > 0)
+                {
+                    float jit = hashVert(input.positionOS.xyz + _Time.y * 3.0) * 2.0 - 1.0;
+                    extruded += norm * jit * _HighlightJitter;
+                }
+
                 VertexPositionInputs posInputs = GetVertexPositionInputs(extruded);
                 float4 clipPos = posInputs.positionCS;
 
-                // PSX vertex snapping
-                float2 snapRes = _VertexSnapResolution.xy;
+                // PSX vertex snapping — use highlight-specific res, fall back to global
+                float2 snapRes = _HighlightSnapResolution.xy;
+                if (snapRes.x <= 0) snapRes = _VertexSnapResolution.xy;
                 if (snapRes.x > 0 && snapRes.y > 0)
                 {
                     clipPos.xy = floor(clipPos.xy / clipPos.w * snapRes + 0.5)

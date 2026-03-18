@@ -77,6 +77,36 @@ public class InteractableHighlight : MonoBehaviour
         }
     }
 
+    // ── Global highlight shader params (snap, jitter, normal offset) ──
+    private static bool  s_hlSnapEnabled = true;
+    private static float s_hlSnapRes = 160f;
+    private static float s_hlNormalOffset = 0.001f;
+    private static float s_hlJitter = 0f;
+
+    private static readonly int HLSnapResID = Shader.PropertyToID("_HighlightSnapResolution");
+    private static readonly int HLJitterID = Shader.PropertyToID("_HighlightJitter");
+    private static readonly int HLNormalOffsetID = Shader.PropertyToID("_HighlightNormalOffset");
+
+    public static bool  HLSnapEnabled   { get => s_hlSnapEnabled; set { s_hlSnapEnabled = value; ApplyGlobalShaderParams(); } }
+    public static float HLSnapRes       { get => s_hlSnapRes; set { s_hlSnapRes = value; ApplyGlobalShaderParams(); } }
+    public static float HLNormalOffset  { get => s_hlNormalOffset; set { s_hlNormalOffset = value; ApplyGlobalShaderParams(); } }
+    public static float HLJitter        { get => s_hlJitter; set { s_hlJitter = value; ApplyGlobalShaderParams(); } }
+
+    /// <summary>Push highlight globals to all shaders.</summary>
+    public static void ApplyGlobalShaderParams()
+    {
+        float snap = s_hlSnapEnabled ? s_hlSnapRes : 0f;
+        Shader.SetGlobalVector(HLSnapResID, new Vector4(snap, snap * 0.75f, 0f, 0f));
+        Shader.SetGlobalFloat(HLJitterID, s_hlJitter);
+        Shader.SetGlobalFloat(HLNormalOffsetID, s_hlNormalOffset);
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void InitGlobals()
+    {
+        ApplyGlobalShaderParams();
+    }
+
     [Tooltip("Drag Iris/Highlight shader here so it's included in builds.")]
     [SerializeField] private Shader _highlightShader;
 
