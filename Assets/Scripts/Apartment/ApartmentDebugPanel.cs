@@ -110,6 +110,7 @@ public class ApartmentDebugPanel : MonoBehaviour
 
         var sb = new System.Text.StringBuilder();
 
+        // ── Game State ──
         if (ObjectGrabber.IsHoldingObject)
             sb.AppendLine("Holding: " + ObjectGrabber.HeldObject.ItemDescription);
 
@@ -124,11 +125,60 @@ public class ApartmentDebugPanel : MonoBehaviour
             sb.AppendLine($"Day {GameClock.Instance.CurrentDay}  {hours:D2}:{mins:D2}");
         }
 
+        if (DayPhaseManager.Instance != null)
+            sb.AppendLine($"Phase: {DayPhaseManager.Instance.CurrentPhase}");
+
+        // ── Systems Status ──
+        sb.AppendLine("--- systems ---");
+
+        // MoodMachine
         if (MoodMachine.Instance != null)
             sb.AppendLine($"Mood: {MoodMachine.Instance.Mood:F2}");
+        else
+            sb.AppendLine("Mood: OFF");
 
+        // Weather
         if (WeatherSystem.Instance != null)
             sb.AppendLine($"Weather: {WeatherSystem.Instance.CurrentWeather}");
+        else
+            sb.AppendLine("Weather: OFF");
+
+        // Atmosphere
+        var atm = AtmosphereController.Instance;
+        if (atm != null)
+        {
+            float mood = MoodMachine.Instance != null ? MoodMachine.Instance.Mood : -1f;
+            sb.Append($"Atmo: ON");
+            if (mood >= 0f) sb.Append($" (mood>{mood:F2})");
+            sb.AppendLine();
+        }
+        else
+            sb.AppendLine("Atmo: OFF");
+
+        // NatureBox
+        var nature = NatureBoxController.Instance;
+        if (nature != null)
+        {
+            float tod = GameClock.Instance != null ? GameClock.Instance.NormalizedTimeOfDay : -1f;
+            sb.AppendLine(tod >= 0f ? $"NatureBox: ON (t={tod:F2})" : "NatureBox: ON (manual)");
+        }
+        else
+            sb.AppendLine("NatureBox: OFF");
+
+        // PSX
+        if (PSXRenderController.Instance != null && PSXRenderController.Instance.enabled)
+            sb.AppendLine($"PSX: ON (snap={PSXRenderController.Instance.VertexSnapResolution.x:F0})");
+        else
+            sb.AppendLine("PSX: OFF");
+
+        // Light
+        var sun = RenderSettings.sun;
+        if (sun != null)
+            sb.AppendLine($"Light: {sun.intensity:F2} ({sun.color.r:F1},{sun.color.g:F1},{sun.color.b:F1})");
+
+        // Fog
+        if (RenderSettings.fog)
+            sb.AppendLine($"Fog: {RenderSettings.fogDensity:F4} ({RenderSettings.fogColor.r:F1},{RenderSettings.fogColor.g:F1},{RenderSettings.fogColor.b:F1})");
 
         _infoText.text = sb.ToString();
     }
