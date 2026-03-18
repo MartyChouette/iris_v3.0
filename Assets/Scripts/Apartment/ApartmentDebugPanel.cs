@@ -13,7 +13,6 @@ public class ApartmentDebugPanel : MonoBehaviour
 
     private InputAction _toggleAction;
     private GameObject _panelGO;
-    private ScrollRect _scrollRect;
     private bool _visible;
 
     private TMP_Text _gridLabel;
@@ -158,7 +157,6 @@ public class ApartmentDebugPanel : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // Outer frame — fixed size, contains scroll view
         _panelGO = new GameObject("DebugPanel");
         _panelGO.transform.SetParent(canvasGO.transform, false);
 
@@ -167,53 +165,21 @@ public class ApartmentDebugPanel : MonoBehaviour
         panelRT.anchorMax = new Vector2(1f, 1f);
         panelRT.pivot = new Vector2(1f, 0.5f);
         panelRT.anchoredPosition = new Vector2(-10f, 0f);
-        panelRT.sizeDelta = new Vector2(PanelWidth, -40f); // 20px margin top+bottom
+        panelRT.sizeDelta = new Vector2(PanelWidth, -20f);
 
         var panelImg = _panelGO.AddComponent<Image>();
         panelImg.color = new Color(0.05f, 0.05f, 0.05f, 0.88f);
-        panelImg.raycastTarget = true;
+        panelImg.raycastTarget = false;
 
-        // Viewport (mask)
-        var viewport = new GameObject("Viewport");
-        viewport.transform.SetParent(_panelGO.transform, false);
-        var viewportRT = viewport.AddComponent<RectTransform>();
-        viewportRT.anchorMin = Vector2.zero;
-        viewportRT.anchorMax = Vector2.one;
-        viewportRT.offsetMin = Vector2.zero;
-        viewportRT.offsetMax = Vector2.zero;
-        viewport.AddComponent<Image>().color = Color.clear;
-        viewport.AddComponent<Mask>().showMaskGraphic = false;
+        var layout = _panelGO.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(12, 12, 6, 6);
+        layout.spacing = 2f;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
 
-        // Scroll content
-        var content = new GameObject("Content");
-        content.transform.SetParent(viewport.transform, false);
-        var contentRT = content.AddComponent<RectTransform>();
-        contentRT.anchorMin = new Vector2(0f, 1f);
-        contentRT.anchorMax = new Vector2(1f, 1f);
-        contentRT.pivot = new Vector2(0.5f, 1f);
-        contentRT.anchoredPosition = Vector2.zero;
-        // sizeDelta.y set after content is built
-
-        var contentLayout = content.AddComponent<VerticalLayoutGroup>();
-        contentLayout.padding = new RectOffset(12, 12, 8, 8);
-        contentLayout.spacing = 3f;
-        contentLayout.childForceExpandWidth = true;
-        contentLayout.childForceExpandHeight = false;
-        contentLayout.childControlWidth = true;
-        contentLayout.childControlHeight = true;
-
-        content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        // ScrollRect
-        _scrollRect = _panelGO.AddComponent<ScrollRect>();
-        _scrollRect.viewport = viewportRT;
-        _scrollRect.content = contentRT;
-        _scrollRect.horizontal = false;
-        _scrollRect.vertical = true;
-        _scrollRect.movementType = ScrollRect.MovementType.Clamped;
-        _scrollRect.scrollSensitivity = 30f;
-
-        var contentParent = content.transform;
+        var contentParent = _panelGO.transform;
 
         // ═════════════════════════════════════
         //  CONTENT
