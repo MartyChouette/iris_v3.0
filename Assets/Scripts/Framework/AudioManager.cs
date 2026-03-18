@@ -10,6 +10,24 @@ public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
 
+    /// <summary>Auto-spawn AudioManager if none exists (lets you play any scene directly in editor).</summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void EnsureExists()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneCheck;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneCheck;
+    }
+
+    private static void OnSceneCheck(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive) return;
+        if (Instance != null) return;
+
+        var go = new GameObject("AudioManager (Auto)");
+        go.AddComponent<AudioManager>();
+        Debug.Log("[AudioManager] Auto-spawned — no existing instance found.");
+    }
+
     [Header("Audio Channels (2D)")]
     public AudioSource sfxSource;
     public AudioSource ambienceSource;
