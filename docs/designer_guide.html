@@ -236,6 +236,7 @@
   <a href="#mood">Mood</a>
   <a href="#walls">Wall Dissolve</a>
   <a href="#drinks">Drinks</a>
+  <a href="#psx">PSX Per-Object</a>
   <a href="#grabfeel">Grab Feel</a>
   <a href="#pairing">Pairing</a>
   <a href="#highlights">Highlights</a>
@@ -708,8 +709,52 @@ flowchart LR
 </section>
 
 <!-- ============================================================ -->
+<section id="psx">
+<h2><span class="num">13</span> PSX Rendering &mdash; Global &amp; Per-Object</h2>
+
+<p>The PSX rendering system gives the game its retro PS1/PS2 look: vertex snapping, affine texture warping, dithered shadows, resolution downscaling, and color posterization.</p>
+
+<h3>Global Controls</h3>
+<p>The <code>PSXRenderController</code> component (toggle with <strong>F4</strong>) applies PSX effects to ALL objects in the scene.</p>
+<table>
+  <tr><th>Property</th><th>Default</th><th>Effect</th></tr>
+  <tr><td>Vertex Snap Resolution</td><td>160 &times; 120</td><td>Lower = chunkier vertex snapping (80&times;60 = very PS1)</td></tr>
+  <tr><td>Affine Intensity</td><td>1.0</td><td>Texture warping (1 = full PS1 affine, 0 = normal UVs)</td></tr>
+  <tr><td>Resolution Divisor</td><td>3</td><td>Render at 1/N resolution then upscale (pixelated)</td></tr>
+  <tr><td>Color Depth</td><td>32</td><td>Color posterization (16 = N64, 8 = very crunchy)</td></tr>
+  <tr><td>Dither Intensity</td><td>0.5</td><td>Fullscreen Bayer dithering amount</td></tr>
+  <tr><td>Shadow Dither Intensity</td><td>1.0</td><td>Stippled shadow edges</td></tr>
+</table>
+
+<h3>Per-Object Overrides</h3>
+<p>Add a <code>PSXObjectSettings</code> component to any GameObject to override PSX settings for just that object. Uses MaterialPropertyBlock &mdash; no extra materials created.</p>
+<table>
+  <tr><th>Field</th><th>Value</th><th>Effect</th></tr>
+  <tr><td rowspan="4">Snap Resolution</td><td><strong>-1</strong></td><td>Use global setting (default)</td></tr>
+  <tr><td><strong>0</strong></td><td>Disable vertex snapping on this object</td></tr>
+  <tr><td><strong>80</strong></td><td>Chunky PS1 snap</td></tr>
+  <tr><td><strong>160&ndash;500</strong></td><td>PS2 to nearly smooth</td></tr>
+  <tr><td rowspan="3">Affine Intensity</td><td><strong>-1</strong></td><td>Use global</td></tr>
+  <tr><td><strong>0</strong></td><td>Normal UVs (no texture warp)</td></tr>
+  <tr><td><strong>1</strong></td><td>Full PS1 affine warping</td></tr>
+  <tr><td rowspan="3">Shadow Dither</td><td><strong>-1</strong></td><td>Use global</td></tr>
+  <tr><td><strong>0</strong></td><td>Smooth shadows</td></tr>
+  <tr><td><strong>1</strong></td><td>Full stipple dither</td></tr>
+</table>
+
+<h3>Use Cases</h3>
+<ul>
+  <li><strong>Interactable objects only:</strong> Add <code>PSXObjectSettings</code> with snap=80, affine=1 to interactive items. Leave furniture at global (or snap=0 for smooth).</li>
+  <li><strong>Important objects stay clean:</strong> Add <code>PSXObjectSettings</code> with snap=0, affine=0 to key story items so they render smoothly while everything else wobbles.</li>
+  <li><strong>Mixed aesthetic:</strong> Some objects crunchy PS1, others smooth PS2, all in the same scene.</li>
+</ul>
+
+<p><strong>Note:</strong> <code>InteractableHighlight</code> already swaps interactable objects to the PSXLit shader on Awake. So interactables are always PSX-ready &mdash; adding <code>PSXObjectSettings</code> just lets you customize <em>how much</em> PSX they get.</p>
+</section>
+
+<!-- ============================================================ -->
 <section id="grabfeel">
-<h2><span class="num">13</span> Grab Feel Presets</h2>
+<h2><span class="num">14</span> Grab Feel Presets</h2>
 
 <p>The physics feel of picking up and moving objects is tuneable at runtime. Press <strong>F6</strong> to cycle through presets, or use the <strong>F3</strong> debug panel sliders for fine control.</p>
 
@@ -745,7 +790,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="pairing">
-<h2><span class="num">14</span> Item Pairing (Shoes, Dishes, Bowls)</h2>
+<h2><span class="num">15</span> Item Pairing (Shoes, Dishes, Bowls)</h2>
 
 <p>Items with a <code>PairableItem</code> component can snap together when the player holds one and clicks its match. Shoes pair with a specific partner (side-by-side), dishes and bowls pair with any of the same category (stacked).</p>
 
@@ -817,7 +862,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="highlights">
-<h2><span class="num">15</span> Highlight Styles</h2>
+<h2><span class="num">16</span> Highlight Styles</h2>
 
 <p>Objects with an <code>InteractableHighlight</code> component glow when the player hovers over them. Three visual styles are available, switchable at runtime with <strong>F5</strong>.</p>
 
@@ -860,7 +905,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="atmosphere">
-<h2><span class="num">16</span> Atmosphere &amp; Volumetric Lighting</h2>
+<h2><span class="num">17</span> Atmosphere &amp; Volumetric Lighting</h2>
 
 <p>The atmosphere system creates an FF8 / Parasite Eve / Shadow of the Colossus look: teal shadows, warm highlights, soft bloom, dust motes, and fake volumetric light shafts.</p>
 
@@ -932,7 +977,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="bugreport">
-<h2><span class="num">17</span> Bug Reports &amp; Feedback (Discord)</h2>
+<h2><span class="num">18</span> Bug Reports &amp; Feedback (Discord)</h2>
 
 <p>Playtesters can report bugs and submit feedback directly from the game. Reports are sent to Discord webhooks and saved locally as JSON + screenshots.</p>
 
