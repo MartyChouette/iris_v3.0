@@ -444,10 +444,9 @@ public class ApartmentManager : MonoBehaviour
         float scroll = _scrollAction.ReadValue<float>();
         if (Mathf.Abs(scroll) > 0.01f)
         {
-            // Normalize scroll — Unity reports ~120 per tick on most mice
-            int direction = scroll > 0f ? 1 : -1;
-
-            // Scroll up (positive) = zoom in = higher index (lower FOV)
+            // Scroll up = zoom in. Respect invert scroll setting.
+            int raw = scroll > 0f ? -1 : 1;
+            int direction = AccessibilitySettings.InvertScroll ? -raw : raw;
             int newStep = Mathf.Clamp(_currentZoomStep + direction, 0, _zoomSteps.Length - 1);
             if (newStep != _currentZoomStep)
             {

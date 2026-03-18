@@ -32,6 +32,7 @@ public static class AccessibilitySettings
     private const string K_ResolutionScale = "Iris_ResolutionScale";
     private const string K_QualityPreset   = "Iris_QualityPreset";
     private const string K_PSXEnabled      = "Iris_PSXEnabled";
+    private const string K_InvertScroll    = "Iris_InvertScroll";
 
     // ── Event ───────────────────────────────────────────────────
     public static event System.Action OnSettingsChanged;
@@ -72,6 +73,7 @@ public static class AccessibilitySettings
     private static float s_resolutionScale;
     private static int   s_qualityPreset;
     private static bool  s_psxEnabled;
+    private static bool  s_invertScroll;
 
     // ── Color palettes per colorblind mode ──────────────────────
     private static readonly Color[] s_happyColors =
@@ -123,6 +125,7 @@ public static class AccessibilitySettings
         s_resolutionScale = 1f;
         s_qualityPreset   = -1;
         s_psxEnabled      = true;
+        s_invertScroll    = false;
     }
 
     private static void LoadAll()
@@ -142,6 +145,7 @@ public static class AccessibilitySettings
         s_resolutionScale = PlayerPrefs.GetFloat(K_ResolutionScale, 1f);
         s_qualityPreset   = PlayerPrefs.GetInt(K_QualityPreset, -1);
         s_psxEnabled      = PlayerPrefs.GetInt(K_PSXEnabled, 1) == 1;
+        s_invertScroll    = PlayerPrefs.GetInt(K_InvertScroll, 0) == 1;
 
         // Clamp loaded values
         s_textScale       = Mathf.Clamp(s_textScale, 0.8f, 1.5f);
@@ -273,6 +277,12 @@ public static class AccessibilitySettings
     {
         get => s_psxEnabled;
         set { s_psxEnabled = value; SaveBool(K_PSXEnabled, value); NotifyChanged(); }
+    }
+
+    public static bool InvertScroll
+    {
+        get => s_invertScroll;
+        set { s_invertScroll = value; SaveBool(K_InvertScroll, value); NotifyChanged(); }
     }
 
     // ── Color Helpers (unchanged API) ───────────────────────────
