@@ -18,6 +18,75 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Maximum speed cap to prevent tunneling.")]
     [SerializeField] private float maxSpeed = 12f;
 
+    // ── Grab feel presets (switchable at runtime via F3 debug panel) ──
+    public enum GrabFeel
+    {
+        Default,   // current — snappy, direct
+        Plucky,    // resistant tug, bouncy release — leaf-pulling feel
+        Floaty,    // slow, dreamy, drifty — underwater feel
+        Snappy,    // instant, no lag — arcade feel
+        Heavy,     // sluggish, weighty — moving furniture feel
+    }
+
+    private static GrabFeel s_currentFeel = GrabFeel.Default;
+    public static GrabFeel CurrentFeel
+    {
+        get => s_currentFeel;
+        set
+        {
+            s_currentFeel = value;
+            Debug.Log($"[ObjectGrabber] Grab feel: {value}");
+        }
+    }
+
+    public static void CycleGrabFeel()
+    {
+        var values = System.Enum.GetValues(typeof(GrabFeel));
+        int next = ((int)s_currentFeel + 1) % values.Length;
+        CurrentFeel = (GrabFeel)next;
+    }
+
+    // Preset tuning values: spring, damper, maxAccel, maxSpeed
+    private static readonly (float spring, float damper, float accel, float speed)[] s_feelPresets =
+    {
+        (120f, 18f, 60f,  12f),  // Default — snappy, direct
+        (35f,  6f,  20f,  5f),   // Plucky — low spring, low damper = stretchy tug + overshoot bounce
+        (25f,  12f, 15f,  4f),   // Floaty — low spring, high damper = slow drift, no bounce
+        (500f, 40f, 200f, 25f),  // Snappy — very stiff, instant follow
+        (50f,  25f, 25f,  3f),   // Heavy — medium spring, high damper, low speed cap
+    };
+
+    // Runtime overrides (driven by debug sliders, -1 = use preset)
+    private static float s_overrideSpring = -1f;
+    private static float s_overrideDamper = -1f;
+    private static float s_overrideAccel = -1f;
+    private static float s_overrideSpeed = -1f;
+
+    public static void SetGrabOverrides(float spring, float damper, float accel, float speed)
+    {
+        s_overrideSpring = spring;
+        s_overrideDamper = damper;
+        s_overrideAccel = accel;
+        s_overrideSpeed = speed;
+    }
+
+    private void GetActiveGrabParams(out float spring, out float damper, out float accel, out float speed)
+    {
+        if (s_overrideSpring > 0f)
+        {
+            spring = s_overrideSpring;
+            damper = s_overrideDamper;
+            accel = s_overrideAccel;
+            speed = s_overrideSpeed;
+            return;
+        }
+        var p = s_feelPresets[(int)s_currentFeel];
+        spring = p.spring;
+        damper = p.damper;
+        accel = p.accel;
+        speed = p.speed;
+    }
+
     [Header("Grid Snap")]
     [Tooltip("Grid cell size in world units.")]
     [SerializeField] private float gridSize = 0.11f;
@@ -235,17 +304,20 @@ public class ObjectGrabber : MonoBehaviour
         }
 
         // Spring-damper pull (free-floating, no surface)
+        GetActiveGrabParams(out float activeSpring, out float activeDamper,
+            out float activeMaxAccel, out float activeMaxSpeed);
+
         Vector3 toTarget = _grabTarget - _heldRb.worldCenterOfMass;
-        Vector3 accel = toTarget * grabSpring - _heldRb.linearVelocity * grabDamper;
+        Vector3 force = toTarget * activeSpring - _heldRb.linearVelocity * activeDamper;
 
-        if (accel.sqrMagnitude > maxAccel * maxAccel)
-            accel = accel.normalized * maxAccel;
+        if (force.sqrMagnitude > activeMaxAccel * activeMaxAccel)
+            force = force.normalized * activeMaxAccel;
 
-        _heldRb.AddForce(accel, ForceMode.Acceleration);
+        _heldRb.AddForce(force, ForceMode.Acceleration);
 
         // Speed cap
-        if (_heldRb.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
-            _heldRb.linearVelocity = _heldRb.linearVelocity.normalized * maxSpeed;
+        if (_heldRb.linearVelocity.sqrMagnitude > activeMaxSpeed * activeMaxSpeed)
+            _heldRb.linearVelocity = _heldRb.linearVelocity.normalized * activeMaxSpeed;
     }
 
     // ── Pick up ──────────────────────────────────────────────────────

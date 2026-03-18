@@ -29,6 +29,13 @@ public class ApartmentDebugPanel : MonoBehaviour
     private Slider _hlPulseSlider;
     private Slider _hlRimSlider;
 
+    // Grab feel controls
+    private TMP_Text _grabFeelLabel;
+    private TMP_Text _grabSpringLabel;
+    private TMP_Text _grabDamperLabel;
+    private TMP_Text _grabAccelLabel;
+    private TMP_Text _grabSpeedLabel;
+
     // Atmosphere controls
     private TMP_Text _atmSatLabel;
     private TMP_Text _atmContrastLabel;
@@ -86,6 +93,13 @@ public class ApartmentDebugPanel : MonoBehaviour
             RefreshHighlightStyleLabel();
         }
 
+        // F6 cycles grab feel preset
+        if (Input.GetKeyDown(KeyCode.F6))
+        {
+            ObjectGrabber.CycleGrabFeel();
+            RefreshGrabFeelLabel();
+        }
+
         if (_visible)
             UpdateInfo();
     }
@@ -140,6 +154,24 @@ public class ApartmentDebugPanel : MonoBehaviour
         if (_hlRimLabel != null) _hlRimLabel.text = $"Rim Power: {rim:F1}";
 
         InteractableHighlight.SetTuningOverrides(width, alpha, pulse, rim);
+    }
+
+    // ── Grab feel tuning ──
+
+    private void RefreshGrabFeelLabel()
+    {
+        if (_grabFeelLabel != null)
+            _grabFeelLabel.text = $"Grab: {ObjectGrabber.CurrentFeel} (F6)";
+    }
+
+    private void OnGrabParamChanged()
+    {
+        float spring = 35f, damper = 6f, accel = 20f, speed = 5f;
+        if (_grabSpringLabel != null) { spring = GetLastSlider(_grabSpringLabel.transform.parent.parent).value; _grabSpringLabel.text = $"Spring: {spring:F0}"; }
+        if (_grabDamperLabel != null) { damper = GetLastSlider(_grabDamperLabel.transform.parent.parent).value; _grabDamperLabel.text = $"Damper: {damper:F0}"; }
+        if (_grabAccelLabel != null) { accel = GetLastSlider(_grabAccelLabel.transform.parent.parent).value; _grabAccelLabel.text = $"Max Accel: {accel:F0}"; }
+        if (_grabSpeedLabel != null) { speed = GetLastSlider(_grabSpeedLabel.transform.parent.parent).value; _grabSpeedLabel.text = $"Max Speed: {speed:F0}"; }
+        ObjectGrabber.SetGrabOverrides(spring, damper, accel, speed);
     }
 
     // ── Panel construction ──
@@ -220,6 +252,24 @@ public class ApartmentDebugPanel : MonoBehaviour
         AddSliderRow(contentParent, "Rim Power", 0.5f, 8.0f, 2.5f,
             _ => OnHighlightParamChanged(), out _hlRimLabel);
         _hlRimSlider = GetLastSlider(contentParent);
+
+        // ── Grab Feel ──
+        AddSeparator(contentParent);
+        _grabFeelLabel = AddLabel(contentParent, $"Grab: {ObjectGrabber.CurrentFeel} (F6)",
+            FontSize, FontStyles.Bold);
+        _grabFeelLabel.color = new Color(0.9f, 0.75f, 1f);
+
+        AddSliderRow(contentParent, "Spring", 5f, 500f, 35f,
+            _ => OnGrabParamChanged(), out _grabSpringLabel);
+
+        AddSliderRow(contentParent, "Damper", 1f, 50f, 6f,
+            _ => OnGrabParamChanged(), out _grabDamperLabel);
+
+        AddSliderRow(contentParent, "Max Accel", 5f, 200f, 20f,
+            _ => OnGrabParamChanged(), out _grabAccelLabel);
+
+        AddSliderRow(contentParent, "Max Speed", 1f, 30f, 5f,
+            _ => OnGrabParamChanged(), out _grabSpeedLabel);
 
         // ── Atmosphere ──
         AddSeparator(contentParent);
