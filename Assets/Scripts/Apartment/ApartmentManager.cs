@@ -48,10 +48,10 @@ public class ApartmentManager : MonoBehaviour
 
     [Header("Zoom (Stepped)")]
     [Tooltip("Discrete zoom levels (FOV or ortho size). Index 0 = most zoomed out, last = most zoomed in.")]
-    [SerializeField] private float[] _zoomSteps = { 110f, 90f, 70f, 50f, 35f };
+    [SerializeField] private float[] _zoomSteps = { 100f, 80f, 60f, 45f, 30f };
 
     [Tooltip("Starting zoom step index (0-based).")]
-    [SerializeField] private int _defaultZoomStep = 1;
+    [SerializeField] private int _defaultZoomStep = 0;
 
     [Tooltip("Lerp speed for smooth zoom transitions.")]
     [SerializeField] private float _zoomLerpSpeed = 8f;
@@ -429,6 +429,8 @@ public class ApartmentManager : MonoBehaviour
         // Initialize zoom step on first use
         if (_currentZoomStep < 0)
         {
+            // Step 0 always matches the area's natural FOV
+            _zoomSteps[0] = _baseFOV;
             _currentZoomStep = Mathf.Clamp(_defaultZoomStep, 0, _zoomSteps.Length - 1);
             _targetZoom = _zoomSteps[_currentZoomStep];
             _currentZoom = _targetZoom;
