@@ -230,7 +230,7 @@ Each date character brings a specific flower. The flower trimming score determin
 - [ ] **Souvenir system** — After date disappears, one of their items appears in apartment (necklace, ring, hat, sweater, watch, scarf). Persistent across days. Accumulates. New dates react to them via ReactableTag ("whose ring is that?"). `SouvenirDefinition` SO per item.
 - [ ] **Repeat dates** — Same person returns, remembers previous visits. Relationship deepens. Eventually they might disappear too.
 - [ ] **Convention demo mode** — 7-minute timer, curated slice of the full loop.
-- [ ] **Feedback system** — Easy player feedback collection when time limits expire (convention demo end, demo end).
+- [x] **Feedback system** — PlaytestFeedbackForm (F8) + BugReportForm (F9) with Discord webhooks + local JSON/screenshot backup. DiscordWebhookConfig SO in Resources.
 - [x] **Save game system** — IrisSaveData with AutoSaveController. Auto-saves on quit + end of date. Persists calendar day, date history, plant records, apartment layout. SaveManager with slot system.
 - [ ] **Player knowledge system (dating journal)** — Per-date, per-phase insight unlocks. Even if rejected at Phase 2, player keeps Phase 1+2 knowledge. Reveals DatePreferences progressively. Journal UI accessible from apartment (notebook/phone). Tracks: preferences learned, times encountered, highest phase reached, disappeared status. Integrates with ReactionEvaluator + DateEndScreen.
 
@@ -262,6 +262,10 @@ Each date character brings a specific flower. The flower trimming score determin
 - [x] **Analytics hooks** — `IrisAnalytics` static utility logging timestamped JSON-lines telemetry (cuts, detachments, sessions) to `iris_analytics.jsonl`
 - [x] **Localization** — `LocalizationTable` ScriptableObject for per-language string tables, `LocalizationManager` static utility with key-based lookup, language switching, English fallback, PlayerPrefs persistence
 - [x] **Crash reporting** — `CrashReporter` static utility hooking `Application.logMessageReceived`, captures errors/exceptions/asserts to rolling `iris_crashlog.txt` with dedup suppression
+- [x] **Highlight style system** — 3 switchable styles (Outline, RimGlow, SolidOverlay) via `InteractableHighlight.CurrentStyle`. F5 cycles, F3 panel sliders for width/alpha/pulse/rim. Stencil anti-overdraw on complex geometry. Proximity stage removed (single clean hover).
+- [x] **Atmosphere system** — `AtmosphereController` with global URP Volume (LiftGammaGain teal shadows/warm highlights, bloom, vignette, film grain, dust motes). FF8/PE/SotC color grading. F3 panel sliders for all parameters.
+- [x] **Volumetric light shafts** — `VolumetricLightShaft` + `Iris/VolumetricShaft` shader. PS2-style fake god rays: place quad at window, auto-tints with directional light, fades at night. Animated noise for dusty feel.
+- [x] **Discord playtest reporting** — `BugReportForm` (F9) + `PlaytestFeedbackForm` (F8) Discord webhook integration. JPEG screenshots, game state telemetry, crash log tail. `DiscordWebhookConfig` SO in Resources. Uses `System.Net.Http.HttpClient` (Unity 6 curl HTTP/2 workaround).
 
 ---
 

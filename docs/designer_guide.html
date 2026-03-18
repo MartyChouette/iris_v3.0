@@ -236,6 +236,9 @@
   <a href="#mood">Mood</a>
   <a href="#walls">Wall Dissolve</a>
   <a href="#drinks">Drinks</a>
+  <a href="#highlights">Highlights</a>
+  <a href="#atmosphere">Atmosphere</a>
+  <a href="#bugreport">Bug Reports</a>
 </nav>
 
 <div class="container">
@@ -703,6 +706,155 @@ flowchart LR
 </section>
 
 <!-- ============================================================ -->
+<section id="highlights">
+<h2><span class="num">13</span> Highlight Styles</h2>
+
+<p>Objects with an <code>InteractableHighlight</code> component glow when the player hovers over them. Three visual styles are available, switchable at runtime with <strong>F5</strong>.</p>
+
+<h3>Available Styles</h3>
+<table>
+  <tr><th>Style</th><th>Look</th><th>How It Works</th></tr>
+  <tr><td><strong>Outline</strong> (default)</td><td>Solid line around silhouette</td><td>Back-face extrusion (<code>Iris/HighlightOutline</code> shader)</td></tr>
+  <tr><td><strong>RimGlow</strong></td><td>Fresnel edge glow + subtle fill</td><td>Normal-offset overlay (<code>Iris/Highlight</code> shader, stencil anti-overdraw)</td></tr>
+  <tr><td><strong>SolidOverlay</strong></td><td>Flat semi-transparent color wash</td><td>Depth-biased overlay (<code>Iris/HighlightOverlay</code> shader, stencil anti-overdraw)</td></tr>
+</table>
+
+<h3>Runtime Tuning (F3 Debug Panel)</h3>
+<table>
+  <tr><th>Slider</th><th>Range</th><th>What It Does</th></tr>
+  <tr><td>Width</td><td>0.001 &ndash; 0.05</td><td>Outline thickness (Outline mode) / not visible in other modes</td></tr>
+  <tr><td>Alpha</td><td>0.05 &ndash; 1.0</td><td>Highlight intensity / opacity</td></tr>
+  <tr><td>Pulse</td><td>0 &ndash; 0.5</td><td>Breathing animation strength</td></tr>
+  <tr><td>Rim Power</td><td>0.5 &ndash; 8.0</td><td>Fresnel falloff (RimGlow mode only)</td></tr>
+</table>
+
+<h3>Setup</h3>
+<ol class="steps">
+  <li>Add <code>InteractableHighlight</code> component to any object you want hoverable</li>
+  <li>Ensure <code>Iris/HighlightOutline</code> and <code>Iris/HighlightOverlay</code> shaders are in the <code>ShaderCollection</code> SO (<span class="path">Assets/Resources/ShaderCollection.asset</span>)</li>
+  <li>Press <strong>F5</strong> at runtime to cycle styles, use <strong>F3</strong> panel sliders to tune</li>
+  <li>Once you find values you like, update defaults in <code>InteractableHighlight.cs</code></li>
+</ol>
+
+<h3>Highlight Layers</h3>
+<p>Multiple highlight layers can be active simultaneously (additive). Each layer uses the current style.</p>
+<table>
+  <tr><th>Layer</th><th>Color</th><th>Purpose</th></tr>
+  <tr><td>Hover</td><td>Warm ivory</td><td>Player mouse (strongest)</td></tr>
+  <tr><td>Gaze</td><td>Amber</td><td>NPC focus during date</td></tr>
+  <tr><td>Display</td><td>Warm peach</td><td>Public item indicator (visible to date)</td></tr>
+  <tr><td>Prep Liked</td><td>Green</td><td>Date likes this item (prep phase)</td></tr>
+  <tr><td>Prep Disliked</td><td>Red</td><td>Date dislikes this item (prep phase)</td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<section id="atmosphere">
+<h2><span class="num">14</span> Atmosphere &amp; Volumetric Lighting</h2>
+
+<p>The atmosphere system creates an FF8 / Parasite Eve / Shadow of the Colossus look: teal shadows, warm highlights, soft bloom, dust motes, and fake volumetric light shafts.</p>
+
+<h3>AtmosphereController Setup</h3>
+<ol class="steps">
+  <li>Create an empty GameObject in the apartment scene</li>
+  <li>Add <code>AtmosphereController</code> component</li>
+  <li>Play &mdash; teal shadows, warm highlights, bloom, dust motes appear immediately</li>
+  <li>Open <strong>F3</strong> debug panel, scroll to <strong>Atmosphere</strong> section to tune values</li>
+</ol>
+
+<h3>Atmosphere Sliders (F3 Debug Panel)</h3>
+<table>
+  <tr><th>Slider</th><th>Default</th><th>What It Does</th></tr>
+  <tr><td>Saturation</td><td>-25</td><td>Desaturate for washed-out SotC look (negative = less color)</td></tr>
+  <tr><td>Contrast</td><td>12</td><td>Slight contrast for cinematic depth</td></tr>
+  <tr><td>Exposure</td><td>0.3</td><td>Overall brightness (positive = SotC overexposed bloom)</td></tr>
+  <tr><td>Bloom Intensity</td><td>0.6</td><td>How strong the glow is</td></tr>
+  <tr><td>Bloom Threshold</td><td>0.7</td><td>What brightness starts glowing (lower = more glow)</td></tr>
+  <tr><td>Bloom Scatter</td><td>0.75</td><td>How wide the bloom spreads (higher = softer, dreamier)</td></tr>
+  <tr><td>Vignette</td><td>0.3</td><td>Edge darkening</td></tr>
+  <tr><td>Film Grain</td><td>0.15</td><td>Subtle noise texture (pairs with PSX dithering)</td></tr>
+</table>
+
+<h3>Color Grading</h3>
+<p>Three-way color grading via LiftGammaGain:</p>
+<table>
+  <tr><th>Zone</th><th>Default Tint</th><th>Effect</th></tr>
+  <tr><td>Shadows (Lift)</td><td>Pale teal <code>(0.75, 0.92, 1.0)</code></td><td>Blue-green in dark areas (FF8 signature look)</td></tr>
+  <tr><td>Midtones (Gamma)</td><td>Neutral</td><td>No shift</td></tr>
+  <tr><td>Highlights (Gain)</td><td>Warm cream <code>(1.0, 0.95, 0.85)</code></td><td>Amber glow in bright areas (Parasite Eve warmth)</td></tr>
+</table>
+<p>Edit shadow/highlight tint colors in the <code>AtmosphereController</code> Inspector fields.</p>
+
+<h3>Dust Motes</h3>
+<p>Auto-spawned particle system. Tiny billboards drifting slowly, tinted by the directional light each frame (warm in sunlight, cool at night). Configurable in Inspector:</p>
+<table>
+  <tr><th>Field</th><th>Default</th><th>What It Does</th></tr>
+  <tr><td>Dust Max Particles</td><td>200</td><td>Total dust motes alive at once</td></tr>
+  <tr><td>Dust Emission Rate</td><td>12/s</td><td>How quickly new motes appear</td></tr>
+  <tr><td>Dust Volume</td><td>12 &times; 3 &times; 12</td><td>Room volume for spawning (match apartment size)</td></tr>
+  <tr><td>Dust Size Min/Max</td><td>0.004 &ndash; 0.012</td><td>Particle size range</td></tr>
+  <tr><td>Dust Color</td><td>Warm white, 20% alpha</td><td>Base color (multiplied by light)</td></tr>
+</table>
+
+<h3>Volumetric Light Shafts (Fake God Rays)</h3>
+<p>PS2-authentic approach: translucent quads placed at windows. No screen-space tricks.</p>
+<ol class="steps">
+  <li>Create a <strong>Quad</strong> at a window opening</li>
+  <li>Scale and rotate so it covers the light beam shape entering the room</li>
+  <li>UV Y=0 should be at the window, Y=1 at the far end of the beam</li>
+  <li>Add <code>VolumetricLightShaft</code> component</li>
+  <li>Adjust <code>Intensity</code>, <code>Fade End</code>, <code>Noise Amount</code> in Inspector</li>
+  <li>Shaft auto-tints with directional light color, fades out at night</li>
+</ol>
+<p><strong>Moving windows:</strong> Just move the quad GameObject. No code changes needed.</p>
+
+<table>
+  <tr><th>Field</th><th>Default</th><th>What It Does</th></tr>
+  <tr><td>Base Color</td><td>Warm white, 12% alpha</td><td>Shaft color (tinted by sun)</td></tr>
+  <tr><td>Intensity</td><td>1.0</td><td>Overall brightness multiplier</td></tr>
+  <tr><td>Fade End</td><td>0.8</td><td>How far the beam reaches (0&ndash;1 UV space)</td></tr>
+  <tr><td>Noise Amount</td><td>0.3</td><td>Animated noise for dusty volumetric feel</td></tr>
+  <tr><td>Min Light Intensity</td><td>0.3</td><td>Below this light level, shaft disappears (night)</td></tr>
+</table>
+
+<p>Add <code>Iris/VolumetricShaft</code> to the <code>ShaderCollection</code> SO to survive build stripping.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="bugreport">
+<h2><span class="num">15</span> Bug Reports &amp; Feedback (Discord)</h2>
+
+<p>Playtesters can report bugs and submit feedback directly from the game. Reports are sent to Discord webhooks and saved locally as JSON + screenshots.</p>
+
+<h3>Setup</h3>
+<ol class="steps">
+  <li>In Discord: create webhooks in your bug report and feedback channels (Edit Channel &gt; Integrations &gt; Webhooks)</li>
+  <li>In Unity: <code>Create &gt; Iris &gt; Discord Webhook Config</code></li>
+  <li>Name it <code>DiscordWebhookConfig</code> and place in <span class="path">Assets/Resources/</span></li>
+  <li>Paste webhook URLs into the Inspector fields</li>
+  <li>Both forms auto-spawn at runtime &mdash; no scene wiring needed</li>
+</ol>
+
+<h3>Runtime Keys</h3>
+<table>
+  <tr><th>Key</th><th>Action</th></tr>
+  <tr><td><code>F8</code></td><td>Playtest feedback form (7 star ratings + text)</td></tr>
+  <tr><td><code>F9</code></td><td>Bug report form (severity + description + repro steps)</td></tr>
+</table>
+
+<h3>What Gets Sent</h3>
+<table>
+  <tr><th>Data</th><th>Bug Report (F9)</th><th>Feedback (F8)</th></tr>
+  <tr><td>Screenshot</td><td>JPEG, captured before form opens</td><td>JPEG, captured on submit</td></tr>
+  <tr><td>Game state</td><td>Day, phase, date character, system info</td><td>Day, phase, play time, ratings</td></tr>
+  <tr><td>Crash log</td><td>Last 15 lines of <code>iris_crashlog.txt</code></td><td>&mdash;</td></tr>
+  <tr><td>Local backup</td><td><code>persistentDataPath/BugReports/</code></td><td><code>persistentDataPath/PlaytestFeedback/</code></td></tr>
+</table>
+
+<p><strong>Technical note:</strong> Uses <code>System.Net.Http.HttpClient</code> instead of <code>UnityWebRequest</code> because Unity 6&rsquo;s curl backend causes HTTP/2 protocol errors with Discord webhooks.</p>
+</section>
+
+<!-- ============================================================ -->
 <section>
 <h2>Quick Reference &mdash; All Create Menu Paths</h2>
 <table>
@@ -717,6 +869,7 @@ flowchart LR
   <tr><td><code>Create &gt; Iris &gt; Spill Definition</code></td><td>Stain/spill appearance + stubbornness</td></tr>
   <tr><td><code>Create &gt; Iris &gt; Mood Machine Profile</code></td><td>Atmosphere curves (light, fog, rain)</td></tr>
   <tr><td><code>Create &gt; Iris &gt; Apartment Area</code></td><td>Area definition (camera, station type)</td></tr>
+  <tr><td><code>Create &gt; Iris &gt; Discord Webhook Config</code></td><td>Discord webhook URLs for bug reports + feedback</td></tr>
   <tr><td><code>Create &gt; Flower &gt; Ideal Flower Definition</code></td><td>Flower scoring rules</td></tr>
   <tr><td><code>Create &gt; Flower &gt; Flower Type</code></td><td>Flower identity + difficulty + days mapping</td></tr>
 </table>
@@ -738,8 +891,11 @@ flowchart LR
 <h2>Quick Reference &mdash; Runtime Debug Keys</h2>
 <table>
   <tr><th>Key</th><th>Action</th></tr>
-  <tr><td><code>F3</code></td><td>Toggle debug panel (grid snap, tidiness, clock, mood)</td></tr>
+  <tr><td><code>F3</code></td><td>Toggle debug panel (grid snap, highlight, atmosphere, info)</td></tr>
   <tr><td><code>F4</code></td><td>Toggle PSX rendering</td></tr>
+  <tr><td><code>F5</code></td><td>Cycle highlight style (Outline / RimGlow / SolidOverlay)</td></tr>
+  <tr><td><code>F8</code></td><td>Playtest feedback form (Discord)</td></tr>
+  <tr><td><code>F9</code></td><td>Bug report form (Discord)</td></tr>
   <tr><td><code>1</code> / <code>2</code> / <code>3</code></td><td>Apply camera presets</td></tr>
   <tr><td><code>`</code></td><td>Clear camera preset</td></tr>
   <tr><td><code>ESC</code></td><td>Pause menu / settings</td></tr>
