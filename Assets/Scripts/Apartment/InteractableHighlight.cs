@@ -53,6 +53,30 @@ public class InteractableHighlight : MonoBehaviour
         CurrentStyle = (HighlightStyle)next;
     }
 
+    // ── Runtime tuning overrides (driven by debug panel sliders) ──
+    private static float s_tuneWidth = 0.008f;
+    private static float s_tuneAlpha = 0.25f;
+    private static float s_tunePulse = 0.1f;
+    private static float s_tuneRim = 2.5f;
+
+    public static void SetTuningOverrides(float width, float alpha, float pulse, float rimPower)
+    {
+        s_tuneWidth = width;
+        s_tuneAlpha = alpha;
+        s_tunePulse = pulse;
+        s_tuneRim = rimPower;
+
+        // Rebuild all shared materials with new values
+        DestroySharedMaterials();
+        for (int i = 0; i < s_all.Count; i++)
+        {
+            s_all[i].EnsureSharedMaterials();
+            if (s_all[i]._glitchIntensity > 0)
+                s_all[i].BuildGlitchRimMaterials();
+            s_all[i].RebuildMaterials();
+        }
+    }
+
     [Tooltip("Drag Iris/Highlight shader here so it's included in builds.")]
     [SerializeField] private Shader _highlightShader;
 
@@ -377,17 +401,21 @@ public class InteractableHighlight : MonoBehaviour
 
     // ── Material factory ───────────────
 
-    private static Material MakeMatForStyle(Color color, float intensity, float pulseSpeed, float pulseAmount)
+    private static Material MakeMatForStyle(Color color, float intensityScale, float pulseSpeed, float pulseAmount)
     {
+        // Scale per-layer intensity by the global tuning alpha
+        float alpha = s_tuneAlpha * intensityScale * 2f;
+        float pulse = s_tunePulse;
+
         switch (s_currentStyle)
         {
             case HighlightStyle.Outline:
-                return MakeOutlineMat(color, intensity * 0.04f, pulseSpeed, pulseAmount);
+                return MakeOutlineMat(color, s_tuneWidth * intensityScale * 2f, pulseSpeed, pulse);
             case HighlightStyle.SolidOverlay:
-                return MakeOverlayMat(color, intensity, pulseSpeed, pulseAmount);
+                return MakeOverlayMat(color, alpha, pulseSpeed, pulse);
             case HighlightStyle.RimGlow:
             default:
-                return MakeRimGlowMat(color, intensity, pulseSpeed, pulseAmount);
+                return MakeRimGlowMat(color, alpha, pulseSpeed, pulse);
         }
     }
 
@@ -423,7 +451,7 @@ public class InteractableHighlight : MonoBehaviour
         float rimAlpha = intensity;
         mat.SetColor("_HighlightColor", new Color(color.r, color.g, color.b, fillAlpha));
         mat.SetColor("_RimColor", new Color(color.r, color.g, color.b, rimAlpha));
-        mat.SetFloat("_RimPower", 2.5f);
+        mat.SetFloat("_RimPower", s_tuneRim);
         mat.SetFloat("_PulseSpeed", pulseSpeed);
         mat.SetFloat("_PulseAmount", pulseAmount);
         return mat;

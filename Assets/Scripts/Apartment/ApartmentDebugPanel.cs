@@ -5,7 +5,7 @@ using TMPro;
 
 /// <summary>
 /// Runtime debug panel for the apartment scene. Toggle with F3.
-/// Shows grid snap slider, tidiness info, and other debug controls.
+/// Shows grid snap slider, highlight style controls, tidiness info, and other debug controls.
 /// </summary>
 public class ApartmentDebugPanel : MonoBehaviour
 {
@@ -18,9 +18,20 @@ public class ApartmentDebugPanel : MonoBehaviour
     private TMP_Text _gridLabel;
     private TMP_Text _infoText;
 
+    // Highlight controls
+    private TMP_Text _hlStyleLabel;
+    private TMP_Text _hlWidthLabel;
+    private TMP_Text _hlAlphaLabel;
+    private TMP_Text _hlPulseLabel;
+    private TMP_Text _hlRimLabel;
+    private Slider _hlWidthSlider;
+    private Slider _hlAlphaSlider;
+    private Slider _hlPulseSlider;
+    private Slider _hlRimSlider;
+
     private const float FontSize = 20f;
     private const float SliderWidth = 200f;
-    private const float PanelWidth = 320f;
+    private const float PanelWidth = 340f;
     private const float RowHeight = 32f;
 
     private void Awake()
@@ -61,7 +72,10 @@ public class ApartmentDebugPanel : MonoBehaviour
 
         // F5 cycles highlight style
         if (Input.GetKeyDown(KeyCode.F5))
+        {
             InteractableHighlight.CycleStyle();
+            RefreshHighlightStyleLabel();
+        }
 
         if (_visible)
             UpdateInfo();
@@ -73,18 +87,12 @@ public class ApartmentDebugPanel : MonoBehaviour
 
         var sb = new System.Text.StringBuilder();
 
-        // Grid snap
         if (ObjectGrabber.IsHoldingObject)
             sb.AppendLine("Holding: " + ObjectGrabber.HeldObject.ItemDescription);
 
-        // Tidiness
         if (TidyScorer.Instance != null)
-        {
-            sb.Append($"Tidiness: {TidyScorer.Instance.OverallTidiness:P0}");
-            sb.AppendLine();
-        }
+            sb.AppendLine($"Tidiness: {TidyScorer.Instance.OverallTidiness:P0}");
 
-        // GameClock
         if (GameClock.Instance != null)
         {
             float h = GameClock.Instance.CurrentHour;
@@ -93,26 +101,50 @@ public class ApartmentDebugPanel : MonoBehaviour
             sb.AppendLine($"Day {GameClock.Instance.CurrentDay}  {hours:D2}:{mins:D2}");
         }
 
-        // MoodMachine
         if (MoodMachine.Instance != null)
             sb.AppendLine($"Mood: {MoodMachine.Instance.Mood:F2}");
 
-        // Weather
         if (WeatherSystem.Instance != null)
             sb.AppendLine($"Weather: {WeatherSystem.Instance.CurrentWeather}");
 
         _infoText.text = sb.ToString();
     }
 
+    // ── Highlight tuning ──
+
+    private void RefreshHighlightStyleLabel()
+    {
+        if (_hlStyleLabel != null)
+            _hlStyleLabel.text = $"Highlight: {InteractableHighlight.CurrentStyle} (F5)";
+    }
+
+    private void OnHighlightParamChanged()
+    {
+        float width = _hlWidthSlider != null ? _hlWidthSlider.value : 0.008f;
+        float alpha = _hlAlphaSlider != null ? _hlAlphaSlider.value : 0.25f;
+        float pulse = _hlPulseSlider != null ? _hlPulseSlider.value : 0.1f;
+        float rim = _hlRimSlider != null ? _hlRimSlider.value : 2.5f;
+
+        if (_hlWidthLabel != null) _hlWidthLabel.text = $"Width: {width:F3}";
+        if (_hlAlphaLabel != null) _hlAlphaLabel.text = $"Alpha: {alpha:F2}";
+        if (_hlPulseLabel != null) _hlPulseLabel.text = $"Pulse: {pulse:F2}";
+        if (_hlRimLabel != null) _hlRimLabel.text = $"Rim Power: {rim:F1}";
+
+        InteractableHighlight.SetTuningOverrides(width, alpha, pulse, rim);
+    }
+
+    // ── Panel construction ──
+
     private void BuildPanel()
     {
-        // Screen-space overlay canvas
         var canvasGO = new GameObject("ApartmentDebugCanvas");
         canvasGO.transform.SetParent(transform);
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 200;
-        canvasGO.AddComponent<CanvasScaler>();
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
         canvasGO.AddComponent<GraphicRaycaster>();
 
         _panelGO = new GameObject("DebugPanel");
@@ -123,7 +155,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         panelRT.anchorMax = new Vector2(1f, 1f);
         panelRT.pivot = new Vector2(1f, 1f);
         panelRT.anchoredPosition = new Vector2(-10f, -10f);
-        panelRT.sizeDelta = new Vector2(PanelWidth, 260f);
+        panelRT.sizeDelta = new Vector2(PanelWidth, 520f);
 
         var panelImg = _panelGO.AddComponent<Image>();
         panelImg.color = new Color(0.05f, 0.05f, 0.05f, 0.85f);
@@ -131,32 +163,57 @@ public class ApartmentDebugPanel : MonoBehaviour
 
         var layout = _panelGO.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(12, 12, 8, 8);
-        layout.spacing = 6f;
+        layout.spacing = 4f;
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
         layout.childControlWidth = true;
         layout.childControlHeight = true;
 
-        // Title
+        // ── Title ──
         AddLabel(_panelGO.transform, "DEBUG (F3)", FontSize + 2f, FontStyles.Bold);
 
-        // Grid snap slider — read current value from ObjectGrabber so we don't overwrite it
+        // ── Grid snap slider ──
         var initGrabber = Object.FindAnyObjectByType<ObjectGrabber>();
         float initGrid = initGrabber != null ? initGrabber.GridSize : 0.11f;
-        AddSliderRow(_panelGO.transform, "Grid Size", 0.05f, 1.0f,
-            initGrid,
+        AddSliderRow(_panelGO.transform, "Grid Size", 0.05f, 1.0f, initGrid,
             val =>
             {
-                // Find the ObjectGrabber in the scene
                 var grabber = Object.FindAnyObjectByType<ObjectGrabber>();
-                if (grabber != null)
-                    grabber.GridSize = val;
-                if (_gridLabel != null)
-                    _gridLabel.text = $"Grid Size: {val:F2}m";
+                if (grabber != null) grabber.GridSize = val;
+                if (_gridLabel != null) _gridLabel.text = $"Grid Size: {val:F2}m";
             },
             out _gridLabel);
 
-        // Info text
+        // ── Separator ──
+        AddSeparator(_panelGO.transform);
+
+        // ── Highlight style label ──
+        _hlStyleLabel = AddLabel(_panelGO.transform, $"Highlight: {InteractableHighlight.CurrentStyle} (F5)",
+            FontSize, FontStyles.Bold);
+        _hlStyleLabel.color = new Color(1f, 0.9f, 0.7f);
+
+        // ── Outline Width ──
+        AddSliderRow(_panelGO.transform, "Width", 0.001f, 0.05f, 0.008f,
+            val => OnHighlightParamChanged(), out _hlWidthLabel);
+        _hlWidthSlider = _panelGO.GetComponentsInChildren<Slider>()[1]; // second slider
+
+        // ── Alpha / Intensity ──
+        AddSliderRow(_panelGO.transform, "Alpha", 0.05f, 1.0f, 0.25f,
+            val => OnHighlightParamChanged(), out _hlAlphaLabel);
+        _hlAlphaSlider = _panelGO.GetComponentsInChildren<Slider>()[2];
+
+        // ── Pulse Amount ──
+        AddSliderRow(_panelGO.transform, "Pulse", 0f, 0.5f, 0.1f,
+            val => OnHighlightParamChanged(), out _hlPulseLabel);
+        _hlPulseSlider = _panelGO.GetComponentsInChildren<Slider>()[3];
+
+        // ── Rim Power (RimGlow only) ──
+        AddSliderRow(_panelGO.transform, "Rim Power", 0.5f, 8.0f, 2.5f,
+            val => OnHighlightParamChanged(), out _hlRimLabel);
+        _hlRimSlider = _panelGO.GetComponentsInChildren<Slider>()[4];
+
+        // ── Info text ──
+        AddSeparator(_panelGO.transform);
         _infoText = AddLabel(_panelGO.transform, "", FontSize - 2f, FontStyles.Normal);
         _infoText.color = new Color(0.8f, 0.9f, 0.8f);
     }
@@ -166,7 +223,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         var go = new GameObject("Label");
         go.transform.SetParent(parent, false);
 
-        var rt = go.AddComponent<RectTransform>();
+        go.AddComponent<RectTransform>();
         var le = go.AddComponent<LayoutElement>();
         le.preferredHeight = RowHeight;
 
@@ -182,13 +239,25 @@ public class ApartmentDebugPanel : MonoBehaviour
         return tmp;
     }
 
+    private void AddSeparator(Transform parent)
+    {
+        var go = new GameObject("Separator");
+        go.transform.SetParent(parent, false);
+        go.AddComponent<RectTransform>();
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = 2f;
+        var img = go.AddComponent<Image>();
+        img.color = new Color(0.3f, 0.3f, 0.3f, 0.6f);
+        img.raycastTarget = false;
+    }
+
     private void AddSliderRow(Transform parent, string label, float min, float max,
         float initial, System.Action<float> onChange, out TMP_Text valueLabel)
     {
         var rowGO = new GameObject("SliderRow");
         rowGO.transform.SetParent(parent, false);
 
-        var rowRT = rowGO.AddComponent<RectTransform>();
+        rowGO.AddComponent<RectTransform>();
         var rowLE = rowGO.AddComponent<LayoutElement>();
         rowLE.preferredHeight = RowHeight + 10f;
 
@@ -199,18 +268,16 @@ public class ApartmentDebugPanel : MonoBehaviour
         rowLayout.childControlWidth = true;
         rowLayout.childControlHeight = true;
 
-        // Label
-        valueLabel = AddLabel(rowGO.transform, $"{label}: {initial:F2}m", FontSize, FontStyles.Normal);
+        valueLabel = AddLabel(rowGO.transform, $"{label}: {initial:F2}", FontSize - 2f, FontStyles.Normal);
 
         // Slider
         var sliderGO = new GameObject("Slider");
         sliderGO.transform.SetParent(rowGO.transform, false);
 
-        var sliderRT = sliderGO.AddComponent<RectTransform>();
+        sliderGO.AddComponent<RectTransform>();
         var sliderLE = sliderGO.AddComponent<LayoutElement>();
         sliderLE.preferredHeight = 20f;
 
-        // Slider background
         var bgGO = new GameObject("Background");
         bgGO.transform.SetParent(sliderGO.transform, false);
         var bgRT = bgGO.AddComponent<RectTransform>();
@@ -218,10 +285,8 @@ public class ApartmentDebugPanel : MonoBehaviour
         bgRT.anchorMax = Vector2.one;
         bgRT.offsetMin = Vector2.zero;
         bgRT.offsetMax = Vector2.zero;
-        var bgImg = bgGO.AddComponent<Image>();
-        bgImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        bgGO.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 1f);
 
-        // Fill area
         var fillAreaGO = new GameObject("Fill Area");
         fillAreaGO.transform.SetParent(sliderGO.transform, false);
         var fillAreaRT = fillAreaGO.AddComponent<RectTransform>();
@@ -237,10 +302,8 @@ public class ApartmentDebugPanel : MonoBehaviour
         fillRT.anchorMax = new Vector2(0f, 1f);
         fillRT.offsetMin = Vector2.zero;
         fillRT.offsetMax = Vector2.zero;
-        var fillImg = fillGO.AddComponent<Image>();
-        fillImg.color = new Color(0.4f, 0.7f, 0.4f, 1f);
+        fillGO.AddComponent<Image>().color = new Color(0.4f, 0.7f, 0.4f, 1f);
 
-        // Handle
         var handleAreaGO = new GameObject("Handle Slide Area");
         handleAreaGO.transform.SetParent(sliderGO.transform, false);
         var handleAreaRT = handleAreaGO.AddComponent<RectTransform>();
