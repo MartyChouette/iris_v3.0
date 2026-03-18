@@ -13,7 +13,7 @@ Shader "Iris/NatureBox"
         _CloudSpeed ("Cloud Speed", Float) = 0.015
         _CloudScale ("Cloud Scale", Float) = 2.5
         _CloudDensity ("Cloud Coverage", Range(0, 1)) = 0.45
-        _CloudSharpness ("Cloud Edge Sharpness", Range(0.01, 0.5)) = 0.15
+        _CloudSharpness ("Cloud Edge Sharpness", Range(0.01, 0.5)) = 0.25
 
         [Header(Terrain)]
         _MountainScale ("Mountain Scale", Float) = 2.5
@@ -21,7 +21,7 @@ Shader "Iris/NatureBox"
         _TreelineHeight ("Treeline Height", Range(0, 0.15)) = 0.07
 
         [Header(Atmosphere)]
-        _HorizonFog ("Horizon Fog", Range(0, 1)) = 0.35
+        _HorizonFog ("Horizon Fog", Range(0, 1)) = 0.55
         _StarDensity ("Star Density", Range(0.95, 1.0)) = 0.985
 
         [Header(Weather)]
@@ -41,8 +41,8 @@ Shader "Iris/NatureBox"
         _HorizonCurve ("Horizon Curve (push horizon down)", Range(0, 0.3)) = 0
 
         [Header(Retro)]
-        _PixelDensity ("Pixel Density (0 off, 240 N64, 480 PS2)", Float) = 0
-        _ColorDepth ("Color Depth per channel (0 off, 16 N64, 32 PS1)", Float) = 0
+        _PixelDensity ("Pixel Density (0 off, 240 N64, 480 PS2)", Float) = 320
+        _ColorDepth ("Color Depth per channel (0 off, 16 N64, 32 PS1)", Float) = 24
     }
 
     SubShader
@@ -131,6 +131,19 @@ Shader "Iris/NatureBox"
                 return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
             }
 
+            // Simpler FBM for Y2K/PS2 aesthetic — fewer octaves = blockier, less painterly
+            float fbm2(float2 p)
+            {
+                float v = 0.5 * noise2D(p) + 0.25 * noise2D(p * 2.01);
+                return v / 0.75;
+            }
+
+            float fbm3(float2 p)
+            {
+                float v = 0.5 * noise2D(p) + 0.25 * noise2D(p * 2.01) + 0.125 * noise2D(p * 4.03);
+                return v / 0.875;
+            }
+
             float fbm4(float2 p)
             {
                 float v = 0.0;
@@ -141,19 +154,6 @@ Shader "Iris/NatureBox"
                 v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
                 v += amp * noise2D(p * freq);
                 return v / 0.9375;
-            }
-
-            float fbm5(float2 p)
-            {
-                float v = 0.0;
-                float amp = 0.5;
-                float freq = 1.0;
-                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
-                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.02;
-                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.01;
-                v += amp * noise2D(p * freq); amp *= 0.5; freq *= 2.03;
-                v += amp * noise2D(p * freq);
-                return v / 0.96875;
             }
 
             // ── Color palette ────────────────────────────────────────
@@ -176,31 +176,34 @@ Shader "Iris/NatureBox"
                 return ab * w0 + bc * w1 + cd * w2 + da * w3;
             }
 
+            // ── FF8 / SotC desaturated blue-teal palette ──
+            // Muted, washed out, melancholy. Blue-teal shadows, pale warm highlights.
+
             float3 zenithColor(float t)
             {
                 return palette4(t,
-                    float3(0.01, 0.01, 0.06),
-                    float3(0.25, 0.18, 0.45),
-                    float3(0.35, 0.55, 0.85),
-                    float3(0.22, 0.12, 0.38));
+                    float3(0.02, 0.03, 0.08),   // midnight: deep blue-black
+                    float3(0.18, 0.16, 0.30),   // dawn: muted lavender
+                    float3(0.40, 0.50, 0.62),   // noon: desaturated blue-gray
+                    float3(0.15, 0.12, 0.28));  // dusk: muted purple
             }
 
             float3 horizColor(float t)
             {
                 return palette4(t,
-                    float3(0.03, 0.03, 0.10),
-                    float3(0.85, 0.45, 0.25),
-                    float3(0.65, 0.75, 0.90),
-                    float3(0.80, 0.30, 0.18));
+                    float3(0.04, 0.04, 0.10),   // midnight: deep blue
+                    float3(0.55, 0.38, 0.35),   // dawn: muted peach (less vivid)
+                    float3(0.55, 0.60, 0.70),   // noon: pale blue-gray haze
+                    float3(0.48, 0.28, 0.25));  // dusk: muted warm
             }
 
             float3 sunColor(float t)
             {
                 return palette4(t,
-                    float3(0.50, 0.55, 0.70),
-                    float3(1.00, 0.65, 0.25),
-                    float3(1.00, 0.95, 0.80),
-                    float3(1.00, 0.35, 0.12));
+                    float3(0.35, 0.40, 0.50),   // midnight: cool moon
+                    float3(0.75, 0.55, 0.35),   // dawn: soft gold (desaturated)
+                    float3(0.85, 0.82, 0.75),   // noon: pale warm
+                    float3(0.70, 0.32, 0.18));  // dusk: muted sunset
             }
 
             float3 sunDirection(float t)
@@ -315,7 +318,7 @@ Shader "Iris/NatureBox"
                     cloudUV.x += _Time.y * _CloudSpeed;
                     cloudUV.y += _Time.y * _CloudSpeed * 0.3;
 
-                    float cn = fbm5(cloudUV);
+                    float cn = fbm2(cloudUV); // fbm2 = blockier, less painterly (Y2K)
                     float thr = 0.50 - _CloudDensity * 0.35;
                     float cloudMask = smoothstep(thr, thr + _CloudSharpness, cn) * cloudVisible;
 
@@ -327,7 +330,7 @@ Shader "Iris/NatureBox"
                 }
 
                 // ── 5. Far mountains ──
-                float mountainN = fbm4(horiz * _MountainScale);
+                float mountainN = fbm2(horiz * _MountainScale); // simpler silhouettes
                 float mountainLine = mountainN * _MountainHeight;
                 float mountainMask = smoothstep(mountainLine + 0.008,
                                                 mountainLine - 0.004, elevation);
@@ -349,7 +352,7 @@ Shader "Iris/NatureBox"
                 }
 
                 // ── 6. Near treeline ──
-                float treeN = fbm4(horiz * _MountainScale * 3.5 + float2(17.3, 42.1));
+                float treeN = fbm2(horiz * _MountainScale * 3.5 + float2(17.3, 42.1));
                 float treeLine = treeN * _TreelineHeight;
                 float treeMask = smoothstep(treeLine + 0.004, treeLine - 0.002, elevation);
                 float treeDetail = noise2D(horiz * _MountainScale * 20.0);

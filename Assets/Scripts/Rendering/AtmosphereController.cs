@@ -116,7 +116,22 @@ public class AtmosphereController : MonoBehaviour
 
     private void LateUpdate()
     {
-        // Tint dust by directional light color for natural integration
+        // ── MoodMachine integration ──
+        // Mood 0 = clear/happy, 1 = dark/stormy
+        // Clear: full bloom, bright exposure (SotC overexposed)
+        // Stormy: reduced bloom, more grain, darker (PE moody)
+        if (MoodMachine.Instance != null && _bloom != null)
+        {
+            float mood = MoodMachine.Instance.Mood;
+
+            _bloom.intensity.Override(Mathf.Lerp(_bloomIntensity, _bloomIntensity * 0.25f, mood));
+            _bloom.scatter.Override(Mathf.Lerp(_bloomScatter, _bloomScatter * 0.5f, mood));
+            _filmGrain.intensity.Override(Mathf.Lerp(_grainIntensity, Mathf.Min(_grainIntensity * 2.5f, 0.5f), mood));
+            _colorAdj.postExposure.Override(Mathf.Lerp(_postExposure, _postExposure - 0.4f, mood));
+            _vignette.intensity.Override(Mathf.Lerp(_vignetteIntensity, Mathf.Min(_vignetteIntensity + 0.15f, 0.6f), mood));
+        }
+
+        // ── Tint dust by directional light color ──
         if (_dustPS != null && _dustMat != null)
         {
             Color lightCol = Color.white;
