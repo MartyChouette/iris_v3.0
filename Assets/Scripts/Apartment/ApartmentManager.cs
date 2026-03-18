@@ -231,6 +231,7 @@ public class ApartmentManager : MonoBehaviour
                 CinemachineBlendDefinition.Styles.EaseInOut, 0.8f);
         }
 
+        ResetZoom();
         UpdateUI();
     }
 
@@ -280,9 +281,7 @@ public class ApartmentManager : MonoBehaviour
             ApplyBrainOrthoMode(pl.ModeOverride == LensSettings.OverrideModes.Orthographic);
 
             // Reset zoom to default step
-            _currentZoomStep = -1;
-            _currentZoom = -1f;
-            _targetZoom = -1f;
+            ResetZoom();
         }
     }
 
@@ -418,6 +417,14 @@ public class ApartmentManager : MonoBehaviour
             CycleArea(1);
     }
 
+    private void ResetZoom()
+    {
+        if (_zoomSteps == null || _zoomSteps.Length == 0) return;
+        _currentZoomStep = Mathf.Clamp(_defaultZoomStep, 0, _zoomSteps.Length - 1);
+        _targetZoom = _zoomSteps[_currentZoomStep];
+        _currentZoom = _targetZoom;
+    }
+
     private void HandleZoomInput()
     {
         if (browseCamera == null) return;
@@ -429,8 +436,6 @@ public class ApartmentManager : MonoBehaviour
         // Initialize zoom step on first use
         if (_currentZoomStep < 0)
         {
-            // Step 0 always matches the area's natural FOV
-            _zoomSteps[0] = _baseFOV;
             _currentZoomStep = Mathf.Clamp(_defaultZoomStep, 0, _zoomSteps.Length - 1);
             _targetZoom = _zoomSteps[_currentZoomStep];
             _currentZoom = _targetZoom;
