@@ -6,9 +6,8 @@ using UnityEngine;
 
 /// <summary>
 /// Editor tool: Window > Iris > Auto-Wire Sounds.
-/// Scans all MonoBehaviours in the open scene, finds empty AudioClip fields,
-/// and wires them to the best matching clip from Assets/Audio/.
-/// Review the log and Ctrl+Z to undo if needed.
+/// Scans scene for empty AudioClip fields and helps wire them.
+/// Dry Run shows what's empty. Wire attempts smart matching from Assets/Audio/.
 /// </summary>
 public class SoundAutoWirer : EditorWindow
 {
@@ -18,107 +17,135 @@ public class SoundAutoWirer : EditorWindow
         GetWindow<SoundAutoWirer>("Auto-Wire Sounds");
     }
 
-    // Field name keyword → audio file keyword mapping
-    // More specific matches first — first match wins
-    private static readonly (string fieldKeyword, string fileKeyword, float volume)[] Mappings =
+    // Keyword-based matching: if field name contains key → try to find file containing value
+    private static readonly (string fieldKey, string[] fileKeys)[] FuzzyMap =
     {
-        // Object grab
-        ("_pickupSFX",         "Button Press Click, Tap, Video Game, Main Menu, Select, Positive 01", 0.5f),
-        ("_placeSFX",          "Flower Vase, Big, Pick Up, Put Down",                                0.6f),
-        ("_pickupSFXOverride", "",                                                                    0f), // skip — per-object, user sets manually
-        ("_placeSFXOverride",  "",                                                                    0f), // skip
-
-        // Area transition
-        ("_areaTransitionSFX", "Pops, Cute, Tap Reverse",                                            0.35f),
-
-        // Cleaning
-        ("_stainCompleteSFX",  "Button Press Click, Tap, Video Game, Main Menu, Select, Positive 03", 0.4f),
-
-        // Door
-        ("_knockSFX",          "Metal Click, Rattle, Close Variations",                               0.6f),
-        ("_doorOpenSFX",       "Lock, Latch, Click",                                                  0.5f),
-
-        // Fridge
-        ("_openSFX",           "Lock, Latch, Click",                                                  0.45f),
-        ("_closeSFX",          "Metal Click, Rattle, Close Variations",                               0.5f),
-
-        // Light switch
-        ("_toggleSFX",         "Clothes Peg, Click",                                                  0.4f),
-
-        // Record player
-        ("_playSFX",           "Fan, Pedestal, Head Adjust Click 01",                                 0.35f),
-        ("_stopSFX",           "Heater Fan, Small, Thermostat, Click",                                0.3f),
-
-        // Disco ball
-        ("_insertSFX",         "Bobcat, Micro, Digger, Safety, Belt, Fasten, Click",                 0.45f),
-
-        // Drop zones
-        ("_depositSFX",        "Flower Vase, Big, Pick Up, Put Down",                                0.4f),
-        ("_trashSFX",          "Button Press Click, Tap, Video Game, Main Menu, Select, Return, Negative 03", 0.5f),
-
-        // UI / Nav
-        ("_navClickSFX",       "Button Click, Input Response, Tap, Short",                            0.3f),
-        ("_dismissSFX",        "Button Press Click, Tap, Video Game, Main Menu, Select, Return, Negative 04", 0.3f),
-        ("_selectSFX",         "Button Press Click, Tap, Video Game, Main Menu, Select, Positive 04", 0.4f),
-
-        // Date
-        ("_presentSFX",        "Pops, Cute, Tap Reverse",                                            0.5f),
-        ("_caughtSFX",         "Button, Double Click, Fast, Phone Tap",                               0.55f),
-
-        // Pairing
-        ("_snapSound",         "",                                                                    0f), // skip — category-specific, user sets per item
-
-        // Ambience
-        ("_morningAmbienceClip",    "Ocean, Rhythmic Waves, Crashing In On Beach, Distant Birds",     0.3f),
-        ("_explorationAmbienceClip","Waves, Ocean, Coming In On Beach, Wind, Birds",                  0.25f),
-        ("_rainAmbience",           "Ocean, Rhythmic Waves",                                          0.4f),
-        ("_stormAmbience",          "Ocean, Rhythmic Waves",                                          0.55f),
-        ("_ambienceClip",           "Waves, Ocean, Coming In On Beach",                               0.3f),
-        ("_weatherClip",            "Ocean, Rhythmic Waves",                                          0.3f),
-
-        // Music
-        ("_menuSong",               "hourglass - baegel",                                             0.5f),
+        ("pickup",       new[] { "Pick Up", "Button Press", "Click, Tap" }),
+        ("place",        new[] { "Put Down", "Flower Vase" }),
+        ("transition",   new[] { "Pops, Cute", "Tap Reverse" }),
+        ("stainComplete",new[] { "Pops", "Positive 03" }),
+        ("knock",        new[] { "Metal Click", "Rattle" }),
+        ("doorOpen",     new[] { "Lock, Latch", "Latch, Click" }),
+        ("open",         new[] { "Lock, Latch", "Click" }),
+        ("close",        new[] { "Metal Click", "Close" }),
+        ("toggle",       new[] { "Clothes Peg", "Click" }),
+        ("play",         new[] { "Fan, Pedestal", "Click 01" }),
+        ("stop",         new[] { "Heater Fan", "Thermostat" }),
+        ("insert",       new[] { "Bobcat", "Fasten, Click" }),
+        ("deposit",      new[] { "Flower Vase", "Put Down" }),
+        ("trash",        new[] { "Negative 03", "Return" }),
+        ("nav",          new[] { "Button Click, Input", "Tap, Short" }),
+        ("dismiss",      new[] { "Negative 04", "Return" }),
+        ("select",       new[] { "Positive 04", "Select" }),
+        ("present",      new[] { "Pops, Cute" }),
+        ("caught",       new[] { "Double Click", "Phone Tap" }),
+        ("snap",         new[] { "Click", "Tap" }),
+        ("morning",      new[] { "Ocean", "Waves", "Birds" }),
+        ("exploration",  new[] { "Waves", "Wind", "Beach" }),
+        ("rain",         new[] { "Ocean", "Waves" }),
+        ("storm",        new[] { "Ocean", "Waves" }),
+        ("ambience",     new[] { "Waves", "Ocean", "Wind" }),
+        ("weather",      new[] { "Ocean", "Waves" }),
+        ("menu",         new[] { "hourglass", "baegel" }),
     };
 
-    private Dictionary<string, AudioClip> _clipCache;
-    private List<string> _results = new();
-
+    private List<AudioClip> _allClips;
+    private List<FieldEntry> _entries = new();
     private Vector2 _scrollPos;
+
+    private struct FieldEntry
+    {
+        public MonoBehaviour component;
+        public string fieldName;
+        public string fieldPath;
+        public AudioClip suggestion;
+        public bool alreadySet;
+    }
 
     private void OnGUI()
     {
         GUILayout.Label("Auto-Wire Sounds", EditorStyles.boldLabel);
-        GUILayout.Label("Scans scene for empty AudioClip fields and wires matching clips from Assets/Audio/.");
-        GUILayout.Space(8);
+        GUILayout.Space(4);
 
-        if (GUILayout.Button("Scan Scene (Dry Run)", GUILayout.Height(30)))
+        if (GUILayout.Button("Scan Scene", GUILayout.Height(28)))
+            ScanScene();
+
+        if (_entries.Count == 0)
         {
-            _results.Clear();
-            RunScan(dryRun: true);
+            GUILayout.Label("Click Scan to find empty AudioClip fields.");
+            return;
         }
 
-        if (GUILayout.Button("Wire All Empty Slots", GUILayout.Height(30)))
-        {
-            _results.Clear();
-            RunScan(dryRun: false);
-        }
+        // Summary
+        int empty = _entries.Count(e => !e.alreadySet);
+        int matched = _entries.Count(e => !e.alreadySet && e.suggestion != null);
+        int set = _entries.Count(e => e.alreadySet);
+        GUILayout.Label($"{empty} empty ({matched} auto-matched), {set} already wired");
+
+        if (matched > 0 && GUILayout.Button($"Wire {matched} matched clips", GUILayout.Height(24)))
+            WireMatched();
 
         GUILayout.Space(8);
         _scrollPos = GUILayout.BeginScrollView(_scrollPos);
-        foreach (var r in _results)
-            GUILayout.Label(r, EditorStyles.wordWrappedMiniLabel);
+
+        // Show empty fields grouped by component
+        string lastComponent = "";
+        foreach (var e in _entries)
+        {
+            if (e.alreadySet) continue;
+
+            string compName = $"{e.component.gameObject.name} ({e.component.GetType().Name})";
+            if (compName != lastComponent)
+            {
+                GUILayout.Space(6);
+                GUILayout.Label(compName, EditorStyles.boldLabel);
+                lastComponent = compName;
+            }
+
+            GUILayout.BeginHorizontal();
+
+            // Field name
+            GUILayout.Label(e.fieldName, GUILayout.Width(200));
+
+            // Suggestion or manual picker
+            if (e.suggestion != null)
+            {
+                GUI.color = new Color(0.7f, 1f, 0.7f);
+                GUILayout.Label($"→ {e.suggestion.name}", GUILayout.Width(350));
+                GUI.color = Color.white;
+            }
+            else
+            {
+                GUI.color = new Color(1f, 0.8f, 0.6f);
+                GUILayout.Label("(drag clip here →)", GUILayout.Width(200));
+                GUI.color = Color.white;
+
+                var newClip = (AudioClip)EditorGUILayout.ObjectField(null, typeof(AudioClip), false, GUILayout.Width(150));
+                if (newClip != null)
+                {
+                    Undo.RecordObject(e.component, "Wire Sound");
+                    var so = new SerializedObject(e.component);
+                    var prop = so.FindProperty(e.fieldPath);
+                    if (prop != null)
+                    {
+                        prop.objectReferenceValue = newClip;
+                        so.ApplyModifiedProperties();
+                    }
+                }
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
         GUILayout.EndScrollView();
     }
 
-    private void RunScan(bool dryRun)
+    private void ScanScene()
     {
-        BuildClipCache();
+        BuildClipList();
+        _entries.Clear();
 
-        int wired = 0;
-        int skipped = 0;
-        int alreadySet = 0;
-
-        var allBehaviours = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        var allBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
         foreach (var mb in allBehaviours)
         {
             if (mb == null) continue;
@@ -128,93 +155,87 @@ public class SoundAutoWirer : EditorWindow
             while (prop.NextVisible(true))
             {
                 if (prop.propertyType != SerializedPropertyType.ObjectReference) continue;
-                if (!prop.name.Contains("SFX") && !prop.name.Contains("Clip") &&
-                    !prop.name.Contains("Sound") && !prop.name.Contains("Song") &&
-                    !prop.name.Contains("Ambience") && !prop.name.Contains("ambience"))
-                    continue;
 
-                // Check if it's an AudioClip field
-                if (prop.objectReferenceValue != null)
-                {
-                    alreadySet++;
-                    continue;
-                }
+                // Check if this is an AudioClip field by checking the type string
+                if (prop.type != "PPtr<$AudioClip>") continue;
 
-                // Find matching clip
-                string fieldName = prop.name;
-                var match = FindMatch(fieldName);
+                bool hasValue = prop.objectReferenceValue != null;
 
-                if (match == null)
-                {
-                    _results.Add($"  ? {mb.GetType().Name}.{fieldName} — no match found");
-                    skipped++;
-                    continue;
-                }
+                AudioClip suggestion = null;
+                if (!hasValue)
+                    suggestion = FindFuzzyMatch(prop.name);
 
-                if (match == "") // explicitly skipped
+                _entries.Add(new FieldEntry
                 {
-                    skipped++;
-                    continue;
-                }
-
-                if (!_clipCache.TryGetValue(match, out var clip))
-                {
-                    _results.Add($"  ! {mb.GetType().Name}.{fieldName} — matched '{match}' but file not found");
-                    skipped++;
-                    continue;
-                }
-
-                if (dryRun)
-                {
-                    _results.Add($"  > {mb.GetType().Name}.{fieldName} → {clip.name}");
-                }
-                else
-                {
-                    Undo.RecordObject(mb, "Auto-Wire Sound");
-                    prop.objectReferenceValue = clip;
-                    so.ApplyModifiedProperties();
-                    _results.Add($"  + {mb.GetType().Name}.{fieldName} → {clip.name}");
-                }
-                wired++;
+                    component = mb,
+                    fieldName = prop.name,
+                    fieldPath = prop.propertyPath,
+                    suggestion = suggestion,
+                    alreadySet = hasValue
+                });
             }
         }
 
-        string mode = dryRun ? "DRY RUN" : "WIRED";
-        _results.Insert(0, $"--- {mode}: {wired} to wire, {alreadySet} already set, {skipped} skipped ---");
-        Debug.Log($"[SoundAutoWirer] {mode}: {wired} clips, {alreadySet} already set, {skipped} skipped");
-    }
-
-    private string FindMatch(string fieldName)
-    {
-        foreach (var (fieldKeyword, fileKeyword, _) in Mappings)
+        // Sort: empty with suggestions first, then empty without, then already set
+        _entries.Sort((a, b) =>
         {
-            if (fieldName == fieldKeyword || fieldName.Contains(fieldKeyword.TrimStart('_')))
-            {
-                return fileKeyword; // empty string = explicitly skip
-            }
-        }
-        return null; // no match at all
+            if (a.alreadySet != b.alreadySet) return a.alreadySet ? 1 : -1;
+            if ((a.suggestion != null) != (b.suggestion != null)) return a.suggestion != null ? -1 : 1;
+            return string.Compare(a.fieldName, b.fieldName);
+        });
     }
 
-    private void BuildClipCache()
+    private void WireMatched()
     {
-        _clipCache = new Dictionary<string, AudioClip>();
+        int count = 0;
+        foreach (var e in _entries)
+        {
+            if (e.alreadySet || e.suggestion == null) continue;
 
+            Undo.RecordObject(e.component, "Wire Sound");
+            var so = new SerializedObject(e.component);
+            var prop = so.FindProperty(e.fieldPath);
+            if (prop != null)
+            {
+                prop.objectReferenceValue = e.suggestion;
+                so.ApplyModifiedProperties();
+                count++;
+            }
+        }
+
+        Debug.Log($"[SoundAutoWirer] Wired {count} clips. Ctrl+Z to undo.");
+        ScanScene(); // refresh
+    }
+
+    private AudioClip FindFuzzyMatch(string fieldName)
+    {
+        string lower = fieldName.ToLowerInvariant();
+
+        foreach (var (fieldKey, fileKeys) in FuzzyMap)
+        {
+            if (!lower.Contains(fieldKey.ToLowerInvariant())) continue;
+
+            // Try each file keyword — return first match
+            foreach (var fk in fileKeys)
+            {
+                var clip = _allClips.FirstOrDefault(c => c.name.Contains(fk));
+                if (clip != null) return clip;
+            }
+        }
+
+        return null;
+    }
+
+    private void BuildClipList()
+    {
+        _allClips = new List<AudioClip>();
         string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio" });
         foreach (var guid in guids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-            if (clip == null) continue;
-
-            string fileName = Path.GetFileNameWithoutExtension(path);
-            // Strip "ES_" prefix for matching
-            string key = fileName.StartsWith("ES_") ? fileName.Substring(3) : fileName;
-            _clipCache[key] = clip;
-
-            // Also store with full filename for exact matches
-            if (!_clipCache.ContainsKey(fileName))
-                _clipCache[fileName] = clip;
+            if (clip != null)
+                _allClips.Add(clip);
         }
     }
 }
