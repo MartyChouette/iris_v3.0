@@ -265,6 +265,7 @@ Each date character brings a specific flower. The flower trimming score determin
 - [x] **Highlight style system** — 3 switchable styles (Outline, RimGlow, SolidOverlay) via `InteractableHighlight.CurrentStyle`. F5 cycles, F3 panel sliders for width/alpha/pulse/rim. Stencil anti-overdraw on complex geometry. Proximity stage removed (single clean hover).
 - [x] **Atmosphere system** — `AtmosphereController` with global URP Volume (LiftGammaGain teal shadows/warm highlights, bloom, vignette, film grain, dust motes). FF8/PE/SotC color grading. F3 panel sliders for all parameters.
 - [x] **Volumetric light shafts** — `VolumetricLightShaft` + `Iris/VolumetricShaft` shader. PS2-style fake god rays: place quad at window, auto-tints with directional light, fades at night. Animated noise for dusty feel.
+- [x] **Item pairing system** — `PairableItem` component. Shoes: SpecificPartner mode, SideBySide snap. Dishes/Bowls: AnyOfCategory mode, Stacked snap. ObjectGrabber intercepts click-while-holding to pair. Per-item snap offset, snap sound. Coat removed from ItemCategory, Bowl added.
 - [x] **Discord playtest reporting** — `BugReportForm` (F9) + `PlaytestFeedbackForm` (F8) Discord webhook integration. JPEG screenshots, game state telemetry, crash log tail. `DiscordWebhookConfig` SO in Resources. Uses `System.Net.Http.HttpClient` (Unity 6 curl HTTP/2 workaround).
 
 ---

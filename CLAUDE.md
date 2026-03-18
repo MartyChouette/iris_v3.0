@@ -373,6 +373,7 @@ Each judgment: thought bubble appears → emote icon (heart/meh/frown) → SFX �
 | Pause menu | Working | SimplePauseMenu (ESC toggle, settings integration) |
 | Main menu | Working | MainMenuManager (3-panel FSM), MainMenuSceneBuilder, Nema parallax head, 3 GameModeConfig SOs |
 | Tutorial card | Working | TutorialCard (overlay between menu and gameplay) |
+| Item pairing | Working | PairableItem (SpecificPartner for shoes, AnyOfCategory for dishes/bowls), ObjectGrabber snap-on-click |
 | Highlight styles | Working | InteractableHighlight (3 styles: Outline/RimGlow/SolidOverlay), F5 cycles, F3 sliders |
 | Atmosphere system | Working | AtmosphereController (URP Volume: LiftGammaGain, bloom, vignette, grain, dust motes) |
 | Volumetric light shafts | Working | VolumetricLightShaft + Iris/VolumetricShaft shader (PS2-style fake god rays at windows) |

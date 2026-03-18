@@ -236,6 +236,7 @@
   <a href="#mood">Mood</a>
   <a href="#walls">Wall Dissolve</a>
   <a href="#drinks">Drinks</a>
+  <a href="#pairing">Pairing</a>
   <a href="#highlights">Highlights</a>
   <a href="#atmosphere">Atmosphere</a>
   <a href="#bugreport">Bug Reports</a>
@@ -706,8 +707,80 @@ flowchart LR
 </section>
 
 <!-- ============================================================ -->
+<section id="pairing">
+<h2><span class="num">13</span> Item Pairing (Shoes, Dishes, Bowls)</h2>
+
+<p>Items with a <code>PairableItem</code> component can snap together when the player holds one and clicks its match. Shoes pair with a specific partner (side-by-side), dishes and bowls pair with any of the same category (stacked).</p>
+
+<h3>Pair Modes</h3>
+<table>
+  <tr><th>Mode</th><th>Use Case</th><th>Matching Rule</th></tr>
+  <tr><td><strong>SpecificPartner</strong></td><td>Shoes</td><td>Must be the exact partner dragged into the Inspector field</td></tr>
+  <tr><td><strong>AnyOfCategory</strong></td><td>Dishes, Bowls</td><td>Any item with the same <code>ItemCategory</code> on its <code>PlaceableObject</code></td></tr>
+</table>
+
+<h3>Snap Modes</h3>
+<table>
+  <tr><th>Mode</th><th>Use Case</th><th>Visual</th></tr>
+  <tr><td><strong>SideBySide</strong></td><td>Shoes</td><td>Items sit next to each other (local X offset)</td></tr>
+  <tr><td><strong>Stacked</strong></td><td>Dishes, Bowls</td><td>Items stack on top of each other (local Y offset)</td></tr>
+</table>
+
+<h3>Setting Up Shoes</h3>
+<ol class="steps">
+  <li>Add <code>PairableItem</code> component to <strong>both</strong> shoes</li>
+  <li>Set <strong>Pair Mode</strong> = <code>SpecificPartner</code></li>
+  <li>Drag the other shoe into <strong>Specific Partner</strong> field (do this on both shoes)</li>
+  <li>Set <strong>Snap Mode</strong> = <code>SideBySide</code></li>
+  <li>Set <strong>Snap Offset</strong> = <code>(0.1, 0, 0)</code> (adjust for shoe size)</li>
+  <li>Drag a shoe-clap AudioClip into <strong>Snap Sound</strong></li>
+  <li>Ensure <code>PlaceableObject.Category</code> = <code>Shoe</code></li>
+</ol>
+
+<h3>Setting Up Dishes</h3>
+<ol class="steps">
+  <li>Add <code>PairableItem</code> component to each dish</li>
+  <li>Set <strong>Pair Mode</strong> = <code>AnyOfCategory</code></li>
+  <li>Set <strong>Snap Mode</strong> = <code>Stacked</code></li>
+  <li>Set <strong>Snap Offset</strong> = <code>(0, 0.02, 0)</code> (plate thickness)</li>
+  <li>Drag a glass-clink AudioClip into <strong>Snap Sound</strong></li>
+  <li>Ensure <code>PlaceableObject.Category</code> = <code>Dish</code></li>
+  <li>Add a <code>ReactableTag</code> with tag "dirty" &mdash; dates react negatively to dirty dishes left out</li>
+</ol>
+
+<h3>Setting Up Bowls</h3>
+<ol class="steps">
+  <li>Same as dishes, but set <code>PlaceableObject.Category</code> = <code>Bowl</code></li>
+  <li>Set <strong>Snap Offset</strong> = <code>(0, 0.03, 0)</code> (bowls are taller)</li>
+  <li>Use a bowl-clink AudioClip for <strong>Snap Sound</strong></li>
+</ol>
+
+<h3>How Pairing Works at Runtime</h3>
+<ol class="steps">
+  <li>Player picks up item A</li>
+  <li>Player clicks on item B (placed in the world)</li>
+  <li>If A and B are pairable and match &rarr; B snaps A onto itself with the configured offset and plays the snap sound</li>
+  <li>The paired items become one object &mdash; picking up the primary moves both</li>
+  <li>Paired items cannot currently be separated</li>
+</ol>
+
+<h3>Item Categories</h3>
+<table>
+  <tr><th>Category</th><th>Notes</th></tr>
+  <tr><td>General</td><td>Default, no special behavior</td></tr>
+  <tr><td>Trash</td><td>Accepted by trash-can DropZones</td></tr>
+  <tr><td>Dish</td><td>Plates &mdash; pairable (AnyOfCategory, Stacked)</td></tr>
+  <tr><td>Bowl</td><td>Bowls &mdash; pairable (AnyOfCategory, Stacked)</td></tr>
+  <tr><td>Shoe</td><td>Pairable (SpecificPartner, SideBySide)</td></tr>
+  <tr><td>Hat</td><td>Entrance item, misplaced daily</td></tr>
+  <tr><td>Record</td><td>Vinyl records for turntable</td></tr>
+  <tr><td>Book</td><td>Shelf books</td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
 <section id="highlights">
-<h2><span class="num">13</span> Highlight Styles</h2>
+<h2><span class="num">14</span> Highlight Styles</h2>
 
 <p>Objects with an <code>InteractableHighlight</code> component glow when the player hovers over them. Three visual styles are available, switchable at runtime with <strong>F5</strong>.</p>
 
@@ -750,7 +823,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="atmosphere">
-<h2><span class="num">14</span> Atmosphere &amp; Volumetric Lighting</h2>
+<h2><span class="num">15</span> Atmosphere &amp; Volumetric Lighting</h2>
 
 <p>The atmosphere system creates an FF8 / Parasite Eve / Shadow of the Colossus look: teal shadows, warm highlights, soft bloom, dust motes, and fake volumetric light shafts.</p>
 
@@ -822,7 +895,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="bugreport">
-<h2><span class="num">15</span> Bug Reports &amp; Feedback (Discord)</h2>
+<h2><span class="num">16</span> Bug Reports &amp; Feedback (Discord)</h2>
 
 <p>Playtesters can report bugs and submit feedback directly from the game. Reports are sent to Discord webhooks and saved locally as JSON + screenshots.</p>
 
