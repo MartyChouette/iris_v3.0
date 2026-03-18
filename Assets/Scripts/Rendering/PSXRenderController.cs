@@ -154,7 +154,8 @@ public class PSXRenderController : MonoBehaviour
         _defaultSnapResolution = _vertexSnapResolution;
         _defaultAffineIntensity = _affineIntensity;
 
-        SwapShadersToRetro();
+        // Defer shader swap to end of frame so it doesn't block scene load
+        StartCoroutine(DeferredSwap());
         ApplyAll();
         ApplyReduceMotion();
 
@@ -277,11 +278,19 @@ public class PSXRenderController : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
     // Shader Swap (URP Lit → PSXLit on all scene renderers)
     // ──────────────────────────────────────────────────────────────
+    private System.Collections.IEnumerator DeferredSwap()
+    {
+        // Wait one frame so scene is fully loaded before scanning renderers
+        yield return null;
+        SwapShadersToRetro();
+    }
+
     private void SwapShadersToRetro()
     {
         if (_psxLitShader == null) return;
 
         var renderers = FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        int swapped = 0;
         foreach (var r in renderers)
         {
             foreach (var mat in r.sharedMaterials)
@@ -293,11 +302,13 @@ public class PSXRenderController : MonoBehaviour
                 {
                     _originalShaders[mat] = mat.shader;
                     mat.shader = _psxLitShader;
+                    swapped++;
                 }
             }
         }
 
-        Debug.Log($"[PSXRenderController] Swapped {_originalShaders.Count} materials to PSXLit.");
+        if (swapped > 0)
+            Debug.Log($"[PSXRenderController] Swapped {swapped} materials to PSXLit.");
     }
 
     private void RestoreOriginalShaders()

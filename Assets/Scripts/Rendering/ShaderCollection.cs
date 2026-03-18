@@ -30,13 +30,12 @@ public class ShaderCollection : ScriptableObject
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Preload()
     {
-        // Force-load at startup so all shader references are alive before any Shader.Find() calls
+        // Force-load at startup so all shader references are alive before any Shader.Find() calls.
+        // NOTE: We no longer call Shader.WarmupAllShaders() here — it blocked the main thread
+        // for 3-5+ seconds compiling every variant. Shaders compile on first use instead,
+        // which spreads the cost across gameplay rather than front-loading it.
         var inst = Instance;
         if (inst != null)
-        {
             Debug.Log($"[ShaderCollection] Loaded {inst.shaders.Length} shaders.");
-            // Pre-compile all shader variants to avoid first-frame hitches in builds
-            Shader.WarmupAllShaders();
-        }
     }
 }
