@@ -46,15 +46,15 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Maximum pan distance from area center.")]
     [SerializeField] private float panMaxDistance = 3f;
 
-    [Header("Zoom")]
-    [Tooltip("Amount added/removed per scroll tick (FOV degrees for perspective, ortho size units for orthographic).")]
-    [SerializeField, Range(0.001f, 1f)] private float zoomStep = 0.1f;
+    [Header("Zoom (Stepped)")]
+    [Tooltip("Discrete zoom levels (FOV or ortho size). Index 0 = most zoomed out, last = most zoomed in.")]
+    [SerializeField] private float[] _zoomSteps = { 110f, 90f, 70f, 50f, 35f };
 
-    [Tooltip("Minimum ortho size / FOV when zoomed in.")]
-    [SerializeField] private float zoomMin = 1f;
+    [Tooltip("Starting zoom step index (0-based).")]
+    [SerializeField] private int _defaultZoomStep = 1;
 
-    [Tooltip("Maximum ortho size / FOV when zoomed out.")]
-    [SerializeField] private float zoomMax = 15f;
+    [Tooltip("Lerp speed for smooth zoom transitions.")]
+    [SerializeField] private float _zoomLerpSpeed = 8f;
 
     [Header("World Bounds")]
     [Tooltip("Objects outside this box are recovered to the nearest surface.")]
@@ -138,7 +138,9 @@ public class ApartmentManager : MonoBehaviour
     private bool _presetOverrideActive;
 
     // Persistent zoom level (written to lens each frame)
-    private float _currentZoom = -1f; // -1 = uninitialized, use lens default
+    private int _currentZoomStep = -1; // -1 = uninitialized
+    private float _currentZoom = -1f; // smoothed zoom value for lerping
+    private float _targetZoom = -1f;  // target zoom from step
 
     // Pan offset (MMB drag, reset on area change)
     private Vector3 _panOffset;
@@ -277,8 +279,10 @@ public class ApartmentManager : MonoBehaviour
             browseCamera.Lens = pl;
             ApplyBrainOrthoMode(pl.ModeOverride == LensSettings.OverrideModes.Orthographic);
 
-            // Reset zoom so it re-reads from the restored lens on next scroll
+            // Reset zoom to default step
+            _currentZoomStep = -1;
             _currentZoom = -1f;
+            _targetZoom = -1f;
         }
     }
 
@@ -417,25 +421,37 @@ public class ApartmentManager : MonoBehaviour
     private void HandleZoomInput()
     {
         if (browseCamera == null) return;
+        if (_zoomSteps == null || _zoomSteps.Length == 0) return;
 
         // Skip zoom when ObjectGrabber is holding (scroll rotates held object)
         if (ObjectGrabber.IsHoldingObject) return;
 
-        float scroll = _scrollAction.ReadValue<float>();
-        if (Mathf.Abs(scroll) < 0.01f) return;
-
-        // Initialize from current lens on first scroll
-        if (_currentZoom < 0f)
+        // Initialize zoom step on first use
+        if (_currentZoomStep < 0)
         {
-            var lens = browseCamera.Lens;
-            bool isOrtho = lens.ModeOverride == LensSettings.OverrideModes.Orthographic;
-            _currentZoom = isOrtho ? lens.OrthographicSize : lens.FieldOfView;
+            _currentZoomStep = Mathf.Clamp(_defaultZoomStep, 0, _zoomSteps.Length - 1);
+            _targetZoom = _zoomSteps[_currentZoomStep];
+            _currentZoom = _targetZoom;
         }
 
-        // Normalize scroll — Unity reports ~120 per tick on most mice.
-        // Use only ±1 tick and apply zoomStep for consistent feel.
-        float normalizedScroll = Mathf.Clamp(scroll / 120f, -1f, 1f);
-        _currentZoom = Mathf.Clamp(_currentZoom - normalizedScroll * zoomStep, zoomMin, zoomMax);
+        float scroll = _scrollAction.ReadValue<float>();
+        if (Mathf.Abs(scroll) > 0.01f)
+        {
+            // Normalize scroll — Unity reports ~120 per tick on most mice
+            int direction = scroll > 0f ? 1 : -1;
+
+            // Scroll up (positive) = zoom in = higher index (lower FOV)
+            int newStep = Mathf.Clamp(_currentZoomStep + direction, 0, _zoomSteps.Length - 1);
+            if (newStep != _currentZoomStep)
+            {
+                _currentZoomStep = newStep;
+                _targetZoom = _zoomSteps[_currentZoomStep];
+            }
+        }
+
+        // Smooth lerp toward target
+        if (_targetZoom > 0f)
+            _currentZoom = Mathf.Lerp(_currentZoom, _targetZoom, Time.unscaledDeltaTime * _zoomLerpSpeed);
     }
 
     private void HandlePanInput()
