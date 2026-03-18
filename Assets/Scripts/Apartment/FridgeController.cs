@@ -115,8 +115,7 @@ public class FridgeController : MonoBehaviour
             && SimpleDrinkManager.Instance.CurrentState != SimpleDrinkManager.State.ChoosingRecipe)
             return;
 
-        // Only respond when viewing the kitchen (area 0)
-        if (ApartmentManager.Instance.CurrentAreaIndex != 0) return;
+        // Wall occlusion raycast (below) handles cross-room blocking — no area gate needed
 
         if (ObjectGrabber.IsHoldingObject) return;
         if (ObjectGrabber.ClickConsumedThisFrame) return;
