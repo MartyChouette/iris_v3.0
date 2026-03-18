@@ -236,6 +236,7 @@
   <a href="#mood">Mood</a>
   <a href="#walls">Wall Dissolve</a>
   <a href="#drinks">Drinks</a>
+  <a href="#grabfeel">Grab Feel</a>
   <a href="#pairing">Pairing</a>
   <a href="#highlights">Highlights</a>
   <a href="#atmosphere">Atmosphere</a>
@@ -707,8 +708,44 @@ flowchart LR
 </section>
 
 <!-- ============================================================ -->
+<section id="grabfeel">
+<h2><span class="num">13</span> Grab Feel Presets</h2>
+
+<p>The physics feel of picking up and moving objects is tuneable at runtime. Press <strong>F6</strong> to cycle through presets, or use the <strong>F3</strong> debug panel sliders for fine control.</p>
+
+<h3>Presets (F6 to cycle)</h3>
+<table>
+  <tr><th>Preset</th><th>Spring</th><th>Damper</th><th>Accel</th><th>Speed</th><th>Feel</th></tr>
+  <tr><td><strong>Default</strong></td><td>120</td><td>18</td><td>60</td><td>12</td><td>Snappy, direct &mdash; current behavior</td></tr>
+  <tr><td><strong>Plucky</strong></td><td>35</td><td>6</td><td>20</td><td>5</td><td>Resistant tug + bouncy overshoot &mdash; leaf-pulling feel</td></tr>
+  <tr><td><strong>Floaty</strong></td><td>25</td><td>12</td><td>15</td><td>4</td><td>Slow dreamy drift, no bounce &mdash; underwater feel</td></tr>
+  <tr><td><strong>Snappy</strong></td><td>500</td><td>40</td><td>200</td><td>25</td><td>Instant follow &mdash; arcade feel</td></tr>
+  <tr><td><strong>Heavy</strong></td><td>50</td><td>25</td><td>25</td><td>3</td><td>Sluggish, weighty &mdash; moving furniture feel</td></tr>
+</table>
+
+<h3>What the Parameters Mean</h3>
+<table>
+  <tr><th>Param</th><th>Low Value</th><th>High Value</th></tr>
+  <tr><td><strong>Spring</strong></td><td>Object lags behind cursor, stretchy</td><td>Object snaps to cursor instantly</td></tr>
+  <tr><td><strong>Damper</strong></td><td>Object bounces/oscillates past target</td><td>Object settles without overshoot</td></tr>
+  <tr><td><strong>Max Accel</strong></td><td>Object accelerates slowly</td><td>Object accelerates instantly</td></tr>
+  <tr><td><strong>Max Speed</strong></td><td>Object moves slowly even when pulled far</td><td>Object can fly across the room</td></tr>
+</table>
+
+<h3>Tuning Workflow</h3>
+<ol class="steps">
+  <li>Press <strong>F6</strong> to find the closest preset to what you want</li>
+  <li>Open <strong>F3</strong> debug panel, scroll to <strong>Grab</strong> section</li>
+  <li>Drag sliders to fine-tune (overrides the active preset)</li>
+  <li>Once happy, note the values and update the preset in <code>ObjectGrabber.cs</code> &rarr; <code>s_feelPresets</code></li>
+</ol>
+
+<p><strong>Nintendo-like feel tip:</strong> Start with Plucky. Increase Spring slightly (40&ndash;60) for less lag. Keep Damper low (4&ndash;8) for satisfying bounce on release. The key is the object should <em>resist</em> slightly, then <em>catch up</em> with a little wobble.</p>
+</section>
+
+<!-- ============================================================ -->
 <section id="pairing">
-<h2><span class="num">13</span> Item Pairing (Shoes, Dishes, Bowls)</h2>
+<h2><span class="num">14</span> Item Pairing (Shoes, Dishes, Bowls)</h2>
 
 <p>Items with a <code>PairableItem</code> component can snap together when the player holds one and clicks its match. Shoes pair with a specific partner (side-by-side), dishes and bowls pair with any of the same category (stacked).</p>
 
@@ -780,7 +817,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="highlights">
-<h2><span class="num">14</span> Highlight Styles</h2>
+<h2><span class="num">15</span> Highlight Styles</h2>
 
 <p>Objects with an <code>InteractableHighlight</code> component glow when the player hovers over them. Three visual styles are available, switchable at runtime with <strong>F5</strong>.</p>
 
@@ -823,7 +860,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="atmosphere">
-<h2><span class="num">15</span> Atmosphere &amp; Volumetric Lighting</h2>
+<h2><span class="num">16</span> Atmosphere &amp; Volumetric Lighting</h2>
 
 <p>The atmosphere system creates an FF8 / Parasite Eve / Shadow of the Colossus look: teal shadows, warm highlights, soft bloom, dust motes, and fake volumetric light shafts.</p>
 
@@ -895,7 +932,7 @@ flowchart LR
 
 <!-- ============================================================ -->
 <section id="bugreport">
-<h2><span class="num">16</span> Bug Reports &amp; Feedback (Discord)</h2>
+<h2><span class="num">17</span> Bug Reports &amp; Feedback (Discord)</h2>
 
 <p>Playtesters can report bugs and submit feedback directly from the game. Reports are sent to Discord webhooks and saved locally as JSON + screenshots.</p>
 
@@ -967,6 +1004,7 @@ flowchart LR
   <tr><td><code>F3</code></td><td>Toggle debug panel (grid snap, highlight, atmosphere, info)</td></tr>
   <tr><td><code>F4</code></td><td>Toggle PSX rendering</td></tr>
   <tr><td><code>F5</code></td><td>Cycle highlight style (Outline / RimGlow / SolidOverlay)</td></tr>
+  <tr><td><code>F6</code></td><td>Cycle grab feel (Default / Plucky / Floaty / Snappy / Heavy)</td></tr>
   <tr><td><code>F8</code></td><td>Playtest feedback form (Discord)</td></tr>
   <tr><td><code>F9</code></td><td>Bug report form (Discord)</td></tr>
   <tr><td><code>1</code> / <code>2</code> / <code>3</code></td><td>Apply camera presets</td></tr>
