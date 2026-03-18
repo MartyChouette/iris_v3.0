@@ -28366,9 +28366,14 @@ MonoBehaviour:
   parallaxSmoothing: 8
   panSpeed: 0.01
   panMaxDistance: 3
-  zoomStep: 3
-  zoomMin: 1
-  zoomMax: 15
+  _zoomSteps:
+  - 0.25
+  - 0.86
+  - 1.2
+  - 3.5
+  - 4.87
+  _defaultZoomStep: 1
+  _zoomLerpSpeed: 8
   worldBounds:
     m_Center: {x: -3, y: 1.5, z: 0}
     m_Extent: {x: 8, y: 4, z: 10}
