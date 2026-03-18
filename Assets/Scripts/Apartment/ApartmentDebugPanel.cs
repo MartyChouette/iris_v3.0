@@ -303,7 +303,7 @@ public class ApartmentDebugPanel : MonoBehaviour
             _ => OnHighlightParamChanged(), out _hlRimLabel);
         _hlRimSlider = GetLastSlider(contentParent);
 
-        TMP_Text hlSnapLabel, hlSnapResLabel, hlOffsetLabel, hlJitterLabel;
+        TMP_Text hlSnapResLabel = null, hlOffsetLabel = null, hlJitterLabel = null;
 
         AddSliderRow(contentParent, "HL Snap Res", 0f, 500f, 160f,
             val => { InteractableHighlight.HLSnapEnabled = val > 1f;
