@@ -42,6 +42,10 @@ public class SettingsPanel : MonoBehaviour
     [Header("Timing")]
     [SerializeField] private TMP_Dropdown _timerDropdown;
 
+    // ── Controls Tab ──────────────────────────────────────────
+    [Header("Controls")]
+    [SerializeField] private Toggle _invertScrollToggle;
+
     // ── Performance Tab ─────────────────────────────────────────
     [Header("Performance")]
     [SerializeField] private Slider _resolutionScaleSlider;
@@ -73,6 +77,7 @@ public class SettingsPanel : MonoBehaviour
         if (_resolutionScaleSlider != null) _resolutionScaleSlider.onValueChanged.AddListener(OnResolutionScaleChanged);
         if (_qualityDropdown != null)    _qualityDropdown.onValueChanged.AddListener(OnQualityChanged);
         if (_psxToggle != null)          _psxToggle.onValueChanged.AddListener(OnPSXChanged);
+        if (_invertScrollToggle != null) _invertScrollToggle.onValueChanged.AddListener(OnInvertScrollChanged);
 
         // Initialize tab buttons
         if (_tabButtons != null)
@@ -177,6 +182,9 @@ public class SettingsPanel : MonoBehaviour
         // Timing
         if (_timerDropdown != null) _timerDropdown.value = TimerMultiplierToIndex(AccessibilitySettings.TimerMultiplier);
 
+        // Controls
+        if (_invertScrollToggle != null) _invertScrollToggle.isOn = AccessibilitySettings.InvertScroll;
+
         // Performance
         if (_resolutionScaleSlider != null) _resolutionScaleSlider.value = AccessibilitySettings.ResolutionScale;
         UpdateResolutionScaleLabel();
@@ -279,6 +287,12 @@ public class SettingsPanel : MonoBehaviour
     {
         if (_suppressCallbacks) return;
         AccessibilitySettings.PSXEnabled = val;
+    }
+
+    private void OnInvertScrollChanged(bool val)
+    {
+        if (_suppressCallbacks) return;
+        AccessibilitySettings.InvertScroll = val;
     }
 
     // ── Reset Buttons ───────────────────────────────────────────

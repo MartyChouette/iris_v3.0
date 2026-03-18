@@ -58,15 +58,7 @@ public static class SettingsPanelBuilder
         containerRT.pivot = new Vector2(0.5f, 0.5f);
         containerRT.sizeDelta = new Vector2(1050, 700);
 
-        // Content area FIRST (so title/tabs render on top in sibling order)
-        var contentArea = CreatePanel(container.transform, "ContentArea", new Color(0.12f, 0.12f, 0.15f, 1f));
-        var contentRT = contentArea.GetComponent<RectTransform>();
-        contentRT.anchorMin = new Vector2(0, 0);
-        contentRT.anchorMax = new Vector2(1, 1);
-        contentRT.offsetMin = new Vector2(10, 50);   // bottom: space for close button
-        contentRT.offsetMax = new Vector2(-10, -94);  // top: space for title + tabs
-
-        // Title (created after content so it renders on top)
+        // Title (first in hierarchy = renders behind everything)
         var title = CreateText(container.transform, "Title", "Settings", 28);
         var titleRT = title.GetComponent<RectTransform>();
         titleRT.anchorMin = new Vector2(0, 1);
@@ -75,8 +67,16 @@ public static class SettingsPanelBuilder
         titleRT.anchoredPosition = new Vector2(0, -8);
         titleRT.sizeDelta = new Vector2(0, 40);
 
-        // Tab bar (created after content so it renders on top)
+        // Tab bar (behind content area so content panel covers tab bottoms cleanly)
         var tabBar = CreatePanel(container.transform, "TabBar", new Color(0, 0, 0, 0));
+
+        // Content area LAST (renders on top of tabs for clean overlap)
+        var contentArea = CreatePanel(container.transform, "ContentArea", new Color(0.12f, 0.12f, 0.15f, 1f));
+        var contentRT = contentArea.GetComponent<RectTransform>();
+        contentRT.anchorMin = new Vector2(0, 0);
+        contentRT.anchorMax = new Vector2(1, 1);
+        contentRT.offsetMin = new Vector2(10, 50);   // bottom: space for close button
+        contentRT.offsetMax = new Vector2(-10, -90);  // top: tabs peek out above
         var tabBarRT = tabBar.GetComponent<RectTransform>();
         tabBarRT.anchorMin = new Vector2(0, 1);
         tabBarRT.anchorMax = new Vector2(1, 1);
@@ -157,8 +157,10 @@ public static class SettingsPanelBuilder
         var controlsVLG = tabPanels[4].AddComponent<VerticalLayoutGroup>();
         ConfigureVLG(controlsVLG);
 
+        var invertScrollToggle = CreateToggleRow(tabPanels[4].transform, "Invert Scroll Zoom");
+
         var controlsText = CreateText(tabPanels[4].transform, "ControlsInfo",
-            "Rebind controls in the Controls page of the pause menu.\n\nKeyboard + Mouse is the primary input method.",
+            "Keyboard + Mouse is the primary input method.\nScroll wheel zooms the camera.",
             LabelFontSize);
         controlsText.GetComponent<TMP_Text>().alignment = TextAlignmentOptions.TopLeft;
 
@@ -236,6 +238,9 @@ public static class SettingsPanelBuilder
         spSO.FindProperty("_resolutionScaleLabel").objectReferenceValue = resSlider.label;
         spSO.FindProperty("_qualityDropdown").objectReferenceValue = qualDropdown;
         spSO.FindProperty("_psxToggle").objectReferenceValue = psxToggle;
+
+        // Controls tab
+        spSO.FindProperty("_invertScrollToggle").objectReferenceValue = invertScrollToggle;
 
         spSO.ApplyModifiedPropertiesWithoutUndo();
 
