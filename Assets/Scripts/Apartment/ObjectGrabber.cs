@@ -288,14 +288,6 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (_held == null || _heldRb == null) return;
 
-        // When hovering a surface, snap directly so placement feels instant
-        if (_currentSurface != null)
-        {
-            _heldRb.linearVelocity = Vector3.zero;
-            _heldRb.position = _grabTarget;
-            return;
-        }
-
         // Tether snap-back
         if (Vector3.Distance(_heldRb.position, _grabTarget) > maxTetherDistance)
         {
@@ -303,7 +295,8 @@ public class ObjectGrabber : MonoBehaviour
             _heldRb.linearVelocity = Vector3.zero;
         }
 
-        // Spring-damper pull (free-floating, no surface)
+        // Spring-damper pull — always applied so grab feel presets work
+        // even when hovering a surface. Place() handles final exact positioning.
         GetActiveGrabParams(out float activeSpring, out float activeDamper,
             out float activeMaxAccel, out float activeMaxSpeed);
 
