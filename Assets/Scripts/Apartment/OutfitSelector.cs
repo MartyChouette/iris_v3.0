@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 
@@ -35,8 +34,6 @@ public class OutfitSelector : MonoBehaviour
     [SerializeField] private AudioClip _openSFX;
     [SerializeField] private AudioClip _selectSFX;
 
-    private InputAction _clickAction;
-    private InputAction _mousePositionAction;
     private OutfitDefinition _selectedOutfit;
     private bool _isOpen;
 
@@ -52,9 +49,6 @@ public class OutfitSelector : MonoBehaviour
         }
         Instance = this;
 
-        _clickAction = new InputAction("OutfitClick", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePositionAction = new InputAction("OutfitMousePos", InputActionType.Value, "<Mouse>/position");
-
         if (_selectionPanel != null)
             _selectionPanel.SetActive(false);
 
@@ -63,17 +57,7 @@ public class OutfitSelector : MonoBehaviour
             _selectedOutfit = _availableOutfits[0];
     }
 
-    private void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePositionAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePositionAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -84,7 +68,7 @@ public class OutfitSelector : MonoBehaviour
     {
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
         if (_isOpen) return;
-        if (!_clickAction.WasPressedThisFrame()) return;
+        if (!IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame()) return;
 
         // Only during Browsing apartment state
         if (ApartmentManager.Instance == null) return;
@@ -94,7 +78,7 @@ public class OutfitSelector : MonoBehaviour
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return;
 
-        Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
+        Vector2 mousePos = IrisInput.CursorPosition;
         var ray = _mainCamera.ScreenPointToRay(mousePos);
 
         if (Physics.Raycast(ray, out var hit, 20f, _wardrobeLayer))

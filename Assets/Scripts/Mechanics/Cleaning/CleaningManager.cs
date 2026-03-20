@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Scene-scoped singleton for ambient cleaning. Sponge only — click+drag
@@ -44,9 +43,7 @@ public class CleaningManager : MonoBehaviour
     [Tooltip("SFX played when an individual stain is fully cleaned.")]
     [SerializeField] private AudioClip _stainCompleteSFX;
 
-    // Input
-    private InputAction _mousePosition;
-    private InputAction _mouseClick;
+    // Input managed by IrisInput singleton
 
     /// <summary>Fired once on the rising edge of a wipe (mouse press on a stain).</summary>
     public static event System.Action OnWipeStarted;
@@ -204,9 +201,6 @@ public class CleaningManager : MonoBehaviour
         }
         Instance = this;
 
-        _mousePosition = new InputAction("CleanPointer", InputActionType.Value, "<Mouse>/position");
-        _mouseClick = new InputAction("CleanClick", InputActionType.Button, "<Mouse>/leftButton");
-
         if (_mainCamera == null)
             _mainCamera = Camera.main;
 
@@ -238,17 +232,7 @@ public class CleaningManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    void OnEnable()
-    {
-        _mousePosition.Enable();
-        _mouseClick.Enable();
-    }
-
-    void OnDisable()
-    {
-        _mousePosition.Disable();
-        _mouseClick.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     // ── Update ──────────────────────────────────────────────────────
 
@@ -288,7 +272,7 @@ public class CleaningManager : MonoBehaviour
 
         _sfxCooldown -= Time.deltaTime;
 
-        Vector2 pointer = _mousePosition.ReadValue<Vector2>();
+        Vector2 pointer = IrisInput.CursorPosition;
         Ray ray = _mainCamera.ScreenPointToRay(pointer);
 
         bool hit = Physics.Raycast(ray, out RaycastHit hitInfo, 100f, _cleanableLayer);
@@ -325,7 +309,7 @@ public class CleaningManager : MonoBehaviour
                 _spongeLingerTimer = SpongeLingerTime; // reset linger
                 SetSpongeVisual(toolPos, true);
 
-                if (_mouseClick.IsPressed() && _hoveredSurface != null)
+                if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed() && _hoveredSurface != null)
                 {
                     if (!_wasPressingLastFrame)
                     {
@@ -354,7 +338,7 @@ public class CleaningManager : MonoBehaviour
             RequestSpongeHide();
         }
 
-        _wasPressingLastFrame = _mouseClick.IsPressed();
+        _wasPressingLastFrame = IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed();
 
         // Check all-clean
         if (!_allCleanFired && AllClean)

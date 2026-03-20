@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Cinemachine;
@@ -65,9 +64,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
     public UnityEvent<DatePersonalDefinition> OnDateSelected;
     public UnityEvent OnNewspaperDone;
 
-    // ─── Input ────────────────────────────────────────────────────
-    private InputAction _clickAction;
-    private InputAction _mousePositionAction;
+    // Input managed by IrisInput singleton
 
     // ─── State ────────────────────────────────────────────────────
     public State CurrentState { get; private set; } = State.Done;
@@ -138,9 +135,6 @@ public class NewspaperManager : MonoBehaviour, IStationManager
                 _backgroundImage = newspaperOverlay.GetComponent<Image>();
         }
 
-        _clickAction = new InputAction("Click", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePositionAction = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
-
         HideAllUI();
         _waitCallingDuration = new WaitForSeconds(callingDuration);
 
@@ -148,17 +142,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
             dayManager.OnNewNewspaper.AddListener(OnNewNewspaper);
     }
 
-    private void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePositionAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePositionAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {

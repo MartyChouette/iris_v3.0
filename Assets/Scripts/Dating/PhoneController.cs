@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Phone that can be clicked from any camera (ambient) or used as a station.
@@ -42,8 +41,6 @@ public class PhoneController : MonoBehaviour, IStationManager
     private PhoneState _state = PhoneState.Idle;
     private DatePersonalDefinition _pendingDate;
     private float _ringTimer;
-    private InputAction _clickAction;
-    private InputAction _mousePositionAction;
     private Camera _mainCamera;
     private static readonly WaitForSeconds s_waitCallSequence = new WaitForSeconds(0.5f);
 
@@ -68,26 +65,13 @@ public class PhoneController : MonoBehaviour, IStationManager
         }
         Instance = this;
 
-        _clickAction = new InputAction("PhoneClick", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePositionAction = new InputAction("PhoneMousePos", InputActionType.Value, "<Mouse>/position");
-
         if (ringVisual != null)
             ringVisual.SetActive(false);
 
         _mainCamera = Camera.main;
     }
 
-    private void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePositionAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePositionAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -104,7 +88,7 @@ public class PhoneController : MonoBehaviour, IStationManager
         {
             if (DayPhaseManager.Instance != null
                 && DayPhaseManager.Instance.CurrentPhase == DayPhaseManager.DayPhase.Exploration
-                && _clickAction.WasPressedThisFrame())
+                && IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
             {
                 if (CheckPhoneRaycast())
                 {
@@ -146,7 +130,7 @@ public class PhoneController : MonoBehaviour, IStationManager
             }
 
             // Ambient click detection
-            if (_clickAction.WasPressedThisFrame() && CheckPhoneRaycast())
+            if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame() && CheckPhoneRaycast())
             {
                 AnswerPhone();
             }
@@ -223,7 +207,7 @@ public class PhoneController : MonoBehaviour, IStationManager
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return false;
 
-        Vector2 screenPos = _mousePositionAction.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = _mainCamera.ScreenPointToRay(screenPos);
 
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, phoneLayer))

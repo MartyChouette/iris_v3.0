@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
@@ -74,7 +73,6 @@ public class MainMenuManager : MonoBehaviour
     private MenuState _state;
     private GameModeConfig _selectedConfig;
     private bool _loading;
-    private InputAction _escapeAction;
     private bool _quitConfirmShowing;
     private GameObject _quitConfirmPanel;
 
@@ -86,15 +84,7 @@ public class MainMenuManager : MonoBehaviour
     // Lifecycle
     // ═══════════════════════════════════════════════════════════════
 
-    private void Awake()
-    {
-        _escapeAction = new InputAction("MenuEscape", InputActionType.Button, "<Keyboard>/escape");
-    }
-
-    private void OnEnable() => _escapeAction.Enable();
-    private void OnDisable() => _escapeAction.Disable();
-
-    private void OnDestroy() => _escapeAction?.Dispose();
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void Start()
     {
@@ -169,7 +159,8 @@ public class MainMenuManager : MonoBehaviour
 
     private void Update()
     {
-        bool pressed = _escapeAction.WasPressedThisFrame() || Input.GetKeyDown(KeyCode.Escape);
+        bool pressed = (IrisInput.Instance != null && IrisInput.Instance.Pause.WasPressedThisFrame())
+                    || Input.GetKeyDown(KeyCode.Escape);
         if (!pressed || _loading) return;
 
         if (_quitConfirmShowing)

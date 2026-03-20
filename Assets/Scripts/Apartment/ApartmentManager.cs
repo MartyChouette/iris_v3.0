@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using TMPro;
 using Iris.Apartment;
@@ -99,16 +98,6 @@ public class ApartmentManager : MonoBehaviour
     private const int PriorityInactive = 0;
 
     // ──────────────────────────────────────────────────────────────
-    // Inline InputActions
-    // ──────────────────────────────────────────────────────────────
-    private InputAction _navigateLeftAction;
-    private InputAction _navigateRightAction;
-    private InputAction _mousePositionAction;
-    private InputAction _scrollAction;
-    private InputAction _panButtonAction;
-    private InputAction _mouseDeltaAction;
-
-    // ──────────────────────────────────────────────────────────────
     // Runtime state
     // ──────────────────────────────────────────────────────────────
     public State CurrentState { get; private set; } = State.Browsing;
@@ -166,47 +155,9 @@ public class ApartmentManager : MonoBehaviour
         if (brain == null)
             Debug.LogError("[ApartmentManager] No CinemachineBrain found in scene.");
 
-        // Inline InputActions
-        _navigateLeftAction = new InputAction("NavLeft", InputActionType.Button);
-        _navigateLeftAction.AddBinding("<Keyboard>/a");
-        _navigateLeftAction.AddBinding("<Keyboard>/leftArrow");
-
-        _navigateRightAction = new InputAction("NavRight", InputActionType.Button);
-        _navigateRightAction.AddBinding("<Keyboard>/d");
-        _navigateRightAction.AddBinding("<Keyboard>/rightArrow");
-
-        _mousePositionAction = new InputAction("MousePosition", InputActionType.Value,
-            "<Mouse>/position");
-
-        _scrollAction = new InputAction("Scroll", InputActionType.Value,
-            "<Mouse>/scroll/y");
-
-        _panButtonAction = new InputAction("PanButton", InputActionType.Button,
-            "<Mouse>/middleButton");
-
-        _mouseDeltaAction = new InputAction("MouseDelta", InputActionType.Value,
-            "<Mouse>/delta");
     }
 
-    private void OnEnable()
-    {
-        _navigateLeftAction.Enable();
-        _navigateRightAction.Enable();
-        _mousePositionAction.Enable();
-        _scrollAction.Enable();
-        _panButtonAction.Enable();
-        _mouseDeltaAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _navigateLeftAction.Disable();
-        _navigateRightAction.Disable();
-        _mousePositionAction.Disable();
-        _scrollAction.Disable();
-        _panButtonAction.Disable();
-        _mouseDeltaAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void Start()
     {
@@ -411,9 +362,10 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandleBrowsingInput()
     {
-        if (_navigateLeftAction.WasPressedThisFrame())
+        if (IrisInput.Instance == null) return;
+        if (IrisInput.Instance.NavigateLeft.WasPressedThisFrame())
             CycleArea(-1);
-        else if (_navigateRightAction.WasPressedThisFrame())
+        else if (IrisInput.Instance.NavigateRight.WasPressedThisFrame())
             CycleArea(1);
     }
 
@@ -441,7 +393,7 @@ public class ApartmentManager : MonoBehaviour
             _currentZoom = _targetZoom;
         }
 
-        float scroll = _scrollAction.ReadValue<float>();
+        float scroll = IrisInput.Instance != null ? IrisInput.Instance.Scroll.ReadValue<float>() : 0f;
         if (Mathf.Abs(scroll) > 0.01f)
         {
             // Scroll up = zoom in. Respect invert scroll setting.
@@ -462,9 +414,9 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandlePanInput()
     {
-        if (!_panButtonAction.IsPressed()) return;
+        if (IrisInput.Instance == null || !IrisInput.Instance.PanButton.IsPressed()) return;
 
-        Vector2 delta = _mouseDeltaAction.ReadValue<Vector2>();
+        Vector2 delta = IrisInput.Instance.PanDelta.ReadValue<Vector2>();
         if (delta.sqrMagnitude < 0.01f) return;
 
         // Move along camera-local right/up axes
@@ -581,7 +533,7 @@ public class ApartmentManager : MonoBehaviour
 
         if (parallaxMaxOffset > 0f && !AccessibilitySettings.ReduceMotion)
         {
-            Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
+            Vector2 mousePos = IrisInput.CursorPosition;
             float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
             float ny = (mousePos.y / Screen.height - 0.5f) * 2f;
             nx = Mathf.Clamp(nx, -1f, 1f);
@@ -671,7 +623,7 @@ public class ApartmentManager : MonoBehaviour
         var cam = _cachedMainCamera;
         if (cam == null) return;
 
-        Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
+        Vector2 mousePos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(mousePos);
 
         // ── Find nearest InteractableHighlight to the cursor ray ──

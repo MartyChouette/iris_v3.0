@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
 /// <summary>
@@ -35,7 +34,6 @@ public class CursorWorldShadow : MonoBehaviour
     [SerializeField] private float _smoothSpeed = 25f;
 
     private Camera _cam;
-    private InputAction _mousePosition;
     private GameObject _shadowQuad;
     private MeshRenderer _shadowRenderer;
     private Material _shadowMat;
@@ -48,19 +46,10 @@ public class CursorWorldShadow : MonoBehaviour
 
     private void Awake()
     {
-        _mousePosition = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
         BuildQuad();
     }
 
-    private void OnEnable()
-    {
-        _mousePosition.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _mousePosition.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -152,7 +141,7 @@ public class CursorWorldShadow : MonoBehaviour
 
         SyncCursorTexture();
 
-        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = _cam.ScreenPointToRay(screenPos);
 
         if (Physics.Raycast(ray, out RaycastHit hit, _maxDistance, _surfaceLayers))

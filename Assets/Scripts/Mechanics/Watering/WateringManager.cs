@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Ambient watering system — always active, not a station.
@@ -58,10 +57,7 @@ public class WateringManager : MonoBehaviour
     [HideInInspector] public float lastOverflowScore;
     [HideInInspector] public float lastBonusScore;
 
-    // ── Input ────────────────────────────────────────────────────────
-
-    private InputAction _clickAction;
-    private InputAction _mousePosition;
+    // Input managed by IrisInput singleton
 
     // ── Runtime ──────────────────────────────────────────────────────
 
@@ -84,9 +80,6 @@ public class WateringManager : MonoBehaviour
         }
         Instance = this;
 
-        _clickAction = new InputAction("WaterClick", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePosition = new InputAction("WaterPointer", InputActionType.Value, "<Mouse>/position");
-
         if (_mainCamera == null)
             _mainCamera = Camera.main;
     }
@@ -96,17 +89,7 @@ public class WateringManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePosition.Enable();
-    }
-
-    void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePosition.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     // ── Update dispatch ──────────────────────────────────────────────
 
@@ -138,9 +121,9 @@ public class WateringManager : MonoBehaviour
 
     private void UpdateIdle()
     {
-        Vector2 pointer = _mousePosition.ReadValue<Vector2>();
+        Vector2 pointer = IrisInput.CursorPosition;
 
-        if (_clickAction.WasPressedThisFrame())
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
         {
             Ray ray = _mainCamera.ScreenPointToRay(pointer);
             if (Physics.Raycast(ray, out RaycastHit hit, 100f, _plantLayer))
@@ -196,7 +179,7 @@ public class WateringManager : MonoBehaviour
                 _pot.TargetLevel = OscillatingTarget;
         }
 
-        if (_clickAction.IsPressed())
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed())
         {
             if (_pot != null)
                 _pot.Pour(Time.deltaTime);
@@ -268,9 +251,9 @@ public class WateringManager : MonoBehaviour
     private void UpdateScoring()
     {
         // Allow clicking the next plant to interrupt the score display
-        if (_clickAction.WasPressedThisFrame())
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
         {
-            Vector2 pointer = _mousePosition.ReadValue<Vector2>();
+            Vector2 pointer = IrisInput.CursorPosition;
             Ray ray = _mainCamera.ScreenPointToRay(pointer);
             if (Physics.Raycast(ray, out RaycastHit hit, 100f, _plantLayer))
             {

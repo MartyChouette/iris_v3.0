@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 
@@ -31,8 +30,6 @@ public class DoorGreetingController : MonoBehaviour
     [Tooltip("SFX played when the door is answered.")]
     [SerializeField] private AudioClip _doorOpenSFX;
 
-    private InputAction _clickAction;
-    private InputAction _mousePositionAction;
     private bool _knockActive;
 
     // Screen-space overlay
@@ -52,9 +49,6 @@ public class DoorGreetingController : MonoBehaviour
         }
         Instance = this;
 
-        _clickAction = new InputAction("DoorClick", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePositionAction = new InputAction("DoorMousePos", InputActionType.Value, "<Mouse>/position");
-
         if (_mainCamera == null)
             _mainCamera = Camera.main;
 
@@ -64,17 +58,7 @@ public class DoorGreetingController : MonoBehaviour
         BuildOverlay();
     }
 
-    private void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePositionAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePositionAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -88,7 +72,7 @@ public class DoorGreetingController : MonoBehaviour
         if (ObjectGrabber.IsHoldingObject) return;
         if (ObjectGrabber.ClickConsumedThisFrame) return;
 
-        if (_clickAction.WasPressedThisFrame() && CheckDoorRaycast())
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame() && CheckDoorRaycast())
         {
             _knockActive = false;
             StartCoroutine(DoorAnsweredSequence());
@@ -152,7 +136,7 @@ public class DoorGreetingController : MonoBehaviour
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return false;
 
-        Vector2 screenPos = _mousePositionAction.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = _mainCamera.ScreenPointToRay(screenPos);
 
         return Physics.Raycast(ray, out _, 100f, _doorLayer);

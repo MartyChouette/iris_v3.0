@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Simple perfect-pour drink station — pick a recipe, click the glass, hold to pour, release to score.
@@ -67,10 +66,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
     [HideInInspector] public float lastBonusScore;
     [HideInInspector] public float lastOverflowScore;
 
-    // ── Input ────────────────────────────────────────────────────────
-
-    private InputAction _clickAction;
-    private InputAction _mousePosition;
+    // Input managed by IrisInput singleton
 
     // ── Runtime ──────────────────────────────────────────────────────
 
@@ -97,9 +93,6 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         }
         Instance = this;
 
-        _clickAction = new InputAction("DrinkClick", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePosition = new InputAction("DrinkPointer", InputActionType.Value, "<Mouse>/position");
-
         if (_mainCamera == null)
             _mainCamera = Camera.main;
     }
@@ -109,17 +102,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         if (Instance == this) Instance = null;
     }
 
-    void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePosition.Enable();
-    }
-
-    void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePosition.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     // ── Update dispatch ──────────────────────────────────────────────
 
@@ -208,9 +191,9 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         // First click must hit the glass to begin pouring
         if (!_pourStarted)
         {
-            if (_clickAction.WasPressedThisFrame())
+            if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
             {
-                Vector2 pointer = _mousePosition.ReadValue<Vector2>();
+                Vector2 pointer = IrisInput.CursorPosition;
                 Ray ray = _mainCamera.ScreenPointToRay(pointer);
                 if (Physics.Raycast(ray, out RaycastHit hit, 100f, _glassLayer))
                 {
@@ -224,7 +207,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
             return;
         }
 
-        if (_clickAction.IsPressed())
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed())
         {
             float dt = Time.deltaTime;
             float rate = _activeRecipe != null ? _activeRecipe.pourRate : 0.15f;
@@ -262,7 +245,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
             _foamLevel = Mathf.Max(0f, _foamLevel - settleRate * Time.deltaTime);
 
             // Mouse released after pouring began → score
-            if (_clickAction.WasReleasedThisFrame() && _fillLevel > 0f)
+            if (IrisInput.Instance != null && IrisInput.Instance.Click.WasReleasedThisFrame() && _fillLevel > 0f)
             {
                 CalculateScore();
             }

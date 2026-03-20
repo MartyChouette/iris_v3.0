@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Click-to-open fridge door. Visual interaction during Selected apartment state.
@@ -42,9 +41,7 @@ public class FridgeController : MonoBehaviour
     [Tooltip("Played when the door closes.")]
     [SerializeField] private AudioClip _closeSFX;
 
-    // Inline InputActions (project convention)
-    private InputAction _clickAction;
-    private InputAction _mousePositionAction;
+    // Input managed by IrisInput singleton
 
     private enum DoorState { Closed, Opening, Open, Closing }
     private DoorState _state = DoorState.Closed;
@@ -65,9 +62,6 @@ public class FridgeController : MonoBehaviour
         }
         Instance = this;
 
-        _clickAction = new InputAction("FridgeClick", InputActionType.Button, "<Mouse>/leftButton");
-        _mousePositionAction = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
-
         if (_doorPivot != null)
         {
             _closedRotation = _doorPivot.localRotation;
@@ -78,17 +72,7 @@ public class FridgeController : MonoBehaviour
             _interiorLight.enabled = false;
     }
 
-    private void OnEnable()
-    {
-        _clickAction.Enable();
-        _mousePositionAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _clickAction.Disable();
-        _mousePositionAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -103,7 +87,7 @@ public class FridgeController : MonoBehaviour
         UpdateBlinkGuide();
 
         if (_state != DoorState.Closed && _state != DoorState.Open) return;
-        if (!_clickAction.WasPressedThisFrame()) return;
+        if (IrisInput.Instance == null || !IrisInput.Instance.Click.WasPressedThisFrame()) return;
 
         // Only respond during Browsing apartment state
         if (ApartmentManager.Instance == null) return;
@@ -122,7 +106,7 @@ public class FridgeController : MonoBehaviour
 
         if (_mainCamera == null) return;
 
-        Vector2 mousePos = _mousePositionAction.ReadValue<Vector2>();
+        Vector2 mousePos = IrisInput.CursorPosition;
         var ray = _mainCamera.ScreenPointToRay(mousePos);
 
         // Two-pass raycast: check if a wall is closer than the fridge (prevents clicking through walls)

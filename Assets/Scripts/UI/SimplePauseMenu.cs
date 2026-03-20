@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -13,7 +12,6 @@ public class SimplePauseMenu : MonoBehaviour
     [SerializeField] private GameObject _pauseRoot;
     [SerializeField] private SettingsPanel _settingsPanel;
 
-    private InputAction _pauseAction;
     private bool _isPaused;
 
     private void Awake()
@@ -26,21 +24,11 @@ public class SimplePauseMenu : MonoBehaviour
         }
         Instance = this;
 
-        _pauseAction = new InputAction("Pause", InputActionType.Button, "<Keyboard>/escape");
-
         if (_pauseRoot != null)
             _pauseRoot.SetActive(false);
     }
 
-    private void OnEnable()
-    {
-        _pauseAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _pauseAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -52,7 +40,7 @@ public class SimplePauseMenu : MonoBehaviour
         // Check both InputAction and legacy Input as fallback —
         // InputAction.WasPressedThisFrame can fail at timeScale 0
         // if Input System is in FixedUpdate processing mode.
-        bool pressed = _pauseAction.WasPressedThisFrame()
+        bool pressed = (IrisInput.Instance != null && IrisInput.Instance.Pause.WasPressedThisFrame())
                     || Input.GetKeyDown(KeyCode.Escape);
 
         if (pressed)

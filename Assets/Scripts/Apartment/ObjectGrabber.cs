@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
 public class ObjectGrabber : MonoBehaviour
@@ -125,11 +124,7 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Max distance between grab target and held object before teleporting to catch up.")]
     [SerializeField] private float maxTetherDistance = 3f;
 
-    // Inline InputActions
-    private InputAction _mousePosition;
-    private InputAction _mouseClick;
-    private InputAction _gridToggle;
-    private InputAction _scrollAction;
+    // Input managed by IrisInput singleton
 
     private bool _isEnabled;
     private bool _gridSnap = true;
@@ -187,29 +182,10 @@ public class ObjectGrabber : MonoBehaviour
         if (cam == null)
             cam = Camera.main;
 
-        _mousePosition = new InputAction("MousePos", InputActionType.Value, "<Mouse>/position");
-        _mouseClick = new InputAction("MouseClick", InputActionType.Button, "<Mouse>/leftButton");
-        _gridToggle = new InputAction("GridToggle", InputActionType.Button, "<Keyboard>/g");
-        _scrollAction = new InputAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
-
         BuildShadow();
     }
 
-    private void OnEnable()
-    {
-        _mousePosition.Enable();
-        _mouseClick.Enable();
-        _gridToggle.Enable();
-        _scrollAction.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _mousePosition.Disable();
-        _mouseClick.Disable();
-        _gridToggle.Disable();
-        _scrollAction.Disable();
-    }
+    // Input managed by IrisInput singleton — no local enable/disable needed.
 
     private void OnDestroy()
     {
@@ -224,7 +200,7 @@ public class ObjectGrabber : MonoBehaviour
 
         if (!_isEnabled) return;
 
-        if (_gridToggle.WasPressedThisFrame())
+        if (IrisInput.Instance != null && IrisInput.Instance.GridToggle.WasPressedThisFrame())
         {
             _gridSnap = !_gridSnap;
             Debug.Log($"[ObjectGrabber] Grid snap: {(_gridSnap ? "ON" : "OFF")}");
@@ -234,7 +210,7 @@ public class ObjectGrabber : MonoBehaviour
         if (Time.frameCount != s_lastConsumedFrame)
             ClickConsumedThisFrame = false;
 
-        if (_mouseClick.WasPressedThisFrame())
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
         {
             // Block game-world clicks when pointer is over UI
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
@@ -323,7 +299,7 @@ public class ObjectGrabber : MonoBehaviour
 
     private void TryPickUp()
     {
-        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
@@ -617,7 +593,7 @@ public class ObjectGrabber : MonoBehaviour
         var heldPairable = _held.GetComponent<PairableItem>();
         if (heldPairable == null || heldPairable.IsPaired) return false;
 
-        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
@@ -647,7 +623,7 @@ public class ObjectGrabber : MonoBehaviour
         var heldStack = _held.GetComponent<StackablePlate>();
         if (heldStack == null) return false;
 
-        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
@@ -775,7 +751,7 @@ public class ObjectGrabber : MonoBehaviour
 
     private void UpdateGrabTarget()
     {
-        Vector2 screenPos = _mousePosition.ReadValue<Vector2>();
+        Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);
 
         bool foundSurface = false;
@@ -881,7 +857,7 @@ public class ObjectGrabber : MonoBehaviour
 
     private void UpdateScrollInput()
     {
-        float scroll = _scrollAction.ReadValue<float>();
+        float scroll = IrisInput.Instance != null ? IrisInput.Instance.Scroll.ReadValue<float>() : 0f;
         if (Mathf.Abs(scroll) < 0.01f) return;
 
         float angle = scrollRotateStep * Mathf.Sign(scroll);
