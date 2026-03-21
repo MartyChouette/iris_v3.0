@@ -21,11 +21,18 @@ public class AudioManager : MonoBehaviour
     private static void OnSceneCheck(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         if (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive) return;
-        if (Instance != null) return;
 
-        var go = new GameObject("AudioManager (Auto)");
-        go.AddComponent<AudioManager>();
-        Debug.Log("[AudioManager] Auto-spawned — no existing instance found.");
+        if (Instance == null)
+        {
+            var go = new GameObject("AudioManager (Auto)");
+            go.AddComponent<AudioManager>();
+            Debug.Log("[AudioManager] Auto-spawned — no existing instance found.");
+        }
+        else
+        {
+            // Re-check AudioListener after each scene load (camera may have changed)
+            Instance.EnsureAudioListener();
+        }
     }
 
     [Header("Audio Channels (2D)")]
@@ -72,6 +79,8 @@ public class AudioManager : MonoBehaviour
         EnsureSource(ref musicSource, "Audio_Music");
         EnsureSource(ref environmentSource, "Audio_Environment");
         EnsureSource(ref uiSource, "Audio_UI");
+
+        EnsureAudioListener();
 
         AccessibilitySettings.OnSettingsChanged += ApplyVolumeSettings;
         ApplyVolumeSettings();
@@ -130,6 +139,28 @@ public class AudioManager : MonoBehaviour
 
         if (src.transform.parent != transform)
             src.transform.SetParent(transform, worldPositionStays: true);
+    }
+
+    /// <summary>
+    /// Ensures an AudioListener exists somewhere in the scene.
+    /// Without one, Unity plays zero audio. Prefers Camera.main;
+    /// falls back to this GameObject if no camera is found.
+    /// </summary>
+    private void EnsureAudioListener()
+    {
+        if (FindAnyObjectByType<AudioListener>() != null) return;
+
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            cam.gameObject.AddComponent<AudioListener>();
+            Debug.Log("[AudioManager] Added missing AudioListener to main camera.");
+        }
+        else
+        {
+            gameObject.AddComponent<AudioListener>();
+            Debug.Log("[AudioManager] Added AudioListener to AudioManager (no main camera found).");
+        }
     }
 
     private static bool IsValid(AudioSource src) => src != null;

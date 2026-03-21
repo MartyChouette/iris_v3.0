@@ -30,7 +30,10 @@ public class RecordDefinition : ScriptableObject
     public float moodValue = 0.3f;
 
     [Header("Audio")]
-    [Tooltip("Path to music clip in Resources folder (e.g. 'Music/MyTrack'). Loaded on demand to avoid bloating scene load.")]
+    [Tooltip("Direct clip reference (legacy SOs use this). Loaded when the SO is deserialized.")]
+    public AudioClip musicClip;
+
+    [Tooltip("Path to music clip in Resources folder (e.g. 'Music/MyTrack'). Takes priority over direct reference when set.")]
     public string musicClipPath;
 
     [Tooltip("Playback volume (0-1).")]
@@ -40,8 +43,8 @@ public class RecordDefinition : ScriptableObject
     private AudioClip _cachedClip;
 
     /// <summary>
-    /// Lazy-loads the music clip from Resources on first access.
-    /// Avoids loading all record audio during scene deserialization.
+    /// Returns the music clip. Prefers musicClipPath (Resources.Load) if set,
+    /// falls back to the direct musicClip reference for backward compatibility.
     /// </summary>
     public AudioClip MusicClip
     {
@@ -49,7 +52,9 @@ public class RecordDefinition : ScriptableObject
         {
             if (_cachedClip == null && !string.IsNullOrEmpty(musicClipPath))
                 _cachedClip = Resources.Load<AudioClip>(musicClipPath);
-            return _cachedClip;
+            if (_cachedClip != null)
+                return _cachedClip;
+            return musicClip;
         }
     }
 }
