@@ -421,20 +421,23 @@ public class DayPhaseManager : MonoBehaviour
         switch (phase)
         {
             case DayPhase.Morning:
+                RecordSlot.Instance?.Stop(); // full stop between days
                 StartCoroutine(MorningTransition());
                 break;
             case DayPhase.Exploration:
+                AudioManager.Instance?.UnduckMusic(1f);
                 StartCoroutine(ExplorationTransition());
                 break;
             case DayPhase.DateInProgress:
-                // Stop prep timer — date is in progress
+                AudioManager.Instance?.DuckMusic(0.15f, 0.5f);
                 StopPrepTimer();
                 break;
             case DayPhase.FlowerTrimming:
+                AudioManager.Instance?.DuckMusic(0.1f, 0.5f);
                 StartCoroutine(FlowerTrimmingTransition());
                 break;
             case DayPhase.Evening:
-                // DateEndScreen shows via existing DateSessionManager flow
+                AudioManager.Instance?.UnduckMusic(1.5f);
                 break;
         }
 
@@ -711,7 +714,7 @@ public class DayPhaseManager : MonoBehaviour
     private void DismissAllStationUI()
     {
         WateringManager.Instance?.ForceIdle();
-        RecordSlot.Instance?.Stop();
+        // Record music continues across phases — duck/unduck handles volume
         SimpleDrinkManager.Instance?.ForceIdle();
         FridgeController.Instance?.CloseDoor();
 

@@ -204,6 +204,7 @@ public class AudioManager : MonoBehaviour
     public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true)
     {
         if (clip == null || !IsValid(musicSource)) return;
+        _preDuckVolume = -1f; // clear duck state on new track
         musicSource.clip = clip;
         musicSource.volume = volume * _masterVol * _musicVol;
         musicSource.loop = loop;
@@ -213,6 +214,7 @@ public class AudioManager : MonoBehaviour
     public void StopMusic(float fadeTime = 0f)
     {
         if (!IsValid(musicSource)) return;
+        _preDuckVolume = -1f;
 
         if (fadeTime <= 0f)
         {
@@ -244,6 +246,55 @@ public class AudioManager : MonoBehaviour
             musicSource.Stop();
             musicSource.volume = start;
         }
+    }
+
+    // ─── Music Duck (lower volume temporarily, then restore) ──
+
+    private float _preDuckVolume = -1f;
+    private Coroutine _duckRoutine;
+
+    /// <summary>
+    /// Smoothly lower music volume. Call UnduckMusic() to restore.
+    /// </summary>
+    public void DuckMusic(float targetVolume = 0.15f, float duration = 0.5f)
+    {
+        if (!IsValid(musicSource) || !musicSource.isPlaying) return;
+        if (_preDuckVolume >= 0f) return; // already ducked
+
+        _preDuckVolume = musicSource.volume;
+        if (_duckRoutine != null) StopCoroutine(_duckRoutine);
+        _duckRoutine = StartCoroutine(FadeMusicTo(targetVolume, duration));
+    }
+
+    /// <summary>
+    /// Restore music volume after a duck.
+    /// </summary>
+    public void UnduckMusic(float duration = 1f)
+    {
+        if (_preDuckVolume < 0f) return;
+        if (!IsValid(musicSource)) { _preDuckVolume = -1f; return; }
+
+        float target = _preDuckVolume;
+        _preDuckVolume = -1f;
+        if (_duckRoutine != null) StopCoroutine(_duckRoutine);
+        _duckRoutine = StartCoroutine(FadeMusicTo(target, duration));
+    }
+
+    private IEnumerator FadeMusicTo(float targetVol, float duration)
+    {
+        if (!IsValid(musicSource)) yield break;
+        float start = musicSource.volume;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            if (IsValid(musicSource))
+                musicSource.volume = Mathf.Lerp(start, targetVol, elapsed / duration);
+            yield return null;
+        }
+        if (IsValid(musicSource))
+            musicSource.volume = targetVol;
+        _duckRoutine = null;
     }
 
     // ─── Dual SFX ────────────────────────────────────────────────

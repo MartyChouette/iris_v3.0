@@ -14,8 +14,11 @@ public class MusicDirector : MonoBehaviour
     public static MusicDirector Instance { get; private set; }
 
     [Header("Menu Music")]
-    [Tooltip("Song that plays on the main menu and through loading. Assign via scene builder or inspector.")]
+    [Tooltip("Song that plays on the main menu and through loading. Assign via inspector.")]
     [SerializeField] private AudioClip _menuSong;
+
+    [Tooltip("Resources path fallback if _menuSong is not assigned (e.g. 'Music/ES_Evening Wind-Down - Sarah, the Illstrumentalist').")]
+    [SerializeField] private string _menuSongPath = "Music/ES_Evening Wind-Down - Sarah, the Illstrumentalist";
 
     [Tooltip("Volume for menu song (before master/music multipliers).")]
     [SerializeField] private float _menuSongVolume = 0.5f;
@@ -55,7 +58,14 @@ public class MusicDirector : MonoBehaviour
     /// </summary>
     public void PlayMenuSong()
     {
-        if (_menuSong == null) return;
+        if (_menuSong == null && !string.IsNullOrEmpty(_menuSongPath))
+            _menuSong = Resources.Load<AudioClip>(_menuSongPath);
+
+        if (_menuSong == null)
+        {
+            Debug.LogWarning("[MusicDirector] No menu song — assign _menuSong in Inspector or set _menuSongPath.");
+            return;
+        }
         if (AudioManager.Instance == null) return;
 
         var src = AudioManager.Instance.musicSource;
