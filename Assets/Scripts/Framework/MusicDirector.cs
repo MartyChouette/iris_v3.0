@@ -30,6 +30,15 @@ public class MusicDirector : MonoBehaviour
     private bool _isCrossFading;
     private Coroutine _crossFadeRoutine;
 
+    /// <summary>Auto-spawn if no MusicDirector exists in the scene.</summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void AutoCreate()
+    {
+        if (Instance != null) return;
+        var go = new GameObject("[MusicDirector]");
+        go.AddComponent<MusicDirector>();
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
