@@ -30,13 +30,21 @@ public class MusicDirector : MonoBehaviour
     private bool _isCrossFading;
     private Coroutine _crossFadeRoutine;
 
-    /// <summary>Auto-spawn if no MusicDirector exists in the scene.</summary>
+    /// <summary>Auto-spawn if no MusicDirector exists after scene load.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void AutoCreate()
+    private static void RegisterAutoCreate()
     {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneCheck;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneCheck;
+    }
+
+    private static void OnSceneCheck(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive) return;
         if (Instance != null) return;
         var go = new GameObject("[MusicDirector]");
         go.AddComponent<MusicDirector>();
+        Debug.Log("[MusicDirector] Auto-spawned — no scene instance found.");
     }
 
     private void Awake()
