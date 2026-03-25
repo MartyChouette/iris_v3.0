@@ -410,7 +410,7 @@ MonoBehaviour:
   _switchRenderer: {fileID: 0}
   _onColor: {r: 0.95, g: 0.9, b: 0.7, a: 1}
   _offColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
-  _toggleSFX: {fileID: 0}
+  _toggleSFX: {fileID: 8300000, guid: fc54bc7ff128db642b0c2163c8fc793f, type: 3}
 --- !u!1 &7351991
 GameObject:
   m_ObjectHideFlags: 0
@@ -1015,6 +1015,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: milk box_unused (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _placeSFXOverride
+      value: 
+      objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _pickupSFXOverride
+      value: 
+      objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.327
@@ -2428,7 +2436,7 @@ MonoBehaviour:
   _switchRenderer: {fileID: 0}
   _onColor: {r: 0.95, g: 0.9, b: 0.7, a: 1}
   _offColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
-  _toggleSFX: {fileID: 0}
+  _toggleSFX: {fileID: 8300000, guid: fc54bc7ff128db642b0c2163c8fc793f, type: 3}
 --- !u!1 &158204158
 GameObject:
   m_ObjectHideFlags: 0
@@ -3531,7 +3539,7 @@ MonoBehaviour:
   _surfaceOffset: 0.005
   wipeSFX: {fileID: 0}
   allCleanSFX: {fileID: 0}
-  _stainCompleteSFX: {fileID: 0}
+  _stainCompleteSFX: {fileID: 8300000, guid: 1b04794d387bf1045be254cc2f9c049b, type: 3}
 --- !u!114 &241821717
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4585,7 +4593,7 @@ MonoBehaviour:
   nemaPortrait: {fileID: 0}
   callingDuration: 2
   phoneRingSFX: {fileID: 0}
-  dateSelectedSFX: {fileID: 0}
+  dateSelectedSFX: {fileID: 8300000, guid: a7c9ee27f522c7a42926aad0a8d2e34c, type: 3}
   callingUI: {fileID: 1064093288}
   callingText: {fileID: 557232561}
   OnDateSelected:
@@ -4809,8 +4817,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -5203,8 +5211,8 @@ MonoBehaviour:
   _overcastRain: 0
   _rainyRain: 0.6
   _stormyRain: 1
-  _rainAmbience: {fileID: 0}
-  _stormAmbience: {fileID: 0}
+  _rainAmbience: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
+  _stormAmbience: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
 --- !u!4 &340865044
 Transform:
   m_ObjectHideFlags: 0
@@ -5538,8 +5546,8 @@ MonoBehaviour:
     m_Bits: 536870912
   _mainCamera: {fileID: 726110192}
   _knockText: {fileID: 0}
-  _knockSFX: {fileID: 0}
-  _doorOpenSFX: {fileID: 0}
+  _knockSFX: {fileID: 8300000, guid: 8eadf142ff60df04980d55aa8ba41e09, type: 3}
+  _doorOpenSFX: {fileID: 8300000, guid: 46429371c45e68544905e670818702b6, type: 3}
 --- !u!23 &377090085
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8312,8 +8320,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -9072,8 +9080,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -9264,7 +9272,7 @@ MonoBehaviour:
   pourSFX: {fileID: 0}
   overflowSFX: {fileID: 0}
   scoreSFX: {fileID: 0}
-  recipeSelectSFX: {fileID: 0}
+  recipeSelectSFX: {fileID: 8300000, guid: a7c9ee27f522c7a42926aad0a8d2e34c, type: 3}
   perfectSFX: {fileID: 0}
   failSFX: {fileID: 0}
   lastScore: 0
@@ -9872,8 +9880,8 @@ MonoBehaviour:
   _wallLayer:
     serializedVersion: 2
     m_Bits: 1
-  _pickupSFX: {fileID: 0}
-  _placeSFX: {fileID: 0}
+  _pickupSFX: {fileID: 8300000, guid: db75e3c39a484fb49af982426713784b, type: 3}
+  _placeSFX: {fileID: 8300000, guid: db75e3c39a484fb49af982426713784b, type: 3}
   maxTetherDistance: 3
 --- !u!4 &603292384
 Transform:
@@ -11112,7 +11120,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MidDateActionWatcher
   _penaltyMagnitude: 0.35
   _cooldownDuration: 8
-  _caughtSFX: {fileID: 0}
+  _caughtSFX: {fileID: 8300000, guid: 098909dae29c9be479af824c88472d46, type: 3}
 --- !u!114 &666569914
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11161,7 +11169,7 @@ MonoBehaviour:
   dateArrivedSFX: {fileID: 0}
   likeSFX: {fileID: 0}
   dislikeSFX: {fileID: 0}
-  phaseTransitionSFX: {fileID: 0}
+  phaseTransitionSFX: {fileID: 8300000, guid: 1b04794d387bf1045be254cc2f9c049b, type: 3}
   dateSpawnPoint: {fileID: 1150571149}
   couchSeatTarget: {fileID: 456744295}
   coffeeTableDeliveryPoint: {fileID: 1444078814}
@@ -11192,8 +11200,8 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: 93d1b1f600db551489be635c746a0bab, type: 2}
   directionalLight: {fileID: 1664897878}
   rainParticles: {fileID: 0}
-  _ambienceClip: {fileID: 0}
-  _weatherClip: {fileID: 0}
+  _ambienceClip: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
+  _weatherClip: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
   lerpSpeed: 0.5
 --- !u!4 &666569917
 Transform:
@@ -11543,8 +11551,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   _interiorLight: {fileID: 280605119}
-  _openSFX: {fileID: 0}
-  _closeSFX: {fileID: 0}
+  _openSFX: {fileID: 8300000, guid: 46429371c45e68544905e670818702b6, type: 3}
+  _closeSFX: {fileID: 8300000, guid: 8eadf142ff60df04980d55aa8ba41e09, type: 3}
 --- !u!4 &692304272
 Transform:
   m_ObjectHideFlags: 0
@@ -12475,8 +12483,8 @@ MonoBehaviour:
   _gridText: {fileID: 1287331492}
   _maxNameLength: 8
   confirmSFX: {fileID: 0}
-  selectLetterSFX: {fileID: 0}
-  _navClickSFX: {fileID: 0}
+  selectLetterSFX: {fileID: 8300000, guid: a7c9ee27f522c7a42926aad0a8d2e34c, type: 3}
+  _navClickSFX: {fileID: 8300000, guid: 1f18eec6fda795e41a99adc60038a2aa, type: 3}
   _highlightColor: {r: 1, g: 0.85, b: 0.4, a: 1}
   _dimColor: {r: 0.53, g: 0.53, b: 0.53, a: 1}
   _nameSlotColor: {r: 0.67, g: 0.67, b: 0.67, a: 1}
@@ -14677,8 +14685,8 @@ MonoBehaviour:
   _disheveledRotation: {x: -0.009699977, y: -0.72119826, z: 0.009299978, w: 0.69259834}
   _hasDisheveledPose: 1
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -14868,8 +14876,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -15049,8 +15057,8 @@ MonoBehaviour:
   _zoneRenderer: {fileID: 910334822}
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
-  _depositSFX: {fileID: 0}
-  _trashSFX: {fileID: 0}
+  _depositSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _trashSFX: {fileID: 8300000, guid: d43f5f54a48c48b4fb61c919925a3fb3, type: 3}
 --- !u!114 &910334820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15575,8 +15583,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -17083,8 +17091,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -17842,8 +17850,8 @@ MonoBehaviour:
   _zoneRenderer: {fileID: 1053943096}
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
-  _depositSFX: {fileID: 0}
-  _trashSFX: {fileID: 0}
+  _depositSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _trashSFX: {fileID: 8300000, guid: d43f5f54a48c48b4fb61c919925a3fb3, type: 3}
 --- !u!114 &1053943095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19850,8 +19858,8 @@ MonoBehaviour:
   _zoneRenderer: {fileID: 0}
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
-  _depositSFX: {fileID: 0}
-  _trashSFX: {fileID: 0}
+  _depositSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _trashSFX: {fileID: 8300000, guid: d43f5f54a48c48b4fb61c919925a3fb3, type: 3}
 --- !u!114 &1192554162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20803,7 +20811,7 @@ MonoBehaviour:
   _overlayRoot: {fileID: 934678143}
   _canvasGroup: {fileID: 934678145}
   _itemNameText: {fileID: 869916289}
-  _presentSFX: {fileID: 0}
+  _presentSFX: {fileID: 8300000, guid: 1b04794d387bf1045be254cc2f9c049b, type: 3}
   _spawnOffset: {x: 0, y: 0.3, z: 1.5}
   _presentationScale: 0.1
   _bobAmplitude: 0.08
@@ -21709,8 +21717,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -24528,8 +24536,8 @@ MonoBehaviour:
   _goToBedPanel: {fileID: 2005649942}
   nextDaySFX: {fileID: 0}
   timerWarningSFX: {fileID: 0}
-  _morningAmbienceClip: {fileID: 0}
-  _explorationAmbienceClip: {fileID: 0}
+  _morningAmbienceClip: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
+  _explorationAmbienceClip: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
   OnPhaseChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -26725,8 +26733,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -28367,11 +28375,11 @@ MonoBehaviour:
   panSpeed: 0.01
   panMaxDistance: 3
   _zoomSteps:
-  - 0.25
-  - 0.86
+  - 0.9
   - 1.2
-  - 3.5
-  - 4.87
+  - 1.4
+  - 1.6
+  - 3.25
   _defaultZoomStep: 1
   _zoomLerpSpeed: 8
   worldBounds:
@@ -28380,7 +28388,7 @@ MonoBehaviour:
   objectGrabber: {fileID: 603292383}
   cameraTestController: {fileID: 880398090}
   defaultPreset: {fileID: 11400000, guid: 66c84a586c84f5245888aa91f3e7b655, type: 2}
-  _areaTransitionSFX: {fileID: 0}
+  _areaTransitionSFX: {fileID: 8300000, guid: 1b04794d387bf1045be254cc2f9c049b, type: 3}
   areaNamePanel: {fileID: 1596123424}
   areaNameText: {fileID: 161363155}
   browseHintsPanel: {fileID: 809716015}
@@ -30917,8 +30925,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -31536,8 +31544,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -32261,7 +32269,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhoneController
   ringingSFX: {fileID: 0}
-  pickupSFX: {fileID: 0}
+  pickupSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   doorbellSFX: {fileID: 0}
   callOutgoingSFX: {fileID: 0}
   ringVisual: {fileID: 1590284863}
@@ -35483,8 +35491,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -37246,7 +37254,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 951524167131090688, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AdditionalShaderChannelsFlag
-      value: 0
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 1147637012184667606, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMax.x
@@ -37536,6 +37544,14 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2341336574256000958, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2341336574256000958, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2402003741977349566, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -37642,6 +37658,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2452513151461932082, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2452513151461932082, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2452513151461932082, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2506485193418992563, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
@@ -38040,6 +38064,14 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3648689157281208970, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3648689157281208970, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3742532825167591233, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4292467161
@@ -38062,6 +38094,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3759662683473009107, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759662683473009107, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759662683473009107, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3781286298252350864, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
@@ -38440,6 +38480,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4850541542112014754, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292467161
+      objectReference: {fileID: 0}
+    - target: {fileID: 4850541542112014754, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4868708695891838641, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -38584,6 +38632,14 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5473736698620700557, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473736698620700557, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5477744113718445038, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -38595,6 +38651,14 @@ PrefabInstance:
     - target: {fileID: 5477744113718445038, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMin.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5619838803037996610, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292467161
+      objectReference: {fileID: 0}
+    - target: {fileID: 5619838803037996610, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
       objectReference: {fileID: 0}
     - target: {fileID: 5665512728873492020, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMax.x
@@ -38804,6 +38868,14 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6220117460526682465, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220117460526682465, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6235997073464295260, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -38899,6 +38971,14 @@ PrefabInstance:
     - target: {fileID: 6559514702431116657, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605991584879132458, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292467161
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605991584879132458, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
       objectReference: {fileID: 0}
     - target: {fileID: 6668698128560167398, guid: 99a9d5d46b6d6324f8b1fa13c0968cea, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -39985,8 +40065,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -40864,8 +40944,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -41152,6 +41232,14 @@ PrefabInstance:
       propertyPath: _useSpawnAsHome
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _placeSFXOverride
+      value: 
+      objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+    - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
+      propertyPath: _pickupSFXOverride
+      value: 
+      objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
     - target: {fileID: 7044222363501929527, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
       propertyPath: m_Name
       value: milk box_used_deshevled
@@ -41575,6 +41663,14 @@ PrefabInstance:
       propertyPath: _useSpawnAsHome
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _placeSFXOverride
+      value: 
+      objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _pickupSFXOverride
+      value: 
+      objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
     - target: {fileID: 3445587615029214451, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.8830484
@@ -42094,8 +42190,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -42656,8 +42752,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -42820,8 +42916,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -42922,8 +43018,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0.65725005, y: 0.26081097, z: -0.26081085, w: 0.6572502}
   _hasDisheveledPose: 1
   _startDishelved: 1
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 1.382, y: 1.167862, z: 8.313}
   _homeTolerance: 0.2
@@ -43085,8 +43181,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 1
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -43410,8 +43506,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -43537,8 +43633,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -43680,8 +43776,8 @@ MonoBehaviour:
   _recordSnapPoint: {fileID: 4489814093171325173}
   _displayPoint: {fileID: 1538588163}
   _startingRecord: {fileID: 0}
-  _playSFX: {fileID: 0}
-  _stopSFX: {fileID: 0}
+  _playSFX: {fileID: 8300000, guid: b99a40055fdbc5547ae79262a16f4972, type: 3}
+  _stopSFX: {fileID: 8300000, guid: a8264e663d4cb5d4897e229820a2f60f, type: 3}
 --- !u!65 &7772146653153167387
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -43792,8 +43888,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -44888,8 +44984,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 0
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
@@ -45017,8 +45113,8 @@ MonoBehaviour:
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
   _startDishelved: 0
-  _pickupSFXOverride: {fileID: 0}
-  _placeSFXOverride: {fileID: 0}
+  _pickupSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
+  _placeSFXOverride: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2

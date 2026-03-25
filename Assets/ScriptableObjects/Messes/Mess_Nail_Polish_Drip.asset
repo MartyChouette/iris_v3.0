@@ -19,12 +19,17 @@ MonoBehaviour:
   spillDefinition: {fileID: 11400000, guid: aef3340373ba58f4c857ce4ca6e7688f, type: 2}
   objectPrefab: {fileID: 0}
   objectScale: {x: 0.1, y: 0.1, z: 0.1}
-  objectColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  objectColor: {r: 1, g: 0.4987672, b: 0, a: 1}
+  canBeDishelved: 0
   requireDateSuccess: 0
   requireDateFailure: 0
   minAffection: 0
   maxAffection: 100
   requireReactionTag: 
+  requireBadFlowerTrim: 0
+  requireGoodFlowerTrim: 0
   minDay: 1
+  spawnPosition: {x: 0, y: 0.16410929, z: 0.9950686}
+  spawnRotation: {x: 0, y: 0, z: 0}
   allowedAreas: 01000000
   weight: 0.8
