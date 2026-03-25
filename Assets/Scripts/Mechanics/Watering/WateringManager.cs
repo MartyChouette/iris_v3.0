@@ -3,8 +3,8 @@ using UnityEngine;
 /// <summary>
 /// Ambient watering system — always active, not a station.
 /// Click plant → release → hold to pour → release to stop → score.
-/// Camera zooms to plant via ApartmentManager.SetPresetBase.
 /// Placeholder pail tips while pouring, soil darkens, water rises.
+/// No camera zoom — just UI bar + pail visual from browse camera.
 /// </summary>
 [DisallowMultipleComponent]
 public class WateringManager : MonoBehaviour
@@ -30,11 +30,6 @@ public class WateringManager : MonoBehaviour
     public AudioClip perfectSFX;
     public AudioClip failSFX;
 
-    [Header("Camera Zoom")]
-    [SerializeField] private float _zoomHeight = 0.35f;
-    [SerializeField] private float _zoomDistance = 0.45f;
-    [SerializeField] private float _zoomFOV = 40f;
-
     // ── Public API ──────────────────────────────────────────────
     public State CurrentState { get; private set; } = State.Idle;
     public PlantDefinition CurrentPlant => _activePlant;
@@ -56,9 +51,6 @@ public class WateringManager : MonoBehaviour
 
     // Pail
     private GameObject _pailGO;
-
-    // Camera
-    private bool _cameraOverrideActive;
 
     // ── Lifecycle ───────────────────────────────────────────────
 
@@ -141,7 +133,6 @@ public class WateringManager : MonoBehaviour
         }
 
         ShowPail(plant.transform);
-        ZoomToPlant(plant.transform);
 
         CurrentState = State.Pouring;
         Debug.Log($"[WateringManager] Pouring: {_activePlant.plantName} at {plant.transform.position}");
@@ -227,7 +218,6 @@ public class WateringManager : MonoBehaviour
         else if (lastScore < 30) AudioManager.Instance?.PlaySFX(failSFX);
 
         HidePail();
-        RestoreCamera();
 
         CurrentState = State.Scoring;
         _scoreTimer = _scoreDisplayTime;
@@ -253,7 +243,6 @@ public class WateringManager : MonoBehaviour
 
     public void ForceIdle()
     {
-        RestoreCamera();
         HidePail();
         _activePlant = null;
         _activeWaterablePlant = null;
@@ -316,31 +305,4 @@ public class WateringManager : MonoBehaviour
         if (_pailGO != null) _pailGO.SetActive(false);
     }
 
-    // ── Camera (uses ApartmentManager.SetPresetBase) ────────────
-
-    private void ZoomToPlant(Transform plant)
-    {
-        if (ApartmentManager.Instance == null) return;
-
-        Vector3 plantPos = plant.position;
-        Vector3 camPos = _mainCamera.transform.position;
-        Vector3 toCam = camPos - plantPos;
-        toCam.y = 0f;
-        if (toCam.sqrMagnitude < 0.01f) toCam = Vector3.back;
-        toCam.Normalize();
-
-        Vector3 zoomPos = plantPos + toCam * _zoomDistance + Vector3.up * _zoomHeight;
-        Quaternion zoomRot = Quaternion.LookRotation(plantPos + Vector3.up * 0.05f - zoomPos, Vector3.up);
-
-        ApartmentManager.Instance.SetPresetBase(zoomPos, zoomRot, _zoomFOV);
-        _cameraOverrideActive = true;
-        Debug.Log($"[WateringManager] Camera zoom to {zoomPos}");
-    }
-
-    private void RestoreCamera()
-    {
-        if (!_cameraOverrideActive) return;
-        ApartmentManager.Instance?.ClearPresetBase();
-        _cameraOverrideActive = false;
-    }
 }
