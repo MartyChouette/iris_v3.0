@@ -76,7 +76,10 @@ public class WateringManager : MonoBehaviour
         {
             case State.Idle:
                 if (ObjectGrabber.IsHoldingObject) return;
-                if (ObjectGrabber.ClickConsumedThisFrame) return;
+                // Don't check ClickConsumedThisFrame — Update order isn't
+                // guaranteed, so the flag may be stale from the prior frame.
+                // Plant raycast uses _plantLayer which doesn't overlap
+                // ObjectGrabber's placeableLayer, so no double-handling.
                 UpdateIdle();
                 break;
             case State.Pouring:
@@ -95,7 +98,13 @@ public class WateringManager : MonoBehaviour
 
     private void UpdateIdle()
     {
-        if (IrisInput.Instance == null || !IrisInput.Instance.Click.WasPressedThisFrame()) return;
+        if (IrisInput.Instance == null) return;
+        if (!IrisInput.Instance.Click.WasPressedThisFrame()) return;
+
+        // Check UI block
+        if (UnityEngine.EventSystems.EventSystem.current != null
+            && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+            return;
 
         var plant = RaycastPlant();
         if (plant != null)
