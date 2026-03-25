@@ -58,6 +58,19 @@ public class WateringManager : MonoBehaviour
     [HideInInspector] public float lastBonusScore;
     [HideInInspector] public float lastOverflowPenalty;
 
+    [Header("Camera Zoom")]
+    [Tooltip("How far above the pot rim the camera sits during watering.")]
+    [SerializeField] private float _zoomHeight = 0.25f;
+
+    [Tooltip("How far back from the pot the camera sits during watering.")]
+    [SerializeField] private float _zoomDistance = 0.3f;
+
+    [Tooltip("Camera lerp speed for zooming in/out.")]
+    [SerializeField] private float _zoomSpeed = 4f;
+
+    [Tooltip("FOV when zoomed into the pot.")]
+    [SerializeField] private float _zoomFOV = 35f;
+
     // Input managed by IrisInput singleton
 
     // ── Runtime ─────────────────────────────────────────────────
@@ -66,6 +79,17 @@ public class WateringManager : MonoBehaviour
     private WaterablePlant _activeWaterablePlant;
     private bool _overflowSFXPlayed;
     private float _scoreTimer;
+    private float _pourTime;
+
+    /// <summary>Current oscillating target moisture level.</summary>
+    public float OscillatingTarget { get; private set; }
+
+    // Camera zoom state
+    private Vector3 _savedCamPos;
+    private Quaternion _savedCamRot;
+    private float _savedCamFOV;
+    private bool _cameraZoomed;
+    private bool _cameraRestoring;
 
     // ── Singleton lifecycle ─────────────────────────────────────
 
@@ -159,8 +183,13 @@ public class WateringManager : MonoBehaviour
         }
 
         _overflowSFXPlayed = false;
-        CurrentState = State.Pouring;
+        _pourTime = 0f;
+        OscillatingTarget = _activePlant.perfectMoisture;
 
+        // Zoom camera to pot rim
+        ZoomToPot(plant.transform);
+
+        CurrentState = State.Pouring;
         Debug.Log($"[WateringManager] Pouring: {_activePlant.plantName}");
     }
 
@@ -168,6 +197,21 @@ public class WateringManager : MonoBehaviour
 
     private void UpdatePouring()
     {
+        // Update oscillating target
+        if (_activePlant != null)
+        {
+            _pourTime += Time.deltaTime;
+            OscillatingTarget = _activePlant.perfectMoisture
+                + _activePlant.targetOscAmplitude
+                * Mathf.Sin(2f * Mathf.PI * _activePlant.targetOscSpeed * _pourTime);
+            OscillatingTarget = Mathf.Clamp01(OscillatingTarget);
+
+            if (_pot != null)
+                _pot.TargetLevel = OscillatingTarget;
+        }
+
+        UpdateCameraZoom();
+
         if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed())
         {
             if (_pot != null)
@@ -195,6 +239,21 @@ public class WateringManager : MonoBehaviour
 
     private void UpdateAbsorbing()
     {
+        // Keep oscillating target moving during absorption
+        if (_activePlant != null)
+        {
+            _pourTime += Time.deltaTime;
+            OscillatingTarget = _activePlant.perfectMoisture
+                + _activePlant.targetOscAmplitude
+                * Mathf.Sin(2f * Mathf.PI * _activePlant.targetOscSpeed * _pourTime);
+            OscillatingTarget = Mathf.Clamp01(OscillatingTarget);
+
+            if (_pot != null)
+                _pot.TargetLevel = OscillatingTarget;
+        }
+
+        UpdateCameraZoom();
+
         // Wait for pooled water to fully absorb into soil
         if (_pot != null && _pot.PooledWater > 0.005f)
         {
@@ -224,8 +283,9 @@ public class WateringManager : MonoBehaviour
 
         var def = _pot.definition;
 
-        // Moisture score (0-70): how close soil moisture is to perfect
-        float accuracy = _pot.MoistureAccuracy;
+        // Moisture score (0-70): how close soil moisture is to oscillating target at moment of scoring
+        float dist = Mathf.Abs(_pot.SoilMoisture - OscillatingTarget);
+        float accuracy = Mathf.Clamp01(1f - dist / Mathf.Max(def.moistureTolerance, 0.001f));
         lastMoistureScore = accuracy * 70f;
 
         // Overflow penalty
@@ -252,12 +312,17 @@ public class WateringManager : MonoBehaviour
         CurrentState = State.Scoring;
         _scoreTimer = _scoreDisplayTime;
 
+        // Start restoring camera
+        RestoreCamera();
+
         Debug.Log($"[WateringManager] Score: {lastScore} (moisture={_pot.SoilMoisture:F2}, " +
-                  $"perfect={def.perfectMoisture:F2}, accuracy={accuracy:F2})");
+                  $"target={OscillatingTarget:F2}, accuracy={accuracy:F2})");
     }
 
     private void UpdateScoring()
     {
+        UpdateCameraRestore();
+
         // Allow clicking the next plant to interrupt
         if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
         {
@@ -282,8 +347,81 @@ public class WateringManager : MonoBehaviour
     /// <summary>Force back to idle. Called on phase transitions.</summary>
     public void ForceIdle()
     {
+        if (_cameraZoomed) SnapCameraBack();
         _activePlant = null;
         _activeWaterablePlant = null;
         CurrentState = State.Idle;
+    }
+
+    // ── Camera Zoom ─────────────────────────────────────────────
+
+    private void ZoomToPot(Transform plantTransform)
+    {
+        if (_mainCamera == null || _cameraZoomed) return;
+
+        // Save current camera state
+        _savedCamPos = _mainCamera.transform.position;
+        _savedCamRot = _mainCamera.transform.rotation;
+        _savedCamFOV = _mainCamera.fieldOfView;
+        _cameraZoomed = true;
+        _cameraRestoring = false;
+
+        // Suppress ApartmentManager camera writes
+        if (ApartmentManager.Instance != null)
+            ApartmentManager.Instance.SetBrowseCameraActive(false);
+    }
+
+    private void UpdateCameraZoom()
+    {
+        if (!_cameraZoomed || _mainCamera == null || _activeWaterablePlant == null) return;
+
+        // Target: look down at pot rim from slightly above and behind
+        Vector3 potTop = _activeWaterablePlant.transform.position + Vector3.up * _zoomHeight;
+        Vector3 camTarget = potTop + _mainCamera.transform.right * _zoomDistance * 0.3f
+                          + Vector3.up * _zoomDistance * 0.5f
+                          - _mainCamera.transform.forward * _zoomDistance;
+        Quaternion lookRot = Quaternion.LookRotation(potTop - camTarget, Vector3.up);
+
+        float t = _zoomSpeed * Time.deltaTime;
+        _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, camTarget, t);
+        _mainCamera.transform.rotation = Quaternion.Slerp(_mainCamera.transform.rotation, lookRot, t);
+        _mainCamera.fieldOfView = Mathf.Lerp(_mainCamera.fieldOfView, _zoomFOV, t);
+    }
+
+    private void RestoreCamera()
+    {
+        _cameraRestoring = true;
+    }
+
+    private void UpdateCameraRestore()
+    {
+        if (!_cameraRestoring || _mainCamera == null) return;
+
+        float t = _zoomSpeed * Time.deltaTime;
+        _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, _savedCamPos, t);
+        _mainCamera.transform.rotation = Quaternion.Slerp(_mainCamera.transform.rotation, _savedCamRot, t);
+        _mainCamera.fieldOfView = Mathf.Lerp(_mainCamera.fieldOfView, _savedCamFOV, t);
+
+        if (Vector3.Distance(_mainCamera.transform.position, _savedCamPos) < 0.01f)
+        {
+            SnapCameraBack();
+        }
+    }
+
+    private void SnapCameraBack()
+    {
+        if (_mainCamera != null)
+        {
+            _mainCamera.transform.position = _savedCamPos;
+            _mainCamera.transform.rotation = _savedCamRot;
+            _mainCamera.fieldOfView = _savedCamFOV;
+        }
+
+        _cameraZoomed = false;
+        _cameraRestoring = false;
+
+        // Re-enable ApartmentManager camera
+        if (ApartmentManager.Instance != null)
+            ApartmentManager.Instance.SetBrowseCameraActive(true);
     }
 }

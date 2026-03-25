@@ -62,10 +62,10 @@ public class WateringHUD : MonoBehaviour
     {
         if (pourBar != null && pot != null && plant != null)
         {
-            // Show soil moisture as the fill level, pooled water as foam,
-            // perfect moisture as the target line
+            // Show soil moisture as the fill level, pooled water on top,
+            // oscillating target as the moving goal line
             pourBar.SetLevels(pot.SoilMoisture, pot.SoilMoisture + pot.PooledWater,
-                plant.perfectMoisture, plant.moistureTolerance);
+                manager.OscillatingTarget, plant.moistureTolerance);
             pourBar.SetOverflowing(pot.Overflowed);
         }
     }

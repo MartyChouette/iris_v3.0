@@ -31,6 +31,10 @@ public class PotController : MonoBehaviour
     [Tooltip("Small renderer showing the 'perfect' soil color as a hint.")]
     public Renderer targetSwatchRenderer;
 
+    [Header("Target Line")]
+    [Tooltip("Thin marker at the oscillating target moisture level.")]
+    public Transform fillLineMarker;
+
     [Header("Overflow Visuals")]
     [Tooltip("Small drip boxes on the pot exterior (visible when overflowing).")]
     public Transform[] overflowDrips;
@@ -40,6 +44,9 @@ public class PotController : MonoBehaviour
     public float potWorldHeight = 0.10f;
 
     // ── State ────────────────────────────────────────────────────
+
+    /// <summary>Oscillating target level set by WateringManager each frame.</summary>
+    public float TargetLevel { get; set; }
 
     /// <summary>Actual wetness of the soil (0 = bone dry, 1 = waterlogged). Increases as pooled water absorbs.</summary>
     public float SoilMoisture => _soilMoisture;
@@ -201,6 +208,13 @@ public class PotController : MonoBehaviour
             targetSwatchRenderer.GetPropertyBlock(_swatchMPB);
             _swatchMPB.SetColor("_BaseColor", perfectCol);
             targetSwatchRenderer.SetPropertyBlock(_swatchMPB);
+        }
+
+        // Fill line tracks oscillating target
+        if (fillLineMarker != null)
+        {
+            float fillY = TargetLevel * h;
+            fillLineMarker.localPosition = new Vector3(0f, fillY, 0f);
         }
 
         // Pooled water layer on top of soil

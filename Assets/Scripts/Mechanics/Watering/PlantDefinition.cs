@@ -55,6 +55,13 @@ public class PlantDefinition : ScriptableObject
     [Tooltip("How quickly pooled water drains away if it overflows (units/sec).")]
     public float overflowDrainRate = 0.3f;
 
+    [Header("Oscillating Target")]
+    [Tooltip("Oscillations per second for the moving target line.")]
+    public float targetOscSpeed = 0.5f;
+
+    [Tooltip("How far the target swings above/below perfectMoisture.")]
+    public float targetOscAmplitude = 0.08f;
+
     [Header("Scoring")]
     [Tooltip("Maximum possible score for this plant.")]
     public int baseScore = 100;
