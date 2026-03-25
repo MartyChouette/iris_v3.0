@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Simple overlay HUD for the ambient watering system.
-/// Shows plant name and a visual pour bar. Hidden when idle.
+/// Shows plant name and soil moisture feedback. Hidden when idle.
 /// </summary>
 [DisallowMultipleComponent]
 public class WateringHUD : MonoBehaviour
@@ -40,10 +40,17 @@ public class WateringHUD : MonoBehaviour
 
         if (!showHUD) return;
 
+        var plant = manager.CurrentPlant;
+        var pot = manager.Pot;
+
+        if (plantNameLabel != null)
+            plantNameLabel.text = plant != null ? plant.plantName : "";
+
         switch (manager.CurrentState)
         {
             case WateringManager.State.Pouring:
-                UpdatePouring();
+            case WateringManager.State.Absorbing:
+                UpdatePouring(plant, pot);
                 break;
             case WateringManager.State.Scoring:
                 UpdateScoring();
@@ -51,28 +58,20 @@ public class WateringHUD : MonoBehaviour
         }
     }
 
-    private void UpdatePouring()
+    private void UpdatePouring(PlantDefinition plant, PotController pot)
     {
-        var plant = manager.CurrentPlant;
-        var pot = manager.Pot;
-
-        if (plantNameLabel != null)
-            plantNameLabel.text = plant != null ? plant.plantName : "";
-
         if (pourBar != null && pot != null && plant != null)
         {
-            pourBar.SetLevels(pot.WaterLevel, pot.FoamLevel, manager.OscillatingTarget, plant.waterTolerance);
-            pourBar.SetOverflowing(pot.FoamLevel >= 1f);
+            // Show soil moisture as the fill level, pooled water as foam,
+            // perfect moisture as the target line
+            pourBar.SetLevels(pot.SoilMoisture, pot.SoilMoisture + pot.PooledWater,
+                plant.perfectMoisture, plant.moistureTolerance);
+            pourBar.SetOverflowing(pot.Overflowed);
         }
     }
 
     private void UpdateScoring()
     {
-        var plant = manager.CurrentPlant;
-
-        if (plantNameLabel != null)
-            plantNameLabel.text = plant != null ? plant.plantName : "";
-
         if (pourBar != null)
         {
             pourBar.SetOverflowing(false);

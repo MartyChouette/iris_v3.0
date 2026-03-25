@@ -1,8 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Defines a single potted plant for the watering prototype.
-/// Controls water needs, foam behaviour, and scoring thresholds.
+/// Defines a potted plant's watering characteristics.
+/// Each soil type absorbs water differently — the player judges
+/// moisture by soil color alone, aiming for the perfect shade.
 /// </summary>
 [CreateAssetMenu(menuName = "Iris/Plant Definition")]
 public class PlantDefinition : ScriptableObject
@@ -19,44 +20,40 @@ public class PlantDefinition : ScriptableObject
     [Tooltip("Tint for the pot mesh.")]
     public Color potColor = new Color(0.72f, 0.45f, 0.20f);
 
-    [Tooltip("Soil colour when dry.")]
-    public Color dryColor = new Color(0.55f, 0.40f, 0.25f);
-
-    [Tooltip("Soil colour when fully saturated.")]
-    public Color wetColor = new Color(0.30f, 0.22f, 0.12f);
-
-    [Tooltip("Bubbly foam tint when dirt foams up.")]
-    public Color foamColor = new Color(0.50f, 0.38f, 0.22f, 0.7f);
-
-    [Tooltip("Stem/leaf tint for the plant visual on the shelf.")]
+    [Tooltip("Stem/leaf tint for the plant visual.")]
     public Color plantColor = new Color(0.2f, 0.6f, 0.2f);
 
+    [Header("Soil Colors")]
+    [Tooltip("Soil when bone dry (moisture = 0).")]
+    public Color soilDry = new Color(0.65f, 0.50f, 0.32f);
+
+    [Tooltip("Soil at perfect moisture — the color the player is aiming for.")]
+    public Color soilPerfect = new Color(0.35f, 0.25f, 0.15f);
+
+    [Tooltip("Soil when waterlogged (moisture = 1). Muddy, too dark.")]
+    public Color soilWaterlogged = new Color(0.12f, 0.08f, 0.05f);
+
     [Header("Watering")]
-    [Tooltip("Target fill level (0-1). The fill line sits here.")]
+    [Tooltip("The ideal soil moisture level (0-1). Player aims for this by watching color.")]
     [Range(0f, 1f)]
-    public float idealWaterLevel = 0.7f;
+    public float perfectMoisture = 0.55f;
 
-    [Tooltip("Tolerance around ideal level for a perfect score.")]
-    [Range(0.01f, 0.2f)]
-    public float waterTolerance = 0.08f;
+    [Tooltip("How close to perfectMoisture counts as 'good' (± this value).")]
+    [Range(0.01f, 0.3f)]
+    public float moistureTolerance = 0.1f;
 
-    [Tooltip("Water units per second while pouring.")]
-    public float pourRate = 0.12f;
+    [Tooltip("Water units per second added to the pool while pouring.")]
+    public float pourRate = 0.25f;
 
-    [Tooltip("Foam rises this many times faster than water (dirt bubbles up).")]
-    public float foamRateMultiplier = 1.3f;
+    [Tooltip("How fast the soil soaks up pooled water (units/sec). Low = slow spongy soil, high = fast sandy soil.")]
+    public float absorptionRate = 0.15f;
 
-    [Tooltip("Oscillations per second for the moving target line.")]
-    public float targetOscSpeed = 0.5f;
+    [Tooltip("Max pooled water that can sit on top before overflowing.")]
+    [Range(0.1f, 1f)]
+    public float maxPool = 0.5f;
 
-    [Tooltip("How far the target swings above/below idealWaterLevel.")]
-    public float targetOscAmplitude = 0.15f;
-
-    [Tooltip("Units/sec foam collapses toward water level when not pouring.")]
-    public float foamSettleRate = 0.25f;
-
-    [Tooltip("Units/sec water absorbs into soil (reduces visible foam).")]
-    public float absorptionRate = 0.05f;
+    [Tooltip("How quickly pooled water drains away if it overflows (units/sec).")]
+    public float overflowDrainRate = 0.3f;
 
     [Header("Scoring")]
     [Tooltip("Maximum possible score for this plant.")]
