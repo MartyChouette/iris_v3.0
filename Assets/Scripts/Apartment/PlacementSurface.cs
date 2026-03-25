@@ -101,7 +101,12 @@ public class PlacementSurface : MonoBehaviour
     /// Project a world point onto this surface, clamped within bounds (with edge margin).
     /// Returns the clamped world position at the surface face.
     /// </summary>
-    public SurfaceHitResult ProjectOntoSurface(Vector3 worldPoint)
+    /// <summary>
+    /// Project a world point onto this surface. For walls, pass viewOrigin
+    /// (camera position) to reliably pick the camera-facing side instead
+    /// of flickering between faces when the point is near the wall center.
+    /// </summary>
+    public SurfaceHitResult ProjectOntoSurface(Vector3 worldPoint, Vector3? viewOrigin = null)
     {
         Vector3 local = transform.InverseTransformPoint(worldPoint);
         GetTangentAxes(out int a, out int b, out int n);
@@ -115,15 +120,24 @@ public class PlacementSurface : MonoBehaviour
         local[a] = Mathf.Clamp(local[a], min[a] + marginA, max[a] - marginA);
         local[b] = Mathf.Clamp(local[b], min[b] + marginB, max[b] - marginB);
 
-        // For walls, pick whichever face the point is nearest to so pictures
-        // stay on the side the player is interacting from.
+        // For walls, pick the face the camera is looking at (stable, no flicker).
         // For tables/shelves, always use the top face.
         bool frontFace = true;
         if (IsVertical)
         {
-            float front = localBounds.center[n] + localBounds.extents[n];
-            float back = localBounds.center[n] - localBounds.extents[n];
-            frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+            if (viewOrigin.HasValue)
+            {
+                // Camera-relative: which side of the wall is the camera on?
+                Vector3 localCam = transform.InverseTransformPoint(viewOrigin.Value);
+                float center = localBounds.center[n];
+                frontFace = localCam[n] >= center;
+            }
+            else
+            {
+                float front = localBounds.center[n] + localBounds.extents[n];
+                float back = localBounds.center[n] - localBounds.extents[n];
+                frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+            }
         }
 
         local[n] = frontFace

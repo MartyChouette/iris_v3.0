@@ -510,7 +510,7 @@ public class ObjectGrabber : MonoBehaviour
 
         // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
         // detection — the rigidbody can overshoot through thin wall triggers.
-        var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget);
+        var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget, cam.transform.position);
         Vector3 pos = _gridSnap
             ? _currentSurface.SnapToGrid(hitResult.worldPosition, gridSize)
             : hitResult.worldPosition;
@@ -788,7 +788,7 @@ public class ObjectGrabber : MonoBehaviour
                 _lastValidSurface = surface;
                 _isOnWall = surface.IsVertical;
 
-                var hitResult = surface.ProjectOntoSurface(hits[h].point);
+                var hitResult = surface.ProjectOntoSurface(hits[h].point, cam.transform.position);
                 Vector3 pos = _gridSnap
                     ? surface.SnapToGrid(hitResult.worldPosition, gridSize)
                     : hitResult.worldPosition;
@@ -983,7 +983,7 @@ public class ObjectGrabber : MonoBehaviour
 
         _shadowGO.SetActive(true);
 
-        var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget);
+        var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget, cam.transform.position);
         Vector3 shadowPos = hitResult.worldPosition + hitResult.surfaceNormal * 0.01f;
         Quaternion shadowRot = Quaternion.FromToRotation(Vector3.up, hitResult.surfaceNormal);
 
@@ -1022,7 +1022,7 @@ public class ObjectGrabber : MonoBehaviour
             var nearest = FindNearestSurfaceForHeld(_heldRb.position);
             if (nearest != null)
             {
-                var hitResult = nearest.ProjectOntoSurface(_heldRb.position);
+                var hitResult = nearest.ProjectOntoSurface(_heldRb.position, cam != null ? cam.transform.position : (Vector3?)null);
                 float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
                 Vector3 pos = hitResult.worldPosition + hitResult.surfaceNormal * halfExtent;
                 Quaternion rot = nearest.IsVertical
