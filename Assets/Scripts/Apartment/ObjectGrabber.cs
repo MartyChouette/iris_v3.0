@@ -865,13 +865,12 @@ public class ObjectGrabber : MonoBehaviour
         }
     }
 
-    // ── Rotate input (R key / gamepad RB) ──────────────────────────
+    // ── Rotate input (RMB / gamepad RB) ─────────────────────────────
 
     private void UpdateScrollInput()
     {
-        // R key or gamepad RB rotates held object
-        bool rotatePressed = UnityEngine.InputSystem.Keyboard.current != null
-            && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame;
+        bool rotatePressed = UnityEngine.InputSystem.Mouse.current != null
+            && UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame;
         if (!rotatePressed
             && UnityEngine.InputSystem.Gamepad.current != null
             && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
