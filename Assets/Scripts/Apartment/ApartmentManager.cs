@@ -123,6 +123,11 @@ public class ApartmentManager : MonoBehaviour
     // Browse camera suppression (DayPhaseManager lowers during Morning)
     private bool _browseSuppressed;
 
+    // External camera lock (watering zoom etc.) — skips camera writes but keeps everything else running
+    private bool _cameraLocked;
+    public void LockCamera() => _cameraLocked = true;
+    public void UnlockCamera() => _cameraLocked = false;
+
     // Preset override (CameraTestController feeds its target here for parallax)
     private bool _presetOverrideActive;
 
@@ -526,6 +531,7 @@ public class ApartmentManager : MonoBehaviour
     private void ApplyParallax()
     {
         if (browseCamera == null) return;
+        if (_cameraLocked) return; // external system controlling camera
 
         // Always write base + offset to transform, even with parallax disabled
         var t = browseCamera.transform;

@@ -359,32 +359,37 @@ public class WateringManager : MonoBehaviour
     {
         if (_mainCamera == null || _cameraZoomed) return;
 
-        // Save current camera state
         _savedCamPos = _mainCamera.transform.position;
         _savedCamRot = _mainCamera.transform.rotation;
         _savedCamFOV = _mainCamera.fieldOfView;
         _cameraZoomed = true;
         _cameraRestoring = false;
 
-        // Suppress ApartmentManager camera writes
-        if (ApartmentManager.Instance != null)
-            ApartmentManager.Instance.SetBrowseCameraActive(false);
+        // Compute a fixed target position centered on the plant
+        // Camera sits above and slightly in front, looking down at the pot
+        Vector3 plantPos = plantTransform.position;
+        Vector3 toCam = (_savedCamPos - plantPos).normalized;
+        // Keep the horizontal direction from original camera but flatten it
+        toCam.y = 0f;
+        if (toCam.sqrMagnitude < 0.01f) toCam = Vector3.back;
+        toCam.Normalize();
+
+        _zoomTargetPos = plantPos + toCam * _zoomDistance + Vector3.up * _zoomHeight;
+        _zoomTargetRot = Quaternion.LookRotation(plantPos + Vector3.up * 0.05f - _zoomTargetPos, Vector3.up);
+
+        ApartmentManager.Instance?.LockCamera();
     }
+
+    private Vector3 _zoomTargetPos;
+    private Quaternion _zoomTargetRot;
 
     private void UpdateCameraZoom()
     {
-        if (!_cameraZoomed || _mainCamera == null || _activeWaterablePlant == null) return;
-
-        // Target: look down at pot rim from slightly above and behind
-        Vector3 potTop = _activeWaterablePlant.transform.position + Vector3.up * _zoomHeight;
-        Vector3 camTarget = potTop + _mainCamera.transform.right * _zoomDistance * 0.3f
-                          + Vector3.up * _zoomDistance * 0.5f
-                          - _mainCamera.transform.forward * _zoomDistance;
-        Quaternion lookRot = Quaternion.LookRotation(potTop - camTarget, Vector3.up);
+        if (!_cameraZoomed || _cameraRestoring || _mainCamera == null) return;
 
         float t = _zoomSpeed * Time.deltaTime;
-        _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, camTarget, t);
-        _mainCamera.transform.rotation = Quaternion.Slerp(_mainCamera.transform.rotation, lookRot, t);
+        _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, _zoomTargetPos, t);
+        _mainCamera.transform.rotation = Quaternion.Slerp(_mainCamera.transform.rotation, _zoomTargetRot, t);
         _mainCamera.fieldOfView = Mathf.Lerp(_mainCamera.fieldOfView, _zoomFOV, t);
     }
 
@@ -402,10 +407,8 @@ public class WateringManager : MonoBehaviour
         _mainCamera.transform.rotation = Quaternion.Slerp(_mainCamera.transform.rotation, _savedCamRot, t);
         _mainCamera.fieldOfView = Mathf.Lerp(_mainCamera.fieldOfView, _savedCamFOV, t);
 
-        if (Vector3.Distance(_mainCamera.transform.position, _savedCamPos) < 0.01f)
-        {
+        if (Vector3.Distance(_mainCamera.transform.position, _savedCamPos) < 0.02f)
             SnapCameraBack();
-        }
     }
 
     private void SnapCameraBack()
@@ -419,9 +422,6 @@ public class WateringManager : MonoBehaviour
 
         _cameraZoomed = false;
         _cameraRestoring = false;
-
-        // Re-enable ApartmentManager camera
-        if (ApartmentManager.Instance != null)
-            ApartmentManager.Instance.SetBrowseCameraActive(true);
+        ApartmentManager.Instance?.UnlockCamera();
     }
 }
