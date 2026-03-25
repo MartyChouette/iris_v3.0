@@ -149,6 +149,35 @@ public class PotController : MonoBehaviour
         _soilMPB = new MaterialPropertyBlock();
         _waterMPB = new MaterialPropertyBlock();
         _swatchMPB = new MaterialPropertyBlock();
+
+        // Auto-create soil disc if not assigned
+        if (soilTransform == null)
+        {
+            var soilGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            soilGO.name = "SoilDisc_Auto";
+            soilGO.transform.SetParent(transform, false);
+            soilGO.transform.localPosition = new Vector3(0f, potWorldHeight * 0.4f, 0f);
+            soilGO.transform.localScale = new Vector3(potWorldRadius * 2f, 0.005f, potWorldRadius * 2f);
+            var col = soilGO.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+            soilRenderer = soilGO.GetComponent<Renderer>();
+            soilTransform = soilGO.transform;
+        }
+
+        // Auto-create water disc if not assigned
+        if (waterTransform == null)
+        {
+            var waterGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            waterGO.name = "WaterDisc_Auto";
+            waterGO.transform.SetParent(transform, false);
+            waterGO.transform.localPosition = new Vector3(0f, potWorldHeight * 0.4f, 0f);
+            waterGO.transform.localScale = new Vector3(potWorldRadius * 1.8f, 0.003f, potWorldRadius * 1.8f);
+            var col = waterGO.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+            waterRenderer = waterGO.GetComponent<Renderer>();
+            waterTransform = waterGO.transform;
+            waterGO.SetActive(false);
+        }
     }
 
     void Update()
@@ -217,7 +246,7 @@ public class PotController : MonoBehaviour
             fillLineMarker.localPosition = new Vector3(0f, fillY, 0f);
         }
 
-        // Pooled water layer on top of soil
+        // Pooled water disc on top of soil — deep blue, rises as pool grows
         if (waterTransform != null)
         {
             bool showPool = _pooledWater > 0.01f;
@@ -225,21 +254,24 @@ public class PotController : MonoBehaviour
 
             if (showPool)
             {
-                // Pool sits on top of the soil surface
-                float soilTop = h * 0.8f; // soil fills ~80% of pot
-                float poolHeight = Mathf.Max(_pooledWater * h * 0.4f, 0.002f);
+                float soilTop = h * 0.8f;
+                float poolRise = _pooledWater * h * 0.3f;
+                // Disc sits just above soil, rises slightly as pool grows
+                waterTransform.localPosition = new Vector3(0f, soilTop + poolRise * 0.5f + 0.002f, 0f);
+                // Thin disc that gets slightly thicker with more water
                 waterTransform.localScale = new Vector3(
                     waterTransform.localScale.x,
-                    poolHeight,
+                    Mathf.Max(poolRise, 0.002f),
                     waterTransform.localScale.z);
-                waterTransform.localPosition = new Vector3(0f, soilTop + poolHeight * 0.5f, 0f);
 
                 if (waterRenderer != null)
                 {
-                    // Water tints slightly with soil color (muddy water)
-                    Color soilCol = GetSoilColor(_soilMoisture);
-                    Color waterCol = Color.Lerp(new Color(0.3f, 0.5f, 0.7f, 0.5f), soilCol, 0.3f);
-                    waterCol.a = 0.5f;
+                    // Deep blue that darkens as pool grows
+                    float depth = Mathf.Clamp01(_pooledWater * 2f);
+                    Color waterCol = Color.Lerp(
+                        new Color(0.2f, 0.4f, 0.75f), // light blue (shallow)
+                        new Color(0.08f, 0.15f, 0.45f), // deep blue (full)
+                        depth);
                     waterRenderer.GetPropertyBlock(_waterMPB);
                     _waterMPB.SetColor("_BaseColor", waterCol);
                     waterRenderer.SetPropertyBlock(_waterMPB);

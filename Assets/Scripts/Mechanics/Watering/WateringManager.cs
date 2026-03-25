@@ -91,6 +91,11 @@ public class WateringManager : MonoBehaviour
     private bool _cameraZoomed;
     private bool _cameraRestoring;
 
+    // Placeholder watering pail
+    private GameObject _pailGO;
+    private Transform _pailTransform;
+    private float _pailTilt; // current tilt angle (lerps toward target)
+
     // ── Singleton lifecycle ─────────────────────────────────────
 
     void Awake()
@@ -186,7 +191,8 @@ public class WateringManager : MonoBehaviour
         _pourTime = 0f;
         OscillatingTarget = _activePlant.perfectMoisture;
 
-        // Zoom camera to pot rim
+        // Show pail + zoom camera to pot rim
+        ShowPail(plant.transform);
         ZoomToPot(plant.transform);
 
         CurrentState = State.Pouring;
@@ -212,7 +218,10 @@ public class WateringManager : MonoBehaviour
 
         UpdateCameraZoom();
 
-        if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed())
+        bool clicking = IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed();
+        UpdatePail(clicking);
+
+        if (clicking)
         {
             if (_pot != null)
                 _pot.Pour(Time.deltaTime);
@@ -239,6 +248,8 @@ public class WateringManager : MonoBehaviour
 
     private void UpdateAbsorbing()
     {
+        UpdatePail(false); // pail tips back upright
+
         // Keep oscillating target moving during absorption
         if (_activePlant != null)
         {
@@ -312,7 +323,7 @@ public class WateringManager : MonoBehaviour
         CurrentState = State.Scoring;
         _scoreTimer = _scoreDisplayTime;
 
-        // Start restoring camera
+        HidePail();
         RestoreCamera();
 
         Debug.Log($"[WateringManager] Score: {lastScore} (moisture={_pot.SoilMoisture:F2}, " +
@@ -348,9 +359,75 @@ public class WateringManager : MonoBehaviour
     public void ForceIdle()
     {
         if (_cameraZoomed) SnapCameraBack();
+        HidePail();
         _activePlant = null;
         _activeWaterablePlant = null;
         CurrentState = State.Idle;
+    }
+
+    // ── Placeholder Watering Pail ───────────────────────────────
+
+    private void EnsurePail()
+    {
+        if (_pailGO != null) return;
+
+        _pailGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        _pailGO.name = "WateringPail_Placeholder";
+        _pailGO.transform.localScale = new Vector3(0.06f, 0.08f, 0.05f);
+
+        // Remove collider so it doesn't interfere with raycasts
+        var col = _pailGO.GetComponent<Collider>();
+        if (col != null) Object.Destroy(col);
+
+        var rend = _pailGO.GetComponent<Renderer>();
+        if (rend != null)
+            rend.material.color = new Color(0.45f, 0.55f, 0.65f); // steel blue-gray
+
+        _pailTransform = _pailGO.transform;
+        _pailGO.SetActive(false);
+    }
+
+    private void ShowPail(Transform plantTransform)
+    {
+        EnsurePail();
+        // Position at the pot rim, offset to the side
+        Vector3 rimPos = plantTransform.position + Vector3.up * 0.12f;
+        Vector3 toCam = (_mainCamera != null)
+            ? (_mainCamera.transform.position - rimPos).normalized
+            : Vector3.back;
+        toCam.y = 0f;
+        if (toCam.sqrMagnitude < 0.01f) toCam = Vector3.back;
+        toCam.Normalize();
+
+        // Place pail to the right of the camera view
+        Vector3 right = Vector3.Cross(Vector3.up, toCam).normalized;
+        _pailTransform.position = rimPos + right * 0.08f + toCam * 0.04f;
+        _pailTransform.rotation = Quaternion.LookRotation(-toCam, Vector3.up);
+        _pailTilt = 0f;
+        _pailGO.SetActive(true);
+    }
+
+    private void UpdatePail(bool pouring)
+    {
+        if (_pailGO == null || !_pailGO.activeSelf) return;
+
+        // Tilt toward pot when pouring (like tipping a watering can)
+        float targetTilt = pouring ? -45f : 0f;
+        _pailTilt = Mathf.Lerp(_pailTilt, targetTilt, Time.deltaTime * 6f);
+
+        // Apply tilt around the forward axis (tips sideways)
+        var baseRot = _pailTransform.rotation;
+        _pailTransform.rotation = baseRot * Quaternion.Euler(0f, 0f, _pailTilt - (_pailTransform.localEulerAngles.z > 180 ? _pailTransform.localEulerAngles.z - 360 : _pailTransform.localEulerAngles.z));
+
+        // Simpler: just set local euler directly
+        var euler = _pailTransform.eulerAngles;
+        euler.z = _pailTilt;
+        _pailTransform.eulerAngles = euler;
+    }
+
+    private void HidePail()
+    {
+        if (_pailGO != null) _pailGO.SetActive(false);
     }
 
     // ── Camera Zoom ─────────────────────────────────────────────
