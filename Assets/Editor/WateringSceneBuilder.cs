@@ -261,16 +261,16 @@ public static class WateringSceneBuilder
         so.plantName = name;
         so.description = desc;
         so.potColor = potColor;
-        so.dryColor = dryColor;
-        so.wetColor = wetColor;
-        so.foamColor = foamColor;
+        so.soilDry = dryColor;
+        so.soilPerfect = Color.Lerp(dryColor, wetColor, idealWater);
+        so.soilWaterlogged = wetColor;
         so.plantColor = plantColor;
-        so.idealWaterLevel = idealWater;
-        so.waterTolerance = tolerance;
+        so.perfectMoisture = idealWater;
+        so.moistureTolerance = tolerance;
         so.pourRate = pourRate;
-        so.foamRateMultiplier = foamMul;
-        so.foamSettleRate = foamSettle;
         so.absorptionRate = absorption;
+        so.maxPool = 0.5f;
+        so.overflowDrainRate = 0.3f;
         so.baseScore = baseScore;
 
         string assetPath = AssetDatabase.GenerateUniqueAssetPath(
