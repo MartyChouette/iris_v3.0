@@ -158,6 +158,10 @@ public class ObjectGrabber : MonoBehaviour
     private float _heldShadowDiameter;
     private Vector3 _heldBoundsExtents;
 
+    // Pickup feel: plucky spring on pickup, then ramp to stiff carry
+    private float _pickupTimer;
+    private const float PickupFeelDuration = 0.25f; // seconds of plucky feel after pickup
+
     // Surface tracking
     private PlacementSurface _currentSurface;
     private PlacementSurface _lastValidSurface;
@@ -271,10 +275,25 @@ public class ObjectGrabber : MonoBehaviour
             _heldRb.linearVelocity = Vector3.zero;
         }
 
-        // Spring-damper pull — always applied so grab feel presets work
-        // even when hovering a surface. Place() handles final exact positioning.
-        GetActiveGrabParams(out float activeSpring, out float activeDamper,
-            out float activeMaxAccel, out float activeMaxSpeed);
+        // Pickup feel: plucky spring for the first fraction of a second,
+        // then ramp to stiff carry so the object follows smoothly.
+        _pickupTimer = Mathf.Max(_pickupTimer - Time.fixedDeltaTime, 0f);
+        float pickupT = Mathf.Clamp01(_pickupTimer / PickupFeelDuration); // 1 = just picked up, 0 = carrying
+
+        GetActiveGrabParams(out float presetSpring, out float presetDamper,
+            out float presetAccel, out float presetSpeed);
+
+        // Carry params: stiff, direct follow
+        const float carrySpring = 400f;
+        const float carryDamper = 35f;
+        const float carryAccel = 150f;
+        const float carrySpeed = 20f;
+
+        // Blend from preset (plucky) to carry (stiff)
+        float activeSpring = Mathf.Lerp(carrySpring, presetSpring, pickupT);
+        float activeDamper = Mathf.Lerp(carryDamper, presetDamper, pickupT);
+        float activeMaxAccel = Mathf.Lerp(carryAccel, presetAccel, pickupT);
+        float activeMaxSpeed = Mathf.Lerp(carrySpeed, presetSpeed, pickupT);
 
         Vector3 toTarget = _grabTarget - _heldRb.worldCenterOfMass;
         Vector3 force = toTarget * activeSpring - _heldRb.linearVelocity * activeDamper;
@@ -365,6 +384,7 @@ public class ObjectGrabber : MonoBehaviour
 
         ConsumeClick();
         _held = placeable;
+        _pickupTimer = PickupFeelDuration;
 
         // Flash partner highlight for pairable items (shoes)
         var pairable = placeable.GetComponent<PairableItem>();
