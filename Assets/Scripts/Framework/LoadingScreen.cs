@@ -6,7 +6,8 @@ using TMPro;
 
 /// <summary>
 /// DontDestroyOnLoad loading screen with async scene loading,
-/// procedural spinning flower, progress bar, and animated text.
+/// falling pixel petals, progress bar, and animated text.
+/// Petals fall continuously while loading is in progress.
 /// Self-destructs after the new scene finishes loading.
 /// </summary>
 public class LoadingScreen : MonoBehaviour
@@ -16,23 +17,41 @@ public class LoadingScreen : MonoBehaviour
     private CanvasGroup _canvasGroup;
     private Image _barFill;
     private TMP_Text _loadingText;
-    private RectTransform _flowerPivot;
+    private RectTransform _petalContainer;
 
     private float _ellipsisTimer;
     private int _ellipsisCount;
+
+    // Petal system
+    private RectTransform[] _petals;
+    private float[] _petalX;
+    private float[] _petalY;
+    private float[] _petalSpeed;
+    private float[] _petalSway;
+    private float[] _petalSwayOffset;
+    private float[] _petalRot;
+    private float[] _petalRotSpeed;
+    private const int PetalCount = 40;
+    private const float SwayAmount = 30f;
+    private const float SwaySpeed = 1.5f;
+
+    private static readonly Color[] PetalColors =
+    {
+        new Color(1f, 0.75f, 0.80f),    // soft pink
+        new Color(1f, 0.85f, 0.88f),    // light pink
+        new Color(0.95f, 0.65f, 0.72f), // dusty rose
+        new Color(1f, 0.92f, 0.85f),    // cream
+        new Color(0.98f, 0.80f, 0.75f), // peach
+        new Color(0.85f, 0.60f, 0.70f), // mauve
+    };
 
     // ═══════════════════════════════════════════════════════════════
     // Static entry point
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Creates the loading screen and begins async scene load.
-    /// Duplicate calls while already loading are ignored.
-    /// </summary>
     public static void LoadScene(int buildIndex)
     {
         if (_instance != null) return;
-
         var go = new GameObject("LoadingScreen");
         DontDestroyOnLoad(go);
         _instance = go.AddComponent<LoadingScreen>();
@@ -40,16 +59,9 @@ public class LoadingScreen : MonoBehaviour
         _instance.StartCoroutine(_instance.LoadCoroutine(buildIndex));
     }
 
-    /// <summary>
-    /// Creates the loading screen using a pre-started AsyncOperation
-    /// (with allowSceneActivation = false). Sets activation to true
-    /// and monitors progress. If the preload is already at 0.9, the
-    /// scene activates nearly instantly.
-    /// </summary>
     public static void LoadPreloaded(AsyncOperation preloadedOp)
     {
         if (_instance != null) return;
-
         var go = new GameObject("LoadingScreen");
         DontDestroyOnLoad(go);
         _instance = go.AddComponent<LoadingScreen>();
@@ -68,7 +80,6 @@ public class LoadingScreen : MonoBehaviour
 
     private void Build()
     {
-        // Canvas — overlay, highest sort order
         var canvas = gameObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 9999;
@@ -88,25 +99,22 @@ public class LoadingScreen : MonoBehaviour
         Stretch(bg.rectTransform);
         bg.color = Color.black;
 
-        // Flower pivot (centered, above middle)
-        var pivotGO = new GameObject("FlowerPivot");
-        pivotGO.transform.SetParent(transform, false);
-        _flowerPivot = pivotGO.AddComponent<RectTransform>();
-        _flowerPivot.anchorMin = new Vector2(0.5f, 0.5f);
-        _flowerPivot.anchorMax = new Vector2(0.5f, 0.5f);
-        _flowerPivot.anchoredPosition = new Vector2(0f, 60f);
-        _flowerPivot.sizeDelta = new Vector2(100f, 100f);
+        // Petal container (fullscreen)
+        var containerGO = new GameObject("PetalContainer");
+        containerGO.transform.SetParent(transform, false);
+        _petalContainer = containerGO.AddComponent<RectTransform>();
+        Stretch(_petalContainer);
 
-        BuildFlower(_flowerPivot);
+        BuildPetals();
 
         // Progress bar background
         var barBgGO = new GameObject("BarBG");
         barBgGO.transform.SetParent(transform, false);
         var barBgRT = barBgGO.AddComponent<RectTransform>();
-        barBgRT.anchorMin = new Vector2(0.5f, 0.5f);
-        barBgRT.anchorMax = new Vector2(0.5f, 0.5f);
-        barBgRT.anchoredPosition = new Vector2(0f, -40f);
-        barBgRT.sizeDelta = new Vector2(300f, 4f);
+        barBgRT.anchorMin = new Vector2(0.5f, 0f);
+        barBgRT.anchorMax = new Vector2(0.5f, 0f);
+        barBgRT.anchoredPosition = new Vector2(0f, 60f);
+        barBgRT.sizeDelta = new Vector2(300f, 3f);
         var barBgImg = barBgGO.AddComponent<Image>();
         barBgImg.color = new Color(0.2f, 0.2f, 0.2f);
 
@@ -119,81 +127,107 @@ public class LoadingScreen : MonoBehaviour
         fillRT.sizeDelta = Vector2.zero;
         fillRT.anchoredPosition = Vector2.zero;
         _barFill = fillGO.AddComponent<Image>();
-        _barFill.color = new Color(0.95f, 0.9f, 0.8f); // eggshell
+        _barFill.color = new Color(0.95f, 0.9f, 0.8f);
 
         // Loading text
         var textGO = new GameObject("LoadingText");
         textGO.transform.SetParent(transform, false);
         var textRT = textGO.AddComponent<RectTransform>();
-        textRT.anchorMin = new Vector2(0.5f, 0.5f);
-        textRT.anchorMax = new Vector2(0.5f, 0.5f);
-        textRT.anchoredPosition = new Vector2(0f, -70f);
+        textRT.anchorMin = new Vector2(0.5f, 0f);
+        textRT.anchorMax = new Vector2(0.5f, 0f);
+        textRT.anchoredPosition = new Vector2(0f, 30f);
         textRT.sizeDelta = new Vector2(300f, 40f);
         _loadingText = textGO.AddComponent<TextMeshProUGUI>();
         _loadingText.text = "Loading.";
-        _loadingText.fontSize = 24f;
+        _loadingText.fontSize = 20f;
         _loadingText.alignment = TextAlignmentOptions.Center;
         _loadingText.color = new Color(0.95f, 0.9f, 0.8f);
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Procedural flower
+    // Falling pixel petals
     // ═══════════════════════════════════════════════════════════════
 
-    private void BuildFlower(RectTransform parent)
+    private void BuildPetals()
     {
-        // 8 petals arranged radially
-        Color petalColor = new Color(1f, 0.85f, 0.88f); // soft pink
-        float petalDist = 28f;
-        Vector2 petalSize = new Vector2(22f, 36f);
+        _petals = new RectTransform[PetalCount];
+        _petalX = new float[PetalCount];
+        _petalY = new float[PetalCount];
+        _petalSpeed = new float[PetalCount];
+        _petalSway = new float[PetalCount];
+        _petalSwayOffset = new float[PetalCount];
+        _petalRot = new float[PetalCount];
+        _petalRotSpeed = new float[PetalCount];
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < PetalCount; i++)
         {
-            float angle = i * 45f;
-            float rad = angle * Mathf.Deg2Rad;
-            var petal = CreateChild<Image>("Petal" + i, parent);
-            petal.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            petal.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            petal.rectTransform.anchoredPosition = new Vector2(
-                Mathf.Cos(rad) * petalDist,
-                Mathf.Sin(rad) * petalDist);
-            petal.rectTransform.sizeDelta = petalSize;
-            petal.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle - 90f);
-            petal.color = petalColor;
+            var go = new GameObject($"Petal{i}");
+            go.transform.SetParent(_petalContainer, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
 
-            // Round the petals using a trick: default UI sprite is fine,
-            // but we can soften them by using the Knob sprite if available
-            petal.sprite = GetRoundSprite();
-            petal.type = Image.Type.Simple;
+            // Pixel-art size: small rectangles (5-12px)
+            float w = Random.Range(4f, 10f);
+            float h = Random.Range(6f, 14f);
+            rt.sizeDelta = new Vector2(w, h);
+
+            var img = go.AddComponent<Image>();
+            img.color = PetalColors[Random.Range(0, PetalColors.Length)];
+            img.raycastTarget = false;
+
+            _petals[i] = rt;
+
+            // Stagger initial positions across the full screen height
+            _petalX[i] = Random.Range(0f, 1920f);
+            _petalY[i] = Random.Range(0f, 1080f + 200f);
+            _petalSpeed[i] = Random.Range(60f, 180f);
+            _petalSway[i] = Random.Range(0.8f, 1.5f);
+            _petalSwayOffset[i] = Random.Range(0f, Mathf.PI * 2f);
+            _petalRot[i] = Random.Range(0f, 360f);
+            _petalRotSpeed[i] = Random.Range(-90f, 90f);
         }
-
-        // Center circle (yellow)
-        var center = CreateChild<Image>("Center", parent);
-        center.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        center.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        center.rectTransform.anchoredPosition = Vector2.zero;
-        center.rectTransform.sizeDelta = new Vector2(30f, 30f);
-        center.color = new Color(1f, 0.88f, 0.4f); // warm yellow
-        center.sprite = GetRoundSprite();
     }
 
-    private static Sprite GetRoundSprite()
+    private void UpdatePetals()
     {
-        // Unity built-in "Knob" sprite — round circle
-        return Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd");
+        float dt = Time.unscaledDeltaTime;
+
+        for (int i = 0; i < PetalCount; i++)
+        {
+            _petalY[i] -= _petalSpeed[i] * dt;
+            _petalRot[i] += _petalRotSpeed[i] * dt;
+
+            // Gentle horizontal sway
+            float sway = Mathf.Sin(Time.unscaledTime * SwaySpeed * _petalSway[i] + _petalSwayOffset[i]) * SwayAmount;
+
+            // Respawn at top when off bottom
+            if (_petalY[i] < -50f)
+            {
+                _petalY[i] = 1080f + Random.Range(20f, 100f);
+                _petalX[i] = Random.Range(0f, 1920f);
+                _petalSpeed[i] = Random.Range(60f, 180f);
+            }
+
+            if (_petals[i] != null)
+            {
+                _petals[i].anchoredPosition = new Vector2(_petalX[i] + sway, -_petalY[i]);
+                _petals[i].localRotation = Quaternion.Euler(0f, 0f, _petalRot[i]);
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Async load coroutine
+    // Async load coroutines
     // ═══════════════════════════════════════════════════════════════
 
     private IEnumerator LoadCoroutine(int buildIndex)
     {
-        // Brief hold so menu fade can finish
         float holdTimer = 0.3f;
         while (holdTimer > 0f)
         {
             holdTimer -= Time.unscaledDeltaTime;
+            UpdatePetals();
             yield return null;
         }
 
@@ -205,20 +239,16 @@ public class LoadingScreen : MonoBehaviour
             yield break;
         }
 
-        // Update visuals while loading
         while (!op.isDone)
         {
-            // Unity async progress goes 0→0.9 then jumps to 1.0 on activation
             float t = Mathf.Clamp01(op.progress / 0.9f);
             SetProgress(t);
-            UpdateFlower();
+            UpdatePetals();
             UpdateEllipsis();
             yield return null;
         }
 
         SetProgress(1f);
-
-        // Wait one frame for new scene Awake/Start
         yield return null;
 
         // Fade out
@@ -228,7 +258,7 @@ public class LoadingScreen : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             _canvasGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeTime);
-            UpdateFlower();
+            UpdatePetals();
             yield return null;
         }
 
@@ -237,11 +267,11 @@ public class LoadingScreen : MonoBehaviour
 
     private IEnumerator ActivatePreloadedCoroutine(AsyncOperation op)
     {
-        // Brief hold so menu fade can finish
         float holdTimer = 0.3f;
         while (holdTimer > 0f)
         {
             holdTimer -= Time.unscaledDeltaTime;
+            UpdatePetals();
             yield return null;
         }
 
@@ -252,35 +282,30 @@ public class LoadingScreen : MonoBehaviour
             yield break;
         }
 
-        // Show current preload progress before activating
         float preProgress = Mathf.Clamp01(op.progress / 0.9f);
         SetProgress(preProgress);
 
-        // Allow the scene to activate
         op.allowSceneActivation = true;
 
         while (!op.isDone)
         {
             float t = Mathf.Clamp01(op.progress / 0.9f);
             SetProgress(t);
-            UpdateFlower();
+            UpdatePetals();
             UpdateEllipsis();
             yield return null;
         }
 
         SetProgress(1f);
-
-        // Wait one frame for new scene Awake/Start
         yield return null;
 
-        // Fade out
         float fadeTime = 0.5f;
         float elapsed = 0f;
         while (elapsed < fadeTime)
         {
             elapsed += Time.unscaledDeltaTime;
             _canvasGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeTime);
-            UpdateFlower();
+            UpdatePetals();
             yield return null;
         }
 
@@ -295,18 +320,6 @@ public class LoadingScreen : MonoBehaviour
     {
         if (_barFill != null)
             _barFill.rectTransform.anchorMax = new Vector2(t, 1f);
-    }
-
-    private void UpdateFlower()
-    {
-        if (_flowerPivot == null) return;
-
-        // Slow rotation
-        _flowerPivot.Rotate(0f, 0f, -30f * Time.unscaledDeltaTime);
-
-        // Gentle scale pulse
-        float pulse = 1f + 0.05f * Mathf.Sin(Time.unscaledTime * 2f);
-        _flowerPivot.localScale = new Vector3(pulse, pulse, 1f);
     }
 
     private void UpdateEllipsis()

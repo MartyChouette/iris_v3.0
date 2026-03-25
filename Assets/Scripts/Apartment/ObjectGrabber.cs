@@ -488,13 +488,7 @@ public class ObjectGrabber : MonoBehaviour
         if (_currentSurface.IsVertical && !_held.CanWallMount) return;
         if (!_currentSurface.IsVertical && _held.WallOnly) return;
 
-        // Trash only on floor or trash cans
-        if (_held.Category == ItemCategory.Trash)
-        {
-            var zone = _currentSurface.GetComponent<DropZone>();
-            bool isTrashCan = zone != null && zone.DestroyOnDeposit;
-            if (!_currentSurface.IsFloor && !isTrashCan) return;
-        }
+        // Trash can be placed on any surface (floor, tables, shelves)
 
         // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
         // detection — the rigidbody can overshoot through thin wall triggers.
@@ -853,14 +847,21 @@ public class ObjectGrabber : MonoBehaviour
         }
     }
 
-    // ── Scroll input ─────────────────────────────────────────────────
+    // ── Rotate input (R key / gamepad RB) ──────────────────────────
 
     private void UpdateScrollInput()
     {
-        float scroll = IrisInput.Instance != null ? IrisInput.Instance.Scroll.ReadValue<float>() : 0f;
-        if (Mathf.Abs(scroll) < 0.01f) return;
+        // R key or gamepad RB rotates held object
+        bool rotatePressed = UnityEngine.InputSystem.Keyboard.current != null
+            && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame;
+        if (!rotatePressed
+            && UnityEngine.InputSystem.Gamepad.current != null
+            && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
+            rotatePressed = true;
 
-        float angle = scrollRotateStep * Mathf.Sign(scroll);
+        if (!rotatePressed) return;
+
+        float angle = scrollRotateStep;
 
         if (_isOnWall)
         {
@@ -972,13 +973,7 @@ public class ObjectGrabber : MonoBehaviour
         bool canPlace = (!_currentSurface.IsVertical || _held.CanWallMount)
             && (_currentSurface.IsVertical || !_held.WallOnly);
 
-        // Trash items only show valid on floor surfaces and trash cans (DropZone with DestroyOnDeposit)
-        if (canPlace && _held.Category == ItemCategory.Trash)
-        {
-            var zone = _currentSurface.GetComponent<DropZone>();
-            bool isTrashCan = zone != null && zone.DestroyOnDeposit;
-            canPlace = _currentSurface.IsFloor || isTrashCan;
-        }
+        // Trash can be placed on any valid surface
 
         _shadowMat.color = canPlace ? s_shadowValid : s_shadowInvalid;
         _shadowGO.transform.position = shadowPos;

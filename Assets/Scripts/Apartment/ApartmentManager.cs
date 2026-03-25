@@ -382,8 +382,7 @@ public class ApartmentManager : MonoBehaviour
         if (browseCamera == null) return;
         if (_zoomSteps == null || _zoomSteps.Length == 0) return;
 
-        // Skip zoom when ObjectGrabber is holding (scroll rotates held object)
-        if (ObjectGrabber.IsHoldingObject) return;
+        // Scroll always zooms — rotation moved to R key
 
         // Initialize zoom step on first use
         if (_currentZoomStep < 0)
