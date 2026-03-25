@@ -9,6 +9,9 @@ public enum HighlightStyle
     Outline,        // Solid line around silhouette (back-face extrusion)
     RimGlow,        // Fresnel edge glow + subtle fill (original)
     SolidOverlay,   // Flat semi-transparent color wash
+    DashedOutline,  // Animated dashed/marching-ants outline
+    DoubleOutline,  // Two-tone inner + outer outline
+    FresnelOutline, // Outline that glows brighter at silhouette edges
 }
 
 /// <summary>
@@ -123,6 +126,9 @@ public class InteractableHighlight : MonoBehaviour
     private static Shader s_cachedOutlineShader;
     private static Shader s_cachedOverlayShader;
     private static Shader s_cachedInteractShader;
+    private static Shader s_cachedDashShader;
+    private static Shader s_cachedDoubleShader;
+    private static Shader s_cachedFresnelShader;
     private static Material s_sharedRimMat;
     private static Material s_sharedGazeMat;
     private static Material s_sharedDisplayMat;
@@ -193,6 +199,12 @@ public class InteractableHighlight : MonoBehaviour
             s_cachedInteractShader = _interactShader;
             if (s_cachedInteractShader == null) s_cachedInteractShader = Shader.Find("Iris/PSXInteractable");
         }
+        if (s_cachedDashShader == null)
+            s_cachedDashShader = Shader.Find("Iris/HighlightDash");
+        if (s_cachedDoubleShader == null)
+            s_cachedDoubleShader = Shader.Find("Iris/HighlightDouble");
+        if (s_cachedFresnelShader == null)
+            s_cachedFresnelShader = Shader.Find("Iris/HighlightFresnel");
 
         EnsureSharedMaterials();
         SwapToPSXLit();
@@ -444,6 +456,12 @@ public class InteractableHighlight : MonoBehaviour
                 return MakeOutlineMat(color, s_tuneWidth * intensityScale * 2f, pulseSpeed, pulse);
             case HighlightStyle.SolidOverlay:
                 return MakeOverlayMat(color, alpha, pulseSpeed, pulse);
+            case HighlightStyle.DashedOutline:
+                return MakeDashMat(color, s_tuneWidth * intensityScale * 2f, pulseSpeed, pulse);
+            case HighlightStyle.DoubleOutline:
+                return MakeDoubleMat(color, s_tuneWidth * intensityScale * 2f, pulseSpeed, pulse);
+            case HighlightStyle.FresnelOutline:
+                return MakeFresnelMat(color, s_tuneWidth * intensityScale * 2f, pulseSpeed, pulse);
             case HighlightStyle.RimGlow:
             default:
                 return MakeRimGlowMat(color, alpha, pulseSpeed, pulse);
@@ -483,6 +501,49 @@ public class InteractableHighlight : MonoBehaviour
         mat.SetColor("_HighlightColor", new Color(color.r, color.g, color.b, fillAlpha));
         mat.SetColor("_RimColor", new Color(color.r, color.g, color.b, rimAlpha));
         mat.SetFloat("_RimPower", s_tuneRim);
+        mat.SetFloat("_PulseSpeed", pulseSpeed);
+        mat.SetFloat("_PulseAmount", pulseAmount);
+        return mat;
+    }
+
+    private static Material MakeDashMat(Color color, float width, float pulseSpeed, float pulseAmount)
+    {
+        var shader = s_cachedDashShader;
+        if (shader == null) return null;
+        var mat = new Material(shader);
+        mat.SetColor("_OutlineColor", color);
+        mat.SetFloat("_OutlineWidth", Mathf.Clamp(width, 0.002f, 0.05f));
+        mat.SetFloat("_DashFreq", 20f);
+        mat.SetFloat("_DashRatio", 0.5f);
+        mat.SetFloat("_ScrollSpeed", 2f);
+        mat.SetFloat("_PulseSpeed", pulseSpeed);
+        mat.SetFloat("_PulseAmount", pulseAmount);
+        return mat;
+    }
+
+    private static Material MakeDoubleMat(Color color, float width, float pulseSpeed, float pulseAmount)
+    {
+        var shader = s_cachedDoubleShader;
+        if (shader == null) return null;
+        var mat = new Material(shader);
+        mat.SetColor("_OutlineColor", color);
+        mat.SetColor("_InnerColor", new Color(color.r * 1.2f, color.g * 0.9f, color.b * 0.7f, 0.5f));
+        mat.SetFloat("_OutlineWidth", Mathf.Clamp(width, 0.002f, 0.05f));
+        mat.SetFloat("_InnerWidth", Mathf.Clamp(width * 0.4f, 0.002f, 0.03f));
+        mat.SetFloat("_PulseSpeed", pulseSpeed);
+        mat.SetFloat("_PulseAmount", pulseAmount);
+        return mat;
+    }
+
+    private static Material MakeFresnelMat(Color color, float width, float pulseSpeed, float pulseAmount)
+    {
+        var shader = s_cachedFresnelShader;
+        if (shader == null) return null;
+        var mat = new Material(shader);
+        mat.SetColor("_OutlineColor", color);
+        mat.SetFloat("_OutlineWidth", Mathf.Clamp(width, 0.002f, 0.05f));
+        mat.SetFloat("_FresnelPower", s_tuneRim);
+        mat.SetFloat("_FresnelMin", 0.3f);
         mat.SetFloat("_PulseSpeed", pulseSpeed);
         mat.SetFloat("_PulseAmount", pulseAmount);
         return mat;
