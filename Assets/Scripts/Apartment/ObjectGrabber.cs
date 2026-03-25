@@ -485,15 +485,27 @@ public class ObjectGrabber : MonoBehaviour
         }
 
         // Wall items only on walls, table items only on tables
-        if (_currentSurface.IsVertical && !_held.CanWallMount) return;
-        if (!_currentSurface.IsVertical && _held.WallOnly) return;
+        if (_currentSurface.IsVertical && !_held.CanWallMount)
+        {
+            Debug.Log($"[ObjectGrabber] BLOCKED: surface '{_currentSurface.name}' IsVertical={_currentSurface.IsVertical} but item CanWallMount=false");
+            return;
+        }
+        if (!_currentSurface.IsVertical && _held.WallOnly)
+        {
+            Debug.Log($"[ObjectGrabber] BLOCKED: surface '{_currentSurface.name}' is horizontal but item is WallOnly");
+            return;
+        }
 
         // Trash only on floor or trash cans
         if (_held.Category == ItemCategory.Trash)
         {
             var zone = _currentSurface.GetComponent<DropZone>();
             bool isTrashCan = zone != null && zone.DestroyOnDeposit;
-            if (!_currentSurface.IsFloor && !isTrashCan) return;
+            if (!_currentSurface.IsFloor && !isTrashCan)
+            {
+                Debug.Log($"[ObjectGrabber] BLOCKED TRASH: surface '{_currentSurface.name}' IsFloor={_currentSurface.IsFloor} isTrashCan={isTrashCan}");
+                return;
+            }
         }
 
         // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
