@@ -423,31 +423,26 @@ public class DayPhaseManager : MonoBehaviour
             case DayPhase.Morning:
                 RecordSlot.Instance?.Stop(); // full stop between days
                 AudioManager.Instance?.SetNonMusicMix(1f, 0.5f);
-                AudioManager.Instance?.SetSFXCutoff(0f);
                 StartCoroutine(MorningTransition());
                 break;
             case DayPhase.Exploration:
                 AudioManager.Instance?.UnduckMusic(1f);
                 AudioManager.Instance?.SetNonMusicMix(1f, 0.5f);
-                AudioManager.Instance?.SetSFXCutoff(2f); // apartment SFX fade+cut after 2s
                 StartCoroutine(ExplorationTransition());
                 break;
             case DayPhase.DateInProgress:
                 AudioManager.Instance?.DuckMusic(0.15f, 0.5f);
                 AudioManager.Instance?.SetNonMusicMix(0.85f, 0.5f); // non-music -15%
-                AudioManager.Instance?.SetSFXCutoff(0f);
                 StopPrepTimer();
                 break;
             case DayPhase.FlowerTrimming:
                 AudioManager.Instance?.DuckMusic(0.1f, 0.5f);
                 AudioManager.Instance?.SetNonMusicMix(0.75f, 0.5f); // non-music -25%
-                AudioManager.Instance?.SetSFXCutoff(0f);
                 StartCoroutine(FlowerTrimmingTransition());
                 break;
             case DayPhase.Evening:
                 AudioManager.Instance?.UnduckMusic(1.5f);
                 AudioManager.Instance?.SetNonMusicMix(1f, 1f);
-                AudioManager.Instance?.SetSFXCutoff(2f); // apartment SFX fade+cut
                 break;
         }
 

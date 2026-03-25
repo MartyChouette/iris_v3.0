@@ -82,6 +82,8 @@ public class AudioManager : MonoBehaviour
         EnsureSource(ref environmentSource, "Audio_Environment");
         EnsureSource(ref uiSource, "Audio_UI");
 
+        _sfxCutoffTime = 2f; // always-on: SFX fade+cut after 2 seconds
+
         AccessibilitySettings.OnSettingsChanged += ApplyVolumeSettings;
         ApplyVolumeSettings();
     }
