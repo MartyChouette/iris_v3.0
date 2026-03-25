@@ -322,6 +322,7 @@ public class AudioManager : MonoBehaviour
         musicSource.volume = volume * _masterVol * _musicVol;
         musicSource.loop = loop;
         musicSource.Play();
+        Debug.Log($"[AudioManager] PlayMusic: '{clip.name}' vol={volume * _masterVol * _musicVol:F2} loop={loop}");
     }
 
     public void StopMusic(float fadeTime = 0f)

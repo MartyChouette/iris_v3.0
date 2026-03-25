@@ -68,7 +68,13 @@ public class MusicDirector : MonoBehaviour
     public void PlayMenuSong()
     {
         if (_menuSong == null && !string.IsNullOrEmpty(_menuSongPath))
+        {
             _menuSong = Resources.Load<AudioClip>(_menuSongPath);
+            if (_menuSong != null)
+                Debug.Log($"[MusicDirector] Loaded menu song from Resources: '{_menuSong.name}' (path: {_menuSongPath})");
+            else
+                Debug.LogWarning($"[MusicDirector] Resources.Load failed for path: '{_menuSongPath}'");
+        }
 
         if (_menuSong == null)
         {
@@ -81,8 +87,12 @@ public class MusicDirector : MonoBehaviour
         if (src != null && src.isPlaying && src.clip == _menuSong)
             return; // already playing
 
+        // Log if something else is already playing
+        if (src != null && src.isPlaying)
+            Debug.Log($"[MusicDirector] Replacing current music '{src.clip?.name}' with menu song '{_menuSong.name}'");
+
         AudioManager.Instance.PlayMusic(_menuSong, _menuSongVolume, loop: true);
-        Debug.Log("[MusicDirector] Menu song started.");
+        Debug.Log($"[MusicDirector] Menu song started: '{_menuSong.name}'");
     }
 
     /// <summary>
