@@ -488,7 +488,13 @@ public class ObjectGrabber : MonoBehaviour
         if (_currentSurface.IsVertical && !_held.CanWallMount) return;
         if (!_currentSurface.IsVertical && _held.WallOnly) return;
 
-        // Trash can be placed on any surface (floor, tables, shelves)
+        // Trash only on floor or trash cans
+        if (_held.Category == ItemCategory.Trash)
+        {
+            var zone = _currentSurface.GetComponent<DropZone>();
+            bool isTrashCan = zone != null && zone.DestroyOnDeposit;
+            if (!_currentSurface.IsFloor && !isTrashCan) return;
+        }
 
         // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
         // detection — the rigidbody can overshoot through thin wall triggers.
@@ -973,7 +979,13 @@ public class ObjectGrabber : MonoBehaviour
         bool canPlace = (!_currentSurface.IsVertical || _held.CanWallMount)
             && (_currentSurface.IsVertical || !_held.WallOnly);
 
-        // Trash can be placed on any valid surface
+        // Trash items only show valid on floor surfaces and trash cans
+        if (canPlace && _held.Category == ItemCategory.Trash)
+        {
+            var zone = _currentSurface.GetComponent<DropZone>();
+            bool isTrashCan = zone != null && zone.DestroyOnDeposit;
+            canPlace = _currentSurface.IsFloor || isTrashCan;
+        }
 
         _shadowMat.color = canPlace ? s_shadowValid : s_shadowInvalid;
         _shadowGO.transform.position = shadowPos;
