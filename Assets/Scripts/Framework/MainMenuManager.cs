@@ -115,7 +115,10 @@ public class MainMenuManager : MonoBehaviour
 
         ShowPanel(MenuState.ModeSelect);
 
-        // Menu music handled by scene AudioSource — MusicDirector takes over in apartment.
+        // Play menu music through AudioManager's persistent music channel so it
+        // survives the scene transition into the apartment.
+        if (MusicDirector.Instance != null)
+            MusicDirector.Instance.PlayMenuSong();
 
         // Fade in from black
         if (ScreenFade.Instance != null)

@@ -78,10 +78,26 @@ public class MusicDirector : MonoBehaviour
         if (_menuSong == null && !string.IsNullOrEmpty(_menuSongPath))
         {
             _menuSong = Resources.Load<AudioClip>(_menuSongPath);
+
+            // Fallback: try loading all clips in Music/ and find by partial name match
+            if (_menuSong == null)
+            {
+                string targetName = System.IO.Path.GetFileName(_menuSongPath);
+                var all = Resources.LoadAll<AudioClip>("Music");
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (all[i].name.Contains("Evening Wind-Down") || all[i].name == targetName)
+                    {
+                        _menuSong = all[i];
+                        break;
+                    }
+                }
+            }
+
             if (_menuSong != null)
-                Debug.Log($"[MusicDirector] Loaded menu song from Resources: '{_menuSong.name}' (path: {_menuSongPath})");
+                Debug.Log($"[MusicDirector] Menu song loaded: '{_menuSong.name}'");
             else
-                Debug.LogWarning($"[MusicDirector] Resources.Load failed for path: '{_menuSongPath}'");
+                Debug.LogWarning($"[MusicDirector] Could not load menu song from: '{_menuSongPath}'");
         }
 
         if (_menuSong == null)
