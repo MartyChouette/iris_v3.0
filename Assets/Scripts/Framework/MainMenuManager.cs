@@ -115,9 +115,7 @@ public class MainMenuManager : MonoBehaviour
 
         ShowPanel(MenuState.ModeSelect);
 
-        // Start menu music (persists through loading screen via DDoL)
-        if (MusicDirector.Instance != null)
-            MusicDirector.Instance.PlayMenuSong();
+        // Menu music handled by scene AudioSource — MusicDirector takes over in apartment.
 
         // Fade in from black
         if (ScreenFade.Instance != null)
