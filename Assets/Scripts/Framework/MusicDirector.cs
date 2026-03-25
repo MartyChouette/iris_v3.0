@@ -18,7 +18,7 @@ public class MusicDirector : MonoBehaviour
     [SerializeField] private AudioClip _menuSong;
 
     [Tooltip("Resources path fallback if _menuSong is not assigned (e.g. 'Music/ES_Evening Wind-Down - Sarah, the Illstrumentalist').")]
-    [SerializeField] private string _menuSongPath = "Music/ES_Evening Wind-Down - Sarah, the Illstrumentalist";
+    [SerializeField] private string _menuSongPath = "Music/ES_Les Artistes - Eva Hummingbird";
 
     [Tooltip("Volume for menu song (before master/music multipliers).")]
     [SerializeField] private float _menuSongVolume = 0.5f;
