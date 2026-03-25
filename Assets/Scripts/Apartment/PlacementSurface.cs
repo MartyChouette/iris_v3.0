@@ -39,8 +39,8 @@ public class PlacementSurface : MonoBehaviour
     [Tooltip("Mark as floor — trash items can be placed here.")]
     [SerializeField] private bool _isFloor;
 
-    /// <summary>True if this surface is a floor (marked or auto-detected from upward-facing normal).</summary>
-    public bool IsFloor => _isFloor || Vector3.Dot(SurfaceNormal, Vector3.up) > 0.7f;
+    /// <summary>True if this surface is marked as a floor in the Inspector.</summary>
+    public bool IsFloor => _isFloor;
 
     /// <summary>World-space surface normal based on orientation axis.</summary>
     public Vector3 SurfaceNormal =>
