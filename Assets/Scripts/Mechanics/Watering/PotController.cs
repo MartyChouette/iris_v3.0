@@ -41,10 +41,10 @@ public class PotController : MonoBehaviour
 
     [Header("Pot Dimensions")]
     [Tooltip("Internal height of the pot in world units.")]
-    public float potWorldHeight = 0.10f;
+    public float potWorldHeight = 0.12f;
 
     [Tooltip("Visual radius of the pot interior.")]
-    public float potWorldRadius = 0.04f;
+    public float potWorldRadius = 0.08f;
 
     // ── State ────────────────────────────────────────────────────
 

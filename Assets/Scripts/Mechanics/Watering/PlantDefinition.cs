@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// Defines a potted plant's watering characteristics.
@@ -25,27 +26,32 @@ public class PlantDefinition : ScriptableObject
 
     [Header("Soil Colors")]
     [Tooltip("Soil when bone dry (moisture = 0).")]
+    [FormerlySerializedAs("dryColor")]
     public Color soilDry = new Color(0.65f, 0.50f, 0.32f);
 
     [Tooltip("Soil at perfect moisture — the color the player is aiming for.")]
     public Color soilPerfect = new Color(0.35f, 0.25f, 0.15f);
 
     [Tooltip("Soil when waterlogged (moisture = 1). Muddy, too dark.")]
+    [FormerlySerializedAs("wetColor")]
     public Color soilWaterlogged = new Color(0.12f, 0.08f, 0.05f);
 
     [Header("Watering")]
     [Tooltip("The ideal soil moisture level (0-1). Player aims for this by watching color.")]
     [Range(0f, 1f)]
+    [FormerlySerializedAs("idealWaterLevel")]
     public float perfectMoisture = 0.55f;
 
     [Tooltip("How close to perfectMoisture counts as 'good' (± this value).")]
     [Range(0.01f, 0.3f)]
+    [FormerlySerializedAs("waterTolerance")]
     public float moistureTolerance = 0.1f;
 
     [Tooltip("Water units per second added to the pool while pouring.")]
     public float pourRate = 0.25f;
 
     [Tooltip("How fast the soil soaks up pooled water (units/sec). Low = slow spongy soil, high = fast sandy soil.")]
+    [FormerlySerializedAs("absorptionRate")]
     public float absorptionRate = 0.15f;
 
     [Tooltip("Max pooled water that can sit on top before overflowing.")]
@@ -57,9 +63,11 @@ public class PlantDefinition : ScriptableObject
 
     [Header("Oscillating Target")]
     [Tooltip("Oscillations per second for the moving target line.")]
+    [FormerlySerializedAs("targetOscSpeed")]
     public float targetOscSpeed = 0.5f;
 
     [Tooltip("How far the target swings above/below perfectMoisture.")]
+    [FormerlySerializedAs("targetOscAmplitude")]
     public float targetOscAmplitude = 0.08f;
 
     [Header("Scoring")]

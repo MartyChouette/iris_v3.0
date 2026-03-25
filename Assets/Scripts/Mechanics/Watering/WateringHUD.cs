@@ -28,9 +28,14 @@ public class WateringHUD : MonoBehaviour
 
         bool showHUD = manager.CurrentState != WateringManager.State.Idle;
 
-        // Show canvas on first interaction
-        if (showHUD && hudCanvas != null && !hudCanvas.gameObject.activeSelf)
-            hudCanvas.gameObject.SetActive(true);
+        // Show canvas on first interaction — force scale to 1 (may be saved at 0)
+        if (showHUD && hudCanvas != null)
+        {
+            if (!hudCanvas.gameObject.activeSelf)
+                hudCanvas.gameObject.SetActive(true);
+            if (hudCanvas.transform.localScale.x < 0.01f)
+                hudCanvas.transform.localScale = Vector3.one;
+        }
 
         if (hudPanel != null)
             hudPanel.SetActive(showHUD);
