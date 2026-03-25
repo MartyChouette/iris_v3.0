@@ -30,21 +30,13 @@ public class MusicDirector : MonoBehaviour
     private bool _isCrossFading;
     private Coroutine _crossFadeRoutine;
 
-    /// <summary>Auto-spawn if no MusicDirector exists after scene load.</summary>
+    /// <summary>Auto-spawn if no MusicDirector exists in the scene.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void RegisterAutoCreate()
+    private static void AutoCreate()
     {
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneCheck;
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneCheck;
-    }
-
-    private static void OnSceneCheck(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
-    {
-        if (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive) return;
         if (Instance != null) return;
         var go = new GameObject("[MusicDirector]");
         go.AddComponent<MusicDirector>();
-        Debug.Log("[MusicDirector] Auto-spawned — no scene instance found.");
     }
 
     private void Awake()
@@ -76,29 +68,7 @@ public class MusicDirector : MonoBehaviour
     public void PlayMenuSong()
     {
         if (_menuSong == null && !string.IsNullOrEmpty(_menuSongPath))
-        {
             _menuSong = Resources.Load<AudioClip>(_menuSongPath);
-
-            // Fallback: try loading all clips in Music/ and find by partial name match
-            if (_menuSong == null)
-            {
-                string targetName = System.IO.Path.GetFileName(_menuSongPath);
-                var all = Resources.LoadAll<AudioClip>("Music");
-                for (int i = 0; i < all.Length; i++)
-                {
-                    if (all[i].name.Contains("Evening Wind-Down") || all[i].name == targetName)
-                    {
-                        _menuSong = all[i];
-                        break;
-                    }
-                }
-            }
-
-            if (_menuSong != null)
-                Debug.Log($"[MusicDirector] Menu song loaded: '{_menuSong.name}'");
-            else
-                Debug.LogWarning($"[MusicDirector] Could not load menu song from: '{_menuSongPath}'");
-        }
 
         if (_menuSong == null)
         {
@@ -111,12 +81,8 @@ public class MusicDirector : MonoBehaviour
         if (src != null && src.isPlaying && src.clip == _menuSong)
             return; // already playing
 
-        // Log if something else is already playing
-        if (src != null && src.isPlaying)
-            Debug.Log($"[MusicDirector] Replacing current music '{src.clip?.name}' with menu song '{_menuSong.name}'");
-
         AudioManager.Instance.PlayMusic(_menuSong, _menuSongVolume, loop: true);
-        Debug.Log($"[MusicDirector] Menu song started: '{_menuSong.name}'");
+        Debug.Log("[MusicDirector] Menu song started.");
     }
 
     /// <summary>

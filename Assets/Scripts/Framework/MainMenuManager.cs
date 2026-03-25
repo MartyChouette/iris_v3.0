@@ -115,8 +115,7 @@ public class MainMenuManager : MonoBehaviour
 
         ShowPanel(MenuState.ModeSelect);
 
-        // Play menu music through AudioManager's persistent music channel so it
-        // survives the scene transition into the apartment.
+        // Start menu music (persists through loading screen via DDoL)
         if (MusicDirector.Instance != null)
             MusicDirector.Instance.PlayMenuSong();
 
