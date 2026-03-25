@@ -48,6 +48,15 @@ public class AudioManager : MonoBehaviour
     private float _ambVol    = 1f;
     private float _uiVol     = 1f;
 
+    // Non-music mix: scales all channels except music (1 = full, 0.85 = -15%, etc.)
+    private float _nonMusicMix = 1f;
+    private float _nonMusicMixTarget = 1f;
+    private Coroutine _nonMusicFadeRoutine;
+
+    // SFX auto-cutoff: fades SFX source to silence after this many seconds (0 = disabled)
+    private float _sfxCutoffTime;
+    private Coroutine _sfxCutoffRoutine;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -107,6 +116,107 @@ public class AudioManager : MonoBehaviour
             weatherSource.volume = _masterVol * _ambVol;
     }
 
+    // ─── Non-Music Mix (scene-level volume for everything except music) ──
+
+    /// <summary>
+    /// Scale all non-music channels (SFX, ambience, weather, environment, UI).
+    /// 1.0 = full volume, 0.85 = -15%, 0.75 = -25%.
+    /// Music (record player / menu) is unaffected.
+    /// </summary>
+    public void SetNonMusicMix(float mix, float fadeDuration = 0.5f)
+    {
+        _nonMusicMixTarget = Mathf.Clamp01(mix);
+        if (_nonMusicFadeRoutine != null) StopCoroutine(_nonMusicFadeRoutine);
+
+        if (fadeDuration <= 0f)
+        {
+            _nonMusicMix = _nonMusicMixTarget;
+            ApplyNonMusicMix();
+        }
+        else
+        {
+            _nonMusicFadeRoutine = StartCoroutine(FadeNonMusicMix(fadeDuration));
+        }
+    }
+
+    private IEnumerator FadeNonMusicMix(float duration)
+    {
+        float start = _nonMusicMix;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            _nonMusicMix = Mathf.Lerp(start, _nonMusicMixTarget, elapsed / duration);
+            ApplyNonMusicMix();
+            yield return null;
+        }
+        _nonMusicMix = _nonMusicMixTarget;
+        ApplyNonMusicMix();
+        _nonMusicFadeRoutine = null;
+    }
+
+    private void ApplyNonMusicMix()
+    {
+        // Update looping non-music sources
+        if (IsValid(ambienceSource) && ambienceSource.isPlaying)
+            ambienceSource.volume = ambienceSource.volume; // re-set on next PlayAmbience
+        if (IsValid(weatherSource) && weatherSource.isPlaying)
+            weatherSource.volume = weatherSource.volume;
+    }
+
+    /// <summary>Effective SFX volume including non-music mix.</summary>
+    private float EffectiveSFXVol(float baseVol) => baseVol * _masterVol * _sfxVol * _nonMusicMix;
+    private float EffectiveAmbVol(float baseVol) => baseVol * _masterVol * _ambVol * _nonMusicMix;
+    private float EffectiveUIVol(float baseVol) => baseVol * _masterVol * _uiVol * _nonMusicMix;
+
+    // ─── SFX Auto-Cutoff (fade SFX source to silence after N seconds) ──
+
+    /// <summary>
+    /// Enable SFX auto-cutoff: any SFX will fade out and stop after this many seconds.
+    /// Pass 0 to disable. Used in apartment to prevent long SFX from droning.
+    /// </summary>
+    public void SetSFXCutoff(float seconds)
+    {
+        _sfxCutoffTime = Mathf.Max(seconds, 0f);
+    }
+
+    private void ScheduleSFXCutoff()
+    {
+        if (_sfxCutoffTime <= 0f) return;
+        if (_sfxCutoffRoutine != null) StopCoroutine(_sfxCutoffRoutine);
+        _sfxCutoffRoutine = StartCoroutine(SFXCutoffRoutine(_sfxCutoffTime));
+    }
+
+    private IEnumerator SFXCutoffRoutine(float totalTime)
+    {
+        if (!IsValid(sfxSource)) yield break;
+
+        // Let SFX play for most of the time, then fade the last 0.5s
+        float fadeStart = Mathf.Max(totalTime - 0.5f, 0f);
+        float fadeDuration = totalTime - fadeStart;
+
+        yield return new WaitForSeconds(fadeStart);
+
+        if (!IsValid(sfxSource)) yield break;
+        float startVol = sfxSource.volume;
+        float elapsed = 0f;
+
+        while (elapsed < fadeDuration && IsValid(sfxSource))
+        {
+            elapsed += Time.unscaledDeltaTime;
+            sfxSource.volume = Mathf.Lerp(startVol, 0f, elapsed / fadeDuration);
+            yield return null;
+        }
+
+        // Cut and restore volume for next SFX
+        if (IsValid(sfxSource))
+        {
+            sfxSource.Stop();
+            sfxSource.volume = startVol;
+        }
+        _sfxCutoffRoutine = null;
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────
 
     private void EnsureSource(ref AudioSource src, string childName)
@@ -146,22 +256,23 @@ public class AudioManager : MonoBehaviour
     public void PlaySFX(AudioClip clip, float volume = 1f, string caption = null)
     {
         if (clip == null || !IsValid(sfxSource)) return;
-        sfxSource.PlayOneShot(clip, volume * _masterVol * _sfxVol);
+        sfxSource.PlayOneShot(clip, EffectiveSFXVol(volume));
         if (debugLogs) Debug.Log("[AudioManager] SFX: " + clip.name, this);
         ShowCaption(caption);
+        ScheduleSFXCutoff();
     }
 
     public void PlayEnvironment(AudioClip clip, float volume = 1f, string caption = null)
     {
         if (clip == null || !IsValid(environmentSource)) return;
-        environmentSource.PlayOneShot(clip, volume * _masterVol * _sfxVol);
+        environmentSource.PlayOneShot(clip, EffectiveSFXVol(volume));
         ShowCaption(caption);
     }
 
     public void PlayUI(AudioClip clip, float volume = 1f, string caption = null)
     {
         if (clip == null || !IsValid(uiSource)) return;
-        uiSource.PlayOneShot(clip, volume * _masterVol * _uiVol);
+        uiSource.PlayOneShot(clip, EffectiveUIVol(volume));
         ShowCaption(caption);
     }
 
@@ -171,7 +282,7 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null || !IsValid(ambienceSource)) return;
         ambienceSource.clip = clip;
-        ambienceSource.volume = volume * _masterVol * _ambVol;
+        ambienceSource.volume = EffectiveAmbVol(volume);
         ambienceSource.loop = loop;
         ambienceSource.Play();
     }
@@ -188,7 +299,7 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null || !IsValid(weatherSource)) return;
         weatherSource.clip = clip;
-        weatherSource.volume = volume * _masterVol * _ambVol;
+        weatherSource.volume = EffectiveAmbVol(volume);
         weatherSource.loop = loop;
         weatherSource.Play();
     }
