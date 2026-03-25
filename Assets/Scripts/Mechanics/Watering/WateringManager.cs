@@ -125,14 +125,16 @@ public class WateringManager : MonoBehaviour
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase)
             return;
 
-        if (ObjectGrabber.IsHoldingObject) return;
-        if (ObjectGrabber.ClickConsumedThisFrame) return;
-
+        if (_mainCamera == null)
+            _mainCamera = Camera.main;
         if (_mainCamera == null) return;
 
         switch (CurrentState)
         {
             case State.Idle:
+                // Only block new interactions in Idle — don't block active watering
+                if (ObjectGrabber.IsHoldingObject) return;
+                if (ObjectGrabber.ClickConsumedThisFrame) return;
                 UpdateIdle();
                 break;
             case State.Pouring:
@@ -145,6 +147,15 @@ public class WateringManager : MonoBehaviour
                 UpdateScoring();
                 break;
         }
+    }
+
+    void LateUpdate()
+    {
+        // Camera zoom in LateUpdate so it writes AFTER ApartmentManager's Update
+        if (CurrentState == State.Pouring || CurrentState == State.Absorbing)
+            UpdateCameraZoom();
+        else if (CurrentState == State.Scoring)
+            UpdateCameraRestore();
     }
 
     // ── Idle ─────────────────────────────────────────────────────
@@ -216,8 +227,6 @@ public class WateringManager : MonoBehaviour
                 _pot.TargetLevel = OscillatingTarget;
         }
 
-        UpdateCameraZoom();
-
         bool clicking = IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed();
         UpdatePail(clicking);
 
@@ -262,8 +271,6 @@ public class WateringManager : MonoBehaviour
             if (_pot != null)
                 _pot.TargetLevel = OscillatingTarget;
         }
-
-        UpdateCameraZoom();
 
         // Wait for pooled water to fully absorb into soil
         if (_pot != null && _pot.PooledWater > 0.005f)
@@ -332,8 +339,6 @@ public class WateringManager : MonoBehaviour
 
     private void UpdateScoring()
     {
-        UpdateCameraRestore();
-
         // Allow clicking the next plant to interrupt
         if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
         {
