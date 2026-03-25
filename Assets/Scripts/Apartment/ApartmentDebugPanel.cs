@@ -5,7 +5,7 @@ using TMPro;
 
 /// <summary>
 /// Runtime debug panel for the apartment scene. Toggle with F3.
-/// Grid snap, highlight style, atmosphere tuning, info readout.
+/// Scrollable panel with sections: Grid, Highlight, Grab Feel, Atmosphere, Info.
 /// </summary>
 public class ApartmentDebugPanel : MonoBehaviour
 {
@@ -20,14 +20,14 @@ public class ApartmentDebugPanel : MonoBehaviour
 
     // Highlight controls
     private TMP_Text _hlStyleLabel;
-    private TMP_Text _hlWidthLabel;
-    private TMP_Text _hlAlphaLabel;
-    private TMP_Text _hlPulseLabel;
-    private TMP_Text _hlRimLabel;
     private Slider _hlWidthSlider;
     private Slider _hlAlphaSlider;
     private Slider _hlPulseSlider;
     private Slider _hlRimSlider;
+    private TMP_Text _hlWidthLabel;
+    private TMP_Text _hlAlphaLabel;
+    private TMP_Text _hlPulseLabel;
+    private TMP_Text _hlRimLabel;
 
     // Grab feel controls
     private TMP_Text _grabFeelLabel;
@@ -35,8 +35,12 @@ public class ApartmentDebugPanel : MonoBehaviour
     private TMP_Text _grabDamperLabel;
     private TMP_Text _grabAccelLabel;
     private TMP_Text _grabSpeedLabel;
+    private Slider _grabSpringSlider;
+    private Slider _grabDamperSlider;
+    private Slider _grabAccelSlider;
+    private Slider _grabSpeedSlider;
 
-    // Atmosphere controls
+    // Atmosphere labels
     private TMP_Text _atmSatLabel;
     private TMP_Text _atmContrastLabel;
     private TMP_Text _atmExposureLabel;
@@ -46,9 +50,9 @@ public class ApartmentDebugPanel : MonoBehaviour
     private TMP_Text _atmVignetteLabel;
     private TMP_Text _atmGrainLabel;
 
-    private const float FontSize = 18f;
-    private const float PanelWidth = 340f;
-    private const float RowHeight = 28f;
+    private const float FontSize = 16f;
+    private const float PanelWidth = 360f;
+    private const float RowHeight = 24f;
 
     private void Awake()
     {
@@ -84,24 +88,67 @@ public class ApartmentDebugPanel : MonoBehaviour
         {
             _visible = !_visible;
             _panelGO.SetActive(_visible);
+            if (_visible) SyncSlidersToSystems();
         }
 
-        // F5 cycles highlight style
         if (Input.GetKeyDown(KeyCode.F5))
         {
             InteractableHighlight.CycleStyle();
             RefreshHighlightStyleLabel();
         }
 
-        // F6 cycles grab feel preset
         if (Input.GetKeyDown(KeyCode.F6))
         {
             ObjectGrabber.CycleGrabFeel();
             RefreshGrabFeelLabel();
+            SyncGrabSliders();
         }
 
         if (_visible)
             UpdateInfo();
+    }
+
+    /// <summary>Read current values from all systems and push to sliders.</summary>
+    private void SyncSlidersToSystems()
+    {
+        SyncGrabSliders();
+        SyncAtmosphereSliders();
+    }
+
+    private void SyncGrabSliders()
+    {
+        // Read the active preset values via reflection-free approach:
+        // OnGrabParamChanged reads from sliders, so set sliders to match preset
+        // We can't easily read the current preset values, so just refresh the label
+        RefreshGrabFeelLabel();
+    }
+
+    private void SyncAtmosphereSliders()
+    {
+        var atm = AtmosphereController.Instance;
+        if (atm == null) return;
+
+        // Push system values to slider positions (suppressing callbacks would be ideal,
+        // but since the callbacks just write back the same value, it's harmless)
+        SetSliderIfValid(_atmSatLabel, atm.Saturation, "Saturation");
+        SetSliderIfValid(_atmContrastLabel, atm.Contrast, "Contrast");
+        SetSliderIfValid(_atmExposureLabel, atm.PostExposure, "Exposure");
+        SetSliderIfValid(_atmBloomIntLabel, atm.BloomIntensity, "Bloom Int");
+        SetSliderIfValid(_atmBloomThreshLabel, atm.BloomThreshold, "Bloom Thresh");
+        SetSliderIfValid(_atmBloomScatterLabel, atm.BloomScatter, "Bloom Scatter");
+        SetSliderIfValid(_atmVignetteLabel, atm.VignetteIntensity, "Vignette");
+        SetSliderIfValid(_atmGrainLabel, atm.GrainIntensity, "Film Grain");
+    }
+
+    private void SetSliderIfValid(TMP_Text label, float value, string name)
+    {
+        if (label == null) return;
+        var slider = label.transform.parent?.parent?.GetComponentInChildren<Slider>();
+        if (slider != null)
+        {
+            slider.SetValueWithoutNotify(value);
+            label.text = $"{name}: {value:F2}";
+        }
     }
 
     private void UpdateInfo()
@@ -110,7 +157,6 @@ public class ApartmentDebugPanel : MonoBehaviour
 
         var sb = new System.Text.StringBuilder();
 
-        // ── Game State ──
         if (ObjectGrabber.IsHoldingObject)
             sb.AppendLine("Holding: " + ObjectGrabber.HeldObject.ItemDescription);
 
@@ -128,57 +174,15 @@ public class ApartmentDebugPanel : MonoBehaviour
         if (DayPhaseManager.Instance != null)
             sb.AppendLine($"Phase: {DayPhaseManager.Instance.CurrentPhase}");
 
-        // ── Systems Status ──
-        sb.AppendLine("--- systems ---");
-
-        // MoodMachine
         if (MoodMachine.Instance != null)
             sb.AppendLine($"Mood: {MoodMachine.Instance.Mood:F2}");
-        else
-            sb.AppendLine("Mood: OFF");
 
-        // Weather
-        if (WeatherSystem.Instance != null)
-            sb.AppendLine($"Weather: {WeatherSystem.Instance.CurrentWeather}");
-        else
-            sb.AppendLine("Weather: OFF");
-
-        // Atmosphere
         var atm = AtmosphereController.Instance;
         if (atm != null)
-        {
-            float mood = MoodMachine.Instance != null ? MoodMachine.Instance.Mood : -1f;
-            sb.Append($"Atmo: ON");
-            if (mood >= 0f) sb.Append($" (mood>{mood:F2})");
-            sb.AppendLine();
-        }
-        else
-            sb.AppendLine("Atmo: OFF");
+            sb.AppendLine($"Atmo: ON (sat={atm.Saturation:F0} exp={atm.PostExposure:F1})");
 
-        // NatureBox
-        var nature = NatureBoxController.Instance;
-        if (nature != null)
-        {
-            float tod = GameClock.Instance != null ? GameClock.Instance.NormalizedTimeOfDay : -1f;
-            sb.AppendLine(tod >= 0f ? $"NatureBox: ON (t={tod:F2})" : "NatureBox: ON (manual)");
-        }
-        else
-            sb.AppendLine("NatureBox: OFF");
-
-        // PSX
         if (PSXRenderController.Instance != null && PSXRenderController.Instance.enabled)
             sb.AppendLine($"PSX: ON (snap={PSXRenderController.Instance.VertexSnapResolution.x:F0})");
-        else
-            sb.AppendLine("PSX: OFF");
-
-        // Light
-        var sun = RenderSettings.sun;
-        if (sun != null)
-            sb.AppendLine($"Light: {sun.intensity:F2} ({sun.color.r:F1},{sun.color.g:F1},{sun.color.b:F1})");
-
-        // Fog
-        if (RenderSettings.fog)
-            sb.AppendLine($"Fog: {RenderSettings.fogDensity:F4} ({RenderSettings.fogColor.r:F1},{RenderSettings.fogColor.g:F1},{RenderSettings.fogColor.b:F1})");
 
         _infoText.text = sb.ToString();
     }
@@ -188,7 +192,7 @@ public class ApartmentDebugPanel : MonoBehaviour
     private void RefreshHighlightStyleLabel()
     {
         if (_hlStyleLabel != null)
-            _hlStyleLabel.text = $"Highlight: {InteractableHighlight.CurrentStyle} (F5)";
+            _hlStyleLabel.text = $"Style: {InteractableHighlight.CurrentStyle} (F5)";
     }
 
     private void OnHighlightParamChanged()
@@ -201,7 +205,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         if (_hlWidthLabel != null) _hlWidthLabel.text = $"Width: {width:F3}";
         if (_hlAlphaLabel != null) _hlAlphaLabel.text = $"Alpha: {alpha:F2}";
         if (_hlPulseLabel != null) _hlPulseLabel.text = $"Pulse: {pulse:F2}";
-        if (_hlRimLabel != null) _hlRimLabel.text = $"Rim Power: {rim:F1}";
+        if (_hlRimLabel != null) _hlRimLabel.text = $"Rim: {rim:F1}";
 
         InteractableHighlight.SetTuningOverrides(width, alpha, pulse, rim);
     }
@@ -211,24 +215,31 @@ public class ApartmentDebugPanel : MonoBehaviour
     private void RefreshGrabFeelLabel()
     {
         if (_grabFeelLabel != null)
-            _grabFeelLabel.text = $"Grab: {ObjectGrabber.CurrentFeel} (F6)";
+            _grabFeelLabel.text = $"Preset: {ObjectGrabber.CurrentFeel} (F6)";
     }
 
     private void OnGrabParamChanged()
     {
-        float spring = 35f, damper = 6f, accel = 20f, speed = 5f;
-        if (_grabSpringLabel != null) { spring = GetLastSlider(_grabSpringLabel.transform.parent.parent).value; _grabSpringLabel.text = $"Spring: {spring:F0}"; }
-        if (_grabDamperLabel != null) { damper = GetLastSlider(_grabDamperLabel.transform.parent.parent).value; _grabDamperLabel.text = $"Damper: {damper:F0}"; }
-        if (_grabAccelLabel != null) { accel = GetLastSlider(_grabAccelLabel.transform.parent.parent).value; _grabAccelLabel.text = $"Max Accel: {accel:F0}"; }
-        if (_grabSpeedLabel != null) { speed = GetLastSlider(_grabSpeedLabel.transform.parent.parent).value; _grabSpeedLabel.text = $"Max Speed: {speed:F0}"; }
+        float spring = _grabSpringSlider != null ? _grabSpringSlider.value : 35f;
+        float damper = _grabDamperSlider != null ? _grabDamperSlider.value : 6f;
+        float accel = _grabAccelSlider != null ? _grabAccelSlider.value : 20f;
+        float speed = _grabSpeedSlider != null ? _grabSpeedSlider.value : 5f;
+
+        if (_grabSpringLabel != null) _grabSpringLabel.text = $"Spring: {spring:F0}";
+        if (_grabDamperLabel != null) _grabDamperLabel.text = $"Damper: {damper:F0}";
+        if (_grabAccelLabel != null) _grabAccelLabel.text = $"Accel: {accel:F0}";
+        if (_grabSpeedLabel != null) _grabSpeedLabel.text = $"Speed: {speed:F0}";
+
         ObjectGrabber.SetGrabOverrides(spring, damper, accel, speed);
     }
 
-    // ── Panel construction ──
+    // ══════════════════════════════════════════════════════════════
+    // Panel construction — scrollable, sectioned
+    // ══════════════════════════════════════════════════════════════
 
     private void BuildPanel()
     {
-        // Screen-space overlay canvas
+        // Canvas
         var canvasGO = new GameObject("ApartmentDebugCanvas");
         canvasGO.transform.SetParent(transform);
         var canvas = canvasGO.AddComponent<Canvas>();
@@ -239,158 +250,179 @@ public class ApartmentDebugPanel : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         canvasGO.AddComponent<GraphicRaycaster>();
 
+        // Panel (right side, full height)
         _panelGO = new GameObject("DebugPanel");
         _panelGO.transform.SetParent(canvasGO.transform, false);
-
         var panelRT = _panelGO.AddComponent<RectTransform>();
         panelRT.anchorMin = new Vector2(1f, 0f);
         panelRT.anchorMax = new Vector2(1f, 1f);
         panelRT.pivot = new Vector2(1f, 0.5f);
-        panelRT.anchoredPosition = new Vector2(-10f, 0f);
-        panelRT.sizeDelta = new Vector2(PanelWidth, -20f);
+        panelRT.anchoredPosition = new Vector2(-8f, 0f);
+        panelRT.sizeDelta = new Vector2(PanelWidth, -16f);
 
         var panelImg = _panelGO.AddComponent<Image>();
-        panelImg.color = new Color(0.05f, 0.05f, 0.05f, 0.88f);
-        panelImg.raycastTarget = false;
+        panelImg.color = new Color(0.05f, 0.05f, 0.05f, 0.9f);
+        panelImg.raycastTarget = true;
 
-        var layout = _panelGO.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(12, 12, 6, 6);
-        layout.spacing = 2f;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
+        // ScrollRect
+        var scrollGO = new GameObject("Scroll");
+        scrollGO.transform.SetParent(_panelGO.transform, false);
+        var scrollRT = scrollGO.AddComponent<RectTransform>();
+        scrollRT.anchorMin = Vector2.zero;
+        scrollRT.anchorMax = Vector2.one;
+        scrollRT.offsetMin = new Vector2(4f, 4f);
+        scrollRT.offsetMax = new Vector2(-4f, -4f);
 
-        var contentParent = _panelGO.transform;
+        var scroll = scrollGO.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 30f;
 
-        // ═════════════════════════════════════
-        //  CONTENT
-        // ═════════════════════════════════════
+        // Mask
+        var maskImg = scrollGO.AddComponent<Image>();
+        maskImg.color = Color.clear;
+        scrollGO.AddComponent<Mask>().showMaskGraphic = false;
 
-        AddLabel(contentParent, "DEBUG (F3)", FontSize + 2f, FontStyles.Bold);
+        // Content (vertical layout)
+        var contentGO = new GameObject("Content");
+        contentGO.transform.SetParent(scrollGO.transform, false);
+        var contentRT = contentGO.AddComponent<RectTransform>();
+        contentRT.anchorMin = new Vector2(0f, 1f);
+        contentRT.anchorMax = new Vector2(1f, 1f);
+        contentRT.pivot = new Vector2(0.5f, 1f);
+        contentRT.anchoredPosition = Vector2.zero;
+        contentRT.sizeDelta = new Vector2(0f, 0f);
 
-        // ── Grid snap ──
-        var initGrabber = Object.FindAnyObjectByType<ObjectGrabber>();
-        float initGrid = initGrabber != null ? initGrabber.GridSize : 0.11f;
-        AddSliderRow(contentParent, "Grid Size", 0.05f, 1.0f, initGrid,
+        var contentLayout = contentGO.AddComponent<VerticalLayoutGroup>();
+        contentLayout.padding = new RectOffset(8, 8, 4, 4);
+        contentLayout.spacing = 1f;
+        contentLayout.childForceExpandWidth = true;
+        contentLayout.childForceExpandHeight = false;
+        contentLayout.childControlWidth = true;
+        contentLayout.childControlHeight = true;
+
+        var contentFitter = contentGO.AddComponent<ContentSizeFitter>();
+        contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        scroll.content = contentRT;
+        scroll.viewport = scrollRT;
+
+        var cp = contentGO.transform;
+
+        // ═══════════════════════════════════════
+        //  SECTIONS
+        // ═══════════════════════════════════════
+
+        AddSectionHeader(cp, "DEBUG PANEL (F3)", new Color(1f, 1f, 1f));
+
+        // ── Grid ──
+        var grabber = Object.FindAnyObjectByType<ObjectGrabber>();
+        float initGrid = grabber != null ? grabber.GridSize : 0.11f;
+        AddSliderRow(cp, "Grid Size", 0.05f, 1.0f, initGrid,
             val =>
             {
-                var grabber = Object.FindAnyObjectByType<ObjectGrabber>();
-                if (grabber != null) grabber.GridSize = val;
+                var g = Object.FindAnyObjectByType<ObjectGrabber>();
+                if (g != null) g.GridSize = val;
                 if (_gridLabel != null) _gridLabel.text = $"Grid: {val:F2}m";
-            },
-            out _gridLabel);
+            }, out _gridLabel);
 
         // ── Highlight ──
-        AddSeparator(contentParent);
-        _hlStyleLabel = AddLabel(contentParent, $"Highlight: {InteractableHighlight.CurrentStyle} (F5)",
-            FontSize, FontStyles.Bold);
-        _hlStyleLabel.color = new Color(1f, 0.9f, 0.7f);
+        AddSectionHeader(cp, "HIGHLIGHT", new Color(1f, 0.9f, 0.7f));
+        _hlStyleLabel = AddLabel(cp, $"Style: {InteractableHighlight.CurrentStyle} (F5)");
 
-        AddSliderRow(contentParent, "Width", 0.001f, 0.05f, 0.008f,
-            _ => OnHighlightParamChanged(), out _hlWidthLabel);
-        _hlWidthSlider = GetLastSlider(contentParent);
+        AddSliderRow(cp, "Width", 0.001f, 0.05f, 0.008f, _ => OnHighlightParamChanged(), out _hlWidthLabel);
+        _hlWidthSlider = GetLastSlider(cp);
+        AddSliderRow(cp, "Alpha", 0.05f, 1.0f, 0.25f, _ => OnHighlightParamChanged(), out _hlAlphaLabel);
+        _hlAlphaSlider = GetLastSlider(cp);
+        AddSliderRow(cp, "Pulse", 0f, 0.5f, 0.1f, _ => OnHighlightParamChanged(), out _hlPulseLabel);
+        _hlPulseSlider = GetLastSlider(cp);
+        AddSliderRow(cp, "Rim Power", 0.5f, 8.0f, 2.5f, _ => OnHighlightParamChanged(), out _hlRimLabel);
+        _hlRimSlider = GetLastSlider(cp);
 
-        AddSliderRow(contentParent, "Alpha", 0.05f, 1.0f, 0.25f,
-            _ => OnHighlightParamChanged(), out _hlAlphaLabel);
-        _hlAlphaSlider = GetLastSlider(contentParent);
-
-        AddSliderRow(contentParent, "Pulse", 0f, 0.5f, 0.1f,
-            _ => OnHighlightParamChanged(), out _hlPulseLabel);
-        _hlPulseSlider = GetLastSlider(contentParent);
-
-        AddSliderRow(contentParent, "Rim Power", 0.5f, 8.0f, 2.5f,
-            _ => OnHighlightParamChanged(), out _hlRimLabel);
-        _hlRimSlider = GetLastSlider(contentParent);
-
-        TMP_Text hlSnapResLabel = null, hlOffsetLabel = null, hlJitterLabel = null;
-
-        AddSliderRow(contentParent, "HL Snap Res", 0f, 500f, 160f,
+        TMP_Text hlSnapLabel, hlOffsetLabel, hlJitterLabel;
+        AddSliderRow(cp, "HL Snap", 0f, 500f, 160f,
             val => { InteractableHighlight.HLSnapEnabled = val > 1f;
                      InteractableHighlight.HLSnapRes = val;
-                     hlSnapResLabel.text = val > 1f ? $"HL Snap: {val:F0}" : "HL Snap: OFF"; },
-            out hlSnapResLabel);
-
-        AddSliderRow(contentParent, "HL Offset", 0f, 0.02f, 0.001f,
+                     if (hlSnapLabel != null) hlSnapLabel.text = val > 1f ? $"HL Snap: {val:F0}" : "HL Snap: OFF"; },
+            out hlSnapLabel);
+        AddSliderRow(cp, "HL Offset", 0f, 0.02f, 0.001f,
             val => { InteractableHighlight.HLNormalOffset = val;
-                     hlOffsetLabel.text = $"HL Offset: {val:F3}"; },
+                     if (hlOffsetLabel != null) hlOffsetLabel.text = $"HL Offset: {val:F3}"; },
             out hlOffsetLabel);
-
-        AddSliderRow(contentParent, "HL Jitter", 0f, 0.02f, 0f,
+        AddSliderRow(cp, "HL Jitter", 0f, 0.02f, 0f,
             val => { InteractableHighlight.HLJitter = val;
-                     hlJitterLabel.text = $"HL Jitter: {val:F3}"; },
+                     if (hlJitterLabel != null) hlJitterLabel.text = $"HL Jitter: {val:F3}"; },
             out hlJitterLabel);
 
         // ── Grab Feel ──
-        AddSeparator(contentParent);
-        _grabFeelLabel = AddLabel(contentParent, $"Grab: {ObjectGrabber.CurrentFeel} (F6)",
-            FontSize, FontStyles.Bold);
-        _grabFeelLabel.color = new Color(0.9f, 0.75f, 1f);
+        AddSectionHeader(cp, "GRAB FEEL", new Color(0.9f, 0.75f, 1f));
+        _grabFeelLabel = AddLabel(cp, $"Preset: {ObjectGrabber.CurrentFeel} (F6)");
 
-        AddSliderRow(contentParent, "Spring", 5f, 500f, 35f,
-            _ => OnGrabParamChanged(), out _grabSpringLabel);
-
-        AddSliderRow(contentParent, "Damper", 1f, 50f, 6f,
-            _ => OnGrabParamChanged(), out _grabDamperLabel);
-
-        AddSliderRow(contentParent, "Max Accel", 5f, 200f, 20f,
-            _ => OnGrabParamChanged(), out _grabAccelLabel);
-
-        AddSliderRow(contentParent, "Max Speed", 1f, 30f, 5f,
-            _ => OnGrabParamChanged(), out _grabSpeedLabel);
+        AddSliderRow(cp, "Spring", 5f, 500f, 35f, _ => OnGrabParamChanged(), out _grabSpringLabel);
+        _grabSpringSlider = GetLastSlider(cp);
+        AddSliderRow(cp, "Damper", 1f, 50f, 6f, _ => OnGrabParamChanged(), out _grabDamperLabel);
+        _grabDamperSlider = GetLastSlider(cp);
+        AddSliderRow(cp, "Accel", 5f, 200f, 20f, _ => OnGrabParamChanged(), out _grabAccelLabel);
+        _grabAccelSlider = GetLastSlider(cp);
+        AddSliderRow(cp, "Speed", 1f, 30f, 5f, _ => OnGrabParamChanged(), out _grabSpeedLabel);
+        _grabSpeedSlider = GetLastSlider(cp);
 
         // ── Atmosphere ──
-        AddSeparator(contentParent);
-        var atmTitle = AddLabel(contentParent, "Atmosphere", FontSize, FontStyles.Bold);
-        atmTitle.color = new Color(0.7f, 0.85f, 1f);
+        AddSectionHeader(cp, "ATMOSPHERE", new Color(0.7f, 0.85f, 1f));
 
-        AddSliderRow(contentParent, "Saturation", -80f, 20f, -25f,
+        var atm = AtmosphereController.Instance;
+        float sat = atm != null ? atm.Saturation : -25f;
+        float con = atm != null ? atm.Contrast : 12f;
+        float exp = atm != null ? atm.PostExposure : 0.3f;
+        float bInt = atm != null ? atm.BloomIntensity : 0.6f;
+        float bTh = atm != null ? atm.BloomThreshold : 0.7f;
+        float bSc = atm != null ? atm.BloomScatter : 0.75f;
+        float vig = atm != null ? atm.VignetteIntensity : 0.3f;
+        float grn = atm != null ? atm.GrainIntensity : 0.15f;
+
+        AddSliderRow(cp, "Saturation", -80f, 20f, sat,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.Saturation = val;
                      if (_atmSatLabel != null) _atmSatLabel.text = $"Saturation: {val:F0}"; },
             out _atmSatLabel);
-
-        AddSliderRow(contentParent, "Contrast", -50f, 50f, 12f,
+        AddSliderRow(cp, "Contrast", -50f, 50f, con,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.Contrast = val;
                      if (_atmContrastLabel != null) _atmContrastLabel.text = $"Contrast: {val:F0}"; },
             out _atmContrastLabel);
-
-        AddSliderRow(contentParent, "Exposure", -2f, 3f, 0.3f,
+        AddSliderRow(cp, "Exposure", -2f, 3f, exp,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.PostExposure = val;
                      if (_atmExposureLabel != null) _atmExposureLabel.text = $"Exposure: {val:F1}"; },
             out _atmExposureLabel);
-
-        AddSliderRow(contentParent, "Bloom Int", 0f, 3f, 0.6f,
+        AddSliderRow(cp, "Bloom Int", 0f, 3f, bInt,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.BloomIntensity = val;
-                     if (_atmBloomIntLabel != null) _atmBloomIntLabel.text = $"Bloom Int: {val:F2}"; },
+                     if (_atmBloomIntLabel != null) _atmBloomIntLabel.text = $"Bloom: {val:F2}"; },
             out _atmBloomIntLabel);
-
-        AddSliderRow(contentParent, "Bloom Thresh", 0f, 2f, 0.7f,
+        AddSliderRow(cp, "Bloom Thresh", 0f, 2f, bTh,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.BloomThreshold = val;
-                     if (_atmBloomThreshLabel != null) _atmBloomThreshLabel.text = $"Bloom Thresh: {val:F2}"; },
+                     if (_atmBloomThreshLabel != null) _atmBloomThreshLabel.text = $"Thresh: {val:F2}"; },
             out _atmBloomThreshLabel);
-
-        AddSliderRow(contentParent, "Bloom Scatter", 0f, 1f, 0.75f,
+        AddSliderRow(cp, "Bloom Scatter", 0f, 1f, bSc,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.BloomScatter = val;
-                     if (_atmBloomScatterLabel != null) _atmBloomScatterLabel.text = $"Bloom Scatter: {val:F2}"; },
+                     if (_atmBloomScatterLabel != null) _atmBloomScatterLabel.text = $"Scatter: {val:F2}"; },
             out _atmBloomScatterLabel);
-
-        AddSliderRow(contentParent, "Vignette", 0f, 1f, 0.3f,
+        AddSliderRow(cp, "Vignette", 0f, 1f, vig,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.VignetteIntensity = val;
                      if (_atmVignetteLabel != null) _atmVignetteLabel.text = $"Vignette: {val:F2}"; },
             out _atmVignetteLabel);
-
-        AddSliderRow(contentParent, "Film Grain", 0f, 1f, 0.15f,
+        AddSliderRow(cp, "Film Grain", 0f, 1f, grn,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.GrainIntensity = val;
-                     if (_atmGrainLabel != null) _atmGrainLabel.text = $"Film Grain: {val:F2}"; },
+                     if (_atmGrainLabel != null) _atmGrainLabel.text = $"Grain: {val:F2}"; },
             out _atmGrainLabel);
 
-        // ── Info text ──
-        AddSeparator(contentParent);
-        _infoText = AddLabel(contentParent, "", FontSize - 2f, FontStyles.Normal);
+        // ── Info readout ──
+        AddSectionHeader(cp, "STATUS", new Color(0.8f, 0.9f, 0.8f));
+        _infoText = AddLabel(cp, "");
         _infoText.color = new Color(0.8f, 0.9f, 0.8f);
     }
 
-    // ── UI Helpers ──
+    // ══════════════════════════════════════════════════════════════
+    // UI Helpers
+    // ══════════════════════════════════════════════════════════════
 
     private Slider GetLastSlider(Transform parent)
     {
@@ -398,37 +430,59 @@ public class ApartmentDebugPanel : MonoBehaviour
         return sliders.Length > 0 ? sliders[sliders.Length - 1] : null;
     }
 
-    private TMP_Text AddLabel(Transform parent, string text, float size, FontStyles style)
+    private TMP_Text AddLabel(Transform parent, string text)
     {
         var go = new GameObject("Label");
         go.transform.SetParent(parent, false);
-
         go.AddComponent<RectTransform>();
         var le = go.AddComponent<LayoutElement>();
         le.preferredHeight = RowHeight;
 
         var tmp = go.AddComponent<TextMeshProUGUI>();
         tmp.text = text;
-        tmp.fontSize = size;
-        tmp.fontStyle = style;
+        tmp.fontSize = FontSize;
         tmp.color = Color.white;
         tmp.alignment = TextAlignmentOptions.Left;
         tmp.enableWordWrapping = true;
         tmp.raycastTarget = false;
-
         return tmp;
     }
 
-    private void AddSeparator(Transform parent)
+    private void AddSectionHeader(Transform parent, string text, Color color)
     {
-        var go = new GameObject("Separator");
+        // Small spacer
+        var spacer = new GameObject("Spacer");
+        spacer.transform.SetParent(parent, false);
+        spacer.AddComponent<RectTransform>();
+        spacer.AddComponent<LayoutElement>().preferredHeight = 6f;
+
+        // Header bar
+        var go = new GameObject("SectionHeader");
         go.transform.SetParent(parent, false);
         go.AddComponent<RectTransform>();
         var le = go.AddComponent<LayoutElement>();
-        le.preferredHeight = 2f;
+        le.preferredHeight = RowHeight + 2f;
+
         var img = go.AddComponent<Image>();
-        img.color = new Color(0.3f, 0.3f, 0.3f, 0.6f);
+        img.color = new Color(color.r * 0.15f, color.g * 0.15f, color.b * 0.15f, 0.8f);
         img.raycastTarget = false;
+
+        // Text inside header
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(go.transform, false);
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = new Vector2(8f, 0f);
+        textRT.offsetMax = Vector2.zero;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = FontSize;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.color = color;
+        tmp.alignment = TextAlignmentOptions.MidlineLeft;
+        tmp.raycastTarget = false;
     }
 
     private void AddSliderRow(Transform parent, string label, float min, float max,
@@ -436,66 +490,68 @@ public class ApartmentDebugPanel : MonoBehaviour
     {
         var rowGO = new GameObject("SliderRow");
         rowGO.transform.SetParent(parent, false);
-
         rowGO.AddComponent<RectTransform>();
-        var rowLE = rowGO.AddComponent<LayoutElement>();
-        rowLE.preferredHeight = RowHeight + 8f;
+        rowGO.AddComponent<LayoutElement>().preferredHeight = RowHeight + 6f;
 
         var rowLayout = rowGO.AddComponent<VerticalLayoutGroup>();
-        rowLayout.spacing = 1f;
+        rowLayout.spacing = 0f;
         rowLayout.childForceExpandWidth = true;
         rowLayout.childForceExpandHeight = false;
         rowLayout.childControlWidth = true;
         rowLayout.childControlHeight = true;
 
-        valueLabel = AddLabel(rowGO.transform, $"{label}: {initial:F2}", FontSize - 2f, FontStyles.Normal);
+        // Value label
+        var labelGO = new GameObject("ValueLabel");
+        labelGO.transform.SetParent(rowGO.transform, false);
+        labelGO.AddComponent<RectTransform>();
+        labelGO.AddComponent<LayoutElement>().preferredHeight = RowHeight - 4f;
+        var tmp = labelGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = $"{label}: {initial:F2}";
+        tmp.fontSize = FontSize - 2f;
+        tmp.color = new Color(0.85f, 0.85f, 0.85f);
+        tmp.alignment = TextAlignmentOptions.Left;
+        tmp.raycastTarget = false;
+        valueLabel = tmp;
 
         // Slider
         var sliderGO = new GameObject("Slider");
         sliderGO.transform.SetParent(rowGO.transform, false);
-
         sliderGO.AddComponent<RectTransform>();
-        var sliderLE = sliderGO.AddComponent<LayoutElement>();
-        sliderLE.preferredHeight = 16f;
+        sliderGO.AddComponent<LayoutElement>().preferredHeight = 12f;
 
-        var bgGO = new GameObject("Background");
+        // BG
+        var bgGO = new GameObject("BG");
         bgGO.transform.SetParent(sliderGO.transform, false);
         var bgRT = bgGO.AddComponent<RectTransform>();
-        bgRT.anchorMin = Vector2.zero;
-        bgRT.anchorMax = Vector2.one;
-        bgRT.offsetMin = Vector2.zero;
-        bgRT.offsetMax = Vector2.zero;
-        bgGO.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
+        bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
+        bgGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f);
 
-        var fillAreaGO = new GameObject("Fill Area");
+        // Fill area
+        var fillAreaGO = new GameObject("FillArea");
         fillAreaGO.transform.SetParent(sliderGO.transform, false);
         var fillAreaRT = fillAreaGO.AddComponent<RectTransform>();
-        fillAreaRT.anchorMin = Vector2.zero;
-        fillAreaRT.anchorMax = Vector2.one;
-        fillAreaRT.offsetMin = Vector2.zero;
-        fillAreaRT.offsetMax = Vector2.zero;
+        fillAreaRT.anchorMin = Vector2.zero; fillAreaRT.anchorMax = Vector2.one;
+        fillAreaRT.offsetMin = Vector2.zero; fillAreaRT.offsetMax = Vector2.zero;
 
         var fillGO = new GameObject("Fill");
         fillGO.transform.SetParent(fillAreaGO.transform, false);
         var fillRT = fillGO.AddComponent<RectTransform>();
-        fillRT.anchorMin = Vector2.zero;
-        fillRT.anchorMax = new Vector2(0f, 1f);
-        fillRT.offsetMin = Vector2.zero;
-        fillRT.offsetMax = Vector2.zero;
-        fillGO.AddComponent<Image>().color = new Color(0.35f, 0.55f, 0.7f, 1f);
+        fillRT.anchorMin = Vector2.zero; fillRT.anchorMax = new Vector2(0f, 1f);
+        fillRT.offsetMin = Vector2.zero; fillRT.offsetMax = Vector2.zero;
+        fillGO.AddComponent<Image>().color = new Color(0.3f, 0.5f, 0.65f);
 
-        var handleAreaGO = new GameObject("Handle Slide Area");
+        // Handle
+        var handleAreaGO = new GameObject("HandleArea");
         handleAreaGO.transform.SetParent(sliderGO.transform, false);
         var handleAreaRT = handleAreaGO.AddComponent<RectTransform>();
-        handleAreaRT.anchorMin = Vector2.zero;
-        handleAreaRT.anchorMax = Vector2.one;
-        handleAreaRT.offsetMin = Vector2.zero;
-        handleAreaRT.offsetMax = Vector2.zero;
+        handleAreaRT.anchorMin = Vector2.zero; handleAreaRT.anchorMax = Vector2.one;
+        handleAreaRT.offsetMin = Vector2.zero; handleAreaRT.offsetMax = Vector2.zero;
 
         var handleGO = new GameObject("Handle");
         handleGO.transform.SetParent(handleAreaGO.transform, false);
         var handleRT = handleGO.AddComponent<RectTransform>();
-        handleRT.sizeDelta = new Vector2(14f, 0f);
+        handleRT.sizeDelta = new Vector2(10f, 0f);
         var handleImg = handleGO.AddComponent<Image>();
         handleImg.color = Color.white;
 
