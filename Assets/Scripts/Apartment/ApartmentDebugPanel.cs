@@ -54,6 +54,8 @@ public class ApartmentDebugPanel : MonoBehaviour
     private const float PanelWidth = 360f;
     private const float RowHeight = 24f;
 
+    private TMP_FontAsset _font;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -239,6 +241,11 @@ public class ApartmentDebugPanel : MonoBehaviour
 
     private void BuildPanel()
     {
+        // Load TMP font explicitly — default font can be null in builds
+        _font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        if (_font == null)
+            _font = TMP_Settings.defaultFontAsset;
+
         // Canvas
         var canvasGO = new GameObject("ApartmentDebugCanvas");
         canvasGO.transform.SetParent(transform);
@@ -439,6 +446,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         le.preferredHeight = RowHeight;
 
         var tmp = go.AddComponent<TextMeshProUGUI>();
+        if (_font != null) tmp.font = _font;
         tmp.text = text;
         tmp.fontSize = FontSize;
         tmp.color = Color.white;
@@ -477,6 +485,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         textRT.offsetMax = Vector2.zero;
 
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        if (_font != null) tmp.font = _font;
         tmp.text = text;
         tmp.fontSize = FontSize;
         tmp.fontStyle = FontStyles.Bold;
@@ -506,6 +515,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         labelGO.AddComponent<RectTransform>();
         labelGO.AddComponent<LayoutElement>().preferredHeight = RowHeight - 4f;
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
+        if (_font != null) tmp.font = _font;
         tmp.text = $"{label}: {initial:F2}";
         tmp.fontSize = FontSize - 2f;
         tmp.color = new Color(0.85f, 0.85f, 0.85f);
