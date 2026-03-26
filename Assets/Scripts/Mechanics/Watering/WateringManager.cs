@@ -94,17 +94,16 @@ public class WateringManager : MonoBehaviour
         }
     }
 
-    // ── Idle ────────────────────────────────────────────────────
+    // ── Raycast helper ─────────────────────────────────────────
 
-    private void UpdateIdle()
+    private WaterablePlant RaycastPlant()
     {
-        if (IrisInput.Instance == null) return;
-        if (!IrisInput.Instance.Click.WasPressedThisFrame()) return;
+        if (_mainCamera == null) return null;
 
         // Check UI block
         if (UnityEngine.EventSystems.EventSystem.current != null
             && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-            return;
+            return null;
 
         Ray ray = _mainCamera.ScreenPointToRay(IrisInput.CursorPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, _plantLayer))
@@ -116,13 +115,28 @@ public class WateringManager : MonoBehaviour
             if (plant != null && plant.definition != null)
             {
                 Debug.Log($"[WateringManager] HIT plant '{plant.definition.plantName}' on '{hit.collider.gameObject.name}' layer={hit.collider.gameObject.layer}");
-                AudioManager.Instance?.PlaySFX(plantClickSFX);
-                BeginPouring(plant);
+                return plant;
             }
             else
             {
                 Debug.Log($"[WateringManager] Raycast hit '{hit.collider.gameObject.name}' layer={hit.collider.gameObject.layer} but no WaterablePlant found");
             }
+        }
+        return null;
+    }
+
+    // ── Idle ────────────────────────────────────────────────────
+
+    private void UpdateIdle()
+    {
+        if (IrisInput.Instance == null) return;
+        if (!IrisInput.Instance.Click.WasPressedThisFrame()) return;
+
+        var plant = RaycastPlant();
+        if (plant != null)
+        {
+            AudioManager.Instance?.PlaySFX(plantClickSFX);
+            BeginPouring(plant);
         }
     }
 
