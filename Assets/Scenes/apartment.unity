@@ -3079,6 +3079,7 @@ GameObject:
   - component: {fileID: 191755246}
   - component: {fileID: 191755245}
   - component: {fileID: 191755244}
+  - component: {fileID: 191755247}
   m_Layer: 0
   m_Name: Plane (2)
   m_TagString: Untagged
@@ -3180,6 +3181,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 191755242}
   m_Mesh: {fileID: -462981019419857548, guid: 5292c727fa375a94fbbe8573e7178595, type: 3}
+--- !u!114 &191755247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 191755242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8657feb6d8d41f4419ce15d86f98dd37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacementSurface
+  localBounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0.5, y: 0.05, z: 0.5}
+  normalAxis: 0
+  surfaceLayerIndex: 22
+  _isFloor: 1
 --- !u!1 &208469183
 GameObject:
   m_ObjectHideFlags: 0
@@ -23327,6 +23346,7 @@ GameObject:
   - component: {fileID: 1384301385}
   - component: {fileID: 1384301384}
   - component: {fileID: 1384301383}
+  - component: {fileID: 1384301386}
   m_Layer: 0
   m_Name: Plane (3)
   m_TagString: Untagged
@@ -23428,6 +23448,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1384301381}
   m_Mesh: {fileID: -462981019419857548, guid: 5292c727fa375a94fbbe8573e7178595, type: 3}
+--- !u!114 &1384301386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1384301381}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8657feb6d8d41f4419ce15d86f98dd37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacementSurface
+  localBounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0.5, y: 0.05, z: 0.5}
+  normalAxis: 0
+  surfaceLayerIndex: 22
+  _isFloor: 1
 --- !u!1 &1388815621
 GameObject:
   m_ObjectHideFlags: 0
@@ -28305,7 +28343,6 @@ MonoBehaviour:
   _hud: {fileID: 1617077711}
   _mainCamera: {fileID: 726110192}
   _scoreDisplayTime: 2
-  _overflowPenalty: 30
   pourSFX: {fileID: 0}
   overflowSFX: {fileID: 0}
   scoreSFX: {fileID: 0}
@@ -28313,9 +28350,13 @@ MonoBehaviour:
   perfectSFX: {fileID: 0}
   failSFX: {fileID: 0}
   lastScore: 0
-  lastFillScore: 0
-  lastOverflowScore: 0
+  lastMoistureScore: 0
   lastBonusScore: 0
+  lastOverflowPenalty: 0
+  _zoomHeight: 0.25
+  _zoomDistance: 0.3
+  _zoomSpeed: 4
+  _zoomFOV: 35
 --- !u!1 &1628316423
 GameObject:
   m_ObjectHideFlags: 0
@@ -31335,19 +31376,14 @@ MonoBehaviour:
   definition: {fileID: 0}
   soilRenderer: {fileID: 0}
   soilTransform: {fileID: 0}
-  foamRenderer: {fileID: 0}
-  foamTransform: {fileID: 0}
-  fillLineMarker: {fileID: 0}
-  waterLineMarker: {fileID: 0}
   waterRenderer: {fileID: 0}
   waterTransform: {fileID: 0}
+  targetSwatchRenderer: {fileID: 0}
+  fillLineMarker: {fileID: 0}
   overflowDrips: []
-  drainDrip: {fileID: 0}
-  drainThreshold: 0.5
   potWorldHeight: 0.1
-  potWorldRadius: 0.04
-  _waterLevel: 0
-  _foamLevel: 0
+  _soilMoisture: 0
+  _pooledWater: 0
   _overflowed: 0
 --- !u!4 &1835067861
 Transform:
@@ -36427,7 +36463,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 91
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &865604402221171312
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -41230,7 +41266,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
       propertyPath: _useSpawnAsHome
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3724982470584749618, guid: 62618b17a52ee524b8ede8fb540a7d32, type: 3}
       propertyPath: _placeSFXOverride
@@ -42140,7 +42176,8 @@ MonoBehaviour:
   displayName: 
   tags:
   - plants
-  isActive: 1
+  - greenery
+  isActive: 0
   reactionIcon: {fileID: 0}
   smellAmount: 0
 --- !u!33 &5558298820962645057
@@ -43082,7 +43119,7 @@ MonoBehaviour:
   tags:
   - plant
   - greenery
-  isActive: 1
+  isActive: 0
   reactionIcon: {fileID: 0}
   smellAmount: 0
 --- !u!114 &6490625522816450277
@@ -44626,7 +44663,7 @@ MonoBehaviour:
   tags:
   - plant
   - greenery
-  isActive: 1
+  isActive: 0
   reactionIcon: {fileID: 0}
   smellAmount: 0
 --- !u!114 &8754244441370330246
@@ -44751,7 +44788,8 @@ MonoBehaviour:
   displayName: 
   tags:
   - plant
-  isActive: 1
+  - greenery
+  isActive: 0
   reactionIcon: {fileID: 0}
   smellAmount: 0
 --- !u!23 &8992892570876034321
