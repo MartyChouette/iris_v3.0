@@ -106,20 +106,24 @@ public class WateringManager : MonoBehaviour
             && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
             return;
 
-        var plant = RaycastPlant();
-        if (plant != null)
-        {
-            AudioManager.Instance?.PlaySFX(plantClickSFX);
-            BeginPouring(plant);
-        }
-    }
-
-    private WaterablePlant RaycastPlant()
-    {
         Ray ray = _mainCamera.ScreenPointToRay(IrisInput.CursorPosition);
-        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, _plantLayer)) return null;
-        var p = hit.collider.GetComponentInParent<WaterablePlant>();
-        return (p != null && p.definition != null) ? p : null;
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, _plantLayer))
+        {
+            var plant = hit.collider.GetComponentInParent<WaterablePlant>();
+            if (plant == null)
+                plant = hit.collider.GetComponent<WaterablePlant>();
+
+            if (plant != null && plant.definition != null)
+            {
+                Debug.Log($"[WateringManager] HIT plant '{plant.definition.plantName}' on '{hit.collider.gameObject.name}' layer={hit.collider.gameObject.layer}");
+                AudioManager.Instance?.PlaySFX(plantClickSFX);
+                BeginPouring(plant);
+            }
+            else
+            {
+                Debug.Log($"[WateringManager] Raycast hit '{hit.collider.gameObject.name}' layer={hit.collider.gameObject.layer} but no WaterablePlant found");
+            }
+        }
     }
 
     // ── Begin ───────────────────────────────────────────────────
@@ -139,12 +143,19 @@ public class WateringManager : MonoBehaviour
             _pot.transform.position = plant.transform.position;
             _pot.definition = _activePlant;
             _pot.Clear();
+            Debug.Log($"[WateringManager] PotController moved to {plant.transform.position}, " +
+                      $"pourRate={_activePlant.pourRate}, perfectMoisture={_activePlant.perfectMoisture}, " +
+                      $"soilDry={_activePlant.soilDry}, soilWaterlogged={_activePlant.soilWaterlogged}");
+        }
+        else
+        {
+            Debug.LogError("[WateringManager] _pot is NULL — assign PotController in Inspector!");
         }
 
         ShowPail(plant.transform);
 
         CurrentState = State.Pouring;
-        Debug.Log($"[WateringManager] Pouring: {_activePlant.plantName} at {plant.transform.position}");
+        Debug.Log($"[WateringManager] State=Pouring, pail active={(_pailGO != null && _pailGO.activeSelf)}");
     }
 
     // ── Pouring ─────────────────────────────────────────────────

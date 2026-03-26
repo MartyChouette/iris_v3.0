@@ -111,10 +111,13 @@ public class PotController : MonoBehaviour
     /// <summary>Add water while pouring (call each frame while held).</summary>
     public void Pour(float dt)
     {
-        if (definition == null) return;
+        if (definition == null) { Debug.LogWarning("[PotController] Pour called but definition is null!"); return; }
         _isPouring = true;
 
+        float before = _pooledWater;
         _pooledWater += definition.pourRate * dt;
+        if (Mathf.FloorToInt(before * 10f) != Mathf.FloorToInt(_pooledWater * 10f))
+            Debug.Log($"[PotController] Pouring: pool={_pooledWater:F2}, moisture={_soilMoisture:F2}, pourRate={definition.pourRate}");
 
         // Overflow
         if (_pooledWater > definition.maxPool)
