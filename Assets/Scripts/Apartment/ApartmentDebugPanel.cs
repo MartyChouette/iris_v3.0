@@ -58,9 +58,12 @@ public class ApartmentDebugPanel : MonoBehaviour
     private Slider _atmVignetteSlider;
     private Slider _atmGrainSlider;
 
+    private TMP_Text _saveStatusLabel;
+
     private const float FontSize = 16f;
     private const float PanelWidth = 360f;
     private const float RowHeight = 24f;
+    private const string PrefPrefix = "DebugTweak_";
 
     private void Awake()
     {
@@ -79,6 +82,7 @@ public class ApartmentDebugPanel : MonoBehaviour
     {
         BuildPanel();
         _panelGO.SetActive(false);
+        LoadSavedTweaks();
     }
 
     private void OnEnable() => _toggleAction?.Enable();
@@ -158,6 +162,123 @@ public class ApartmentDebugPanel : MonoBehaviour
     {
         if (slider != null) slider.SetValueWithoutNotify(value);
         if (label != null) label.text = $"{name}: {value.ToString(fmt)}";
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // Save / Load / Reset tweaks (PlayerPrefs)
+    // ══════════════════════════════════════════════════════════════
+
+    private static bool HasSavedTweaks() => PlayerPrefs.HasKey(PrefPrefix + "saved");
+
+    private void SaveTweaks()
+    {
+        var atm = AtmosphereController.Instance;
+        if (atm != null)
+        {
+            PlayerPrefs.SetFloat(PrefPrefix + "sat", atm.Saturation);
+            PlayerPrefs.SetFloat(PrefPrefix + "con", atm.Contrast);
+            PlayerPrefs.SetFloat(PrefPrefix + "exp", atm.PostExposure);
+            PlayerPrefs.SetFloat(PrefPrefix + "bloomInt", atm.BloomIntensity);
+            PlayerPrefs.SetFloat(PrefPrefix + "bloomThr", atm.BloomThreshold);
+            PlayerPrefs.SetFloat(PrefPrefix + "bloomSca", atm.BloomScatter);
+            PlayerPrefs.SetFloat(PrefPrefix + "vig", atm.VignetteIntensity);
+            PlayerPrefs.SetFloat(PrefPrefix + "grain", atm.GrainIntensity);
+        }
+
+        ObjectGrabber.GetCurrentGrabParams(out float sp, out float da, out float ac, out float spd);
+        PlayerPrefs.SetFloat(PrefPrefix + "gSpring", sp);
+        PlayerPrefs.SetFloat(PrefPrefix + "gDamper", da);
+        PlayerPrefs.SetFloat(PrefPrefix + "gAccel", ac);
+        PlayerPrefs.SetFloat(PrefPrefix + "gSpeed", spd);
+
+        var grabber = Object.FindAnyObjectByType<ObjectGrabber>();
+        if (grabber != null)
+            PlayerPrefs.SetFloat(PrefPrefix + "grid", grabber.GridSize);
+
+        PlayerPrefs.SetInt(PrefPrefix + "saved", 1);
+        PlayerPrefs.Save();
+
+        if (_saveStatusLabel != null) _saveStatusLabel.text = "Tweaks saved!";
+        Debug.Log("[ApartmentDebugPanel] Tweaks saved to PlayerPrefs.");
+    }
+
+    private void ClearSavedTweaks()
+    {
+        string[] keys = { "sat", "con", "exp", "bloomInt", "bloomThr", "bloomSca",
+                          "vig", "grain", "gSpring", "gDamper", "gAccel", "gSpeed", "grid", "saved" };
+        foreach (var k in keys) PlayerPrefs.DeleteKey(PrefPrefix + k);
+        PlayerPrefs.Save();
+
+        if (_saveStatusLabel != null) _saveStatusLabel.text = "Saved tweaks cleared";
+        Debug.Log("[ApartmentDebugPanel] Saved tweaks cleared.");
+    }
+
+    /// <summary>Called from Start after panel build — applies saved tweaks if any.</summary>
+    private void LoadSavedTweaks()
+    {
+        if (!HasSavedTweaks()) return;
+
+        var atm = AtmosphereController.Instance;
+        if (atm != null)
+        {
+            atm.Saturation = PlayerPrefs.GetFloat(PrefPrefix + "sat", atm.Saturation);
+            atm.Contrast = PlayerPrefs.GetFloat(PrefPrefix + "con", atm.Contrast);
+            atm.PostExposure = PlayerPrefs.GetFloat(PrefPrefix + "exp", atm.PostExposure);
+            atm.BloomIntensity = PlayerPrefs.GetFloat(PrefPrefix + "bloomInt", atm.BloomIntensity);
+            atm.BloomThreshold = PlayerPrefs.GetFloat(PrefPrefix + "bloomThr", atm.BloomThreshold);
+            atm.BloomScatter = PlayerPrefs.GetFloat(PrefPrefix + "bloomSca", atm.BloomScatter);
+            atm.VignetteIntensity = PlayerPrefs.GetFloat(PrefPrefix + "vig", atm.VignetteIntensity);
+            atm.GrainIntensity = PlayerPrefs.GetFloat(PrefPrefix + "grain", atm.GrainIntensity);
+        }
+
+        if (PlayerPrefs.HasKey(PrefPrefix + "gSpring"))
+        {
+            ObjectGrabber.SetGrabOverrides(
+                PlayerPrefs.GetFloat(PrefPrefix + "gSpring"),
+                PlayerPrefs.GetFloat(PrefPrefix + "gDamper"),
+                PlayerPrefs.GetFloat(PrefPrefix + "gAccel"),
+                PlayerPrefs.GetFloat(PrefPrefix + "gSpeed")
+            );
+        }
+
+        if (PlayerPrefs.HasKey(PrefPrefix + "grid"))
+        {
+            var grabber = Object.FindAnyObjectByType<ObjectGrabber>();
+            if (grabber != null) grabber.GridSize = PlayerPrefs.GetFloat(PrefPrefix + "grid");
+        }
+
+        Debug.Log("[ApartmentDebugPanel] Loaded saved tweaks from PlayerPrefs.");
+    }
+
+    private void LogCurrentValues()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("═══ Debug Tweak Values ═══");
+
+        var atm = AtmosphereController.Instance;
+        if (atm != null)
+        {
+            sb.AppendLine($"Saturation: {atm.Saturation:F1}");
+            sb.AppendLine($"Contrast: {atm.Contrast:F1}");
+            sb.AppendLine($"PostExposure: {atm.PostExposure:F2}");
+            sb.AppendLine($"BloomIntensity: {atm.BloomIntensity:F2}");
+            sb.AppendLine($"BloomThreshold: {atm.BloomThreshold:F2}");
+            sb.AppendLine($"BloomScatter: {atm.BloomScatter:F2}");
+            sb.AppendLine($"VignetteIntensity: {atm.VignetteIntensity:F2}");
+            sb.AppendLine($"GrainIntensity: {atm.GrainIntensity:F2}");
+        }
+
+        ObjectGrabber.GetCurrentGrabParams(out float sp, out float da, out float ac, out float spd);
+        sb.AppendLine($"Grab: spring={sp:F0} damper={da:F0} accel={ac:F0} speed={spd:F0}");
+
+        var grabber = Object.FindAnyObjectByType<ObjectGrabber>();
+        if (grabber != null) sb.AppendLine($"GridSize: {grabber.GridSize:F2}");
+
+        string text = sb.ToString();
+        Debug.Log(text);
+        GUIUtility.systemCopyBuffer = text;
+
+        if (_saveStatusLabel != null) _saveStatusLabel.text = "Copied to clipboard + console";
     }
 
     private void UpdateInfo()
@@ -433,6 +554,16 @@ public class ApartmentDebugPanel : MonoBehaviour
         AddSectionHeader(cp, "STATUS", new Color(0.8f, 0.9f, 0.8f));
         _infoText = AddLabel(cp, "");
         _infoText.color = new Color(0.8f, 0.9f, 0.8f);
+
+        // ── Save / Load / Reset ──
+        AddSectionHeader(cp, "PRESETS", new Color(1f, 0.85f, 0.5f));
+        _saveStatusLabel = AddLabel(cp, HasSavedTweaks() ? "Saved tweaks loaded" : "No saved tweaks");
+        _saveStatusLabel.color = new Color(0.7f, 0.7f, 0.7f);
+        _saveStatusLabel.fontSize = FontSize - 2f;
+
+        AddButtonRow(cp, "Save Tweaks", new Color(0.3f, 0.55f, 0.35f), SaveTweaks);
+        AddButtonRow(cp, "Clear Saved", new Color(0.55f, 0.3f, 0.3f), ClearSavedTweaks);
+        AddButtonRow(cp, "Copy to Log", new Color(0.35f, 0.4f, 0.55f), LogCurrentValues);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -578,5 +709,36 @@ public class ApartmentDebugPanel : MonoBehaviour
         slider.maxValue = max;
         slider.value = initial;
         slider.onValueChanged.AddListener(val => onChange?.Invoke(val));
+    }
+
+    private void AddButtonRow(Transform parent, string label, Color bgColor, System.Action onClick)
+    {
+        var go = new GameObject("Button");
+        go.transform.SetParent(parent, false);
+        go.AddComponent<RectTransform>();
+        go.AddComponent<LayoutElement>().preferredHeight = RowHeight + 4f;
+
+        var img = go.AddComponent<Image>();
+        img.color = bgColor;
+
+        var btn = go.AddComponent<Button>();
+        btn.targetGraphic = img;
+        btn.onClick.AddListener(() => onClick?.Invoke());
+
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(go.transform, false);
+        var textRT = textGO.AddComponent<RectTransform>();
+        textRT.anchorMin = Vector2.zero;
+        textRT.anchorMax = Vector2.one;
+        textRT.offsetMin = Vector2.zero;
+        textRT.offsetMax = Vector2.zero;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = FontSize;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.raycastTarget = false;
     }
 }
