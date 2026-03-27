@@ -54,6 +54,9 @@ public class ApartmentDebugPanel : MonoBehaviour
     private const float PanelWidth = 360f;
     private const float RowHeight = 24f;
 
+    [Tooltip("Assign LiberationSans SDF here to guarantee font is included in builds.")]
+    [SerializeField] private TMP_FontAsset _serializedFont;
+
     private TMP_FontAsset _font;
 
     private void Awake()
@@ -90,7 +93,14 @@ public class ApartmentDebugPanel : MonoBehaviour
         {
             _visible = !_visible;
             _panelGO.SetActive(_visible);
-            if (_visible) SyncSlidersToSystems();
+            if (_visible)
+            {
+                // Force TMP to regenerate meshes — needed in builds where
+                // text created on inactive GameObjects may have empty meshes
+                foreach (var tmp in _panelGO.GetComponentsInChildren<TMP_Text>(true))
+                    tmp.ForceMeshUpdate();
+                SyncSlidersToSystems();
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.F5))
@@ -241,10 +251,14 @@ public class ApartmentDebugPanel : MonoBehaviour
 
     private void BuildPanel()
     {
-        // Load TMP font explicitly — default font can be null in builds
-        _font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        // Load TMP font — serialized field is most reliable for builds
+        _font = _serializedFont;
         if (_font == null)
             _font = TMP_Settings.defaultFontAsset;
+        if (_font == null)
+            _font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        Debug.Log($"[ApartmentDebugPanel] Font: {(_font != null ? _font.name : "NULL")}");
+
 
         // Canvas
         var canvasGO = new GameObject("ApartmentDebugCanvas");
