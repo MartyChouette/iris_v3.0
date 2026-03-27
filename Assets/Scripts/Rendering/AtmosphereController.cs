@@ -79,6 +79,9 @@ public class AtmosphereController : MonoBehaviour
     [Tooltip("Dust base color (tinted by directional light at runtime).")]
     [SerializeField] private Color _dustColor = new Color(1f, 0.97f, 0.92f, 0.2f);
 
+    /// <summary>When true, LateUpdate skips MoodMachine overrides so debug sliders take effect directly.</summary>
+    public bool SuppressMoodOverrides { get; set; }
+
     // ── Runtime refs ──
     private Volume _volume;
     private VolumeProfile _profile;
@@ -120,7 +123,7 @@ public class AtmosphereController : MonoBehaviour
         // Mood 0 = clear/happy, 1 = dark/stormy
         // Clear: full bloom, bright exposure (SotC overexposed)
         // Stormy: reduced bloom, more grain, darker (PE moody)
-        if (MoodMachine.Instance != null && _bloom != null)
+        if (!SuppressMoodOverrides && MoodMachine.Instance != null && _bloom != null)
         {
             float mood = MoodMachine.Instance.Mood;
 

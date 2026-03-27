@@ -69,6 +69,18 @@ public class ObjectGrabber : MonoBehaviour
         s_overrideSpeed = speed;
     }
 
+    public static void GetCurrentGrabParams(out float spring, out float damper, out float accel, out float speed)
+    {
+        if (s_overrideSpring > 0f)
+        {
+            spring = s_overrideSpring; damper = s_overrideDamper;
+            accel = s_overrideAccel; speed = s_overrideSpeed;
+            return;
+        }
+        var p = s_feelPresets[(int)s_currentFeel];
+        spring = p.spring; damper = p.damper; accel = p.accel; speed = p.speed;
+    }
+
     private void GetActiveGrabParams(out float spring, out float damper, out float accel, out float speed)
     {
         if (s_overrideSpring > 0f)

@@ -40,7 +40,7 @@ public class ApartmentDebugPanel : MonoBehaviour
     private Slider _grabAccelSlider;
     private Slider _grabSpeedSlider;
 
-    // Atmosphere labels
+    // Atmosphere controls
     private TMP_Text _atmSatLabel;
     private TMP_Text _atmContrastLabel;
     private TMP_Text _atmExposureLabel;
@@ -49,6 +49,14 @@ public class ApartmentDebugPanel : MonoBehaviour
     private TMP_Text _atmBloomScatterLabel;
     private TMP_Text _atmVignetteLabel;
     private TMP_Text _atmGrainLabel;
+    private Slider _atmSatSlider;
+    private Slider _atmContrastSlider;
+    private Slider _atmExposureSlider;
+    private Slider _atmBloomIntSlider;
+    private Slider _atmBloomThreshSlider;
+    private Slider _atmBloomScatterSlider;
+    private Slider _atmVignetteSlider;
+    private Slider _atmGrainSlider;
 
     private const float FontSize = 16f;
     private const float PanelWidth = 360f;
@@ -88,6 +96,12 @@ public class ApartmentDebugPanel : MonoBehaviour
         {
             _visible = !_visible;
             _panelGO.SetActive(_visible);
+
+            // Suppress MoodMachine overrides while debug panel is open
+            // so atmosphere sliders take effect directly
+            if (AtmosphereController.Instance != null)
+                AtmosphereController.Instance.SuppressMoodOverrides = _visible;
+
             if (_visible) SyncSlidersToSystems();
         }
 
@@ -117,10 +131,12 @@ public class ApartmentDebugPanel : MonoBehaviour
 
     private void SyncGrabSliders()
     {
-        // Read the active preset values via reflection-free approach:
-        // OnGrabParamChanged reads from sliders, so set sliders to match preset
-        // We can't easily read the current preset values, so just refresh the label
         RefreshGrabFeelLabel();
+        ObjectGrabber.GetCurrentGrabParams(out float spring, out float damper, out float accel, out float speed);
+        SyncSlider(_grabSpringSlider, _grabSpringLabel, spring, "Spring", "F0");
+        SyncSlider(_grabDamperSlider, _grabDamperLabel, damper, "Damper", "F0");
+        SyncSlider(_grabAccelSlider, _grabAccelLabel, accel, "Accel", "F0");
+        SyncSlider(_grabSpeedSlider, _grabSpeedLabel, speed, "Speed", "F0");
     }
 
     private void SyncAtmosphereSliders()
@@ -128,27 +144,20 @@ public class ApartmentDebugPanel : MonoBehaviour
         var atm = AtmosphereController.Instance;
         if (atm == null) return;
 
-        // Push system values to slider positions (suppressing callbacks would be ideal,
-        // but since the callbacks just write back the same value, it's harmless)
-        SetSliderIfValid(_atmSatLabel, atm.Saturation, "Saturation");
-        SetSliderIfValid(_atmContrastLabel, atm.Contrast, "Contrast");
-        SetSliderIfValid(_atmExposureLabel, atm.PostExposure, "Exposure");
-        SetSliderIfValid(_atmBloomIntLabel, atm.BloomIntensity, "Bloom Int");
-        SetSliderIfValid(_atmBloomThreshLabel, atm.BloomThreshold, "Bloom Thresh");
-        SetSliderIfValid(_atmBloomScatterLabel, atm.BloomScatter, "Bloom Scatter");
-        SetSliderIfValid(_atmVignetteLabel, atm.VignetteIntensity, "Vignette");
-        SetSliderIfValid(_atmGrainLabel, atm.GrainIntensity, "Film Grain");
+        SyncSlider(_atmSatSlider, _atmSatLabel, atm.Saturation, "Saturation", "F0");
+        SyncSlider(_atmContrastSlider, _atmContrastLabel, atm.Contrast, "Contrast", "F0");
+        SyncSlider(_atmExposureSlider, _atmExposureLabel, atm.PostExposure, "Exposure", "F1");
+        SyncSlider(_atmBloomIntSlider, _atmBloomIntLabel, atm.BloomIntensity, "Bloom", "F2");
+        SyncSlider(_atmBloomThreshSlider, _atmBloomThreshLabel, atm.BloomThreshold, "Thresh", "F2");
+        SyncSlider(_atmBloomScatterSlider, _atmBloomScatterLabel, atm.BloomScatter, "Scatter", "F2");
+        SyncSlider(_atmVignetteSlider, _atmVignetteLabel, atm.VignetteIntensity, "Vignette", "F2");
+        SyncSlider(_atmGrainSlider, _atmGrainLabel, atm.GrainIntensity, "Grain", "F2");
     }
 
-    private void SetSliderIfValid(TMP_Text label, float value, string name)
+    private static void SyncSlider(Slider slider, TMP_Text label, float value, string name, string fmt)
     {
-        if (label == null) return;
-        var slider = label.transform.parent?.parent?.GetComponentInChildren<Slider>();
-        if (slider != null)
-        {
-            slider.SetValueWithoutNotify(value);
-            label.text = $"{name}: {value:F2}";
-        }
+        if (slider != null) slider.SetValueWithoutNotify(value);
+        if (label != null) label.text = $"{name}: {value.ToString(fmt)}";
     }
 
     private void UpdateInfo()
@@ -383,34 +392,42 @@ public class ApartmentDebugPanel : MonoBehaviour
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.Saturation = val;
                      if (_atmSatLabel != null) _atmSatLabel.text = $"Saturation: {val:F0}"; },
             out _atmSatLabel);
+        _atmSatSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Contrast", -50f, 50f, con,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.Contrast = val;
                      if (_atmContrastLabel != null) _atmContrastLabel.text = $"Contrast: {val:F0}"; },
             out _atmContrastLabel);
+        _atmContrastSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Exposure", -2f, 3f, exp,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.PostExposure = val;
                      if (_atmExposureLabel != null) _atmExposureLabel.text = $"Exposure: {val:F1}"; },
             out _atmExposureLabel);
+        _atmExposureSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Bloom Int", 0f, 3f, bInt,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.BloomIntensity = val;
                      if (_atmBloomIntLabel != null) _atmBloomIntLabel.text = $"Bloom: {val:F2}"; },
             out _atmBloomIntLabel);
+        _atmBloomIntSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Bloom Thresh", 0f, 2f, bTh,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.BloomThreshold = val;
                      if (_atmBloomThreshLabel != null) _atmBloomThreshLabel.text = $"Thresh: {val:F2}"; },
             out _atmBloomThreshLabel);
+        _atmBloomThreshSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Bloom Scatter", 0f, 1f, bSc,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.BloomScatter = val;
                      if (_atmBloomScatterLabel != null) _atmBloomScatterLabel.text = $"Scatter: {val:F2}"; },
             out _atmBloomScatterLabel);
+        _atmBloomScatterSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Vignette", 0f, 1f, vig,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.VignetteIntensity = val;
                      if (_atmVignetteLabel != null) _atmVignetteLabel.text = $"Vignette: {val:F2}"; },
             out _atmVignetteLabel);
+        _atmVignetteSlider = GetLastSlider(cp);
         AddSliderRow(cp, "Film Grain", 0f, 1f, grn,
             val => { if (AtmosphereController.Instance != null) AtmosphereController.Instance.GrainIntensity = val;
                      if (_atmGrainLabel != null) _atmGrainLabel.text = $"Grain: {val:F2}"; },
             out _atmGrainLabel);
+        _atmGrainSlider = GetLastSlider(cp);
 
         // ── Info readout ──
         AddSectionHeader(cp, "STATUS", new Color(0.8f, 0.9f, 0.8f));
