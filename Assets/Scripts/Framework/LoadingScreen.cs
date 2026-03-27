@@ -195,16 +195,16 @@ public class LoadingScreen : MonoBehaviour
 
         for (int i = 0; i < PetalCount; i++)
         {
-            _petalY[i] -= _petalSpeed[i] * dt;
+            _petalY[i] += _petalSpeed[i] * dt;
             _petalRot[i] += _petalRotSpeed[i] * dt;
 
             // Gentle horizontal sway
             float sway = Mathf.Sin(Time.unscaledTime * SwaySpeed * _petalSway[i] + _petalSwayOffset[i]) * SwayAmount;
 
             // Respawn at top when off bottom
-            if (_petalY[i] < -50f)
+            if (_petalY[i] > 1080f + 50f)
             {
-                _petalY[i] = 1080f + Random.Range(20f, 100f);
+                _petalY[i] = -Random.Range(20f, 100f);
                 _petalX[i] = Random.Range(0f, 1920f);
                 _petalSpeed[i] = Random.Range(60f, 180f);
             }
