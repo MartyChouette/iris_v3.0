@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using System.Collections;
 using TMPro;
 
 /// <summary>
@@ -95,11 +96,8 @@ public class ApartmentDebugPanel : MonoBehaviour
             _panelGO.SetActive(_visible);
             if (_visible)
             {
-                // Force TMP to regenerate meshes — needed in builds where
-                // text created on inactive GameObjects may have empty meshes
-                foreach (var tmp in _panelGO.GetComponentsInChildren<TMP_Text>(true))
-                    tmp.ForceMeshUpdate();
                 SyncSlidersToSystems();
+                StartCoroutine(RebuildTextNextFrame());
             }
         }
 
@@ -197,6 +195,17 @@ public class ApartmentDebugPanel : MonoBehaviour
             sb.AppendLine($"PSX: ON (snap={PSXRenderController.Instance.VertexSnapResolution.x:F0})");
 
         _infoText.text = sb.ToString();
+    }
+
+    /// <summary>Wait one frame for Canvas layout, then force TMP mesh rebuild (fixes builds).</summary>
+    private IEnumerator RebuildTextNextFrame()
+    {
+        yield return null;
+        if (_panelGO != null && _panelGO.activeSelf)
+        {
+            foreach (var tmp in _panelGO.GetComponentsInChildren<TMP_Text>(true))
+                tmp.ForceMeshUpdate();
+        }
     }
 
     // ── Highlight tuning ──
