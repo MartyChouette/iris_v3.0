@@ -105,6 +105,19 @@ public class AtmosphereController : MonoBehaviour
 
     private void Start()
     {
+        // Ensure the main camera has post-processing enabled,
+        // otherwise Volume effects (color grading, bloom, etc.) are invisible
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            var camData = cam.GetComponent<UniversalAdditionalCameraData>();
+            if (camData != null && !camData.renderPostProcessing)
+            {
+                camData.renderPostProcessing = true;
+                Debug.Log("[AtmosphereController] Enabled post-processing on Main Camera.");
+            }
+        }
+
         BuildVolume();
         if (_enableDust) BuildDustParticles();
         ApplySettings();
