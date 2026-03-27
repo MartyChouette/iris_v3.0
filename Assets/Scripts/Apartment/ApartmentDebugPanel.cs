@@ -279,10 +279,8 @@ public class ApartmentDebugPanel : MonoBehaviour
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 30f;
 
-        // Mask
-        var maskImg = scrollGO.AddComponent<Image>();
-        maskImg.color = Color.clear;
-        scrollGO.AddComponent<Mask>().showMaskGraphic = false;
+        // Clip mask (RectMask2D avoids stencil issues with TMP)
+        scrollGO.AddComponent<RectMask2D>();
 
         // Content (vertical layout)
         var contentGO = new GameObject("Content");
