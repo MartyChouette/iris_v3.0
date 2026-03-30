@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae432375d3c15d343ba1c93b3e964911, type: 3}
   m_Name: Mode_7Minutes
   m_EditorClassIdentifier: Assembly-CSharp::GameModeConfig
-  modeName: 7 Minutes
+  modeName: DEMO
   modeDescription: Real-time 7-minute countdown. A quick taste of Iris.
   totalDays: 1
   demoTimeLimitSeconds: 420

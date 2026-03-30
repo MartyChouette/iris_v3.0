@@ -90,7 +90,14 @@ public class MainMenuManager : MonoBehaviour
     {
         // Wire button listeners at runtime
         if (_demoButton != null) _demoButton.onClick.AddListener(OnDemoClicked);
-        if (_showcaseButton != null) _showcaseButton.onClick.AddListener(OnShowcaseClicked);
+
+        // 7 Days mode disabled — not yet implemented
+        if (_showcaseButton != null)
+        {
+            _showcaseButton.interactable = false;
+            var showcaseLabel = _showcaseButton.GetComponentInChildren<TMP_Text>();
+            if (showcaseLabel != null) showcaseLabel.color = new Color(0.4f, 0.4f, 0.4f, 0.5f);
+        }
 
         // Infinite mode disabled — not yet implemented
         if (_fullButton != null)
