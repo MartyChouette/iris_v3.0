@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Mode_7Minutes
   m_EditorClassIdentifier: Assembly-CSharp::GameModeConfig
   modeName: DEMO
-  modeDescription: Real-time 7-minute countdown. A quick taste of Iris.
-  totalDays: 1
-  demoTimeLimitSeconds: 420
+  modeDescription: Play at your own pace. No time limits.
+  totalDays: 7
+  demoTimeLimitSeconds: 0
   realSecondsPerGameHour: 60
   prepDuration: 180
