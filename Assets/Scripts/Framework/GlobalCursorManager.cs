@@ -147,10 +147,18 @@ public class GlobalCursorManager : MonoBehaviour
         var loaded = Resources.Load<Texture2D>($"Cursors/{name}");
         if (loaded != null)
         {
-            // Art asset found — discard procedural fallback (safe, it's not a Resources asset)
-            if (proceduralFallback != null)
-                Destroy(proceduralFallback);
-            return loaded;
+            if (!loaded.isReadable)
+            {
+                Debug.LogWarning($"[GlobalCursorManager] Cursors/{name} is not Read/Write enabled — using procedural fallback. " +
+                                 "Fix: select the texture in Project, enable Read/Write in Inspector, click Apply.");
+            }
+            else
+            {
+                // Art asset found and readable — discard procedural fallback
+                if (proceduralFallback != null)
+                    Destroy(proceduralFallback);
+                return loaded;
+            }
         }
 
         if (proceduralFallback == null)
