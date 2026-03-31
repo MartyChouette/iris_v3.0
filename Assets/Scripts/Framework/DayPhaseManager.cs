@@ -457,7 +457,7 @@ public class DayPhaseManager : MonoBehaviour
                 break;
             case DayPhase.FlowerTrimming:
                 AudioManager.Instance?.DuckMusic(0.1f, 0.5f);
-                AudioManager.Instance?.SetNonMusicMix(0.75f, 0.5f); // non-music -25%
+                AudioManager.Instance?.SetNonMusicMix(1f, 0.5f); // SFX at full volume
                 StartCoroutine(FlowerTrimmingTransition());
                 break;
             case DayPhase.Evening:
