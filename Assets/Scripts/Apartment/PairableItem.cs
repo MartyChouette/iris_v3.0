@@ -137,9 +137,32 @@ public class PairableItem : MonoBehaviour
 
         // Find the topmost item in the stack to parent onto
         Transform stackTop = FindStackTop(transform);
-        held.transform.SetParent(stackTop, true);
-        held.transform.localPosition = _snapOffset;
-        held.transform.localRotation = Quaternion.identity;
+
+        if (_snapMode == SnapMode.Stacked)
+        {
+            // Position on top of the visual mesh, not the pivot
+            var renderer = stackTop.GetComponentInChildren<Renderer>();
+            if (renderer != null)
+            {
+                Vector3 topCenter = renderer.bounds.center + Vector3.up * renderer.bounds.extents.y;
+                held.transform.SetParent(stackTop, true);
+                held.transform.position = topCenter + _snapOffset;
+                held.transform.localRotation = Quaternion.identity;
+            }
+            else
+            {
+                held.transform.SetParent(stackTop, true);
+                held.transform.localPosition = _snapOffset;
+                held.transform.localRotation = Quaternion.identity;
+            }
+        }
+        else
+        {
+            // SideBySide (shoes) — use local offset as before
+            held.transform.SetParent(stackTop, true);
+            held.transform.localPosition = _snapOffset;
+            held.transform.localRotation = Quaternion.identity;
+        }
 
         // Disable held item's standalone behavior
         var heldCol = held.GetComponent<Collider>();
