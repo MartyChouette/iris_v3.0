@@ -26,6 +26,29 @@ public class InteractableHighlight : MonoBehaviour
     private static readonly List<InteractableHighlight> s_all = new();
     public static IReadOnlyList<InteractableHighlight> All => s_all;
 
+    // ── Suppress visual highlight (cursor system replaces it) ───────────────
+    // When true, the highlight shader overlay is skipped but the component
+    // stays registered in s_all so cursor detection still works.
+    // Set to false to re-enable visual highlights.
+    private static bool s_suppressVisuals = true;
+
+    /// <summary>Enable/disable the highlight shader overlay globally. Registry stays active either way.</summary>
+    public static bool SuppressVisuals
+    {
+        get => s_suppressVisuals;
+        set
+        {
+            if (s_suppressVisuals == value) return;
+            s_suppressVisuals = value;
+            // Strip overlays from all highlights when suppressing
+            if (value)
+            {
+                for (int i = 0; i < s_all.Count; i++)
+                    s_all[i].StripOverlayMaterials();
+            }
+        }
+    }
+
     // ── Highlight style ───────────────
     private static HighlightStyle s_currentStyle = HighlightStyle.Outline;
 
@@ -339,8 +362,26 @@ public class InteractableHighlight : MonoBehaviour
 
     // ── Material rebuild ───────────────
 
+    /// <summary>Reset renderers to base materials only (strip all highlight overlays).</summary>
+    private void StripOverlayMaterials()
+    {
+        if (_renderers == null || _baseMaterialArrays == null) return;
+        for (int r = 0; r < _renderers.Length; r++)
+        {
+            if (_renderers[r] != null && _baseMaterialArrays[r] != null)
+                _renderers[r].sharedMaterials = _baseMaterialArrays[r];
+        }
+    }
+
     private void RebuildMaterials()
     {
+        // When visuals are suppressed, always show base materials only
+        if (s_suppressVisuals)
+        {
+            StripOverlayMaterials();
+            return;
+        }
+
         int extraCount = (_interactActive ? 1 : 0)
                        + (_displayActive ? 1 : 0)
                        + (_prepLikedActive ? 1 : 0)
