@@ -290,6 +290,7 @@ public class DateSessionManager : MonoBehaviour
         // Set up session while screen is black
         _state = SessionState.DateInProgress;
         _datePhase = DatePhase.Arrival;
+        NemaController.Instance?.MoveToDatePhase(DatePhase.Arrival);
         _affection = startingAffection;
         _moodCheckTimer = 0f;
         _accumulatedReactions.Clear();
@@ -346,6 +347,7 @@ public class DateSessionManager : MonoBehaviour
             ScreenFade.Instance.HidePhaseTitle();
 
         _datePhase = DatePhase.BackgroundJudging;
+        NemaController.Instance?.MoveToDatePhase(DatePhase.BackgroundJudging);
         _moodCheckTimer = 0f;
 
         // Teleport NPC to kitchen
@@ -395,6 +397,7 @@ public class DateSessionManager : MonoBehaviour
             ScreenFade.Instance.HidePhaseTitle();
 
         _datePhase = DatePhase.Reveal;
+        NemaController.Instance?.MoveToDatePhase(DatePhase.Reveal);
 
         // Teleport NPC to couch
         Vector3 couchPos = couchSeatTarget != null ? couchSeatTarget.position : Vector3.zero;

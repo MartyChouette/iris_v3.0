@@ -104,6 +104,9 @@ public class ApartmentManager : MonoBehaviour
     public bool IsTransitioning => _isTransitioning;
     public int CurrentAreaIndex => _currentAreaIndex;
 
+    /// <summary>Fired when the player switches apartment areas. Arg = new area index.</summary>
+    public event System.Action<int> OnAreaChanged;
+
     private int _currentAreaIndex;
 
     // Base camera state (parallax-free, lerped between areas)
@@ -462,6 +465,7 @@ public class ApartmentManager : MonoBehaviour
             browseCamera.Priority = PriorityActive;
 
         UpdateUI();
+        OnAreaChanged?.Invoke(_currentAreaIndex);
         Debug.Log($"[ApartmentManager] Browsing: {area.areaName}");
     }
 
