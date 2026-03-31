@@ -185,6 +185,14 @@ public class NameEntryScreen : MonoBehaviour
             return;
         }
 
+        // Demo mode: skip name entry, use default name
+        if (MainMenuManager.ActiveConfig != null)
+        {
+            Debug.Log("[NameEntryScreen] Demo mode — auto-confirming default name.");
+            OnConfirm();
+            return;
+        }
+
         // Fade out menu music as the player enters their name
         if (MusicDirector.Instance != null)
             MusicDirector.Instance.FadeOutMenuMusic();
