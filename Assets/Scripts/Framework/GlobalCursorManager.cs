@@ -200,8 +200,8 @@ public class GlobalCursorManager : MonoBehaviour
 
     private void Update()
     {
-        if (_cachedCamera == null)
-            _cachedCamera = Camera.main;
+        // Always re-fetch — camera changes during additive scene loads (flower trimming)
+        _cachedCamera = Camera.main;
         if (_cachedCamera == null) { ApplyCursor(CursorType.Default); return; }
 
         if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
