@@ -635,12 +635,14 @@ public class DayPhaseManager : MonoBehaviour
         if (bridge != null)
             bridge.RestoreApartmentCamera();
 
-        // 9. Transition to Evening free-roam (player can explore, then go to bed manually)
-        SetPhase(DayPhase.Evening);
+        // 9. Skip Evening — go straight to bed (advances to next morning)
+        _currentPhase = DayPhase.Evening;
+        OnPhaseChanged?.Invoke((int)DayPhase.Evening);
 
-        // 10. Fade back in to the apartment
-        if (ScreenFade.Instance != null)
-            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+        if (GameClock.Instance != null)
+            GameClock.Instance.GoToBed();
+        else
+            Debug.LogWarning("[DayPhaseManager] No GameClock — cannot advance day after flower trimming.");
     }
 
     // ═══════════════════════════════════════════════════════════════
