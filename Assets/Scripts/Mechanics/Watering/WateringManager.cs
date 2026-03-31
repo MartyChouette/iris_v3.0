@@ -296,47 +296,10 @@ public class WateringManager : MonoBehaviour
         if (_pot != null) _pot.TargetLevel = OscillatingTarget;
     }
 
-    // ── Pail ────────────────────────────────────────────────────
+    // ── Pail (disabled — cursor system handles visual feedback) ──
 
-    private void ShowPail(Transform plant)
-    {
-        if (_pailGO == null)
-        {
-            _pailGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            _pailGO.name = "WateringPail";
-            _pailGO.transform.localScale = new Vector3(0.12f, 0.15f, 0.10f);
-            var c = _pailGO.GetComponent<Collider>();
-            if (c != null) Destroy(c);
-            var r = _pailGO.GetComponent<Renderer>();
-            if (r != null) r.material.color = new Color(0.45f, 0.55f, 0.65f);
-            _pailGO.SetActive(false);
-        }
-
-        Vector3 rimPos = plant.position + Vector3.up * 0.15f;
-        Vector3 camDir = (_mainCamera.transform.position - rimPos);
-        camDir.y = 0f;
-        if (camDir.sqrMagnitude < 0.01f) camDir = Vector3.back;
-        camDir.Normalize();
-        Vector3 right = Vector3.Cross(Vector3.up, camDir).normalized;
-
-        _pailGO.transform.position = rimPos + right * 0.12f;
-        _pailGO.transform.rotation = Quaternion.LookRotation(-camDir, Vector3.up);
-        _pailGO.SetActive(true);
-    }
-
-    private void UpdatePail(bool pouring)
-    {
-        if (_pailGO == null || !_pailGO.activeSelf) return;
-        float target = pouring ? -45f : 0f;
-        var euler = _pailGO.transform.eulerAngles;
-        float current = euler.z > 180f ? euler.z - 360f : euler.z;
-        euler.z = Mathf.Lerp(current, target, Time.deltaTime * 6f);
-        _pailGO.transform.eulerAngles = euler;
-    }
-
-    private void HidePail()
-    {
-        if (_pailGO != null) _pailGO.SetActive(false);
-    }
+    private void ShowPail(Transform plant) { }
+    private void UpdatePail(bool pouring) { }
+    private void HidePail() { }
 
 }
