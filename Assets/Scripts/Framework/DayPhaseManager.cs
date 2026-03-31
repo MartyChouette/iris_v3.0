@@ -815,17 +815,22 @@ public class DayPhaseManager : MonoBehaviour
         if (_entranceMessSpawner != null)
             _entranceMessSpawner.SpawnDailyMess();
 
-        // 7. Ambience
+        // 7. Restore audio (may still be ducked from flower trimming / date)
+        AudioManager.Instance?.UnduckMusic(0.5f);
+        AudioManager.Instance?.SetNonMusicMix(1f, 0.5f);
+        RecordSlot.Instance?.Stop(); // clean slate for new day
+
+        // 8. Ambience
         if (_explorationAmbienceClip != null && AudioManager.Instance != null)
             AudioManager.Instance.PlayAmbience(_explorationAmbienceClip, 0.5f);
 
-        // 8. Fade in
+        // 9. Fade in
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
 
         OnPhaseChanged?.Invoke((int)DayPhase.Exploration);
 
-        // 9. Poll for all messes resolved, then show end screen
+        // 10. Poll for all messes resolved, then show end screen
         StartCoroutine(PollDemoCleanupComplete());
     }
 
@@ -909,22 +914,44 @@ public class DayPhaseManager : MonoBehaviour
         while (!trimmingComplete)
             yield return null;
 
-        // 8. Fade to black, unload flower scene, go straight to end of day
+        // 8. Fade to black
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
-        // 8b. Restore apartment camera now that screen is fully black
+        // 9. Restore apartment camera while screen is fully black
         if (bridge != null)
             bridge.RestoreApartmentCamera();
 
-        // 9. Skip Evening — go straight to bed (advances to next morning)
+        // 10. Clean up state while still black (skip GoToBed to avoid redundant fades)
         _currentPhase = DayPhase.Evening;
-        OnPhaseChanged?.Invoke((int)DayPhase.Evening);
+        DateSessionManager.Instance?.EndDate();
+        FridgeController.Instance?.ForceClose();
+        SimpleDrinkManager.Instance?.HideRecipePanel();
+        RecordSlot.Instance?.Stop();
+        DateEndScreen.Instance?.Dismiss();
+
+        // 11. Dream interstitial
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.ShowPhaseTitle("Nema drifts to sleep...");
+        yield return new WaitForSecondsRealtime(3f);
+        if (ScreenFade.Instance != null)
+            ScreenFade.Instance.HidePhaseTitle();
+
+        // 12. Auto-save + advance day (still black — no flicker)
+        AutoSaveController.Instance?.PerformSave("end_of_day");
 
         if (GameClock.Instance != null)
-            GameClock.Instance.GoToBed();
+        {
+            // Advance day directly without SleepSequence's redundant fades
+            GameClock.Instance.AdvanceDayDirect();
+        }
         else
+        {
             Debug.LogWarning("[DayPhaseManager] No GameClock — cannot advance day after flower trimming.");
+        }
+
+        // 13. EnterMorning will be called by DayManager.OnNewNewspaper
+        //     It handles its own fade-in, so screen stays black until then.
     }
 
     // ═══════════════════════════════════════════════════════════════

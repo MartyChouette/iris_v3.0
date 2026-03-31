@@ -165,6 +165,29 @@ public class GameClock : MonoBehaviour
         StartCoroutine(SleepSequence());
     }
 
+    /// <summary>
+    /// Advance to next day without any fading or coroutines.
+    /// Called by DayPhaseManager after flower trimming (which handles its own fade).
+    /// </summary>
+    public void AdvanceDayDirect()
+    {
+        _currentDay++;
+        _currentHour = startHour;
+
+        if (totalDays > 0 && _currentDay > totalDays)
+        {
+            _isSleeping = true;
+            Debug.Log("[GameClock] Calendar complete!");
+            OnCalendarComplete?.Invoke();
+            return;
+        }
+
+        dayManager?.AdvanceDay();
+        _isSleeping = false;
+        OnDayStarted?.Invoke();
+        Debug.Log($"[GameClock] Day {_currentDay} started at {_currentHour:F0}:00 (direct advance)");
+    }
+
     /// <summary>Debug shortcut to immediately advance to next day.</summary>
     public void ForceNewDay()
     {

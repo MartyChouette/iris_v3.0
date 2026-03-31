@@ -65,8 +65,11 @@ public class MessBlueprint : ScriptableObject
     [Tooltip("Only eligible if last flower trim score >= 80.")]
     public bool requireGoodFlowerTrim;
 
-    [Tooltip("Minimum day number for this mess to appear.")]
+    [Tooltip("Minimum day number for this mess to appear (1 = first day).")]
     public int minDay = 1;
+
+    [Tooltip("Maximum day number for this mess to appear (0 = no limit). Use to restrict messes to specific days.")]
+    public int maxDay = 0;
 
     [Header("Placement")]
     [Tooltip("Exact world position to spawn this mess. Each blueprint owns its location.")]

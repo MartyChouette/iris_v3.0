@@ -213,6 +213,7 @@ public class AuthoredMessSpawner : MonoBehaviour
     {
         // Day check
         if (currentDay < bp.minDay) return false;
+        if (bp.maxDay > 0 && currentDay > bp.maxDay) return false;
 
         // Flower trim conditions
         if (bp.requireBadFlowerTrim)
