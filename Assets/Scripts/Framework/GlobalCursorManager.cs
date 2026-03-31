@@ -79,6 +79,9 @@ public class GlobalCursorManager : MonoBehaviour
                   $"sponge={(_spongeCursor != null ? "OK" : "NULL")}");
     }
 
+    // Track procedurally generated textures so we only destroy those (not Resources assets)
+    private readonly System.Collections.Generic.HashSet<Texture2D> _proceduralTextures = new();
+
     private void OnDestroy()
     {
         if (Instance == this)
@@ -86,15 +89,12 @@ public class GlobalCursorManager : MonoBehaviour
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             Instance = null;
         }
-        DestroyTex(_wateringCursor);
-        DestroyTex(_fridgeCursor);
-        DestroyTex(_phoneCursor);
-        DestroyTex(_drawerCursor);
-        DestroyTex(_drinkCursor);
-        DestroyTex(_spongeCursor);
+        foreach (var tex in _proceduralTextures)
+        {
+            if (tex != null) Destroy(tex);
+        }
+        _proceduralTextures.Clear();
     }
-
-    private static void DestroyTex(Texture2D tex) { if (tex != null) Destroy(tex); }
 
     private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
     private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -139,15 +139,15 @@ public class GlobalCursorManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Try loading Resources/Cursors/{name}. If found, destroy the fallback and return the loaded texture.
+    /// Try loading Resources/Cursors/{name}. If found, discard the fallback and return the loaded texture.
     /// If not found, return the procedural fallback (may be null for pinch which has no procedural).
     /// </summary>
-    private static Texture2D LoadOrGenerate(string name, Texture2D proceduralFallback)
+    private Texture2D LoadOrGenerate(string name, Texture2D proceduralFallback)
     {
         var loaded = Resources.Load<Texture2D>($"Cursors/{name}");
         if (loaded != null)
         {
-            // Art asset found — discard procedural fallback
+            // Art asset found — discard procedural fallback (safe, it's not a Resources asset)
             if (proceduralFallback != null)
                 Destroy(proceduralFallback);
             return loaded;
@@ -155,6 +155,10 @@ public class GlobalCursorManager : MonoBehaviour
 
         if (proceduralFallback == null)
             Debug.LogWarning($"[GlobalCursorManager] Cursors/{name} not found and no procedural fallback.");
+
+        // Track procedural texture so we can clean it up on destroy
+        if (proceduralFallback != null)
+            _proceduralTextures.Add(proceduralFallback);
 
         return proceduralFallback;
     }
