@@ -306,15 +306,18 @@ public class CleaningManager : MonoBehaviour
             else
             {
                 Vector3 toolPos = hitInfo.point + hitInfo.normal * _surfaceOffset;
-                _spongeLingerTimer = SpongeLingerTime; // reset linger
-                SetSpongeVisual(toolPos, true);
+                bool isPressed = IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed();
 
-                if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed() && _hoveredSurface != null)
+                // 3D sponge only appears while actively scrubbing (click+hold)
+                // Context cursor handles the hover state
+                if (isPressed && _hoveredSurface != null)
                 {
+                    _spongeLingerTimer = SpongeLingerTime;
+                    SetSpongeVisual(toolPos, true);
+
                     if (!_wasPressingLastFrame)
                     {
                         OnWipeStarted?.Invoke();
-                        // Trigger sponge click bounce
                         _clickBounce = ClickBounceStrength;
                         _clickBounceVel = 0f;
                     }
@@ -324,11 +327,15 @@ public class CleaningManager : MonoBehaviour
                     _hoveredSurface.Wipe(uv, _wipeRadius);
                     PlaySFX(wipeSFX);
 
-                    // Per-stain completion: sparkle + SFX + deactivate
                     if (!wasClean && _hoveredSurface.IsFullyClean)
                     {
                         OnStainCompleted(_hoveredSurface);
                     }
+                }
+                else
+                {
+                    // Just hovering — hide 3D sponge (context cursor shows instead)
+                    RequestSpongeHide();
                 }
             }
         }

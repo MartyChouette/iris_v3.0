@@ -18,7 +18,7 @@ public class GlobalCursorManager : MonoBehaviour
 {
     public static GlobalCursorManager Instance { get; private set; }
 
-    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink }
+    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge }
 
     // ── Cursor textures ──
     private Texture2D _interactCursor;
@@ -27,6 +27,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Texture2D _phoneCursor;
     private Texture2D _drawerCursor;
     private Texture2D _drinkCursor;
+    private Texture2D _spongeCursor;
 
     private Vector2 _interactHotSpot;
     private Vector2 _wateringHotSpot;
@@ -34,6 +35,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Vector2 _phoneHotSpot;
     private Vector2 _drawerHotSpot;
     private Vector2 _drinkHotSpot;
+    private Vector2 _spongeHotSpot;
 
     // ── State ──
     private CursorType _currentType = CursorType.Default;
@@ -74,6 +76,7 @@ public class GlobalCursorManager : MonoBehaviour
         DestroyTex(_phoneCursor);
         DestroyTex(_drawerCursor);
         DestroyTex(_drinkCursor);
+        DestroyTex(_spongeCursor);
     }
 
     private static void DestroyTex(Texture2D tex) { if (tex != null) Destroy(tex); }
@@ -115,6 +118,9 @@ public class GlobalCursorManager : MonoBehaviour
 
         _drinkCursor = LoadOrGenerate("drink", GenDrinkPour(S));
         _drinkHotSpot = center;
+
+        _spongeCursor = LoadOrGenerate("sponge", GenSponge(S));
+        _spongeHotSpot = center;
     }
 
     /// <summary>
@@ -169,10 +175,11 @@ public class GlobalCursorManager : MonoBehaviour
                 desired = CursorType.Drawer;
             else if (Has<SimpleDrinkManager>(go))
                 desired = CursorType.Drink;
+            else if (go.GetComponent<CleanableSurface>() != null)
+                desired = CursorType.Sponge;
             else if (Has<InteractableHighlight>(go)
                   || Has<PlaceableObject>(go)
                   || Has<RecordSlot>(go)
-                  || go.GetComponent<CleanableSurface>() != null
                   || HasFlowerTag(go))
                 desired = CursorType.Interact;
         }
@@ -204,6 +211,7 @@ public class GlobalCursorManager : MonoBehaviour
             case CursorType.Phone:    Cursor.SetCursor(_phoneCursor, _phoneHotSpot, CursorMode.Auto); break;
             case CursorType.Drawer:   Cursor.SetCursor(_drawerCursor, _drawerHotSpot, CursorMode.Auto); break;
             case CursorType.Drink:    Cursor.SetCursor(_drinkCursor, _drinkHotSpot, CursorMode.Auto); break;
+            case CursorType.Sponge:   Cursor.SetCursor(_spongeCursor, _spongeHotSpot, CursorMode.Auto); break;
             case CursorType.Interact: Cursor.SetCursor(_interactCursor, _interactHotSpot, CursorMode.Auto); break;
             default:                  Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); break;
         }
@@ -444,6 +452,40 @@ public class GlobalCursorManager : MonoBehaviour
         for (int x = 6; x <= 14; x++) Set(px, s, x, 2, dark);
         // Liquid in glass
         FillRect(px, s, 7, 4, 13, 6, liquid);
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Sponge (rounded rectangle with pores) ──────────────────
+    private static Texture2D GenSponge(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var body = new Color32(230, 210, 120, 255);    // yellow sponge
+        var dark = new Color32(200, 180, 90, 255);      // edge/shadow
+        var pore = new Color32(210, 190, 100, 220);     // pore dots
+        var foam = new Color32(240, 245, 250, 200);     // soap bubbles
+
+        // Sponge body — rounded rectangle
+        FillRect(px, s, 8, 8, 24, 22, body);
+        // Rounded corners — clip
+        Set(px, s, 8, 8, new Color32(0,0,0,0)); Set(px, s, 24, 8, new Color32(0,0,0,0));
+        Set(px, s, 8, 22, new Color32(0,0,0,0)); Set(px, s, 24, 22, new Color32(0,0,0,0));
+        // Edges
+        for (int x = 9; x <= 23; x++) { Set(px, s, x, 8, dark); Set(px, s, x, 22, dark); }
+        for (int y = 9; y <= 21; y++) { Set(px, s, 8, y, dark); Set(px, s, 24, y, dark); }
+        // Pores (scattered dots inside)
+        Set(px, s, 11, 11, pore); Set(px, s, 15, 12, pore); Set(px, s, 20, 10, pore);
+        Set(px, s, 13, 16, pore); Set(px, s, 18, 14, pore); Set(px, s, 22, 18, pore);
+        Set(px, s, 10, 19, pore); Set(px, s, 16, 20, pore); Set(px, s, 21, 16, pore);
+        Set(px, s, 12, 13, pore); Set(px, s, 19, 19, pore);
+        // Soap bubbles (top-right, floating above)
+        Set(px, s, 22, 24, foam); Set(px, s, 23, 25, foam);
+        Set(px, s, 24, 24, foam); Set(px, s, 25, 26, foam);
+        Set(px, s, 20, 25, foam); Set(px, s, 26, 24, foam);
 
         tex.SetPixels32(px);
         tex.Apply();
