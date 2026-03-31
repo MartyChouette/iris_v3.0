@@ -307,7 +307,7 @@ Transform:
   m_GameObject: {fileID: 6758136}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.67999995, y: 1.7, z: -2.1100001}
+  m_LocalPosition: {x: -0.67999995, y: 1.58, z: -2.1100001}
   m_LocalScale: {x: 0.35, y: 0.25, z: 0.35}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2412,8 +2412,8 @@ Transform:
   m_GameObject: {fileID: 147166028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.184, y: 1.618, z: -1.691}
-  m_LocalScale: {x: 0.1, y: 0.4, z: 0.2}
+  m_LocalPosition: {x: 3.184, y: 2.9, z: -4.67}
+  m_LocalScale: {x: 0.93, y: 0.66, z: 0.13}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -4230,7 +4230,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &294380040
 Transform:
   m_ObjectHideFlags: 0
@@ -9344,7 +9344,7 @@ Transform:
   m_GameObject: {fileID: 582955333}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.68, y: 0.8, z: -2.11}
+  m_LocalPosition: {x: -0.68, y: 0.67, z: -2.11}
   m_LocalScale: {x: 0.06, y: 1.6, z: 0.06}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -28417,8 +28417,8 @@ MonoBehaviour:
   - 1.4
   - 1.6
   - 3.25
-  _defaultZoomStep: 1
-  _zoomLerpSpeed: 8
+  _defaultZoomStep: 4
+  _zoomLerpSpeed: 7
   worldBounds:
     m_Center: {x: -3, y: 1.5, z: 0}
     m_Extent: {x: 8, y: 4, z: 10}
@@ -40103,7 +40103,7 @@ MonoBehaviour:
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.5172536, y: -0.5183699, z: -0.4821295, w: 0.4809289}
 --- !u!54 &2292339034119131267
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -40126,7 +40126,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -42229,7 +42229,7 @@ MonoBehaviour:
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.5172536, y: -0.5183699, z: -0.4821295, w: 0.4809289}
 --- !u!54 &5558298820962645060
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -42252,7 +42252,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -42387,7 +42387,7 @@ Transform:
   m_GameObject: {fileID: 8700725329762857947}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0.49082437, y: 0.85197973, z: 8.182077}
+  m_LocalPosition: {x: 0.565, y: 0.595, z: 7.868}
   m_LocalScale: {x: 10.878255, y: 10.878255, z: 1.2765647}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -42791,7 +42791,7 @@ MonoBehaviour:
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.5172536, y: -0.5183699, z: -0.4821295, w: 0.4809289}
 --- !u!54 &6151023684486888932
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -42814,7 +42814,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -42955,7 +42955,7 @@ MonoBehaviour:
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.5172536, y: -0.5183699, z: -0.4821295, w: 0.4809289}
 --- !u!54 &6243451016124370459
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -42978,7 +42978,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -43094,7 +43094,7 @@ Transform:
   m_GameObject: {fileID: 5444727772679788217}
   serializedVersion: 2
   m_LocalRotation: {x: -0.79205483, y: 0.14037195, z: 0.19856629, w: 0.5599253}
-  m_LocalPosition: {x: -0.98594266, y: 1.6635559, z: 9.153869}
+  m_LocalPosition: {x: -0.351, y: 1.6635559, z: 8.872}
   m_LocalScale: {x: 15.652501, y: 17.240662, z: 34.46326}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -43672,7 +43672,7 @@ MonoBehaviour:
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.5172536, y: -0.5183699, z: -0.4821295, w: 0.4809289}
 --- !u!54 &7758307918097530552
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -43695,7 +43695,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -45153,7 +45153,7 @@ MonoBehaviour:
   _useSpawnAsHome: 1
   _homePosition: {x: 0, y: 0, z: 0}
   _homeTolerance: 0.2
-  _homeRotation: {x: 0, y: 0, z: 0, w: 1}
+  _homeRotation: {x: -0.5172536, y: -0.5183699, z: -0.4821295, w: 0.4809289}
 --- !u!54 &9151970196485579311
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -45176,7 +45176,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
