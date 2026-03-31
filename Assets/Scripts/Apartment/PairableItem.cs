@@ -140,21 +140,21 @@ public class PairableItem : MonoBehaviour
 
         if (_snapMode == SnapMode.Stacked)
         {
-            // Position on top of the visual mesh, not the pivot
+            // Stack in world space — place flat on top of the topmost plate's mesh
             var renderer = stackTop.GetComponentInChildren<Renderer>();
+            Vector3 stackPos;
             if (renderer != null)
-            {
-                Vector3 topCenter = renderer.bounds.center + Vector3.up * renderer.bounds.extents.y;
-                held.transform.SetParent(stackTop, true);
-                held.transform.position = topCenter + _snapOffset;
-                held.transform.localRotation = Quaternion.identity;
-            }
+                stackPos = renderer.bounds.center + Vector3.up * renderer.bounds.extents.y;
             else
-            {
-                held.transform.SetParent(stackTop, true);
-                held.transform.localPosition = _snapOffset;
-                held.transform.localRotation = Quaternion.identity;
-            }
+                stackPos = stackTop.position + Vector3.up * _snapOffset.y;
+
+            // Keep world rotation from the root plate (all plates face the same way)
+            Quaternion stackRot = transform.rotation;
+
+            // Parent, then set world pos/rot (worldPositionStays=false would lose it)
+            held.transform.SetParent(stackTop, true);
+            held.transform.position = stackPos;
+            held.transform.rotation = stackRot;
         }
         else
         {
