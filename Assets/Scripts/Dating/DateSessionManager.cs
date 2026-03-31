@@ -460,8 +460,8 @@ public class DateSessionManager : MonoBehaviour
                 type = reaction
             });
 
-            // Spawn particles at the item's position
-            SpawnReactionParticles(tag.transform.position, reaction);
+            // Spawn particles at the item's visual center (not pivot)
+            SpawnReactionParticles(GetVisualCenter(tag.transform), reaction);
 
             Debug.Log($"[DateSessionManager] Reveal: {tag.DisplayName} → {reaction}");
 
@@ -491,6 +491,18 @@ public class DateSessionManager : MonoBehaviour
     // ──────────────────────────────────────────────────────────────
     // Reaction Particles (runtime-built, no prefab needed)
     // ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Get the visual center of an object using renderer bounds.
+    /// Falls back to transform.position if no renderer found.
+    /// </summary>
+    private static Vector3 GetVisualCenter(Transform t)
+    {
+        var renderer = t.GetComponentInChildren<Renderer>();
+        if (renderer != null)
+            return renderer.bounds.center;
+        return t.position;
+    }
 
     private static void SpawnReactionParticles(Vector3 position, ReactionType reaction)
     {
