@@ -47,6 +47,13 @@ public class CursorContext : MonoBehaviour
 
     void Start()
     {
+        // Defer to GlobalCursorManager if present (it handles all scenes)
+        if (GlobalCursorManager.Instance != null)
+        {
+            enabled = false;
+            return;
+        }
+
         mainCamera = Camera.main;
         SetCursor(false);
     }
