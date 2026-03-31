@@ -631,6 +631,9 @@ public class ObjectGrabber : MonoBehaviour
     /// While holding a plate, raycast for another plate under the cursor.
     /// If found, join the clicked plate onto the held stack (or vice versa).
     /// </summary>
+    // Forgiving radius for pairing/stacking — SphereCast instead of Raycast
+    private const float PairStackRadius = 0.08f;
+
     private bool TryPairWithClicked()
     {
         if (_held == null) return false;
@@ -641,12 +644,8 @@ public class ObjectGrabber : MonoBehaviour
         Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
-            return false;
-
-        var clickedPairable = hit.collider.GetComponent<PairableItem>();
-        if (clickedPairable == null)
-            clickedPairable = hit.collider.GetComponentInParent<PairableItem>();
+        // Use SphereCast for forgiving click area, fall back to RaycastAll
+        PairableItem clickedPairable = FindComponentAlongRay<PairableItem>(ray, placeableLayer);
         if (clickedPairable == null || clickedPairable == heldPairable) return false;
 
         if (!clickedPairable.CanPairWith(heldPairable)) return false;
@@ -671,12 +670,8 @@ public class ObjectGrabber : MonoBehaviour
         Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);
 
-        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, placeableLayer))
-            return false;
-
-        var clickedPlate = hit.collider.GetComponent<StackablePlate>();
-        if (clickedPlate == null)
-            clickedPlate = hit.collider.GetComponentInParent<StackablePlate>();
+        // Use SphereCast for forgiving click area
+        StackablePlate clickedPlate = FindComponentAlongRay<StackablePlate>(ray, placeableLayer);
         if (clickedPlate == null || clickedPlate == heldStack) return false;
         if (clickedPlate.transform.IsChildOf(_held.transform)) return false;
 
@@ -702,6 +697,37 @@ public class ObjectGrabber : MonoBehaviour
     }
 
     /// <summary>
+    /// <summary>
+    /// Forgiving component search along a ray. Tries SphereCast first (wider hit area),
+    /// then falls back to RaycastAll for objects the sphere might miss.
+    /// </summary>
+    private static T FindComponentAlongRay<T>(Ray ray, LayerMask layer) where T : Component
+    {
+        // 1. SphereCast — generous hit radius
+        if (Physics.SphereCast(ray, PairStackRadius, out RaycastHit sphereHit, 100f, layer))
+        {
+            var comp = sphereHit.collider.GetComponent<T>();
+            if (comp == null) comp = sphereHit.collider.GetComponentInParent<T>();
+            if (comp != null) return comp;
+        }
+
+        // 2. RaycastAll — check all hits along the exact ray
+        var hits = Physics.RaycastAll(ray, 100f, layer);
+        float bestDist = float.MaxValue;
+        T best = null;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var comp = hits[i].collider.GetComponent<T>();
+            if (comp == null) comp = hits[i].collider.GetComponentInParent<T>();
+            if (comp != null && hits[i].distance < bestDist)
+            {
+                bestDist = hits[i].distance;
+                best = comp;
+            }
+        }
+        return best;
+    }
+
     /// Double-click while holding a plate with children → detach the topmost child
     /// and place/drop the remaining stack.
     /// </summary>
