@@ -427,47 +427,17 @@ public class ApartmentManager : MonoBehaviour
             int newStep = Mathf.Clamp(_currentZoomStep + direction, 0, _zoomSteps.Length - 1);
             if (newStep != _currentZoomStep)
             {
-                float oldZoom = _targetZoom > 0f ? _targetZoom : _zoomSteps[_currentZoomStep];
                 _currentZoomStep = newStep;
                 _targetZoom = _zoomSteps[_currentZoomStep];
 
-                // Bias pan toward cursor so zoom centers on what you're pointing at
-                BiasZoomTowardCursor(oldZoom, _targetZoom);
+                // Re-clamp pan so it doesn't exceed the new zoom's limit
+                ClampPanOffset();
             }
         }
 
         // Smooth lerp toward target
         if (_targetZoom > 0f)
             _currentZoom = Mathf.Lerp(_currentZoom, _targetZoom, Time.unscaledDeltaTime * _zoomLerpSpeed);
-    }
-
-    /// <summary>
-    /// When zooming in, shift the pan offset toward the cursor position so the
-    /// zoom feels centered on what the player is pointing at.
-    /// </summary>
-    private void BiasZoomTowardCursor(float oldZoom, float newZoom)
-    {
-        if (browseCamera == null || oldZoom <= 0f || newZoom <= 0f) return;
-
-        // How much of the view is changing (positive = zooming in)
-        float zoomRatio = 1f - (newZoom / oldZoom);
-        if (Mathf.Abs(zoomRatio) < 0.001f) return;
-
-        // Cursor position in normalized screen space (-1 to 1)
-        Vector2 mousePos = IrisInput.CursorPosition;
-        float nx = (mousePos.x / Screen.width - 0.5f) * 2f;
-        float ny = (mousePos.y / Screen.height - 0.5f) * 2f;
-
-        // Offset in camera-local space toward the cursor
-        Vector3 right = _baseRotation * Vector3.right;
-        Vector3 up = _baseRotation * Vector3.up;
-
-        // Scale by current zoom size so the offset matches what the player sees
-        float worldScale = browseCamera.Lens.ModeOverride == Unity.Cinemachine.LensSettings.OverrideModes.Orthographic
-            ? oldZoom  // ortho: size = half-height in world units
-            : oldZoom * 0.02f; // perspective: approximate world scale from FOV
-
-        _panOffset += (right * nx + up * ny) * worldScale * zoomRatio;
     }
 
     private void HandlePanInput()
