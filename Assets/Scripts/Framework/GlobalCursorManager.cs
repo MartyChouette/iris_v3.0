@@ -18,7 +18,7 @@ public class GlobalCursorManager : MonoBehaviour
 {
     public static GlobalCursorManager Instance { get; private set; }
 
-    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge }
+    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge, Grab }
 
     // ── Cursor textures ──
     private Texture2D _interactCursor;
@@ -28,6 +28,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Texture2D _drawerCursor;
     private Texture2D _drinkCursor;
     private Texture2D _spongeCursor;
+    private Texture2D _grabCursor;
 
     private Vector2 _interactHotSpot;
     private Vector2 _wateringHotSpot;
@@ -36,6 +37,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Vector2 _drawerHotSpot;
     private Vector2 _drinkHotSpot;
     private Vector2 _spongeHotSpot;
+    private Vector2 _grabHotSpot;
 
     // ── State ──
     private CursorType _currentType = CursorType.Default;
@@ -161,6 +163,9 @@ public class GlobalCursorManager : MonoBehaviour
 
         _spongeCursor = LoadOrGenerate("sponge", GenSponge(S));
         _spongeHotSpot = center;
+
+        _grabCursor = LoadOrGenerate("grab", GenGrab(S));
+        _grabHotSpot = center;
     }
 
     /// <summary>
@@ -199,7 +204,7 @@ public class GlobalCursorManager : MonoBehaviour
             _cachedCamera = Camera.main;
         if (_cachedCamera == null) { ApplyCursor(CursorType.Default); return; }
 
-        if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Default); return; }
+        if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
 
         Vector2 cursorPos = IrisInput.CursorPosition;
         Ray ray = _cachedCamera.ScreenPointToRay(cursorPos);
@@ -262,6 +267,7 @@ public class GlobalCursorManager : MonoBehaviour
             case CursorType.Drawer:   Cursor.SetCursor(_drawerCursor, _drawerHotSpot, CursorMode.Auto); break;
             case CursorType.Drink:    Cursor.SetCursor(_drinkCursor, _drinkHotSpot, CursorMode.Auto); break;
             case CursorType.Sponge:   Cursor.SetCursor(_spongeCursor, _spongeHotSpot, CursorMode.Auto); break;
+            case CursorType.Grab:     Cursor.SetCursor(_grabCursor, _grabHotSpot, CursorMode.Auto); break;
             case CursorType.Interact: Cursor.SetCursor(_interactCursor, _interactHotSpot, CursorMode.Auto); break;
             default:                  Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); break;
         }
@@ -536,6 +542,61 @@ public class GlobalCursorManager : MonoBehaviour
         Set(px, s, 22, 24, foam); Set(px, s, 23, 25, foam);
         Set(px, s, 24, 24, foam); Set(px, s, 25, 26, foam);
         Set(px, s, 20, 25, foam); Set(px, s, 26, 24, foam);
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Grab (closed fist / gripping hand) ─────────────────────
+    private static Texture2D GenGrab(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var skin = new Color32(220, 190, 160, 255);    // skin tone
+        var dark = new Color32(180, 150, 120, 255);     // shadow/outline
+        var nail = new Color32(240, 210, 190, 255);     // lighter nail/knuckle
+
+        // Closed fist — 4 curled fingers (rows 12-22)
+        // Finger 1 (index)
+        FillRect(px, s, 8, 18, 12, 24, skin);
+        FillRect(px, s, 8, 24, 12, 25, dark);   // tip curl
+        Set(px, s, 8, 22, dark); Set(px, s, 12, 22, dark);
+        // Finger 2 (middle)
+        FillRect(px, s, 13, 19, 17, 25, skin);
+        FillRect(px, s, 13, 25, 17, 26, dark);
+        Set(px, s, 13, 23, dark); Set(px, s, 17, 23, dark);
+        // Finger 3 (ring)
+        FillRect(px, s, 18, 18, 22, 24, skin);
+        FillRect(px, s, 18, 24, 22, 25, dark);
+        Set(px, s, 18, 22, dark); Set(px, s, 22, 22, dark);
+        // Finger 4 (pinky)
+        FillRect(px, s, 23, 17, 26, 23, skin);
+        FillRect(px, s, 23, 23, 26, 24, dark);
+        Set(px, s, 23, 21, dark); Set(px, s, 26, 21, dark);
+
+        // Palm (connects fingers)
+        FillRect(px, s, 8, 12, 26, 18, skin);
+        for (int x = 8; x <= 26; x++) Set(px, s, x, 12, dark);
+        for (int y = 12; y <= 18; y++) { Set(px, s, 7, y, dark); Set(px, s, 27, y, dark); }
+
+        // Thumb (curled across front, lower-left)
+        FillRect(px, s, 5, 10, 9, 16, skin);
+        Set(px, s, 5, 10, dark); Set(px, s, 9, 10, dark);
+        for (int y = 10; y <= 16; y++) Set(px, s, 4, y, dark);
+        FillRect(px, s, 5, 16, 8, 17, dark); // thumb tip
+        // Thumb nail
+        Set(px, s, 6, 11, nail); Set(px, s, 7, 11, nail);
+
+        // Knuckle highlights
+        Set(px, s, 10, 19, nail); Set(px, s, 15, 20, nail);
+        Set(px, s, 20, 19, nail); Set(px, s, 24, 18, nail);
+
+        // Wrist hint (bottom)
+        FillRect(px, s, 10, 6, 24, 12, skin);
+        for (int x = 10; x <= 24; x++) Set(px, s, x, 6, dark);
+        for (int y = 6; y <= 12; y++) { Set(px, s, 9, y, dark); Set(px, s, 25, y, dark); }
 
         tex.SetPixels32(px);
         tex.Apply();
