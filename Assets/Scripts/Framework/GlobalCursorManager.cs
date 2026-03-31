@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -209,6 +210,13 @@ public class GlobalCursorManager : MonoBehaviour
             Debug.Log($"[GlobalCursorManager] HeldObject={ObjectGrabber.HeldObject?.name ?? "null"} IsHolding={ObjectGrabber.IsHoldingObject}");
 
         if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
+
+        // If cursor is over UI (buttons, panels, etc.), use default cursor
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            ApplyCursor(CursorType.Default);
+            return;
+        }
 
         Vector2 cursorPos = IrisInput.CursorPosition;
         Ray ray = _cachedCamera.ScreenPointToRay(cursorPos);
