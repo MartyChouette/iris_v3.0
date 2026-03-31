@@ -6,30 +6,39 @@ using UnityEngine.SceneManagement;
 /// based on what the mouse is hovering over. Auto-spawns on scene load.
 ///
 /// Cursor contexts (highest priority first):
-///   1. Watering   — hovering a WaterablePlant
-///   2. Interact   — hovering an InteractableHighlight, PlaceableObject, or flower tag
-///   3. Default    — OS cursor (null)
-///
-/// Loads "Cursors/pinch" from Resources for the interact cursor.
-/// Generates a procedural watering pail texture at runtime.
+///   1. Watering   — hovering a WaterablePlant (watering pail icon)
+///   2. Fridge     — hovering FridgeController (open-fridge icon)
+///   3. Phone      — hovering PhoneController (phone icon)
+///   4. Drawer     — hovering DrawerController (open/pull icon)
+///   5. Drink      — hovering SimpleDrinkManager or drink station (pouring icon)
+///   6. Interact   — hovering InteractableHighlight, PlaceableObject, etc. (pinch)
+///   7. Default    — OS cursor (null)
 /// </summary>
 public class GlobalCursorManager : MonoBehaviour
 {
     public static GlobalCursorManager Instance { get; private set; }
 
+    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink }
+
     // ── Cursor textures ──
-    private Texture2D _interactCursor;   // pinch.png — for general interactables
-    private Texture2D _wateringCursor;   // procedural watering pail
+    private Texture2D _interactCursor;
+    private Texture2D _wateringCursor;
+    private Texture2D _fridgeCursor;
+    private Texture2D _phoneCursor;
+    private Texture2D _drawerCursor;
+    private Texture2D _drinkCursor;
+
     private Vector2 _interactHotSpot;
     private Vector2 _wateringHotSpot;
+    private Vector2 _fridgeHotSpot;
+    private Vector2 _phoneHotSpot;
+    private Vector2 _drawerHotSpot;
+    private Vector2 _drinkHotSpot;
 
     // ── State ──
     private CursorType _currentType = CursorType.Default;
     private Camera _cachedCamera;
 
-    private enum CursorType { Default, Interact, Watering }
-
-    // ── Layers for raycast ──
     // Raycast against everything except UI (layer 5) and Ignore Raycast (layer 2)
     private const int RaycastMask = ~((1 << 5) | (1 << 2));
 
@@ -37,7 +46,6 @@ public class GlobalCursorManager : MonoBehaviour
     private static void AutoSpawn()
     {
         if (Instance != null) return;
-
         var go = new GameObject("GlobalCursorManager");
         go.AddComponent<GlobalCursorManager>();
     }
@@ -51,7 +59,6 @@ public class GlobalCursorManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
         LoadCursorTextures();
     }
 
@@ -59,67 +66,90 @@ public class GlobalCursorManager : MonoBehaviour
     {
         if (Instance == this)
         {
-            // Restore OS cursor on destroy
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             Instance = null;
         }
-
-        if (_wateringCursor != null)
-            Destroy(_wateringCursor);
+        DestroyTex(_wateringCursor);
+        DestroyTex(_fridgeCursor);
+        DestroyTex(_phoneCursor);
+        DestroyTex(_drawerCursor);
+        DestroyTex(_drinkCursor);
     }
 
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
+    private static void DestroyTex(Texture2D tex) { if (tex != null) Destroy(tex); }
 
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
+    private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
+    private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+    private void OnSceneLoaded(Scene s, LoadSceneMode m) => _cachedCamera = null;
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        _cachedCamera = null; // force re-cache
-    }
+    // ══════════════════════════════════════════════════════════════
+    // Texture loading
+    // ══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Loads each cursor from Resources/Cursors/ by name.
+    /// If an art asset exists it's used; otherwise falls back to a procedural placeholder.
+    /// To replace a cursor: drop a 32x32 PNG (Read/Write enabled, Cursor texture type)
+    /// into Assets/Resources/Cursors/ with the matching name:
+    ///   pinch.png, watering.png, fridge.png, phone.png, drawer.png, drink.png
+    /// </summary>
     private void LoadCursorTextures()
     {
-        // Load pinch cursor from Resources
-        _interactCursor = Resources.Load<Texture2D>("Cursors/pinch");
-        if (_interactCursor != null)
+        const int S = 32;
+        Vector2 center = new Vector2(S / 2f, S / 2f);
+
+        _interactCursor = LoadOrGenerate("pinch", null); // pinch.png already exists
+        _interactHotSpot = Vector2.zero; // top-left (matches flower scene CursorContext)
+
+        _wateringCursor = LoadOrGenerate("watering", GenWateringPail(S));
+        _wateringHotSpot = new Vector2(6f, 2f);
+
+        _fridgeCursor = LoadOrGenerate("fridge", GenFridge(S));
+        _fridgeHotSpot = center;
+
+        _phoneCursor = LoadOrGenerate("phone", GenPhone(S));
+        _phoneHotSpot = center;
+
+        _drawerCursor = LoadOrGenerate("drawer", GenDrawer(S));
+        _drawerHotSpot = center;
+
+        _drinkCursor = LoadOrGenerate("drink", GenDrinkPour(S));
+        _drinkHotSpot = center;
+    }
+
+    /// <summary>
+    /// Try loading Resources/Cursors/{name}. If found, destroy the fallback and return the loaded texture.
+    /// If not found, return the procedural fallback (may be null for pinch which has no procedural).
+    /// </summary>
+    private static Texture2D LoadOrGenerate(string name, Texture2D proceduralFallback)
+    {
+        var loaded = Resources.Load<Texture2D>($"Cursors/{name}");
+        if (loaded != null)
         {
-            // Hotspot at top-left (matches original CursorContext in flower scenes)
-            _interactHotSpot = Vector2.zero;
-        }
-        else
-        {
-            Debug.LogWarning("[GlobalCursorManager] Cursors/pinch not found in Resources.");
+            // Art asset found — discard procedural fallback
+            if (proceduralFallback != null)
+                Destroy(proceduralFallback);
+            return loaded;
         }
 
-        // Generate watering pail cursor procedurally
-        _wateringCursor = GenerateWateringCursor(32, 32);
-        _wateringHotSpot = new Vector2(6f, 2f); // tip of spout
+        if (proceduralFallback == null)
+            Debug.LogWarning($"[GlobalCursorManager] Cursors/{name} not found and no procedural fallback.");
+
+        return proceduralFallback;
     }
+
+    // ══════════════════════════════════════════════════════════════
+    // Update — raycast and pick cursor
+    // ══════════════════════════════════════════════════════════════
 
     private void Update()
     {
         if (_cachedCamera == null)
             _cachedCamera = Camera.main;
-        if (_cachedCamera == null)
-        {
-            ApplyCursor(CursorType.Default);
-            return;
-        }
+        if (_cachedCamera == null) { ApplyCursor(CursorType.Default); return; }
 
-        // Don't change cursor when grabbing an object
-        if (ObjectGrabber.IsHoldingObject)
-        {
-            ApplyCursor(CursorType.Default);
-            return;
-        }
+        if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Default); return; }
 
-        // Raycast from cursor position
         Vector2 cursorPos = IrisInput.CursorPosition;
         Ray ray = _cachedCamera.ScreenPointToRay(cursorPos);
 
@@ -129,27 +159,30 @@ public class GlobalCursorManager : MonoBehaviour
         {
             var go = hit.collider.gameObject;
 
-            // Priority 1: Watering — hovering a WaterablePlant
-            if (go.GetComponent<WaterablePlant>() != null
-                || go.GetComponentInParent<WaterablePlant>() != null)
-            {
+            if (Has<WaterablePlant>(go))
                 desired = CursorType.Watering;
-            }
-            // Priority 2: Interact — hovering an interactable
-            else if (go.GetComponent<InteractableHighlight>() != null
-                  || go.GetComponentInParent<InteractableHighlight>() != null
-                  || go.GetComponent<PlaceableObject>() != null
-                  || go.GetComponentInParent<PlaceableObject>() != null
-                  || go.GetComponent<RecordSlot>() != null
-                  || go.GetComponentInParent<RecordSlot>() != null
+            else if (Has<FridgeController>(go))
+                desired = CursorType.Fridge;
+            else if (Has<PhoneController>(go))
+                desired = CursorType.Phone;
+            else if (Has<DrawerController>(go))
+                desired = CursorType.Drawer;
+            else if (Has<SimpleDrinkManager>(go))
+                desired = CursorType.Drink;
+            else if (Has<InteractableHighlight>(go)
+                  || Has<PlaceableObject>(go)
+                  || Has<RecordSlot>(go)
                   || go.GetComponent<CleanableSurface>() != null
                   || HasFlowerTag(go))
-            {
                 desired = CursorType.Interact;
-            }
         }
 
         ApplyCursor(desired);
+    }
+
+    private static bool Has<T>(GameObject go) where T : Component
+    {
+        return go.GetComponent<T>() != null || go.GetComponentInParent<T>() != null;
     }
 
     private static bool HasFlowerTag(GameObject go)
@@ -166,90 +199,253 @@ public class GlobalCursorManager : MonoBehaviour
 
         switch (type)
         {
-            case CursorType.Watering:
-                Cursor.SetCursor(_wateringCursor, _wateringHotSpot, CursorMode.Auto);
-                break;
-            case CursorType.Interact:
-                Cursor.SetCursor(_interactCursor, _interactHotSpot, CursorMode.Auto);
-                break;
-            default:
-                Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-                break;
+            case CursorType.Watering: Cursor.SetCursor(_wateringCursor, _wateringHotSpot, CursorMode.Auto); break;
+            case CursorType.Fridge:   Cursor.SetCursor(_fridgeCursor, _fridgeHotSpot, CursorMode.Auto); break;
+            case CursorType.Phone:    Cursor.SetCursor(_phoneCursor, _phoneHotSpot, CursorMode.Auto); break;
+            case CursorType.Drawer:   Cursor.SetCursor(_drawerCursor, _drawerHotSpot, CursorMode.Auto); break;
+            case CursorType.Drink:    Cursor.SetCursor(_drinkCursor, _drinkHotSpot, CursorMode.Auto); break;
+            case CursorType.Interact: Cursor.SetCursor(_interactCursor, _interactHotSpot, CursorMode.Auto); break;
+            default:                  Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); break;
         }
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // Procedural watering pail cursor (32x32)
-    // ──────────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════
+    // Procedural cursor generators (32x32 pixel art)
+    // ══════════════════════════════════════════════════════════════
 
-    private static Texture2D GenerateWateringCursor(int w, int h)
+    private static Texture2D MakeTex(int s)
     {
-        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Point;
+        var t = new Texture2D(s, s, TextureFormat.RGBA32, false);
+        t.filterMode = FilterMode.Point;
+        return t;
+    }
 
-        // Clear to transparent
-        var pixels = new Color32[w * h];
-        for (int i = 0; i < pixels.Length; i++)
-            pixels[i] = new Color32(0, 0, 0, 0);
+    private static void Set(Color32[] px, int w, int x, int y, Color32 c)
+    {
+        if (x >= 0 && x < w && y >= 0 && y < w)
+            px[y * w + x] = c;
+    }
 
-        var body = new Color32(110, 160, 200, 255);   // steel blue
-        var dark = new Color32(70, 110, 150, 255);     // darker steel
-        var handle = new Color32(90, 140, 180, 255);   // handle color
-        var water = new Color32(100, 180, 230, 180);   // water drops
-        var rim = new Color32(130, 180, 210, 255);     // rim highlight
+    private static void FillRect(Color32[] px, int w, int x0, int y0, int x1, int y1, Color32 c)
+    {
+        for (int y = y0; y <= y1; y++)
+            for (int x = x0; x <= x1; x++)
+                Set(px, w, x, y, c);
+    }
 
-        // Pail body (bucket shape) — rows 10-24, cols 8-24
+    private static void DrawLine(Color32[] px, int w, int x0, int y0, int x1, int y1, Color32 c)
+    {
+        int dx = Mathf.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+        int dy = -Mathf.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+        int err = dx + dy;
+        while (true)
+        {
+            Set(px, w, x0, y0, c);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 >= dy) { err += dy; x0 += sx; }
+            if (e2 <= dx) { err += dx; y0 += sy; }
+        }
+    }
+
+    // ── Watering pail ──────────────────────────────────────────
+    private static Texture2D GenWateringPail(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var body = new Color32(110, 160, 200, 255);
+        var dark = new Color32(70, 110, 150, 255);
+        var hndl = new Color32(90, 140, 180, 255);
+        var drop = new Color32(100, 180, 230, 180);
+        var rim  = new Color32(130, 180, 210, 255);
+
+        // Bucket body — tapered
         for (int y = 10; y <= 24; y++)
         {
-            // Taper: wider at top, narrower at bottom
             float t = (y - 10f) / 14f;
-            int left = (int)Mathf.Lerp(10, 12, t);
-            int right = (int)Mathf.Lerp(24, 22, t);
-            for (int x = left; x <= right; x++)
-            {
-                pixels[y * w + x] = (y == 24 || x == left || x == right) ? dark : body;
-            }
+            int l = (int)Mathf.Lerp(10, 12, t);
+            int r = (int)Mathf.Lerp(24, 22, t);
+            for (int x = l; x <= r; x++)
+                Set(px, s, x, y, (y == 24 || x == l || x == r) ? dark : body);
         }
-
-        // Rim at top — row 24-25
-        for (int x = 9; x <= 25; x++)
-        {
-            pixels[24 * w + x] = rim;
-            pixels[25 * w + x] = rim;
-        }
-
-        // Handle (arc above pail) — rows 25-30
+        // Rim
+        for (int x = 9; x <= 25; x++) { Set(px, s, x, 24, rim); Set(px, s, x, 25, rim); }
+        // Handle arc
         for (int y = 26; y <= 30; y++)
         {
-            int offset = y - 25;
-            int xl = 13 - offset;
-            int xr = 21 + offset;
-            if (xl >= 0 && xl < w) pixels[y * w + xl] = handle;
-            if (xl + 1 >= 0 && xl + 1 < w) pixels[y * w + xl + 1] = handle;
-            if (xr >= 0 && xr < w) pixels[y * w + xr] = handle;
-            if (xr - 1 >= 0 && xr - 1 < w) pixels[y * w + xr - 1] = handle;
+            int o = y - 25;
+            Set(px, s, 13 - o, y, hndl); Set(px, s, 14 - o, y, hndl);
+            Set(px, s, 21 + o, y, hndl); Set(px, s, 20 + o, y, hndl);
         }
-        // Top of handle
-        for (int x = 8; x <= 26; x++)
-            if (x >= 0 && x < w) pixels[30 * w + x] = handle;
-
-        // Spout (left side, pointing down-left) — rows 16-22
+        for (int x = 8; x <= 26; x++) Set(px, s, x, 30, hndl);
+        // Spout
         for (int y = 16; y <= 22; y++)
         {
             int sx = 10 - (y - 16);
-            if (sx >= 0 && sx < w && y < h)
-            {
-                pixels[y * w + sx] = dark;
-                if (sx + 1 < w) pixels[y * w + sx + 1] = body;
-            }
+            Set(px, s, sx, y, dark); Set(px, s, sx + 1, y, body);
         }
+        // Water drops
+        Set(px, s, 4, 6, drop); Set(px, s, 3, 4, drop); Set(px, s, 5, 2, drop);
 
-        // Water drops from spout
-        if (4 < w && 6 < h) pixels[6 * w + 4] = water;
-        if (3 < w && 4 < h) pixels[4 * w + 3] = water;
-        if (5 < w && 2 < h) pixels[2 * w + 5] = water;
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
 
-        tex.SetPixels32(pixels);
+    // ── Fridge (open door icon) ────────────────────────────────
+    private static Texture2D GenFridge(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var body = new Color32(220, 225, 230, 255);   // white/light grey
+        var edge = new Color32(160, 165, 170, 255);    // darker edge
+        var door = new Color32(200, 210, 215, 255);    // slightly off-white door
+        var hndl = new Color32(130, 135, 140, 255);    // handle
+        var cold = new Color32(170, 210, 240, 200);    // cold air wisps
+        var line = new Color32(140, 145, 150, 255);    // divider line
+
+        // Fridge body
+        FillRect(px, s, 8, 4, 24, 28, body);
+        // Edges
+        for (int y = 4; y <= 28; y++) { Set(px, s, 8, y, edge); Set(px, s, 24, y, edge); }
+        for (int x = 8; x <= 24; x++) { Set(px, s, x, 4, edge); Set(px, s, x, 28, edge); }
+        // Middle divider (freezer/fridge split)
+        for (int x = 8; x <= 24; x++) Set(px, s, x, 18, line);
+        // Handle (right side)
+        FillRect(px, s, 22, 20, 23, 24, hndl);
+        FillRect(px, s, 22, 8, 23, 12, hndl);
+        // Open door hint — partial door ajar on right side
+        DrawLine(px, s, 25, 5, 28, 8, door);
+        DrawLine(px, s, 25, 27, 28, 24, door);
+        for (int y = 9; y <= 23; y++) Set(px, s, 25 + (y < 16 ? 1 : 1), y, door);
+        // Cold air wisps
+        Set(px, s, 26, 14, cold); Set(px, s, 27, 16, cold); Set(px, s, 28, 12, cold);
+        Set(px, s, 26, 20, cold); Set(px, s, 27, 22, cold);
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Phone (handset icon) ───────────────────────────────────
+    private static Texture2D GenPhone(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var body = new Color32(60, 60, 65, 255);      // dark handset
+        var ear  = new Color32(80, 80, 85, 255);      // earpiece/mic
+        var ring = new Color32(180, 200, 140, 255);    // ringing indicator
+        var cord = new Color32(50, 50, 55, 255);       // cord
+
+        // Handset — classic phone shape (vertical, ear at top, mic at bottom)
+        // Earpiece (top)
+        FillRect(px, s, 12, 24, 20, 27, ear);
+        FillRect(px, s, 11, 25, 21, 26, ear);
+        // Handle (middle bar)
+        FillRect(px, s, 14, 10, 18, 24, body);
+        // Mouthpiece (bottom)
+        FillRect(px, s, 12, 6, 20, 10, ear);
+        FillRect(px, s, 11, 7, 21, 9, ear);
+        // Ring indicators (sound waves)
+        Set(px, s, 23, 26, ring); Set(px, s, 25, 27, ring); Set(px, s, 27, 26, ring);
+        Set(px, s, 24, 28, ring); Set(px, s, 26, 29, ring);
+        Set(px, s, 9, 26, ring); Set(px, s, 7, 27, ring); Set(px, s, 5, 26, ring);
+        Set(px, s, 8, 28, ring); Set(px, s, 6, 29, ring);
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Drawer (open/pull arrow icon) ──────────────────────────
+    private static Texture2D GenDrawer(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var wood = new Color32(170, 130, 90, 255);     // warm wood
+        var dark = new Color32(130, 95, 65, 255);       // wood edge
+        var hndl = new Color32(200, 180, 140, 255);     // brass handle
+        var arrw = new Color32(240, 230, 200, 255);     // arrow (pull indicator)
+
+        // Drawer front face
+        FillRect(px, s, 6, 12, 26, 24, wood);
+        // Edges
+        for (int y = 12; y <= 24; y++) { Set(px, s, 6, y, dark); Set(px, s, 26, y, dark); }
+        for (int x = 6; x <= 26; x++) { Set(px, s, x, 12, dark); Set(px, s, x, 24, dark); }
+        // Inner panel bevel
+        FillRect(px, s, 8, 14, 24, 22, new Color32(180, 140, 100, 255));
+        // Handle (horizontal bar in center)
+        FillRect(px, s, 13, 17, 19, 19, hndl);
+        // Pull arrow pointing down (open direction)
+        DrawLine(px, s, 16, 6, 16, 11, arrw);
+        DrawLine(px, s, 16, 6, 13, 9, arrw);
+        DrawLine(px, s, 16, 6, 19, 9, arrw);
+        // Second arrow line for thickness
+        DrawLine(px, s, 15, 6, 15, 11, arrw);
+        DrawLine(px, s, 17, 6, 17, 11, arrw);
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Drink pour (bottle pouring icon) ───────────────────────
+    private static Texture2D GenDrinkPour(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var glass = new Color32(180, 200, 220, 220);   // glass/bottle
+        var dark  = new Color32(120, 140, 160, 255);   // glass edge
+        var liquid = new Color32(200, 140, 80, 255);   // amber liquid
+        var drops = new Color32(210, 160, 100, 200);   // pour stream
+
+        // Bottle (tilted ~30deg, top-right to bottom-left)
+        // Bottle body — angled rectangle
+        for (int i = 0; i < 14; i++)
+        {
+            int bx = 18 + i / 2;
+            int by = 14 + i;
+            FillRect(px, s, bx - 2, by, bx + 2, by, glass);
+            Set(px, s, bx - 3, by, dark);
+            Set(px, s, bx + 3, by, dark);
+        }
+        // Bottle neck (narrower, towards pour point)
+        for (int i = 0; i < 5; i++)
+        {
+            int nx = 17 + i / 3;
+            int ny = 10 + i;
+            Set(px, s, nx - 1, ny, dark);
+            Set(px, s, nx, ny, glass);
+            Set(px, s, nx + 1, ny, dark);
+        }
+        // Liquid inside bottle
+        for (int i = 6; i < 12; i++)
+        {
+            int lx = 18 + i / 2;
+            int ly = 14 + i;
+            FillRect(px, s, lx - 1, ly, lx + 1, ly, liquid);
+        }
+        // Pour stream (drops falling from neck)
+        Set(px, s, 16, 9, drops);
+        Set(px, s, 15, 7, drops);
+        Set(px, s, 14, 5, drops);
+        Set(px, s, 13, 3, drops);
+        Set(px, s, 15, 4, drops);
+        Set(px, s, 14, 6, drops);
+        // Glass at bottom-left receiving the pour
+        FillRect(px, s, 6, 2, 14, 3, dark);
+        FillRect(px, s, 7, 4, 13, 8, glass);
+        for (int y = 4; y <= 8; y++) { Set(px, s, 6, y, dark); Set(px, s, 14, y, dark); }
+        for (int x = 6; x <= 14; x++) Set(px, s, x, 2, dark);
+        // Liquid in glass
+        FillRect(px, s, 7, 4, 13, 6, liquid);
+
+        tex.SetPixels32(px);
         tex.Apply();
         return tex;
     }
