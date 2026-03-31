@@ -234,6 +234,16 @@ public class PlaceableObject : MonoBehaviour
         Debug.Log($"[PlaceableObject] {name} home pose captured: pos={_homePosition}, rot={transform.eulerAngles}");
     }
 
+    /// <summary>Clear the home position and rotation. Object will have no home.</summary>
+    [ContextMenu("Clear Home Position")]
+    private void ClearHomePose()
+    {
+        _homePosition = Vector3.zero;
+        _homeRotation = Quaternion.identity;
+        _useSpawnAsHome = false;
+        Debug.Log($"[PlaceableObject] {name} home position cleared.");
+    }
+
     /// <summary>Clear the captured disheveled pose (reverts to procedural fallback).</summary>
     [ContextMenu("Clear Disheveled Rotation")]
     private void ClearDisheveledPose()
