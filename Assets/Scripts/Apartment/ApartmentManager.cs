@@ -709,13 +709,44 @@ public class ApartmentManager : MonoBehaviour
         // ── Direct hover (strongest highlight) ──
         if (hit != _hoveredHighlight)
         {
+            // Unhighlight previous + its pair partner
             if (_hoveredHighlight != null)
+            {
                 _hoveredHighlight.SetHighlighted(false);
+                SetPartnerHighlight(_hoveredHighlight, false);
+            }
 
             _hoveredHighlight = hit;
 
+            // Highlight new + its pair partner
             if (_hoveredHighlight != null)
+            {
                 _hoveredHighlight.SetHighlighted(true);
+                SetPartnerHighlight(_hoveredHighlight, true);
+            }
+        }
+    }
+
+    /// <summary>If the object has a PairableItem with a specific partner, highlight/unhighlight it too.</summary>
+    private static void SetPartnerHighlight(InteractableHighlight hl, bool on)
+    {
+        var pairable = hl.GetComponent<PairableItem>();
+        if (pairable == null) return;
+
+        // For SpecificPartner: highlight the partner shoe
+        if (pairable.Mode == PairableItem.PairMode.SpecificPartner && pairable.SpecificPartner != null)
+        {
+            var partnerHL = pairable.SpecificPartner.GetComponent<InteractableHighlight>();
+            if (partnerHL != null)
+                partnerHL.SetHighlighted(on);
+        }
+
+        // For AnyOfCategory when paired: highlight the paired child
+        if (pairable.PairedChild != null)
+        {
+            var childHL = pairable.PairedChild.GetComponent<InteractableHighlight>();
+            if (childHL != null)
+                childHL.SetHighlighted(on);
         }
     }
 
