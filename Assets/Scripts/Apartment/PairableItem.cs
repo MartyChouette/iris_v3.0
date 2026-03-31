@@ -56,11 +56,24 @@ public class PairableItem : MonoBehaviour
     }
 
     /// <summary>
-    /// Called when this item is picked up. If it has a specific partner, flash that partner's highlight.
+    /// Called when this item is picked up. Resets pairing state and
+    /// unparents any paired child. Flashes partner highlight for shoes.
     /// </summary>
     public void OnPickedUp()
     {
-        if (_isPaired) return;
+        // Unpair: detach child and re-enable its collider/placeable
+        if (_isPaired && _pairedChild != null)
+        {
+            var childCol = _pairedChild.GetComponent<Collider>();
+            if (childCol != null) childCol.enabled = true;
+            if (_pairedChild._placeable != null) _pairedChild._placeable.enabled = true;
+
+            _pairedChild.transform.SetParent(null);
+            _pairedChild._isPaired = false;
+            _pairedChild = null;
+        }
+        _isPaired = false;
+
         if (_pairMode != PairMode.SpecificPartner || _specificPartner == null) return;
         if (_specificPartner._isPaired) return;
 
