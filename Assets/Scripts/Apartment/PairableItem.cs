@@ -94,13 +94,14 @@ public class PairableItem : MonoBehaviour
     {
         if (held == null || held == this) return false;
 
-        // Already paired items can't pair again
-        if (_isPaired || held._isPaired) return false;
-
         if (_pairMode == PairMode.SpecificPartner)
+        {
+            // Specific partners can only pair once
+            if (_isPaired || held._isPaired) return false;
             return held == _specificPartner || held._specificPartner == this;
+        }
 
-        // AnyOfCategory — both must have PlaceableObject with same category
+        // AnyOfCategory — unlimited stacking (no _isPaired check)
         if (_placeable == null || held._placeable == null) return false;
         return _placeable.Category == held._placeable.Category;
     }
