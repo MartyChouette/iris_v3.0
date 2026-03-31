@@ -436,9 +436,17 @@ public class ApartmentManager : MonoBehaviour
         Vector3 up = _baseRotation * Vector3.up;
         _panOffset -= (right * delta.x + up * delta.y) * panSpeed;
 
-        // Clamp to max distance from area center
-        if (_panOffset.magnitude > panMaxDistance)
-            _panOffset = _panOffset.normalized * panMaxDistance;
+        // Scale pan limit with zoom — zoomed in = more pan range to reach edges
+        float zoomFactor = 1f;
+        if (_zoomSteps != null && _zoomSteps.Length > 0 && _currentZoom > 0f)
+        {
+            float baseZoom = _zoomSteps[0]; // most zoomed out
+            zoomFactor = baseZoom / Mathf.Max(_currentZoom, 1f);
+        }
+        float effectiveMaxPan = panMaxDistance * Mathf.Max(zoomFactor, 1f);
+
+        if (_panOffset.magnitude > effectiveMaxPan)
+            _panOffset = _panOffset.normalized * effectiveMaxPan;
     }
 
     private void CycleArea(int direction)
