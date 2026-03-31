@@ -313,7 +313,22 @@ public class DayPhaseManager : MonoBehaviour
     /// <summary>Called by DayManager.OnNewNewspaper event.</summary>
     public void EnterMorning()
     {
+        // Demo mode day 2+: skip newspaper, go straight to cleanup exploration
+        if (IsDemoCleanupDay())
+        {
+            Debug.Log("[DayPhaseManager] Demo cleanup day — skipping newspaper.");
+            StartCoroutine(DemoCleanupTransition());
+            return;
+        }
+
         SetPhase(DayPhase.Morning);
+    }
+
+    /// <summary>True when demo mode and past the first date day.</summary>
+    private bool IsDemoCleanupDay()
+    {
+        int day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1;
+        return day >= 2 && MainMenuManager.ActiveConfig != null;
     }
 
     /// <summary>Called by NewspaperManager.OnNewspaperDone event.</summary>
@@ -568,6 +583,90 @@ public class DayPhaseManager : MonoBehaviour
 
         // 12. Start preparation countdown
         StartPrepTimer();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEMO CLEANUP (day 2+ in demo — explore aftermath, no date)
+    // ═══════════════════════════════════════════════════════════════
+
+    private IEnumerator DemoCleanupTransition()
+    {
+        // Set phase to Exploration but skip newspaper and prep timer entirely
+        _currentPhase = DayPhase.Exploration;
+        Debug.Log("[DayPhaseManager] Phase → Exploration (demo cleanup)");
+        DismissAllStationUI();
+
+        // 1. Fade to black (we're coming from sleep which already faded out, but be safe)
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(_fadeDuration);
+
+        // 2. Set up browse camera (skip newspaper read camera)
+        if (_readCamera != null)
+            _readCamera.Priority = PriorityInactive;
+        if (ApartmentManager.Instance != null)
+            ApartmentManager.Instance.SetBrowseCameraActive(true);
+        CameraTestController.Instance?.RestorePreset();
+
+        // 3. Force hard cut (no Cinemachine blend)
+        if (brain != null)
+        {
+            var savedBlend = brain.DefaultBlend;
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.Cut, 0f);
+            yield return null;
+            brain.DefaultBlend = savedBlend;
+        }
+
+        // 4. Disable newspaper
+        if (_newspaperManager != null)
+            _newspaperManager.enabled = false;
+
+        // 5. UI: apartment browse on, newspaper off
+        if (_apartmentUI != null) _apartmentUI.SetActive(true);
+        if (_newspaperHUD != null) _newspaperHUD.SetActive(false);
+        if (_goToBedPanel != null) _goToBedPanel.SetActive(false);
+
+        // 6. Spawn date aftermath messes
+        if (_authoredMessSpawner != null)
+            _authoredMessSpawner.SpawnDailyMess();
+        if (_entranceMessSpawner != null)
+            _entranceMessSpawner.SpawnDailyMess();
+
+        // 7. Ambience
+        if (_explorationAmbienceClip != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayAmbience(_explorationAmbienceClip, 0.5f);
+
+        // 8. Fade in
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        OnPhaseChanged?.Invoke((int)DayPhase.Exploration);
+
+        // 9. Poll for all messes resolved, then show end screen
+        StartCoroutine(PollDemoCleanupComplete());
+    }
+
+    private IEnumerator PollDemoCleanupComplete()
+    {
+        // Wait at least a few seconds before checking (let messes spawn)
+        yield return new WaitForSeconds(3f);
+
+        while (true)
+        {
+            bool stainsClean = CleaningManager.Instance == null || CleaningManager.Instance.AllClean;
+            bool objectsClean = AuthoredMessSpawner.Instance == null
+                             || AuthoredMessSpawner.Instance.ActiveMessObjectCount == 0;
+
+            if (stainsClean && objectsClean)
+            {
+                Debug.Log("[DayPhaseManager] Demo cleanup complete — all messes resolved!");
+                yield return new WaitForSeconds(1.5f); // brief pause before end screen
+                OnCalendarComplete();
+                yield break;
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════

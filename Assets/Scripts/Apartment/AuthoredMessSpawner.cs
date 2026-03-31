@@ -46,6 +46,21 @@ public class AuthoredMessSpawner : MonoBehaviour
 
     public IReadOnlyList<string> SpawnedBlueprintNames => _spawnedBlueprintNames;
 
+    /// <summary>Number of spawned mess objects still active in the scene.</summary>
+    public int ActiveMessObjectCount
+    {
+        get
+        {
+            int count = 0;
+            for (int i = _spawnedObjects.Count - 1; i >= 0; i--)
+            {
+                if (_spawnedObjects[i] != null)
+                    count++;
+            }
+            return count;
+        }
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
