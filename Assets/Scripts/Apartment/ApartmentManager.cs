@@ -144,6 +144,9 @@ public class ApartmentManager : MonoBehaviour
 
     // Hover highlight tracking
     private InteractableHighlight _hoveredHighlight;
+
+    /// <summary>The InteractableHighlight currently under the cursor, or null.</summary>
+    public InteractableHighlight HoveredHighlight => _hoveredHighlight;
     // _proximityHighlights removed — proximity highlight stage dropped
     private Camera _cachedMainCamera;
 
