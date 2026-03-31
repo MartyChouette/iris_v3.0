@@ -180,37 +180,35 @@ public class GlobalCursorManager : MonoBehaviour
 
         CursorType desired = CursorType.Default;
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, RaycastMask))
+        // RaycastAll so we can see through PlacementSurface triggers to the items behind them
+        var hits = Physics.RaycastAll(ray, 100f, RaycastMask);
+        for (int i = 0; i < hits.Length; i++)
         {
-            var go = hit.collider.gameObject;
-
-            // Temporary debug — press F7 to log what's under cursor
-            if (Input.GetKeyDown(KeyCode.F7))
-                Debug.Log($"[GlobalCursorManager] Hit: '{go.name}' layer={go.layer} " +
-                          $"HL={go.GetComponent<InteractableHighlight>() != null || go.GetComponentInParent<InteractableHighlight>() != null} " +
-                          $"PO={go.GetComponent<PlaceableObject>() != null || go.GetComponentInParent<PlaceableObject>() != null} " +
-                          $"CS={go.GetComponent<CleanableSurface>() != null}");
-
-            if (Has<WaterablePlant>(go))
-                desired = CursorType.Watering;
-            else if (Has<FridgeController>(go))
-                desired = CursorType.Fridge;
-            else if (Has<PhoneController>(go))
-                desired = CursorType.Phone;
-            else if (Has<DrawerController>(go))
-                desired = CursorType.Drawer;
-            else if (Has<SimpleDrinkManager>(go))
-                desired = CursorType.Drink;
-            else if (go.GetComponent<CleanableSurface>() != null)
-                desired = CursorType.Sponge;
-            else if (Has<InteractableHighlight>(go)
-                  || Has<PlaceableObject>(go)
-                  || Has<RecordSlot>(go)
-                  || HasFlowerTag(go))
-                desired = CursorType.Interact;
+            var go = hits[i].collider.gameObject;
+            var type = ClassifyHit(go);
+            if (type != CursorType.Default)
+            {
+                desired = type;
+                break;
+            }
         }
 
         ApplyCursor(desired);
+    }
+
+    private static CursorType ClassifyHit(GameObject go)
+    {
+        if (Has<WaterablePlant>(go))       return CursorType.Watering;
+        if (Has<FridgeController>(go))     return CursorType.Fridge;
+        if (Has<PhoneController>(go))      return CursorType.Phone;
+        if (Has<DrawerController>(go))     return CursorType.Drawer;
+        if (Has<SimpleDrinkManager>(go))   return CursorType.Drink;
+        if (Has<CleanableSurface>(go))     return CursorType.Sponge;
+        if (Has<InteractableHighlight>(go)
+         || Has<PlaceableObject>(go)
+         || Has<RecordSlot>(go)
+         || HasFlowerTag(go))              return CursorType.Interact;
+        return CursorType.Default;
     }
 
     private static bool Has<T>(GameObject go) where T : Component
