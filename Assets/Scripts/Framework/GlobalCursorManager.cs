@@ -96,6 +96,21 @@ public class GlobalCursorManager : MonoBehaviour
         _proceduralTextures.Clear();
     }
 
+    private static bool IsCursorUsable(Texture2D tex)
+    {
+        if (tex == null || !tex.isReadable) return false;
+        try
+        {
+            // Actually try to read pixel data — this is what Cursor.SetCursor needs
+            tex.GetPixel(0, 0);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
     private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
     private void OnSceneLoaded(Scene s, LoadSceneMode m) => _cachedCamera = null;
@@ -147,18 +162,16 @@ public class GlobalCursorManager : MonoBehaviour
         var loaded = Resources.Load<Texture2D>($"Cursors/{name}");
         if (loaded != null)
         {
-            if (!loaded.isReadable)
+            if (IsCursorUsable(loaded))
             {
-                Debug.LogWarning($"[GlobalCursorManager] Cursors/{name} is not Read/Write enabled — using procedural fallback. " +
-                                 "Fix: select the texture in Project, enable Read/Write in Inspector, click Apply.");
-            }
-            else
-            {
-                // Art asset found and readable — discard procedural fallback
+                // Art asset found and usable — discard procedural fallback
                 if (proceduralFallback != null)
                     Destroy(proceduralFallback);
                 return loaded;
             }
+
+            Debug.LogWarning($"[GlobalCursorManager] Cursors/{name} is not usable as a cursor — using procedural fallback. " +
+                             "Fix: select the texture → set Type to 'Cursor', enable Read/Write, set Compression to 'None', click Apply.");
         }
 
         if (proceduralFallback == null)
