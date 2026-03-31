@@ -89,8 +89,8 @@ public class GlobalCursorManager : MonoBehaviour
         _interactCursor = Resources.Load<Texture2D>("Cursors/pinch");
         if (_interactCursor != null)
         {
-            // Hotspot at center-top of the pinch icon
-            _interactHotSpot = new Vector2(_interactCursor.width * 0.5f, 0f);
+            // Hotspot at top-left (matches original CursorContext in flower scenes)
+            _interactHotSpot = Vector2.zero;
         }
         else
         {
@@ -156,8 +156,7 @@ public class GlobalCursorManager : MonoBehaviour
     {
         return go.CompareTag("Petal")
             || go.CompareTag("Leaf")
-            || go.CompareTag("Crown")
-            || go.CompareTag("Stem");
+            || go.CompareTag("Crown");
     }
 
     private void ApplyCursor(CursorType type)
