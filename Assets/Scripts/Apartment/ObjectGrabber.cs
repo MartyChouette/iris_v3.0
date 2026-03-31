@@ -423,6 +423,7 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb = placeable.GetComponent<Rigidbody>();
         _heldRb.useGravity = false;
         _heldRb.isKinematic = false;
+        _heldRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         _grabTarget = _heldRb.worldCenterOfMass;
 
         // Store depth for floating fallback when cursor isn't over a surface
@@ -765,6 +766,10 @@ public class ObjectGrabber : MonoBehaviour
 
     private void ClearHeld()
     {
+        // Restore discrete collision detection
+        if (_heldRb != null)
+            _heldRb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
         if (_held != null)
         {
             // Stop partner highlight flash
@@ -866,25 +871,26 @@ public class ObjectGrabber : MonoBehaviour
     {
         if (_heldRb == null) return;
 
-        // Skip wall clamping when item is snapped to a valid surface —
-        // allows cross-room placement (e.g. coffee table from kitchen).
-        if (_currentSurface != null) return;
-
         const float margin = 0.05f;
 
         // 1) Camera → target: keep item on camera's side of any wall
-        Vector3 camPos = cam.transform.position;
-        Vector3 camToTarget = _grabTarget - camPos;
-        float camDist = camToTarget.magnitude;
-
-        if (camDist > 0.001f &&
-            Physics.Raycast(camPos, camToTarget.normalized, out RaycastHit camHit, camDist, _wallLayer))
+        //    (skip when on a surface to allow cross-room placement)
+        if (_currentSurface == null)
         {
-            float safeDist = Mathf.Max(0f, camHit.distance - margin);
-            _grabTarget = camPos + camToTarget.normalized * safeDist;
+            Vector3 camPos = cam.transform.position;
+            Vector3 camToTarget = _grabTarget - camPos;
+            float camDist = camToTarget.magnitude;
+
+            if (camDist > 0.001f &&
+                Physics.Raycast(camPos, camToTarget.normalized, out RaycastHit camHit, camDist, _wallLayer))
+            {
+                float safeDist = Mathf.Max(0f, camHit.distance - margin);
+                _grabTarget = camPos + camToTarget.normalized * safeDist;
+            }
         }
 
         // 2) Current position → target: prevent tunneling through walls frame-to-frame
+        //    (always active — even when snapped to a surface)
         Vector3 from = _heldRb.position;
         Vector3 delta = _grabTarget - from;
         float dist = delta.magnitude;
