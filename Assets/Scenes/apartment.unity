@@ -42954,6 +42954,7 @@ GameObject:
   - component: {fileID: 6772523027520886103}
   - component: {fileID: 490634545}
   - component: {fileID: 9156988147770989392}
+  - component: {fileID: 9156988147770989393}
   m_Layer: 31
   m_Name: wall
   m_TagString: Untagged
@@ -45891,7 +45892,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AreaWallFade
   _areaDissolves:
+  - areaIndex: 0
+    dissolveAmount: 0.725
   - areaIndex: 1
+    dissolveAmount: 0.725
+  - areaIndex: 2
     dissolveAmount: 0.725
 --- !u!23 &9034389303684831051
 MeshRenderer:
@@ -45956,6 +45961,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AreaWallFade
   _areaDissolves:
   - areaIndex: 0
+    dissolveAmount: 0.725
+  - areaIndex: 1
+    dissolveAmount: 0.725
+  - areaIndex: 2
     dissolveAmount: 0.725
 --- !u!23 &9129727725189718595
 MeshRenderer:
@@ -46250,8 +46259,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AreaWallFade
   _areaDissolves:
+  - areaIndex: 0
+    dissolveAmount: 0.725
+  - areaIndex: 1
+    dissolveAmount: 0.725
   - areaIndex: 2
     dissolveAmount: 0.725
+--- !u!114 &9156988147770989393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5371030063992620802}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8657feb6d8d41f4419ce15d86f98dd37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacementSurface
+  localBounds:
+    m_Center: {x: 0, y: 0.01, z: 0}
+    m_Extent: {x: 0.01, y: 0.001, z: 0.01}
+  normalAxis: 1
+  surfaceLayerIndex: 22
+  _isFloor: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
