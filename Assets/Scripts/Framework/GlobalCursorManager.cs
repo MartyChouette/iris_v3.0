@@ -180,6 +180,13 @@ public class GlobalCursorManager : MonoBehaviour
         {
             var go = hit.collider.gameObject;
 
+            // Temporary debug — press F7 to log what's under cursor
+            if (Input.GetKeyDown(KeyCode.F7))
+                Debug.Log($"[GlobalCursorManager] Hit: '{go.name}' layer={go.layer} " +
+                          $"HL={go.GetComponent<InteractableHighlight>() != null || go.GetComponentInParent<InteractableHighlight>() != null} " +
+                          $"PO={go.GetComponent<PlaceableObject>() != null || go.GetComponentInParent<PlaceableObject>() != null} " +
+                          $"CS={go.GetComponent<CleanableSurface>() != null}");
+
             if (Has<WaterablePlant>(go))
                 desired = CursorType.Watering;
             else if (Has<FridgeController>(go))
