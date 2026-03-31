@@ -1,297 +1,307 @@
 using UnityEngine;
 
 /// <summary>
-/// Soil saturation simulation for the watering mechanic.
-/// Water pools on top of soil, soil absorbs it over time.
-/// Soil color is the primary feedback — dry → perfect → waterlogged.
-/// Player judges moisture by color alone.
+/// Soil/water/foam simulation for the watering prototype.
+/// Adapted from <see cref="GlassController"/> — uses Transform scaling for visual levels.
+/// Dirt foams up when watered (homage to drink-making foam mechanic).
 /// </summary>
 [DisallowMultipleComponent]
 public class PotController : MonoBehaviour
 {
     [Header("Definition")]
-    [Tooltip("Active plant definition (set by WateringManager).")]
+    [Tooltip("Active plant definition (set by WateringManager when entering watering state).")]
     public PlantDefinition definition;
 
-    [Header("Soil Visuals")]
-    [Tooltip("Renderer for the soil surface (color driven by moisture).")]
+    [Header("Visuals")]
+    [Tooltip("Renderer for the soil box (colour lerps dry to wet).")]
     public Renderer soilRenderer;
 
-    [Tooltip("Transform for the soil box.")]
+    [Tooltip("Transform for the soil box (scales Y with water level).")]
     public Transform soilTransform;
 
-    [Header("Water Pool Visuals")]
-    [Tooltip("Renderer for the pooled water on top of soil.")]
-    public Renderer waterRenderer;
+    [Tooltip("Renderer for the foam box (bubbly dirt on top).")]
+    public Renderer foamRenderer;
 
-    [Tooltip("Transform for the pooled water layer (scales Y with pool amount).")]
-    public Transform waterTransform;
+    [Tooltip("Transform for the foam box (scales Y with foam minus water).")]
+    public Transform foamTransform;
 
-    [Header("Target Swatch")]
-    [Tooltip("Small renderer showing the 'perfect' soil color as a hint.")]
-    public Renderer targetSwatchRenderer;
-
-    [Header("Target Line")]
-    [Tooltip("Thin marker at the oscillating target moisture level.")]
+    [Tooltip("Thin marker at the ideal water level.")]
     public Transform fillLineMarker;
 
+    [Tooltip("Thin marker tracking the current water level.")]
+    public Transform waterLineMarker;
+
+    [Header("Water Visuals")]
+    [Tooltip("Renderer for the water box (transparent blue).")]
+    public Renderer waterRenderer;
+
+    [Tooltip("Transform for the water box (scales Y with water level).")]
+    public Transform waterTransform;
+
     [Header("Overflow Visuals")]
-    [Tooltip("Small drip boxes on the pot exterior (visible when overflowing).")]
+    [Tooltip("Small drip boxes on the pot exterior (animate when overflowed).")]
     public Transform[] overflowDrips;
+
+    [Header("Drain Visuals")]
+    [Tooltip("Small drip box below the pot (visible when water > drainThreshold).")]
+    public Transform drainDrip;
+
+    [Tooltip("Water level above which drain drip appears.")]
+    public float drainThreshold = 0.5f;
 
     [Header("Pot Dimensions")]
     [Tooltip("Internal height of the pot in world units.")]
-    public float potWorldHeight = 0.12f;
+    public float potWorldHeight = 0.10f;
 
     [Tooltip("Visual radius of the pot interior.")]
-    public float potWorldRadius = 0.08f;
+    public float potWorldRadius = 0.04f;
 
-    // ── State ────────────────────────────────────────────────────
+    // ── State (read-only from outside) ───────────────────────────────
 
-    /// <summary>Oscillating target level set by WateringManager each frame.</summary>
-    public float TargetLevel { get; set; }
+    [Header("State (Read-Only)")]
+    [SerializeField] private float _waterLevel;
+    [SerializeField] private float _foamLevel;
+    [SerializeField] private bool _overflowed;
 
-    /// <summary>Actual wetness of the soil (0 = bone dry, 1 = waterlogged). Increases as pooled water absorbs.</summary>
-    public float SoilMoisture => _soilMoisture;
+    private bool _isPouring;
+    private MaterialPropertyBlock _soilMPB;
+    private MaterialPropertyBlock _foamMPB;
+    private MaterialPropertyBlock _waterMPB;
 
-    /// <summary>Water sitting on top of soil that hasn't absorbed yet.</summary>
-    public float PooledWater => _pooledWater;
+    // ── Public API ───────────────────────────────────────────────────
 
-    /// <summary>True if pooled water hit the max and spilled over.</summary>
+    public float WaterLevel => _waterLevel;
+    public float FoamLevel => _foamLevel;
     public bool Overflowed => _overflowed;
-
-    /// <summary>True while actively pouring.</summary>
     public bool IsPouring => _isPouring;
 
+    /// <summary>Externally-set target level for the fill line marker (written by WateringManager each frame).</summary>
+    public float TargetLevel { get; set; }
+
     /// <summary>
-    /// How close soil moisture is to the perfect level (1 = perfect, 0 = way off).
+    /// How close the water level is to the ideal fill line (1 = perfect, 0 = way off).
     /// </summary>
-    public float MoistureAccuracy
+    public float FillAccuracy
     {
         get
         {
             if (definition == null) return 0f;
-            float dist = Mathf.Abs(_soilMoisture - definition.perfectMoisture);
-            return Mathf.Clamp01(1f - dist / Mathf.Max(definition.moistureTolerance, 0.001f));
+            float dist = Mathf.Abs(_waterLevel - definition.idealWaterLevel);
+            return Mathf.Clamp01(1f - dist / Mathf.Max(definition.waterTolerance, 0.001f));
         }
     }
 
     /// <summary>
-    /// Returns the soil color for a given moisture value.
-    /// 0 → soilDry, perfectMoisture → soilPerfect, 1 → soilWaterlogged.
+    /// Add water while pouring (call each frame while mouse held).
     /// </summary>
-    public Color GetSoilColor(float moisture)
-    {
-        if (definition == null) return Color.gray;
-        float perfect = definition.perfectMoisture;
-
-        if (moisture <= perfect)
-        {
-            float t = perfect > 0f ? moisture / perfect : 0f;
-            return Color.Lerp(definition.soilDry, definition.soilPerfect, t);
-        }
-        else
-        {
-            float t = (1f - perfect) > 0f ? (moisture - perfect) / (1f - perfect) : 1f;
-            return Color.Lerp(definition.soilPerfect, definition.soilWaterlogged, t);
-        }
-    }
-
-    [SerializeField] private float _soilMoisture;
-    [SerializeField] private float _pooledWater;
-    [SerializeField] private bool _overflowed;
-    private bool _isPouring;
-
-    private MaterialPropertyBlock _soilMPB;
-    private MaterialPropertyBlock _waterMPB;
-    private MaterialPropertyBlock _swatchMPB;
-
-    // ── Public API ──────────────────────────────────────────────
-
-    /// <summary>Add water while pouring (call each frame while held).</summary>
     public void Pour(float dt)
     {
-        if (definition == null) { Debug.LogWarning("[PotController] Pour called but definition is null!"); return; }
-        _isPouring = true;
+        if (definition == null) return;
 
-        float before = _pooledWater;
-        _pooledWater += definition.pourRate * dt;
-        if (Mathf.FloorToInt(before * 10f) != Mathf.FloorToInt(_pooledWater * 10f))
-            Debug.Log($"[PotController] Pouring: pool={_pooledWater:F2}, moisture={_soilMoisture:F2}, pourRate={definition.pourRate}");
+        float liquidDelta = definition.pourRate * dt;
+        _waterLevel += liquidDelta;
 
-        // Overflow
-        if (_pooledWater > definition.maxPool)
+        // Foam rises FASTER than water (dirt bubbles up)
+        float foamDelta = liquidDelta * definition.foamRateMultiplier;
+        _foamLevel += foamDelta;
+
+        // Clamp water to 0-1
+        _waterLevel = Mathf.Clamp01(_waterLevel);
+
+        // Foam can exceed 1.0 → overflow
+        if (_foamLevel > 1f)
         {
-            _pooledWater = definition.maxPool;
+            _foamLevel = 1f;
             _overflowed = true;
         }
+
+        // Foam never below water
+        _foamLevel = Mathf.Max(_foamLevel, _waterLevel);
+
+        _isPouring = true;
     }
 
-    /// <summary>Signal the end of a pour.</summary>
+    /// <summary>
+    /// Signal the end of a pour.
+    /// </summary>
     public void StopPouring()
     {
         _isPouring = false;
     }
 
-    /// <summary>Reset pot to empty for a new plant.</summary>
+    /// <summary>
+    /// Reset pot to empty for a new plant.
+    /// </summary>
     public void Clear()
     {
-        _soilMoisture = 0f;
-        _pooledWater = 0f;
+        _waterLevel = 0f;
+        _foamLevel = 0f;
         _overflowed = false;
         _isPouring = false;
 
+        // Hide water/overflow/drain visuals
         if (waterTransform != null)
             waterTransform.gameObject.SetActive(false);
+
         if (overflowDrips != null)
+        {
             for (int i = 0; i < overflowDrips.Length; i++)
                 if (overflowDrips[i] != null) overflowDrips[i].gameObject.SetActive(false);
+        }
+
+        if (drainDrip != null)
+            drainDrip.gameObject.SetActive(false);
     }
 
-    // ── MonoBehaviour ───────────────────────────────────────────
+    // ── MonoBehaviour ────────────────────────────────────────────────
 
     void Awake()
     {
         _soilMPB = new MaterialPropertyBlock();
+        _foamMPB = new MaterialPropertyBlock();
         _waterMPB = new MaterialPropertyBlock();
-        _swatchMPB = new MaterialPropertyBlock();
-
-        // Auto-create soil disc if not assigned
-        if (soilTransform == null)
-        {
-            var soilGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            soilGO.name = "SoilDisc_Auto";
-            soilGO.transform.SetParent(transform, false);
-            soilGO.transform.localPosition = new Vector3(0f, potWorldHeight * 0.4f, 0f);
-            soilGO.transform.localScale = new Vector3(potWorldRadius * 2f, 0.005f, potWorldRadius * 2f);
-            var col = soilGO.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-            soilRenderer = soilGO.GetComponent<Renderer>();
-            soilTransform = soilGO.transform;
-        }
-
-        // Auto-create water disc if not assigned
-        if (waterTransform == null)
-        {
-            var waterGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            waterGO.name = "WaterDisc_Auto";
-            waterGO.transform.SetParent(transform, false);
-            waterGO.transform.localPosition = new Vector3(0f, potWorldHeight * 0.4f, 0f);
-            waterGO.transform.localScale = new Vector3(potWorldRadius * 1.8f, 0.003f, potWorldRadius * 1.8f);
-            var col = waterGO.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-            waterRenderer = waterGO.GetComponent<Renderer>();
-            waterTransform = waterGO.transform;
-            waterGO.SetActive(false);
-        }
     }
 
     void Update()
     {
         if (definition == null) return;
-        SimulateAbsorption(Time.deltaTime);
+
+        SettleFoam(Time.deltaTime);
         UpdateVisuals();
     }
 
-    // ── Simulation ──────────────────────────────────────────────
+    // ── Internals ────────────────────────────────────────────────────
 
-    private void SimulateAbsorption(float dt)
+    private void SettleFoam(float dt)
     {
-        if (_pooledWater > 0f)
+        if (!_isPouring)
         {
-            // Soil soaks up pooled water at its absorption rate
-            float absorb = Mathf.Min(_pooledWater, definition.absorptionRate * dt);
+            // Foam settles toward water level
+            _foamLevel = Mathf.MoveTowards(_foamLevel, _waterLevel, definition.foamSettleRate * dt);
 
-            // Soil can't exceed 1.0 moisture
-            float headroom = 1f - _soilMoisture;
-            absorb = Mathf.Min(absorb, headroom);
-
-            _soilMoisture += absorb;
-            _pooledWater -= absorb;
-
-            // If soil is fully saturated, excess pool drains away
-            if (_soilMoisture >= 1f && _pooledWater > 0f)
+            // Water slowly absorbs into soil
+            if (_waterLevel > 0f)
             {
-                _pooledWater = Mathf.MoveTowards(_pooledWater, 0f, definition.overflowDrainRate * dt);
-                _overflowed = true;
+                _waterLevel = Mathf.MoveTowards(_waterLevel, 0f, definition.absorptionRate * dt);
+                _foamLevel = Mathf.Max(_foamLevel, _waterLevel);
             }
         }
-
-        _soilMoisture = Mathf.Clamp01(_soilMoisture);
-        _pooledWater = Mathf.Max(_pooledWater, 0f);
     }
-
-    // ── Visuals ─────────────────────────────────────────────────
 
     private void UpdateVisuals()
     {
         float h = potWorldHeight;
 
-        // Soil color driven by moisture
+        // Soil colour lerp (dry → wet based on water level)
         if (soilRenderer != null)
         {
-            Color col = GetSoilColor(_soilMoisture);
+            Color soilColor = Color.Lerp(definition.dryColor, definition.wetColor, _waterLevel);
             soilRenderer.GetPropertyBlock(_soilMPB);
-            _soilMPB.SetColor("_BaseColor", col);
+            _soilMPB.SetColor("_BaseColor", soilColor);
             soilRenderer.SetPropertyBlock(_soilMPB);
         }
 
-        // Target swatch — shows the perfect color as a hint
-        if (targetSwatchRenderer != null)
+        // Soil transform — scales Y with water level
+        if (soilTransform != null)
         {
-            Color perfectCol = definition.soilPerfect;
-            targetSwatchRenderer.GetPropertyBlock(_swatchMPB);
-            _swatchMPB.SetColor("_BaseColor", perfectCol);
-            targetSwatchRenderer.SetPropertyBlock(_swatchMPB);
+            float soilHeight = Mathf.Max(_waterLevel * h, 0.001f);
+            soilTransform.localScale = new Vector3(
+                soilTransform.localScale.x,
+                soilHeight,
+                soilTransform.localScale.z);
+            soilTransform.localPosition = new Vector3(0f, soilHeight * 0.5f, 0f);
         }
 
-        // Fill line tracks oscillating target
+        // Foam transform — sits on top of soil, height = foam - water
+        if (foamTransform != null)
+        {
+            float soilHeight = _waterLevel * h;
+            float foamHeight = Mathf.Max((_foamLevel - _waterLevel) * h, 0f);
+
+            foamTransform.localScale = new Vector3(
+                foamTransform.localScale.x,
+                Mathf.Max(foamHeight, 0.001f),
+                foamTransform.localScale.z);
+            foamTransform.localPosition = new Vector3(0f, soilHeight + foamHeight * 0.5f, 0f);
+
+            // Foam colour via MPB
+            if (foamRenderer != null)
+            {
+                foamRenderer.GetPropertyBlock(_foamMPB);
+                _foamMPB.SetColor("_BaseColor", definition.foamColor);
+                foamRenderer.SetPropertyBlock(_foamMPB);
+            }
+        }
+
+        // Fill line tracks the oscillating target level
         if (fillLineMarker != null)
         {
             float fillY = TargetLevel * h;
             fillLineMarker.localPosition = new Vector3(0f, fillY, 0f);
         }
 
-        // Pooled water disc on top of soil — deep blue, rises as pool grows
+        // Current water line
+        if (waterLineMarker != null)
+        {
+            float waterY = _waterLevel * h;
+            waterLineMarker.localPosition = new Vector3(0f, waterY, 0f);
+        }
+
+        // Water box — transparent blue layer
         if (waterTransform != null)
         {
-            bool showPool = _pooledWater > 0.01f;
-            waterTransform.gameObject.SetActive(showPool);
+            bool showWater = _waterLevel > 0.05f;
+            waterTransform.gameObject.SetActive(showWater);
 
-            if (showPool)
+            if (showWater)
             {
-                float soilTop = h * 0.8f;
-                float poolRise = _pooledWater * h * 0.3f;
-                // Disc sits just above soil, rises slightly as pool grows
-                waterTransform.localPosition = new Vector3(0f, soilTop + poolRise * 0.5f + 0.002f, 0f);
-                // Thin disc that gets slightly thicker with more water
+                float waterHeight = Mathf.Max(_waterLevel * h, 0.001f);
                 waterTransform.localScale = new Vector3(
                     waterTransform.localScale.x,
-                    Mathf.Max(poolRise, 0.002f),
+                    waterHeight,
                     waterTransform.localScale.z);
+                waterTransform.localPosition = new Vector3(0f, waterHeight * 0.5f, 0f);
 
                 if (waterRenderer != null)
                 {
-                    // Deep blue that darkens as pool grows
-                    float depth = Mathf.Clamp01(_pooledWater * 2f);
-                    Color waterCol = Color.Lerp(
-                        new Color(0.2f, 0.4f, 0.75f), // light blue (shallow)
-                        new Color(0.08f, 0.15f, 0.45f), // deep blue (full)
-                        depth);
                     waterRenderer.GetPropertyBlock(_waterMPB);
-                    _waterMPB.SetColor("_BaseColor", waterCol);
+                    _waterMPB.SetColor("_BaseColor", new Color(0.3f, 0.5f, 0.8f, 0.4f));
                     waterRenderer.SetPropertyBlock(_waterMPB);
                 }
             }
         }
 
-        // Overflow drips
+        // Overflow drips — visible when overflowed, animate with PingPong
         if (overflowDrips != null)
         {
             for (int i = 0; i < overflowDrips.Length; i++)
             {
                 if (overflowDrips[i] == null) continue;
-                overflowDrips[i].gameObject.SetActive(_overflowed && _pooledWater > 0.05f);
+                overflowDrips[i].gameObject.SetActive(_overflowed);
+
+                if (_overflowed)
+                {
+                    float ping = Mathf.PingPong(Time.time * 1.5f + i * 0.7f, 1f);
+                    float s = Mathf.Lerp(0.5f, 1.2f, ping);
+                    overflowDrips[i].localScale = new Vector3(
+                        overflowDrips[i].localScale.x,
+                        overflowDrips[i].localScale.y * 0f + 0.01f * s,
+                        overflowDrips[i].localScale.z);
+                }
+            }
+        }
+
+        // Drain drip — visible when water > drainThreshold
+        if (drainDrip != null)
+        {
+            bool showDrain = _waterLevel > drainThreshold;
+            drainDrip.gameObject.SetActive(showDrain);
+
+            if (showDrain)
+            {
+                float excess = (_waterLevel - drainThreshold) / (1f - drainThreshold);
+                float dripScale = Mathf.Lerp(0.005f, 0.015f, excess);
+                drainDrip.localScale = new Vector3(dripScale, dripScale * 2f, dripScale);
             }
         }
     }
