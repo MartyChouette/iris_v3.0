@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Unity.Cinemachine;
 using TMPro;
 
@@ -313,22 +314,26 @@ public class DayPhaseManager : MonoBehaviour
     /// <summary>Called by DayManager.OnNewNewspaper event.</summary>
     public void EnterMorning()
     {
-        // Demo mode day 2+: skip newspaper, go straight to cleanup exploration
-        if (IsDemoCleanupDay())
+        bool isDemo = MainMenuManager.ActiveConfig != null;
+        int day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1;
+
+        // Demo day 2+: skip newspaper, go straight to cleanup exploration
+        if (isDemo && day >= 2)
         {
             Debug.Log("[DayPhaseManager] Demo cleanup day — skipping newspaper.");
             StartCoroutine(DemoCleanupTransition());
             return;
         }
 
-        SetPhase(DayPhase.Morning);
-    }
+        // Demo day 1: skip newspaper, show info card, auto-select Paris
+        if (isDemo && day == 1)
+        {
+            Debug.Log("[DayPhaseManager] Demo day 1 — showing date info card instead of newspaper.");
+            StartCoroutine(DemoDay1Transition());
+            return;
+        }
 
-    /// <summary>True when demo mode and past the first date day.</summary>
-    private bool IsDemoCleanupDay()
-    {
-        int day = GameClock.Instance != null ? GameClock.Instance.CurrentDay : 1;
-        return day >= 2 && MainMenuManager.ActiveConfig != null;
+        SetPhase(DayPhase.Morning);
     }
 
     /// <summary>Called by NewspaperManager.OnNewspaperDone event.</summary>
@@ -583,6 +588,184 @@ public class DayPhaseManager : MonoBehaviour
 
         // 12. Start preparation countdown
         StartPrepTimer();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEMO DAY 1 (info card → auto-select date → exploration)
+    // ═══════════════════════════════════════════════════════════════
+
+    private IEnumerator DemoDay1Transition()
+    {
+        // 1. Get the tutorial date definition from DayManager's pool
+        var tutorialDate = DayManager.Instance != null && DayManager.Instance.Pool != null
+            ? DayManager.Instance.Pool.tutorialDate
+            : null;
+
+        if (tutorialDate == null)
+        {
+            Debug.LogWarning("[DayPhaseManager] No tutorial date found — falling back to normal morning.");
+            SetPhase(DayPhase.Morning);
+            yield break;
+        }
+
+        // 2. Set up browse camera (skip newspaper read camera entirely)
+        if (_readCamera != null)
+            _readCamera.Priority = PriorityInactive;
+        if (ApartmentManager.Instance != null)
+            ApartmentManager.Instance.SetBrowseCameraActive(true);
+        CameraTestController.Instance?.RestorePreset();
+
+        // Force hard cut
+        if (brain != null)
+        {
+            var savedBlend = brain.DefaultBlend;
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.Cut, 0f);
+            yield return null;
+            brain.DefaultBlend = savedBlend;
+        }
+
+        // 3. Disable newspaper, fade out menu music
+        if (_newspaperManager != null)
+            _newspaperManager.enabled = false;
+        if (_newspaperHUD != null) _newspaperHUD.SetActive(false);
+        if (_apartmentUI != null) _apartmentUI.SetActive(true);
+        MusicDirector.Instance?.FadeOutMenuMusic();
+
+        // 4. Fade in from black so the apartment is visible behind the card
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeIn(_fadeDuration);
+
+        // 5. Build and show the info card overlay
+        bool cardDismissed = false;
+        var cardRoot = BuildDemoInfoCard(tutorialDate, () => cardDismissed = true);
+
+        // 6. Wait for player to dismiss the card
+        while (!cardDismissed)
+            yield return null;
+
+        // 7. Clean up the card
+        if (cardRoot != null)
+            Destroy(cardRoot);
+
+        // 8. Auto-schedule the tutorial date
+        DateSessionManager.Instance?.ScheduleDate(tutorialDate);
+        PhoneController.Instance?.SetPendingDate(tutorialDate);
+
+        // 9. Spawn day 1 messes + start exploration (with prep timer)
+        _currentPhase = DayPhase.Exploration;
+        Debug.Log("[DayPhaseManager] Phase → Exploration (demo day 1)");
+        DismissAllStationUI();
+
+        if (_authoredMessSpawner != null)
+            _authoredMessSpawner.SpawnDailyMess();
+        if (_entranceMessSpawner != null)
+            _entranceMessSpawner.SpawnDailyMess();
+
+        if (_explorationAmbienceClip != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayAmbience(_explorationAmbienceClip, 0.5f);
+
+        if (_goToBedPanel != null) _goToBedPanel.SetActive(false);
+
+        OnPhaseChanged?.Invoke((int)DayPhase.Exploration);
+
+        // 10. Start prep timer (date will arrive when it expires or player calls)
+        StartPrepTimer();
+    }
+
+    private GameObject BuildDemoInfoCard(DatePersonalDefinition date, System.Action onDismiss)
+    {
+        // ── Canvas ──
+        var canvasGO = new GameObject("DemoInfoCardCanvas");
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 50;
+
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        // ── Dim backdrop ──
+        var dimGO = new GameObject("Dim");
+        dimGO.transform.SetParent(canvasGO.transform, false);
+        var dimRT = dimGO.AddComponent<RectTransform>();
+        dimRT.anchorMin = Vector2.zero;
+        dimRT.anchorMax = Vector2.one;
+        dimRT.sizeDelta = Vector2.zero;
+        var dimImg = dimGO.AddComponent<Image>();
+        dimImg.color = new Color(0f, 0f, 0f, 0.5f);
+
+        // ── Card panel ──
+        var panelGO = new GameObject("CardPanel");
+        panelGO.transform.SetParent(canvasGO.transform, false);
+        var panelRT = panelGO.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRT.sizeDelta = new Vector2(800f, 500f);
+        var panelImg = panelGO.AddComponent<Image>();
+        panelImg.color = new Color(0.95f, 0.92f, 0.85f, 1f); // eggshell/newspaper
+
+        // ── Title (character name) ──
+        var titleGO = new GameObject("Title");
+        titleGO.transform.SetParent(panelGO.transform, false);
+        var titleRT = titleGO.AddComponent<RectTransform>();
+        titleRT.anchorMin = new Vector2(0f, 0.75f);
+        titleRT.anchorMax = new Vector2(1f, 0.95f);
+        titleRT.sizeDelta = Vector2.zero;
+        titleRT.offsetMin = new Vector2(40f, 0f);
+        titleRT.offsetMax = new Vector2(-40f, 0f);
+        var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        titleTMP.text = date.characterName;
+        titleTMP.fontSize = 48f;
+        titleTMP.fontStyle = FontStyles.Bold;
+        titleTMP.alignment = TextAlignmentOptions.Center;
+        titleTMP.color = new Color(0.15f, 0.12f, 0.1f);
+
+        // ── Ad text ──
+        var bodyGO = new GameObject("Body");
+        bodyGO.transform.SetParent(panelGO.transform, false);
+        var bodyRT = bodyGO.AddComponent<RectTransform>();
+        bodyRT.anchorMin = new Vector2(0f, 0.25f);
+        bodyRT.anchorMax = new Vector2(1f, 0.75f);
+        bodyRT.sizeDelta = Vector2.zero;
+        bodyRT.offsetMin = new Vector2(50f, 0f);
+        bodyRT.offsetMax = new Vector2(-50f, 0f);
+        var bodyTMP = bodyGO.AddComponent<TextMeshProUGUI>();
+        bodyTMP.text = date.adText;
+        bodyTMP.fontSize = 32f;
+        bodyTMP.fontStyle = FontStyles.Italic;
+        bodyTMP.alignment = TextAlignmentOptions.Center;
+        bodyTMP.color = new Color(0.25f, 0.22f, 0.2f);
+        bodyTMP.enableWordWrapping = true;
+
+        // ── Start button ──
+        var btnGO = new GameObject("StartButton");
+        btnGO.transform.SetParent(panelGO.transform, false);
+        var btnRT = btnGO.AddComponent<RectTransform>();
+        btnRT.anchorMin = new Vector2(0.5f, 0.05f);
+        btnRT.anchorMax = new Vector2(0.5f, 0.05f);
+        btnRT.anchoredPosition = new Vector2(0f, 40f);
+        btnRT.sizeDelta = new Vector2(250f, 60f);
+        var btnImg = btnGO.AddComponent<Image>();
+        btnImg.color = new Color(0.25f, 0.55f, 0.35f);
+        var btn = btnGO.AddComponent<Button>();
+        btn.targetGraphic = btnImg;
+        btn.onClick.AddListener(() => onDismiss?.Invoke());
+
+        var btnLabelGO = new GameObject("Label");
+        btnLabelGO.transform.SetParent(btnGO.transform, false);
+        var btnLabelRT = btnLabelGO.AddComponent<RectTransform>();
+        btnLabelRT.anchorMin = Vector2.zero;
+        btnLabelRT.anchorMax = Vector2.one;
+        btnLabelRT.sizeDelta = Vector2.zero;
+        var btnLabel = btnLabelGO.AddComponent<TextMeshProUGUI>();
+        btnLabel.text = "BEGIN";
+        btnLabel.fontSize = 28f;
+        btnLabel.alignment = TextAlignmentOptions.Center;
+        btnLabel.color = Color.white;
+
+        return canvasGO;
     }
 
     // ═══════════════════════════════════════════════════════════════
