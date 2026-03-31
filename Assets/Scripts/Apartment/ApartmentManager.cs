@@ -373,14 +373,26 @@ public class ApartmentManager : MonoBehaviour
     // Browsing
     // ──────────────────────────────────────────────────────────────
 
+    [Header("Keyboard Pan")]
+    [Tooltip("Pan speed for WASD/arrow keys (world units per second).")]
+    [SerializeField] private float _keyPanSpeed = 3f;
+
     private void HandleBrowsingInput()
     {
-        // Area cycling disabled — single camera angle for now
-        // if (IrisInput.Instance == null) return;
-        // if (IrisInput.Instance.NavigateLeft.WasPressedThisFrame())
-        //     CycleArea(-1);
-        // else if (IrisInput.Instance.NavigateRight.WasPressedThisFrame())
-        //     CycleArea(1);
+        // WASD / arrow keys pan the camera (replaces area cycling)
+        float h = 0f, v = 0f;
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))  h -= 1f;
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) h += 1f;
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))    v += 1f;
+        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))  v -= 1f;
+
+        if (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f)
+        {
+            Vector3 right = _baseRotation * Vector3.right;
+            Vector3 up = _baseRotation * Vector3.up;
+            _panOffset += (right * h + up * v) * _keyPanSpeed * Time.deltaTime;
+            ClampPanOffset();
+        }
     }
 
     private void ResetZoom()
@@ -469,12 +481,15 @@ public class ApartmentManager : MonoBehaviour
         Vector3 right = _baseRotation * Vector3.right;
         Vector3 up = _baseRotation * Vector3.up;
         _panOffset -= (right * delta.x + up * delta.y) * panSpeed;
+        ClampPanOffset();
+    }
 
-        // Scale pan limit with zoom — zoomed in = more pan range to reach edges
+    private void ClampPanOffset()
+    {
         float zoomFactor = 1f;
         if (_zoomSteps != null && _zoomSteps.Length > 0 && _currentZoom > 0f)
         {
-            float baseZoom = _zoomSteps[0]; // most zoomed out
+            float baseZoom = _zoomSteps[0];
             zoomFactor = baseZoom / Mathf.Max(_currentZoom, 1f);
         }
         float effectiveMaxPan = panMaxDistance * Mathf.Max(zoomFactor, 1f);
