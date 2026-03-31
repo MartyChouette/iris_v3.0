@@ -54,15 +54,16 @@ public class ItemLabelOverlay : MonoBehaviour
 
     private void Update()
     {
-        if (_mmbAction == null) return;
-
-        if (_mmbAction.WasPressedThisFrame())
-            ShowLabels();
-        else if (_mmbAction.WasReleasedThisFrame())
-            HideLabels();
-
-        if (_showing)
-            UpdateLabelPositions();
+        // Disabled — context cursors replaced label overlay
+        // if (_mmbAction == null) return;
+        //
+        // if (_mmbAction.WasPressedThisFrame())
+        //     ShowLabels();
+        // else if (_mmbAction.WasReleasedThisFrame())
+        //     HideLabels();
+        //
+        // if (_showing)
+        //     UpdateLabelPositions();
     }
 
     private void ShowLabels()
