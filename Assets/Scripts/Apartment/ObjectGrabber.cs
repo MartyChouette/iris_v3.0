@@ -639,7 +639,9 @@ public class ObjectGrabber : MonoBehaviour
         if (_held == null) return false;
 
         var heldPairable = _held.GetComponent<PairableItem>();
-        if (heldPairable == null || heldPairable.IsPaired) return false;
+        if (heldPairable == null) return false;
+        // SpecificPartner (shoes) can't re-pair, but AnyOfCategory (plates) can stack freely
+        if (heldPairable.IsPaired && heldPairable.Mode == PairableItem.PairMode.SpecificPartner) return false;
 
         Vector2 screenPos = IrisInput.CursorPosition;
         Ray ray = cam.ScreenPointToRay(screenPos);

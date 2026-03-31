@@ -174,19 +174,12 @@ public class PairableItem : MonoBehaviour
         Debug.Log($"[PairableItem] {held.name} snapped to {stackTop.name} (stack depth)");
     }
 
-    /// <summary>Walk down the child chain to find the deepest paired child (top of stack).</summary>
+    /// <summary>Walk the transform hierarchy to find the topmost stacked PairableItem.</summary>
     private static Transform FindStackTop(Transform root)
     {
         var current = root;
         while (true)
         {
-            var pairable = current.GetComponent<PairableItem>();
-            if (pairable != null && pairable._pairedChild != null)
-            {
-                current = pairable._pairedChild.transform;
-                continue;
-            }
-            // Also check for any PairableItem children directly
             bool found = false;
             foreach (Transform child in current)
             {
