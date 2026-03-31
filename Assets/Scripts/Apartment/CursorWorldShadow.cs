@@ -172,7 +172,19 @@ public class CursorWorldShadow : MonoBehaviour
 
             _shadowQuad.transform.position = _currentPos;
             _shadowQuad.transform.rotation = _currentRot;
-            _shadowQuad.transform.localScale = new Vector3(_diameter, 1f, _diameter);
+
+            // Scale shadow with zoom so it stays the same apparent screen size
+            float zoomScale = 1f;
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                if (cam.orthographic)
+                    zoomScale = cam.orthographicSize / 10f; // baseline ortho size 10
+                else
+                    zoomScale = cam.fieldOfView / 60f; // baseline FOV 60
+            }
+            float d = _diameter * Mathf.Max(zoomScale, 0.1f);
+            _shadowQuad.transform.localScale = new Vector3(d, 1f, d);
             _shadowQuad.SetActive(true);
         }
         else
