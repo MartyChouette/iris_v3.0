@@ -375,11 +375,12 @@ public class ApartmentManager : MonoBehaviour
 
     private void HandleBrowsingInput()
     {
-        if (IrisInput.Instance == null) return;
-        if (IrisInput.Instance.NavigateLeft.WasPressedThisFrame())
-            CycleArea(-1);
-        else if (IrisInput.Instance.NavigateRight.WasPressedThisFrame())
-            CycleArea(1);
+        // Area cycling disabled — single camera angle for now
+        // if (IrisInput.Instance == null) return;
+        // if (IrisInput.Instance.NavigateLeft.WasPressedThisFrame())
+        //     CycleArea(-1);
+        // else if (IrisInput.Instance.NavigateRight.WasPressedThisFrame())
+        //     CycleArea(1);
     }
 
     private void ResetZoom()
@@ -525,26 +526,12 @@ public class ApartmentManager : MonoBehaviour
 
     private void UpdateUI()
     {
+        // Area name and nav buttons hidden — single camera angle for now
         if (areaNamePanel != null)
-            areaNamePanel.SetActive(true);
-
-        if (areaNameText != null && areas != null && areas.Length > 0)
-            areaNameText.text = areas[_currentAreaIndex].areaName;
+            areaNamePanel.SetActive(false);
 
         if (browseHintsPanel != null)
-            browseHintsPanel.SetActive(true);
-
-        // Update nav button labels with destination area names
-        if (areas != null && areas.Length > 1)
-        {
-            int leftIdx = (_currentAreaIndex - 1 + areas.Length) % areas.Length;
-            int rightIdx = (_currentAreaIndex + 1) % areas.Length;
-
-            if (_navLeftLabel != null)
-                _navLeftLabel.text = areas[leftIdx].areaName;
-            if (_navRightLabel != null)
-                _navRightLabel.text = areas[rightIdx].areaName;
-        }
+            browseHintsPanel.SetActive(false);
     }
 
     // ──────────────────────────────────────────────────────────────
