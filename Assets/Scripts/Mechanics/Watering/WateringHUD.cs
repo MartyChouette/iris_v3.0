@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Simple overlay HUD for the ambient watering system.
-/// Shows plant name and soil moisture feedback. Hidden when idle.
+/// Shows plant name and a visual pour bar. Hidden when idle.
 /// </summary>
 [DisallowMultipleComponent]
 public class WateringHUD : MonoBehaviour
@@ -28,14 +28,9 @@ public class WateringHUD : MonoBehaviour
 
         bool showHUD = manager.CurrentState != WateringManager.State.Idle;
 
-        // Show canvas on first interaction — force scale to 1 (may be saved at 0)
-        if (showHUD && hudCanvas != null)
-        {
-            if (!hudCanvas.gameObject.activeSelf)
-                hudCanvas.gameObject.SetActive(true);
-            if (hudCanvas.transform.localScale.x < 0.01f)
-                hudCanvas.transform.localScale = Vector3.one;
-        }
+        // Show canvas on first interaction
+        if (showHUD && hudCanvas != null && !hudCanvas.gameObject.activeSelf)
+            hudCanvas.gameObject.SetActive(true);
 
         if (hudPanel != null)
             hudPanel.SetActive(showHUD);
@@ -45,17 +40,10 @@ public class WateringHUD : MonoBehaviour
 
         if (!showHUD) return;
 
-        var plant = manager.CurrentPlant;
-        var pot = manager.Pot;
-
-        if (plantNameLabel != null)
-            plantNameLabel.text = plant != null ? plant.plantName : "";
-
         switch (manager.CurrentState)
         {
             case WateringManager.State.Pouring:
-            case WateringManager.State.Absorbing:
-                UpdatePouring(plant, pot);
+                UpdatePouring();
                 break;
             case WateringManager.State.Scoring:
                 UpdateScoring();
@@ -63,20 +51,28 @@ public class WateringHUD : MonoBehaviour
         }
     }
 
-    private void UpdatePouring(PlantDefinition plant, PotController pot)
+    private void UpdatePouring()
     {
+        var plant = manager.CurrentPlant;
+        var pot = manager.Pot;
+
+        if (plantNameLabel != null)
+            plantNameLabel.text = plant != null ? plant.plantName : "";
+
         if (pourBar != null && pot != null && plant != null)
         {
-            // Show soil moisture as the fill level, pooled water on top,
-            // oscillating target as the moving goal line
-            pourBar.SetLevels(pot.SoilMoisture, pot.SoilMoisture + pot.PooledWater,
-                manager.OscillatingTarget, plant.moistureTolerance);
-            pourBar.SetOverflowing(pot.Overflowed);
+            pourBar.SetLevels(pot.WaterLevel, pot.FoamLevel, manager.OscillatingTarget, plant.waterTolerance);
+            pourBar.SetOverflowing(pot.FoamLevel >= 1f);
         }
     }
 
     private void UpdateScoring()
     {
+        var plant = manager.CurrentPlant;
+
+        if (plantNameLabel != null)
+            plantNameLabel.text = plant != null ? plant.plantName : "";
+
         if (pourBar != null)
         {
             pourBar.SetOverflowing(false);
