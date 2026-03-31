@@ -402,7 +402,6 @@ public class DateSessionManager : MonoBehaviour
         {
             _dateCharacter.WarpTo(couchPos);
             _dateCharacter.SetSitting();
-            _dateCharacter.EnableExcursions();
         }
 
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
@@ -416,28 +415,151 @@ public class DateSessionManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         string postLine = s_postPhase3Lines[UnityEngine.Random.Range(0, s_postPhase3Lines.Length)];
         reactionUI?.ShowText(postLine, 2.0f);
+        yield return new WaitForSeconds(2.5f);
 
-        Debug.Log("[DateSessionManager] Phase 3: Couch — NPC evaluating apartment items.");
+        Debug.Log("[DateSessionManager] Phase 3: Instant reveal — evaluating all apartment items.");
 
-        // Start Phase 3 duration timer
-        StartCoroutine(Phase3Timer());
+        // Reveal all reactions at once with staggered heart particles
+        yield return StartCoroutine(RevealAllReactions());
+
+        // Brief pause, then end the date
+        yield return new WaitForSeconds(2f);
+        StartCoroutine(RunEndSequence());
     }
 
-    private IEnumerator Phase3Timer()
+    /// <summary>
+    /// Instantly evaluate all active ReactableTags against the date's preferences.
+    /// Liked items emit heart particles; disliked emit a grey puff.
+    /// Staggered with a short delay between each for visual readability.
+    /// </summary>
+    private IEnumerator RevealAllReactions()
     {
-        float multiplier = AccessibilitySettings.TimerMultiplier;
-        float duration = multiplier > 0f ? phase3Duration * multiplier : float.MaxValue;
-        yield return new WaitForSeconds(duration);
+        if (_currentDate == null || _currentDate.preferences == null) yield break;
 
-        if (_state != SessionState.DateInProgress || _datePhase != DatePhase.Reveal)
-            yield break;
+        var prefs = _currentDate.preferences;
+        var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
 
-        Debug.Log("[DateSessionManager] Phase 3 complete — ending date.");
+        foreach (var tag in ReactableTag.All)
+        {
+            if (!tag.IsActive) continue;
+            if (tag.IsPrivate) continue;
 
-        if (_dateCharacter != null)
-            _dateCharacter.DisableExcursions();
+            var reaction = ReactionEvaluator.EvaluateReactable(tag, prefs);
+            if (reaction == ReactionType.Neutral) continue;
 
-        StartCoroutine(RunEndSequence());
+            // Apply affection
+            ApplyReaction(reaction);
+
+            // Fire reveal event for HUD
+            OnRevealReaction?.Invoke(new AccumulatedReaction
+            {
+                itemName = tag.DisplayName,
+                type = reaction
+            });
+
+            // Spawn particles at the item's position
+            SpawnReactionParticles(tag.transform.position, reaction);
+
+            Debug.Log($"[DateSessionManager] Reveal: {tag.DisplayName} → {reaction}");
+
+            // Stagger for visual clarity
+            yield return new WaitForSeconds(0.3f);
+        }
+
+        // Also evaluate cleanliness as a whole-room judgment
+        if (TidyScorer.Instance != null)
+        {
+            var cleanReaction = ReactionEvaluator.EvaluateCleanliness(TidyScorer.Instance.OverallTidiness);
+            if (cleanReaction != ReactionType.Neutral)
+            {
+                ApplyReaction(cleanReaction);
+                if (reactionUI != null)
+                {
+                    string cleanText = cleanReaction == ReactionType.Like
+                        ? "So clean and tidy!"
+                        : "It's a bit messy...";
+                    reactionUI.ShowText(cleanText, 2f);
+                }
+                yield return new WaitForSeconds(1f);
+            }
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Reaction Particles (runtime-built, no prefab needed)
+    // ──────────────────────────────────────────────────────────────
+
+    private static void SpawnReactionParticles(Vector3 position, ReactionType reaction)
+    {
+        var go = new GameObject("ReactionParticles");
+        go.transform.position = position;
+
+        var ps = go.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.duration = 1.5f;
+        main.loop = false;
+        main.startLifetime = 1.2f;
+        main.startSpeed = 0.8f;
+        main.startSize = 0.08f;
+        main.gravityModifier = -0.3f; // float upward
+        main.maxParticles = 12;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.stopAction = ParticleSystemStopAction.Destroy;
+
+        // Color based on reaction
+        if (reaction == ReactionType.Like)
+        {
+            main.startColor = new Color(0.95f, 0.4f, 0.5f); // soft pink/red hearts
+        }
+        else if (reaction == ReactionType.Dislike)
+        {
+            main.startColor = new Color(0.45f, 0.45f, 0.5f, 0.6f); // muted grey
+            main.startSize = 0.05f;
+            main.maxParticles = 6;
+        }
+        else
+        {
+            Object.Destroy(go);
+            return;
+        }
+
+        // Emission — one burst
+        var emission = ps.emission;
+        emission.rateOverTime = 0f;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, reaction == ReactionType.Like ? 8 : 4) });
+
+        // Shape — small sphere around the item
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.15f;
+
+        // Size over lifetime — grow then shrink
+        var sol = ps.sizeOverLifetime;
+        sol.enabled = true;
+        sol.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+            new Keyframe(0f, 0.5f),
+            new Keyframe(0.3f, 1f),
+            new Keyframe(1f, 0f)
+        ));
+
+        // Color over lifetime — fade out
+        var col = ps.colorOverLifetime;
+        col.enabled = true;
+        var gradient = new Gradient();
+        gradient.SetKeys(
+            new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) }
+        );
+        col.color = gradient;
+
+        // Use default particle material
+        var renderer = go.GetComponent<ParticleSystemRenderer>();
+        renderer.material = new Material(Shader.Find("Particles/Standard Unlit")
+                                      ?? Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        renderer.material.SetFloat("_Surface", 1f); // transparent
+        renderer.material.SetFloat("_Blend", 0f);
+
+        ps.Play();
     }
 
     // ──────────────────────────────────────────────────────────────
