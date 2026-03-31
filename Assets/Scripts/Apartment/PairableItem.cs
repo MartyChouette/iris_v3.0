@@ -61,27 +61,37 @@ public class PairableItem : MonoBehaviour
     /// </summary>
     public void OnPickedUp()
     {
-        // Unpair: detach child and re-enable its collider/placeable
         if (_isPaired && _pairedChild != null)
         {
-            var childCol = _pairedChild.GetComponent<Collider>();
-            if (childCol != null) childCol.enabled = true;
-            if (_pairedChild._placeable != null) _pairedChild._placeable.enabled = true;
+            if (_pairMode == PairMode.AnyOfCategory)
+            {
+                // Plates: break the stack on pickup so you grab one at a time
+                var childCol = _pairedChild.GetComponent<Collider>();
+                if (childCol != null) childCol.enabled = true;
+                if (_pairedChild._placeable != null) _pairedChild._placeable.enabled = true;
 
-            _pairedChild.transform.SetParent(null);
-            _pairedChild._isPaired = false;
-            _pairedChild = null;
+                _pairedChild.transform.SetParent(null);
+                _pairedChild._isPaired = false;
+                _pairedChild = null;
+                _isPaired = false;
+            }
+            // SpecificPartner (shoes): stay paired, move as a unit
         }
-        _isPaired = false;
-
-        if (_pairMode != PairMode.SpecificPartner || _specificPartner == null) return;
-        if (_specificPartner._isPaired) return;
-
-        var partnerHL = _specificPartner.GetComponent<InteractableHighlight>();
-        if (partnerHL != null)
+        else
         {
-            partnerHL.SetHighlighted(true);
-            _partnerHighlightActive = true;
+            _isPaired = false;
+        }
+
+        // Flash partner highlight for unpaired shoes
+        if (!_isPaired && _pairMode == PairMode.SpecificPartner
+            && _specificPartner != null && !_specificPartner._isPaired)
+        {
+            var partnerHL = _specificPartner.GetComponent<InteractableHighlight>();
+            if (partnerHL != null)
+            {
+                partnerHL.SetHighlighted(true);
+                _partnerHighlightActive = true;
+            }
         }
     }
 
