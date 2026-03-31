@@ -45,6 +45,12 @@ public class ApartmentManager : MonoBehaviour
     [Tooltip("Maximum pan distance from area center.")]
     [SerializeField] private float panMaxDistance = 3f;
 
+    [Tooltip("Custom pan center in world space. Pan clamp is relative to this point instead of the area camera position. Leave at zero to use area camera position.")]
+    [SerializeField] private Vector3 _panCenter;
+
+    [Tooltip("Rectangular pan bounds (half-extents in camera-local X and Y). Zero = use circular panMaxDistance instead.")]
+    [SerializeField] private Vector2 _panBoundsHalf;
+
     [Header("Zoom (Stepped)")]
     [Tooltip("Discrete zoom levels (FOV or ortho size). Index 0 = most zoomed out, last = most zoomed in.")]
     [SerializeField] private float[] _zoomSteps = { 100f, 80f, 60f, 45f, 30f };
@@ -462,10 +468,37 @@ public class ApartmentManager : MonoBehaviour
             float baseZoom = _zoomSteps[0];
             zoomFactor = baseZoom / Mathf.Max(_currentZoom, 1f);
         }
-        float effectiveMaxPan = panMaxDistance * Mathf.Max(zoomFactor, 1f);
+        float scale = Mathf.Max(zoomFactor, 1f);
 
-        if (_panOffset.magnitude > effectiveMaxPan)
-            _panOffset = _panOffset.normalized * effectiveMaxPan;
+        // If custom pan center is set, offset the pan relative to it
+        Vector3 centerOffset = Vector3.zero;
+        if (_panCenter != Vector3.zero)
+            centerOffset = _panCenter - _basePosition;
+
+        Vector3 adjusted = _panOffset - centerOffset;
+
+        if (_panBoundsHalf.x > 0f && _panBoundsHalf.y > 0f)
+        {
+            // Rectangular clamp in camera-local space
+            Vector3 right = _baseRotation * Vector3.right;
+            Vector3 up = _baseRotation * Vector3.up;
+
+            float dotR = Vector3.Dot(adjusted, right);
+            float dotU = Vector3.Dot(adjusted, up);
+
+            dotR = Mathf.Clamp(dotR, -_panBoundsHalf.x * scale, _panBoundsHalf.x * scale);
+            dotU = Mathf.Clamp(dotU, -_panBoundsHalf.y * scale, _panBoundsHalf.y * scale);
+
+            _panOffset = centerOffset + right * dotR + up * dotU;
+        }
+        else
+        {
+            // Circular clamp
+            float effectiveMaxPan = panMaxDistance * scale;
+            if (adjusted.magnitude > effectiveMaxPan)
+                adjusted = adjusted.normalized * effectiveMaxPan;
+            _panOffset = centerOffset + adjusted;
+        }
     }
 
     private void CycleArea(int direction)
