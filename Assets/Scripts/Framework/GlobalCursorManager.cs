@@ -96,19 +96,29 @@ public class GlobalCursorManager : MonoBehaviour
         _proceduralTextures.Clear();
     }
 
-    private static bool IsCursorUsable(Texture2D tex)
+    /// <summary>
+    /// Create a CPU-readable RGBA32 copy of a texture. Works regardless of
+    /// the source texture's compression or import settings.
+    /// </summary>
+    private Texture2D MakeCursorCopy(Texture2D source)
     {
-        if (tex == null || !tex.isReadable) return false;
-        try
-        {
-            // Actually try to read pixel data — this is what Cursor.SetCursor needs
-            tex.GetPixel(0, 0);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        // Render the source to a temporary RenderTexture, then read it back as RGBA32
+        var rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(source, rt);
+
+        var prev = RenderTexture.active;
+        RenderTexture.active = rt;
+
+        var copy = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+        copy.filterMode = FilterMode.Point;
+        copy.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+        copy.Apply();
+
+        RenderTexture.active = prev;
+        RenderTexture.ReleaseTemporary(rt);
+
+        _proceduralTextures.Add(copy); // track for cleanup
+        return copy;
     }
 
     private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
@@ -162,16 +172,11 @@ public class GlobalCursorManager : MonoBehaviour
         var loaded = Resources.Load<Texture2D>($"Cursors/{name}");
         if (loaded != null)
         {
-            if (IsCursorUsable(loaded))
-            {
-                // Art asset found and usable — discard procedural fallback
-                if (proceduralFallback != null)
-                    Destroy(proceduralFallback);
-                return loaded;
-            }
-
-            Debug.LogWarning($"[GlobalCursorManager] Cursors/{name} is not usable as a cursor — using procedural fallback. " +
-                             "Fix: select the texture → set Type to 'Cursor', enable Read/Write, set Compression to 'None', click Apply.");
+            // Always make a RGBA32 copy — works regardless of import settings
+            var copy = MakeCursorCopy(loaded);
+            if (proceduralFallback != null)
+                Destroy(proceduralFallback);
+            return copy;
         }
 
         if (proceduralFallback == null)
