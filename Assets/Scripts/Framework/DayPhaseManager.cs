@@ -456,8 +456,8 @@ public class DayPhaseManager : MonoBehaviour
                 StopPrepTimer();
                 break;
             case DayPhase.FlowerTrimming:
-                AudioManager.Instance?.DuckMusic(0.18f, 0.5f);
-                AudioManager.Instance?.SetNonMusicMix(0.83f, 0.5f); // non-music -17%
+                AudioManager.Instance?.DuckMusic(0.1f, 0.5f);
+                AudioManager.Instance?.SetNonMusicMix(0.75f, 0.5f); // non-music -25%
                 StartCoroutine(FlowerTrimmingTransition());
                 break;
             case DayPhase.Evening:
