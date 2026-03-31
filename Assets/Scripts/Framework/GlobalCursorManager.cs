@@ -50,6 +50,14 @@ public class GlobalCursorManager : MonoBehaviour
         if (Instance != null) return;
         var go = new GameObject("GlobalCursorManager");
         go.AddComponent<GlobalCursorManager>();
+        Debug.Log("[GlobalCursorManager] Auto-spawned via RuntimeInitialize.");
+    }
+
+    /// <summary>Call from any scene script's Start() as a safety net if AutoSpawn didn't fire.</summary>
+    public static void EnsureExists()
+    {
+        if (Instance != null) return;
+        AutoSpawn();
     }
 
     private void Awake()
@@ -62,6 +70,13 @@ public class GlobalCursorManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         LoadCursorTextures();
+        Debug.Log($"[GlobalCursorManager] Awake — interact={(_interactCursor != null ? "OK" : "NULL")}, " +
+                  $"watering={(_wateringCursor != null ? "OK" : "NULL")}, " +
+                  $"fridge={(_fridgeCursor != null ? "OK" : "NULL")}, " +
+                  $"phone={(_phoneCursor != null ? "OK" : "NULL")}, " +
+                  $"drawer={(_drawerCursor != null ? "OK" : "NULL")}, " +
+                  $"drink={(_drinkCursor != null ? "OK" : "NULL")}, " +
+                  $"sponge={(_spongeCursor != null ? "OK" : "NULL")}");
     }
 
     private void OnDestroy()

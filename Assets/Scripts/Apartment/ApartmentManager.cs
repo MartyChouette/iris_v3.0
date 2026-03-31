@@ -166,6 +166,8 @@ public class ApartmentManager : MonoBehaviour
 
     private void Start()
     {
+        GlobalCursorManager.EnsureExists();
+
         if (areas == null || areas.Length == 0)
         {
             Debug.LogError("[ApartmentManager] No areas assigned.");
