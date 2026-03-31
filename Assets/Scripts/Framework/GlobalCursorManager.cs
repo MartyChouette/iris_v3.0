@@ -204,6 +204,10 @@ public class GlobalCursorManager : MonoBehaviour
         _cachedCamera = Camera.main;
         if (_cachedCamera == null) { ApplyCursor(CursorType.Default); return; }
 
+        // F7 debug: log grab state
+        if (Input.GetKeyDown(KeyCode.F7))
+            Debug.Log($"[GlobalCursorManager] HeldObject={ObjectGrabber.HeldObject?.name ?? "null"} IsHolding={ObjectGrabber.IsHoldingObject}");
+
         if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
 
         Vector2 cursorPos = IrisInput.CursorPosition;
