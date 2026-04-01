@@ -100,16 +100,12 @@ public class CameraTestController : MonoBehaviour
 
     private void Start()
     {
+        // Hide all preset buttons — camera switching disabled for now
         if (presetButtons != null)
         {
             for (int i = 0; i < presetButtons.Length; i++)
             {
-                if (presetButtons[i] == null) continue;
-                int index = i;
-                presetButtons[i].onClick.AddListener(() => ApplyPreset(index));
-
-                // Hide buttons beyond the visible count (V4–V9 hidden by default)
-                if (_visiblePresetCount > 0 && i >= _visiblePresetCount)
+                if (presetButtons[i] != null)
                     presetButtons[i].gameObject.SetActive(false);
             }
         }
