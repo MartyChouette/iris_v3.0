@@ -550,6 +550,12 @@ public class ApartmentManager : MonoBehaviour
 
         if (browseHintsPanel != null)
             browseHintsPanel.SetActive(false);
+
+        // Hide nav arrow buttons
+        if (_navLeftLabel != null)
+            _navLeftLabel.transform.parent.gameObject.SetActive(false);
+        if (_navRightLabel != null)
+            _navRightLabel.transform.parent.gameObject.SetActive(false);
     }
 
     // ──────────────────────────────────────────────────────────────
