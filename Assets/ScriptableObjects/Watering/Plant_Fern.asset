@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Plant_Fern
   m_EditorClassIdentifier: Assembly-CSharp::PlantDefinition
   plantName: Fern
-  description: "A classic shelf fern \u2014 likes it moist."
+  description: A classic shelf fern, likes it moist.
   potColor: {r: 0.72, g: 0.45, b: 0.2, a: 1}
   dryColor: {r: 0.55, g: 0.4, b: 0.25, a: 1}
   wetColor: {r: 0.3, g: 0.22, b: 0.12, a: 1}
@@ -23,6 +23,8 @@ MonoBehaviour:
   waterTolerance: 0.06
   pourRate: 0.14
   foamRateMultiplier: 2.5
+  targetOscSpeed: 0.5
+  targetOscAmplitude: 0.15
   foamSettleRate: 0.25
   absorptionRate: 0.05
   baseScore: 100
