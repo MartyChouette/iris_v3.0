@@ -63,15 +63,23 @@ public class PlacementSurface : MonoBehaviour
 
         var box = triggerGO.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = localBounds.center;
 
-        // Slightly thicken along the normal so the raycast has something to hit
+        // Thicken the trigger along the normal so angled rays reliably hit it.
+        // Offset it slightly toward the front face so it sits in front of the wall mesh.
+        Vector3 center = localBounds.center;
         Vector3 size = localBounds.size;
         if (normalAxis == SurfaceAxis.Up)
-            size.y = Mathf.Max(size.y, 0.05f);
+        {
+            size.y = Mathf.Max(size.y, 0.3f);
+        }
         else
-            size.z = Mathf.Max(size.z, 0.05f);
+        {
+            size.z = Mathf.Max(size.z, 0.3f);
+            // Shift trigger toward the front face so it's not buried inside the wall
+            center.z += localBounds.extents.z * 0.5f;
+        }
 
+        box.center = center;
         box.size = size;
     }
 
