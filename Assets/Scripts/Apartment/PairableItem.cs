@@ -40,10 +40,21 @@ public class PairableItem : MonoBehaviour
     [Tooltip("Sound when items snap together.")]
     [SerializeField] private AudioClip _snapSound;
 
+    [Header("Partner Highlight")]
+    [Tooltip("Color to pulse when the partner is being held.")]
+    [SerializeField] private Color _partnerPulseColor = new Color(1f, 0.85f, 0.4f, 0.6f);
+
+    [Tooltip("Pulse speed (Hz).")]
+    [SerializeField] private float _partnerPulseSpeed = 2f;
+
     private bool _isPaired;
     private PairableItem _pairedChild; // the item that was snapped TO this one
     private PlaceableObject _placeable;
     private bool _partnerHighlightActive;
+    private Renderer _renderer;
+    private MaterialPropertyBlock _pulseMPB;
+    private Color _originalColor;
+    private bool _originalColorCaptured;
 
     public bool IsPaired => _isPaired;
     public PairableItem PairedChild => _pairedChild;
@@ -53,6 +64,44 @@ public class PairableItem : MonoBehaviour
     private void Awake()
     {
         _placeable = GetComponent<PlaceableObject>();
+        _renderer = GetComponentInChildren<Renderer>();
+        _pulseMPB = new MaterialPropertyBlock();
+    }
+
+    private void Update()
+    {
+        if (_pairMode != PairMode.SpecificPartner || _specificPartner == null) return;
+        if (_isPaired) return; // already paired, no need to pulse
+
+        // Check if our partner is currently being held
+        bool partnerHeld = ObjectGrabber.HeldObject != null
+            && ObjectGrabber.HeldObject.gameObject == _specificPartner.gameObject;
+
+        if (partnerHeld && _renderer != null)
+        {
+            if (!_originalColorCaptured)
+            {
+                _renderer.GetPropertyBlock(_pulseMPB);
+                _originalColor = _pulseMPB.GetColor("_BaseColor");
+                if (_originalColor == Color.clear)
+                    _originalColor = _renderer.sharedMaterial != null ? _renderer.sharedMaterial.color : Color.white;
+                _originalColorCaptured = true;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _partnerPulseSpeed * Mathf.PI * 2f);
+            Color c = Color.Lerp(_originalColor, _partnerPulseColor, pulse);
+            _renderer.GetPropertyBlock(_pulseMPB);
+            _pulseMPB.SetColor("_BaseColor", c);
+            _renderer.SetPropertyBlock(_pulseMPB);
+        }
+        else if (_originalColorCaptured)
+        {
+            // Restore original color
+            _renderer.GetPropertyBlock(_pulseMPB);
+            _pulseMPB.SetColor("_BaseColor", _originalColor);
+            _renderer.SetPropertyBlock(_pulseMPB);
+            _originalColorCaptured = false;
+        }
     }
 
     /// <summary>
