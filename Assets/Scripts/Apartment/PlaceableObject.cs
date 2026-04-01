@@ -42,6 +42,12 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("If true, this object can ONLY be placed on walls (rejects tables/shelves).")]
     [SerializeField] private bool wallOnly;
 
+    [Tooltip("Grid size multiplier for this item (0.5 = half grid, fits 2 per cell). 0 or 1 = use default.")]
+    [SerializeField, Range(0f, 2f)] private float _gridSizeMultiplier = 1f;
+
+    /// <summary>Multiplier applied to grid size for this item. Books use 0.5 to fit 2 per cell.</summary>
+    public float GridSizeMultiplier => _gridSizeMultiplier <= 0f ? 1f : _gridSizeMultiplier;
+
     [Tooltip("Random rotation range (degrees) applied when spawned on a wall.")]
     [SerializeField] private float crookedAngleRange = 12f;
 

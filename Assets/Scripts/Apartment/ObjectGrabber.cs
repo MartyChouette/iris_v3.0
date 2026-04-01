@@ -549,8 +549,9 @@ public class ObjectGrabber : MonoBehaviour
         // Use _grabTarget (cursor-tracked) instead of _heldRb.position for wall face
         // detection — the rigidbody can overshoot through thin wall triggers.
         var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget, cam.transform.position);
+        float effectiveGrid = gridSize * (_held != null ? _held.GridSizeMultiplier : 1f);
         Vector3 pos = _gridSnap
-            ? _currentSurface.SnapToGrid(hitResult.worldPosition, gridSize, cam.transform.position)
+            ? _currentSurface.SnapToGrid(hitResult.worldPosition, effectiveGrid, cam.transform.position)
             : hitResult.worldPosition;
 
         float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
@@ -859,8 +860,9 @@ public class ObjectGrabber : MonoBehaviour
                 _isOnWall = surface.IsVertical;
 
                 var hitResult = surface.ProjectOntoSurface(hits[h].point, cam.transform.position);
+                float eGrid = gridSize * (_held != null ? _held.GridSizeMultiplier : 1f);
                 Vector3 pos = _gridSnap
-                    ? surface.SnapToGrid(hitResult.worldPosition, gridSize, cam.transform.position)
+                    ? surface.SnapToGrid(hitResult.worldPosition, eGrid, cam.transform.position)
                     : hitResult.worldPosition;
 
                 float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
@@ -940,26 +942,25 @@ public class ObjectGrabber : MonoBehaviour
 
     private void UpdateScrollInput()
     {
-        // Object rotation disabled for now
-        // bool rotatePressed = UnityEngine.InputSystem.Mouse.current != null
-        //     && UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame;
-        // if (!rotatePressed
-        //     && UnityEngine.InputSystem.Gamepad.current != null
-        //     && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
-        //     rotatePressed = true;
-        //
-        // if (!rotatePressed) return;
-        //
-        // float angle = scrollRotateStep;
-        //
-        // if (_isOnWall)
-        // {
-        //     _wallRotation += angle;
-        // }
-        // else
-        // {
-        //     _held.transform.Rotate(0f, angle, 0f, Space.World);
-        // }
+        bool rotatePressed = UnityEngine.InputSystem.Mouse.current != null
+            && UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame;
+        if (!rotatePressed
+            && UnityEngine.InputSystem.Gamepad.current != null
+            && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
+            rotatePressed = true;
+
+        if (!rotatePressed) return;
+
+        float angle = scrollRotateStep;
+
+        if (_isOnWall)
+        {
+            _wallRotation += angle;
+        }
+        else
+        {
+            _held.transform.Rotate(0f, angle, 0f, Space.World);
+        }
     }
 
     // ── Helper: half-extent along a normal ────────────────────────────
