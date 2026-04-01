@@ -253,16 +253,16 @@ public class CameraTestController : MonoBehaviour
 
     private void Update()
     {
-        // Keyboard shortcuts: 1-9 for presets, backtick to clear
-        for (int i = 0; i < _presetActions.Length; i++)
-        {
-            if (_presetActions[i].WasPressedThisFrame() && i < (presets != null ? presets.Length : 0))
-            {
-                ApplyPreset(i);
-                break;
-            }
-        }
-        if (_clearPresetAction.WasPressedThisFrame()) ClearPreset();
+        // Camera preset switching disabled for now
+        // for (int i = 0; i < _presetActions.Length; i++)
+        // {
+        //     if (_presetActions[i].WasPressedThisFrame() && i < (presets != null ? presets.Length : 0))
+        //     {
+        //         ApplyPreset(i);
+        //         break;
+        //     }
+        // }
+        // if (_clearPresetAction.WasPressedThisFrame()) ClearPreset();
 
         if (!_isTransitioning || _activePresetIndex < 0 || browseCamera == null) return;
 
