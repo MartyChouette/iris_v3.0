@@ -321,6 +321,7 @@ public class CleaningManager : MonoBehaviour
                     if (!_wasPressingLastFrame)
                     {
                         OnWipeStarted?.Invoke();
+                        ObjectGrabber.ConsumeClickExternal();
                         _clickBounce = ClickBounceStrength;
                         _clickBounceVel = 0f;
                     }

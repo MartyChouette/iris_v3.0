@@ -328,6 +328,9 @@ public class ObjectGrabber : MonoBehaviour
         s_lastConsumedFrame = Time.frameCount;
     }
 
+    /// <summary>Allow other systems (WateringManager, CleaningManager) to consume the click.</summary>
+    public static void ConsumeClickExternal() => ConsumeClick();
+
     private void TryPickUp()
     {
         Vector2 screenPos = IrisInput.CursorPosition;

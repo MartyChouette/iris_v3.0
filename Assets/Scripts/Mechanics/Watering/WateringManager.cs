@@ -116,6 +116,7 @@ public class WateringManager : MonoBehaviour
             return;
 
         if (ObjectGrabber.IsHoldingObject) return;
+        if (ObjectGrabber.ClickConsumedThisFrame) return;
 
         if (_mainCamera == null) return;
 
@@ -152,6 +153,7 @@ public class WateringManager : MonoBehaviour
                 {
                     if (plantClickSFX != null && AudioManager.Instance != null)
                         AudioManager.Instance.PlaySFX(plantClickSFX);
+                    ObjectGrabber.ConsumeClickExternal();
                     BeginPouring(plant.definition);
                 }
             }
