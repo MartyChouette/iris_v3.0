@@ -55,6 +55,7 @@ public class PairableItem : MonoBehaviour
     private MaterialPropertyBlock _pulseMPB;
     private Color _originalColor;
     private bool _originalColorCaptured;
+    private bool _pairPulseActive; // true while snap-confirmation pulse is playing
 
     public bool IsPaired => _isPaired;
     public PairableItem PairedChild => _pairedChild;
@@ -70,6 +71,7 @@ public class PairableItem : MonoBehaviour
 
     private void Update()
     {
+        if (_pairPulseActive) return; // snap-confirmation pulse owns the renderer
         if (_pairMode != PairMode.SpecificPartner || _specificPartner == null) return;
         if (_isPaired) return; // already paired, no need to pulse
 
@@ -200,8 +202,8 @@ public class PairableItem : MonoBehaviour
             AudioManager.Instance?.PlaySFX(held._snapSound);
 
         // Pulse both items to confirm the pairing
-        StartCoroutine(PairPulse(this));
-        StartCoroutine(PairPulse(held));
+        StartCoroutine(RunPairPulse());
+        held.StartCoroutine(held.RunPairPulse());
 
         // Parent held item to this item
         var heldRb = held.GetComponent<Rigidbody>();
@@ -272,33 +274,36 @@ public class PairableItem : MonoBehaviour
     }
 
     /// <summary>Brief color pulse on an item to confirm pairing.</summary>
-    private static System.Collections.IEnumerator PairPulse(PairableItem item)
+    private System.Collections.IEnumerator RunPairPulse()
     {
-        var rend = item._renderer;
-        if (rend == null) yield break;
+        if (_renderer == null) yield break;
 
-        var mpb = new MaterialPropertyBlock();
-        rend.GetPropertyBlock(mpb);
-        Color original = mpb.GetColor("_BaseColor");
-        if (original == Color.clear && rend.sharedMaterial != null)
-            original = rend.sharedMaterial.color;
+        _pairPulseActive = true;
 
-        Color flash = item._partnerPulseColor;
-        float duration = 0.4f;
+        // Capture current color
+        _renderer.GetPropertyBlock(_pulseMPB);
+        Color original = _pulseMPB.GetColor("_BaseColor");
+        if (original == Color.clear && _renderer.sharedMaterial != null)
+            original = _renderer.sharedMaterial.color;
 
-        // Pulse up
+        Color flash = _partnerPulseColor;
+        float duration = 0.5f;
+
         for (float t = 0f; t < duration; t += Time.deltaTime)
         {
             float blend = Mathf.Sin(t / duration * Mathf.PI); // 0→1→0
-            rend.GetPropertyBlock(mpb);
-            mpb.SetColor("_BaseColor", Color.Lerp(original, flash, blend));
-            rend.SetPropertyBlock(mpb);
+            _renderer.GetPropertyBlock(_pulseMPB);
+            _pulseMPB.SetColor("_BaseColor", Color.Lerp(original, flash, blend));
+            _renderer.SetPropertyBlock(_pulseMPB);
             yield return null;
         }
 
         // Restore
-        rend.GetPropertyBlock(mpb);
-        mpb.SetColor("_BaseColor", original);
-        rend.SetPropertyBlock(mpb);
+        _renderer.GetPropertyBlock(_pulseMPB);
+        _pulseMPB.SetColor("_BaseColor", original);
+        _renderer.SetPropertyBlock(_pulseMPB);
+
+        _pairPulseActive = false;
+        _originalColorCaptured = false;
     }
 }
