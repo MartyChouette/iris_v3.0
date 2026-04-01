@@ -127,6 +127,9 @@ public class ObjectGrabber : MonoBehaviour
     [Tooltip("Layer mask for wall/ceiling/floor geometry that held items cannot pass through.")]
     [SerializeField] private LayerMask _wallLayer = 1; // Default layer
 
+    [Tooltip("Additional layer mask for barriers (closed cubbies, custom blockers). Merged with _wallLayer for clamping.")]
+    [SerializeField] private LayerMask _barrierLayer;
+
     [Header("Audio")]
     [Tooltip("SFX played when picking up an object.")]
     [SerializeField] private AudioClip _pickupSFX;
@@ -907,8 +910,9 @@ public class ObjectGrabber : MonoBehaviour
         if (_heldRb == null) return;
 
         const float margin = 0.05f;
+        int blockMask = _wallLayer | _barrierLayer;
 
-        // 1) Camera → target: keep item on camera's side of any wall
+        // 1) Camera → target: keep item on camera's side of any wall/barrier
         //    (skip when on a surface to allow cross-room placement)
         if (_currentSurface == null)
         {
@@ -917,21 +921,21 @@ public class ObjectGrabber : MonoBehaviour
             float camDist = camToTarget.magnitude;
 
             if (camDist > 0.001f &&
-                Physics.Raycast(camPos, camToTarget.normalized, out RaycastHit camHit, camDist, _wallLayer))
+                Physics.Raycast(camPos, camToTarget.normalized, out RaycastHit camHit, camDist, blockMask))
             {
                 float safeDist = Mathf.Max(0f, camHit.distance - margin);
                 _grabTarget = camPos + camToTarget.normalized * safeDist;
             }
         }
 
-        // 2) Current position → target: prevent tunneling through walls frame-to-frame
+        // 2) Current position → target: prevent tunneling through walls/barriers
         //    (always active — even when snapped to a surface)
         Vector3 from = _heldRb.position;
         Vector3 delta = _grabTarget - from;
         float dist = delta.magnitude;
 
         if (dist > 0.001f &&
-            Physics.Raycast(from, delta.normalized, out RaycastHit wallHit, dist, _wallLayer))
+            Physics.Raycast(from, delta.normalized, out RaycastHit wallHit, dist, blockMask))
         {
             float safeDist = Mathf.Max(0f, wallHit.distance - margin);
             _grabTarget = from + delta.normalized * safeDist;
