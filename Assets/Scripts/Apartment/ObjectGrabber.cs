@@ -5,6 +5,7 @@ using UnityEngine.Rendering;
 public class ObjectGrabber : MonoBehaviour
 {
     [Header("Physics")]
+#pragma warning disable 0414
     [Tooltip("Spring strength pulling the object toward the cursor.")]
     [SerializeField] private float grabSpring = 120f;
 
@@ -16,6 +17,7 @@ public class ObjectGrabber : MonoBehaviour
 
     [Tooltip("Maximum speed cap to prevent tunneling.")]
     [SerializeField] private float maxSpeed = 12f;
+#pragma warning restore 0414
 
     // ── Grab feel presets (switchable at runtime via F3 debug panel) ──
     public enum GrabFeel

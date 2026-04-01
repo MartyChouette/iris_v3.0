@@ -134,7 +134,7 @@ public class ScreenFade : MonoBehaviour
         _phaseText.fontSize = 48f;
         _phaseText.alignment = TMPro.TextAlignmentOptions.Center;
         _phaseText.color = new Color(0.95f, 0.92f, 0.85f);
-        _phaseText.enableWordWrapping = true;
+        _phaseText.textWrappingMode = TextWrappingModes.Normal;
         textGO.SetActive(false);
 
         Debug.Log("[ScreenFade] Created phase title on overlay canvas (sortingOrder 105).");

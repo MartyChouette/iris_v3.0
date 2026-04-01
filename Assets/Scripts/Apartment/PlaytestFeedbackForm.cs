@@ -680,7 +680,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         var inputTMP = inputTextGO.AddComponent<TextMeshProUGUI>();
         inputTMP.fontSize = 16f;
         inputTMP.color = new Color(0.9f, 0.9f, 0.88f);
-        inputTMP.enableWordWrapping = true;
+        inputTMP.textWrappingMode = TextWrappingModes.Normal;
 
         // Placeholder
         var phGO = MakeChild(textArea, "Placeholder");
@@ -691,7 +691,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         phTMP.fontSize = 16f;
         phTMP.fontStyle = FontStyles.Italic;
         phTMP.color = new Color(0.5f, 0.5f, 0.48f);
-        phTMP.enableWordWrapping = true;
+        phTMP.textWrappingMode = TextWrappingModes.Normal;
 
         // TMP_InputField component
         var inputField = fieldGO.AddComponent<TMP_InputField>();

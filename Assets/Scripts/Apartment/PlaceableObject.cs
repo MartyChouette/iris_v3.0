@@ -13,8 +13,10 @@ public class PlaceableObject : MonoBehaviour
     public enum State { Resting, Held, Placed }
 
     [Header("Visual Feedback")]
+#pragma warning disable 0414
     [Tooltip("Color multiplier applied to the material when held.")]
     [SerializeField] private float heldBrightness = 1.4f;
+#pragma warning restore 0414
 
     [Header("Respawn")]
     [Tooltip("Seconds after leaving world bounds before recovery (prevents flicker).")]
@@ -67,8 +69,10 @@ public class PlaceableObject : MonoBehaviour
     [SerializeField] private AudioClip _placeSFXOverride;
 
     [Header("Home Position")]
+#pragma warning disable 0414
     [Tooltip("If true, captures spawn position as home on Awake (when _homePosition is unset).")]
     [SerializeField] private bool _useSpawnAsHome;
+#pragma warning restore 0414
 
     [Tooltip("World-space home position. Set manually or auto-captured via _useSpawnAsHome.")]
     [SerializeField] private Vector3 _homePosition;
@@ -81,10 +85,9 @@ public class PlaceableObject : MonoBehaviour
 
     // ── Static world bounds (set by ApartmentManager) ─────────────────
     private static Bounds s_worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
-    private static bool s_boundsSet;
 
     /// <summary>Set the world bounding box. Objects outside this are recovered to the nearest surface.</summary>
-    public static void SetWorldBounds(Bounds bounds) { s_worldBounds = bounds; s_boundsSet = true; }
+    public static void SetWorldBounds(Bounds bounds) { s_worldBounds = bounds; }
 
     public State CurrentState { get; private set; } = State.Resting;
     public ItemCategory Category => _itemCategory;

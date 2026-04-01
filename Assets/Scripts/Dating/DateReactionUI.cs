@@ -315,7 +315,7 @@ public class DateReactionUI : MonoBehaviour
         _bubbleText.outlineWidth = 0.2f;
         _bubbleText.outlineColor = new Color32(0, 0, 0, 200);
         _bubbleText.rectTransform.sizeDelta = new Vector2(4f, 2f);
-        _bubbleText.enableWordWrapping = true;
+        _bubbleText.textWrappingMode = TextWrappingModes.Normal;
         _bubbleText.sortingOrder = 101;
 
         // Render text through walls

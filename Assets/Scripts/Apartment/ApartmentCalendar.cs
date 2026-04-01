@@ -230,7 +230,7 @@ public class ApartmentCalendar : MonoBehaviour
                 _cellTexts[idx].fontSize = 14f;
                 _cellTexts[idx].alignment = TextAlignmentOptions.Center;
                 _cellTexts[idx].color = new Color(0.85f, 0.85f, 0.85f);
-                _cellTexts[idx].enableWordWrapping = true;
+                _cellTexts[idx].textWrappingMode = TextWrappingModes.Normal;
                 _cellTexts[idx].overflowMode = TextOverflowModes.Ellipsis;
                 _cellTexts[idx].raycastTarget = false;
             }
@@ -391,7 +391,7 @@ public class ApartmentCalendar : MonoBehaviour
         tmp.fontStyle = style;
         tmp.alignment = align;
         tmp.color = color;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
         tmp.raycastTarget = false;
         return tmp;
     }

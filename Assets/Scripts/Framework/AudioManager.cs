@@ -39,7 +39,6 @@ public class AudioManager : MonoBehaviour
     [Header("Debug")]
     public bool debugLogs = false;
 
-    private bool _wasDetachedToRoot = false;
 
     // Cached per-channel volumes (applied on top of base volume args)
     private float _masterVol = 1f;
@@ -70,7 +69,6 @@ public class AudioManager : MonoBehaviour
         if (transform.parent != null)
         {
             transform.SetParent(null, worldPositionStays: true);
-            _wasDetachedToRoot = true;
         }
 
         DontDestroyOnLoad(gameObject);

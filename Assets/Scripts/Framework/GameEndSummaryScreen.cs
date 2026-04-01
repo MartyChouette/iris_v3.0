@@ -322,7 +322,7 @@ public class GameEndSummaryScreen : MonoBehaviour
         tmp.fontSize = fontSize;
         tmp.alignment = align;
         tmp.color = color;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
 
         return tmp;

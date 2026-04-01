@@ -127,7 +127,7 @@ public class ContentWarningScreen : MonoBehaviour
         bodyTMP.fontSize = 22f;
         bodyTMP.alignment = TextAlignmentOptions.Center;
         bodyTMP.color = new Color(0.75f, 0.73f, 0.68f);
-        bodyTMP.enableWordWrapping = true;
+        bodyTMP.textWrappingMode = TextWrappingModes.Normal;
         bodyTMP.lineSpacing = 8f;
 
         // Dismiss hint

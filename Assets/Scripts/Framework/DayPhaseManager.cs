@@ -737,7 +737,7 @@ public class DayPhaseManager : MonoBehaviour
         bodyTMP.fontStyle = FontStyles.Italic;
         bodyTMP.alignment = TextAlignmentOptions.Center;
         bodyTMP.color = new Color(0.25f, 0.22f, 0.2f);
-        bodyTMP.enableWordWrapping = true;
+        bodyTMP.textWrappingMode = TextWrappingModes.Normal;
 
         // ── Start button ──
         var btnGO = new GameObject("StartButton");

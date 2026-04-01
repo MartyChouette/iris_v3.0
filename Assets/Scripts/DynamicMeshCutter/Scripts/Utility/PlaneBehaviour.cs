@@ -68,7 +68,7 @@ namespace DynamicMeshCutter
 
         // ───────────────────── Unity ─────────────────────
 
-        private void Update()
+        private new void Update()
         {
             // Stage 1: Live preview while you position/rotate the plane.
             if (previewBeforeCut)
@@ -116,7 +116,6 @@ namespace DynamicMeshCutter
             RefreshCachedReferencesIfNeeded();
             var sessions = _cachedSessions ?? System.Array.Empty<FlowerSessionController>();
 
-            bool anyVirtualCuts = false;
             bool anyDMCCuts = false;
 
             // ── PHASE 1: Virtual stem cuts (no suppression needed) ──
@@ -154,8 +153,6 @@ namespace DynamicMeshCutter
 
                             if (success)
                             {
-                                anyVirtualCuts = true;
-
                                 // Fire sap effects
                                 var sap = stemRuntime.GetComponentInParent<FlowerSapController>();
                                 sap?.EmitStemCut(_lastPlanePoint, _lastPlaneNormal, stemRuntime);

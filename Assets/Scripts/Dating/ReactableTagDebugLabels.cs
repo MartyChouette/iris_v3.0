@@ -116,7 +116,7 @@ public class ReactableTagDebugLabels : MonoBehaviour
         tmp.fontSize = 22f;
         tmp.color = color;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.enableWordWrapping = false;
+        tmp.textWrappingMode = TextWrappingModes.NoWrap;
         var textRT = textGO.GetComponent<RectTransform>();
         textRT.anchorMin = Vector2.zero;
         textRT.anchorMax = Vector2.one;

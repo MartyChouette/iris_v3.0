@@ -34,7 +34,6 @@ public class WipeController : MonoBehaviour
 
     private InputAction _mousePosition;
     private InputAction _mouseClick;
-    private bool _isOnSurface;
 
     // ─── Lifecycle ───────────────────────────────────────────────────
 
@@ -77,7 +76,6 @@ public class WipeController : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, spillLayer))
         {
-            _isOnSurface = true;
             Vector3 pos = hit.point + hit.normal * surfaceOffset;
 
             if (spongeVisual != null)
@@ -96,7 +94,6 @@ public class WipeController : MonoBehaviour
         }
         else
         {
-            _isOnSurface = false;
             if (spongeVisual != null && spongeVisual.gameObject.activeSelf)
                 spongeVisual.gameObject.SetActive(false);
         }

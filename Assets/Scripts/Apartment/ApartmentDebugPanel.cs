@@ -589,7 +589,7 @@ public class ApartmentDebugPanel : MonoBehaviour
         tmp.fontSize = FontSize;
         tmp.color = Color.white;
         tmp.alignment = TextAlignmentOptions.Left;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
         tmp.raycastTarget = false;
         return tmp;
     }

@@ -21,7 +21,6 @@ public class ItemLabelOverlay : MonoBehaviour
     private InputAction _mmbAction;
     private readonly List<GameObject> _labelPool = new List<GameObject>();
     private int _activeCount;
-    private bool _showing;
     private Camera _cachedCamera;
 
     private void Awake()
@@ -68,7 +67,6 @@ public class ItemLabelOverlay : MonoBehaviour
 
     private void ShowLabels()
     {
-        _showing = true;
         if (_cachedCamera == null) _cachedCamera = Camera.main;
         var cam = _cachedCamera;
         if (cam == null) return;
@@ -123,7 +121,6 @@ public class ItemLabelOverlay : MonoBehaviour
 
     private void HideLabels()
     {
-        _showing = false;
         for (int i = 0; i < _labelPool.Count; i++)
             _labelPool[i].SetActive(false);
         _activeCount = 0;
@@ -190,7 +187,7 @@ public class ItemLabelOverlay : MonoBehaviour
         tmp.fontSize = 22f;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
-        tmp.enableWordWrapping = false;
+        tmp.textWrappingMode = TextWrappingModes.NoWrap;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
         tmp.raycastTarget = false;
 

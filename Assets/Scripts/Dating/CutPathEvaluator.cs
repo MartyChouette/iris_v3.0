@@ -5,7 +5,9 @@ public class CutPathEvaluator : MonoBehaviour
 {
     [Header("Sampling")]
     [Tooltip("NxN sample grid within each phone number rect.")]
+#pragma warning disable 0414
     [SerializeField] private int gridResolution = 20;
+#pragma warning restore 0414
 
     [Tooltip("Minimum overlap fraction to count as 'selected'.")]
     [SerializeField] private float minimumCoverage = 0.15f;

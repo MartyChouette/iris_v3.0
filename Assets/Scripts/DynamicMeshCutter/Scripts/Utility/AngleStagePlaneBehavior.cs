@@ -98,7 +98,7 @@ namespace DynamicMeshCutter
             }
         }
 
-        private void Update()
+        private new void Update()
         {
             if (previewBeforeCut)
             {

@@ -71,8 +71,10 @@ public class DateSessionManager : MonoBehaviour
     [SerializeField] private float ambientMoodDrift = 0.5f;
 
     [Header("Phase 3 Timing")]
+#pragma warning disable 0414
     [Tooltip("Duration of Phase 3 (couch judging) in seconds before the date ends.")]
     [SerializeField] private float phase3Duration = 40f;
+#pragma warning restore 0414
 
     [Header("Fade Timing")]
     [Tooltip("Fade duration for phase transitions (seconds).")]

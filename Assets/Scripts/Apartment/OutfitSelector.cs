@@ -68,7 +68,7 @@ public class OutfitSelector : MonoBehaviour
     {
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
         if (_isOpen) return;
-        if (!IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame()) return;
+        if (IrisInput.Instance == null || !IrisInput.Instance.Click.WasPressedThisFrame()) return;
 
         // Only during Browsing apartment state
         if (ApartmentManager.Instance == null) return;

@@ -645,7 +645,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         _tooltipText.fontSize = 12f;
         _tooltipText.color = new Color(0.9f, 0.9f, 0.9f);
         _tooltipText.alignment = TextAlignmentOptions.TopLeft;
-        _tooltipText.enableWordWrapping = true;
+        _tooltipText.textWrappingMode = TextWrappingModes.Normal;
 
         _tooltipPanel.SetActive(false);
     }
@@ -669,7 +669,7 @@ public class NewspaperManager : MonoBehaviour, IStationManager
         tmp.fontStyle = style;
         tmp.alignment = alignment;
         tmp.color = new Color(0.12f, 0.12f, 0.12f);
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
         tmp.raycastTarget = false;
         return go;

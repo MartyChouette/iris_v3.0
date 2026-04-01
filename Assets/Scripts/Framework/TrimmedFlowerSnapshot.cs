@@ -90,7 +90,6 @@ public static class TrimmedFlowerSnapshot
                     ? new Material(srcMats[i])
                     : null;
             }
-            cloneMats = cloneMats; // suppress unused warning
             cloneRend.sharedMaterials = cloneMats;
         }
 

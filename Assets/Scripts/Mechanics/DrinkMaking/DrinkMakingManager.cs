@@ -64,7 +64,6 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
     // Pour state
     private BottleController _selectedBottle;
     private bool _isPouring;
-    private int _currentIngredientIndex;
 
     // Scoring breakdown (public for HUD)
     [HideInInspector] public float lastFillScore;
@@ -141,7 +140,6 @@ public class DrinkMakingManager : MonoBehaviour, IStationManager
         if (index < 0 || index >= availableRecipes.Length) return;
 
         activeRecipe = availableRecipes[index];
-        _currentIngredientIndex = 0;
 
         // Reset glass
         if (glass != null)

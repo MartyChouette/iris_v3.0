@@ -41,7 +41,7 @@ public class SquishMesh : MonoBehaviour
     public float dragStrength = 1f; // weight of the drag
 
     private Mesh OriginalMesh, MeshClone;
-    private MeshRenderer renderer;
+    private new MeshRenderer renderer;
     private JellyVertex[] jv;
     private Vector3[] vertexArray;
 
