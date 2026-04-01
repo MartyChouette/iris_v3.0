@@ -158,7 +158,7 @@ public class PlacementSurface : MonoBehaviour
     /// <summary>
     /// Snap a world point to a grid on this surface's tangent plane, clamped within bounds (with edge margin).
     /// </summary>
-    public Vector3 SnapToGrid(Vector3 worldPoint, float gridSize)
+    public Vector3 SnapToGrid(Vector3 worldPoint, float gridSize, Vector3? viewOrigin = null)
     {
         Vector3 local = transform.InverseTransformPoint(worldPoint);
         GetTangentAxes(out int a, out int b, out int n);
@@ -171,13 +171,22 @@ public class PlacementSurface : MonoBehaviour
         local[a] = Mathf.Clamp(Mathf.Round(local[a] / gridSize) * gridSize, min[a] + marginA, max[a] - marginA);
         local[b] = Mathf.Clamp(Mathf.Round(local[b] / gridSize) * gridSize, min[b] + marginB, max[b] - marginB);
 
-        // Preserve the face the point is already on (for walls)
+        // Use same dot-product face detection as ProjectOntoSurface
         bool frontFace = true;
         if (IsVertical)
         {
-            float front = localBounds.center[n] + localBounds.extents[n];
-            float back = localBounds.center[n] - localBounds.extents[n];
-            frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+            if (viewOrigin.HasValue)
+            {
+                Vector3 wallCenter = transform.TransformPoint(localBounds.center);
+                Vector3 camToWall = wallCenter - viewOrigin.Value;
+                frontFace = Vector3.Dot(camToWall, SurfaceNormal) < 0f;
+            }
+            else
+            {
+                float front = localBounds.center[n] + localBounds.extents[n];
+                float back = localBounds.center[n] - localBounds.extents[n];
+                frontFace = Mathf.Abs(local[n] - front) <= Mathf.Abs(local[n] - back);
+            }
         }
 
         local[n] = frontFace

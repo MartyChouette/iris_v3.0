@@ -548,7 +548,7 @@ public class ObjectGrabber : MonoBehaviour
         // detection — the rigidbody can overshoot through thin wall triggers.
         var hitResult = _currentSurface.ProjectOntoSurface(_grabTarget, cam.transform.position);
         Vector3 pos = _gridSnap
-            ? _currentSurface.SnapToGrid(hitResult.worldPosition, gridSize)
+            ? _currentSurface.SnapToGrid(hitResult.worldPosition, gridSize, cam.transform.position)
             : hitResult.worldPosition;
 
         float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
@@ -858,7 +858,7 @@ public class ObjectGrabber : MonoBehaviour
 
                 var hitResult = surface.ProjectOntoSurface(hits[h].point, cam.transform.position);
                 Vector3 pos = _gridSnap
-                    ? surface.SnapToGrid(hitResult.worldPosition, gridSize)
+                    ? surface.SnapToGrid(hitResult.worldPosition, gridSize, cam.transform.position)
                     : hitResult.worldPosition;
 
                 float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
