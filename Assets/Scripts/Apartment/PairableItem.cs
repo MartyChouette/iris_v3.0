@@ -199,6 +199,10 @@ public class PairableItem : MonoBehaviour
         else if (held._snapSound != null)
             AudioManager.Instance?.PlaySFX(held._snapSound);
 
+        // Pulse both items to confirm the pairing
+        StartCoroutine(PairPulse(this));
+        StartCoroutine(PairPulse(held));
+
         // Parent held item to this item
         var heldRb = held.GetComponent<Rigidbody>();
         if (heldRb != null)
@@ -265,5 +269,36 @@ public class PairableItem : MonoBehaviour
             if (!found) break;
         }
         return current;
+    }
+
+    /// <summary>Brief color pulse on an item to confirm pairing.</summary>
+    private static System.Collections.IEnumerator PairPulse(PairableItem item)
+    {
+        var rend = item._renderer;
+        if (rend == null) yield break;
+
+        var mpb = new MaterialPropertyBlock();
+        rend.GetPropertyBlock(mpb);
+        Color original = mpb.GetColor("_BaseColor");
+        if (original == Color.clear && rend.sharedMaterial != null)
+            original = rend.sharedMaterial.color;
+
+        Color flash = item._partnerPulseColor;
+        float duration = 0.4f;
+
+        // Pulse up
+        for (float t = 0f; t < duration; t += Time.deltaTime)
+        {
+            float blend = Mathf.Sin(t / duration * Mathf.PI); // 0→1→0
+            rend.GetPropertyBlock(mpb);
+            mpb.SetColor("_BaseColor", Color.Lerp(original, flash, blend));
+            rend.SetPropertyBlock(mpb);
+            yield return null;
+        }
+
+        // Restore
+        rend.GetPropertyBlock(mpb);
+        mpb.SetColor("_BaseColor", original);
+        rend.SetPropertyBlock(mpb);
     }
 }
