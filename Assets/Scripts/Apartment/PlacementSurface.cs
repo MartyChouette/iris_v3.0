@@ -61,17 +61,28 @@ public class PlacementSurface : MonoBehaviour
         triggerGO.transform.SetParent(transform, false);
         triggerGO.layer = surfaceLayerIndex;
 
+        // Counteract negative scale on parent — BoxCollider can't handle it
+        Vector3 parentScale = transform.lossyScale;
+        Vector3 localScale = new Vector3(
+            parentScale.x < 0f ? -1f : 1f,
+            parentScale.y < 0f ? -1f : 1f,
+            parentScale.z < 0f ? -1f : 1f);
+        triggerGO.transform.localScale = localScale;
+
         var box = triggerGO.AddComponent<BoxCollider>();
         box.isTrigger = true;
 
-        // Thicken the trigger along the normal so angled rays reliably hit it.
-        // Offset it slightly toward the front face so it sits in front of the wall mesh.
         Vector3 center = localBounds.center;
         Vector3 size = localBounds.size;
+        // Ensure positive size
+        size.x = Mathf.Abs(size.x);
+        size.y = Mathf.Abs(size.y);
+        size.z = Mathf.Abs(size.z);
+
         if (normalAxis == SurfaceAxis.Up)
             size.y = Mathf.Max(size.y, 0.05f);
         else
-            size.z = Mathf.Max(size.z, 0.15f); // slightly thicker for walls so angled rays hit
+            size.z = Mathf.Max(size.z, 0.15f);
 
         box.center = center;
         box.size = size;
