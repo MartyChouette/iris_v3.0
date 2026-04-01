@@ -50,6 +50,19 @@ public class ScreenFade : MonoBehaviour
         // Forcing a higher order blocks NameEntryScreen clicks and deadlocks startup.
     }
 
+    private void Start()
+    {
+        // If starting directly in Exploration (editor play), clear the fade immediately
+        if (_canvasGroup != null
+            && DayPhaseManager.Instance != null
+            && DayPhaseManager.Instance.CurrentPhase == DayPhaseManager.DayPhase.Exploration
+            && MainMenuManager.ActiveConfig == null)
+        {
+            _canvasGroup.alpha = 0f;
+            _canvasGroup.blocksRaycasts = false;
+        }
+    }
+
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
