@@ -208,7 +208,34 @@ public class PlaceableObject : MonoBehaviour
             _rb.linearVelocity = Vector3.zero;
         }
 
+        ApplyGlitch();
         Debug.Log($"[PlaceableObject] {name} disheveled.");
+    }
+
+    private void ApplyGlitch()
+    {
+        if (_instanceMat == null) return;
+        if (_isGlitched) return;
+
+        if (!s_glitchShaderCached)
+        {
+            s_glitchShaderCached = true;
+            s_glitchShader = Shader.Find("Iris/PSXLitGlitch");
+        }
+        if (s_glitchShader == null) return;
+
+        _originalShader = _instanceMat.shader;
+        _instanceMat.shader = s_glitchShader;
+        _instanceMat.SetFloat("_GlitchIntensity", 0.4f);
+        _isGlitched = true;
+    }
+
+    private void RemoveGlitch()
+    {
+        if (!_isGlitched || _instanceMat == null || _originalShader == null) return;
+
+        _instanceMat.shader = _originalShader;
+        _isGlitched = false;
     }
 
     /// <summary>Capture current rotation as the disheveled pose (rotation only, position untouched).</summary>
@@ -289,6 +316,10 @@ public class PlaceableObject : MonoBehaviour
     // Cached shader lookups (avoid per-object Shader.Find)
     private static Shader s_silhouetteShader;
     private static bool s_silhouetteShaderCached;
+    private static Shader s_glitchShader;
+    private static bool s_glitchShaderCached;
+    private Shader _originalShader;
+    private bool _isGlitched;
 
     private void Awake()
     {
@@ -433,6 +464,7 @@ public class PlaceableObject : MonoBehaviour
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
         IsAtHome = false;
+        RemoveGlitch();
 
         // Lazy-init silhouette on first pickup (deferred from scene load)
         EnsureSilhouette();
