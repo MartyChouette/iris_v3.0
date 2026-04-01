@@ -70,6 +70,7 @@ public class ScissorsCutController : MonoBehaviour
     private int _scissorsLastCutIndex;
     private LineRenderer _lineRenderer;
     private Texture2D _dashTexture;
+    private Material _lineMaterial;
 
     // Pre-computed cumulative arc lengths for each point
     private List<float> _cumulativeArcLengths = new List<float>();
@@ -112,11 +113,11 @@ public class ScissorsCutController : MonoBehaviour
         _lineRenderer.numCapVertices = 2;
         _lineRenderer.textureMode = LineTextureMode.Tile;
 
-        var lineMat = new Material(Shader.Find("Sprites/Default"));
-        lineMat.mainTexture = _dashTexture;
-        lineMat.color = cutLineColor;
-        lineMat.mainTextureScale = new Vector2(dashesPerUnit, 1f);
-        _lineRenderer.sharedMaterial = lineMat;
+        _lineMaterial = new Material(Shader.Find("Sprites/Default"));
+        _lineMaterial.mainTexture = _dashTexture;
+        _lineMaterial.color = cutLineColor;
+        _lineMaterial.mainTextureScale = new Vector2(dashesPerUnit, 1f);
+        _lineRenderer.sharedMaterial = _lineMaterial;
 
         if (scissorsVisual != null)
             scissorsVisual.gameObject.SetActive(false);
@@ -137,6 +138,7 @@ public class ScissorsCutController : MonoBehaviour
     private void OnDestroy()
     {
         if (_dashTexture != null) Destroy(_dashTexture);
+        if (_lineMaterial != null) Destroy(_lineMaterial);
     }
 
     private void Update()

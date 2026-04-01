@@ -43,6 +43,7 @@ public class GlobalCursorManager : MonoBehaviour
     // ── State ──
     private CursorType _currentType = CursorType.Default;
     private Camera _cachedCamera;
+    private float _cameraRefetchTimer;
 
     // Raycast against everything except UI (layer 5) and Ignore Raycast (layer 2)
     private const int RaycastMask = ~((1 << 5) | (1 << 2));
@@ -126,7 +127,7 @@ public class GlobalCursorManager : MonoBehaviour
 
     private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
     private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
-    private void OnSceneLoaded(Scene s, LoadSceneMode m) => _cachedCamera = null;
+    private void OnSceneLoaded(Scene s, LoadSceneMode m) { _cachedCamera = null; _cameraRefetchTimer = 0f; }
 
     // ══════════════════════════════════════════════════════════════
     // Texture loading
@@ -201,8 +202,13 @@ public class GlobalCursorManager : MonoBehaviour
 
     private void Update()
     {
-        // Always re-fetch — camera changes during additive scene loads (flower trimming)
-        _cachedCamera = Camera.main;
+        // Re-fetch Camera.main periodically (every 0.5s) or when null
+        _cameraRefetchTimer -= Time.unscaledDeltaTime;
+        if (_cachedCamera == null || _cameraRefetchTimer <= 0f)
+        {
+            _cachedCamera = Camera.main;
+            _cameraRefetchTimer = 0.5f;
+        }
         if (_cachedCamera == null) { ApplyCursor(CursorType.Default); return; }
 
         // F7 debug: log grab state

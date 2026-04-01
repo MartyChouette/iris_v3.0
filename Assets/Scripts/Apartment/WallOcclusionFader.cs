@@ -43,6 +43,7 @@ public class WallOcclusionFader : MonoBehaviour
 
     private static readonly int DissolveID = Shader.PropertyToID("_DissolveAmount");
     private int _lastAreaIndex = -1;
+    private AreaWallFade[] _cachedAreaWalls;
 
     /// <summary>Dissolve threshold above which a wall's collider is disabled (raycasts pass through).</summary>
     private const float ColliderDisableThreshold = 0.3f;
@@ -58,6 +59,7 @@ public class WallOcclusionFader : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
+        _cachedAreaWalls = FindObjectsByType<AreaWallFade>(FindObjectsSortMode.None);
     }
 
     private void OnDestroy()
@@ -213,8 +215,9 @@ public class WallOcclusionFader : MonoBehaviour
         }
 
         // Find AreaWallFade walls not yet tracked and apply their floor immediately
-        var areaWalls = FindObjectsByType<AreaWallFade>(FindObjectsSortMode.None);
-        foreach (var aw in areaWalls)
+        if (_cachedAreaWalls == null)
+            _cachedAreaWalls = FindObjectsByType<AreaWallFade>(FindObjectsSortMode.None);
+        foreach (var aw in _cachedAreaWalls)
         {
             var rend = aw.GetComponent<Renderer>();
             if (rend == null) continue;

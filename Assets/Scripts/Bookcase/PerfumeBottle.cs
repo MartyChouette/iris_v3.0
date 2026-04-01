@@ -6,6 +6,9 @@ using UnityEngine;
 /// </summary>
 public class PerfumeBottle : MonoBehaviour
 {
+    private static readonly System.Collections.Generic.List<PerfumeBottle> s_all = new();
+    public static System.Collections.Generic.IReadOnlyList<PerfumeBottle> All => s_all;
+
     [Header("Definition")]
     [Tooltip("ScriptableObject defining this perfume.")]
     [SerializeField] private PerfumeDefinition definition;
@@ -27,6 +30,9 @@ public class PerfumeBottle : MonoBehaviour
     private Material _instanceMaterial;
     private Color _baseColor;
     private bool _isHovered;
+
+    private void OnEnable() => s_all.Add(this);
+    private void OnDisable() => s_all.Remove(this);
 
     private void Awake()
     {
@@ -76,11 +82,10 @@ public class PerfumeBottle : MonoBehaviour
     public void SprayOnce()
     {
         // Deactivate all other perfumes first so only the latest spray is active
-        var allBottles = FindObjectsByType<PerfumeBottle>(FindObjectsSortMode.None);
-        for (int i = 0; i < allBottles.Length; i++)
+        for (int i = 0; i < s_all.Count; i++)
         {
-            if (allBottles[i] == this) continue;
-            allBottles[i].Deactivate();
+            if (s_all[i] == this) continue;
+            s_all[i].Deactivate();
         }
 
         // Burst particles
