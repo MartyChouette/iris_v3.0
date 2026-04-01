@@ -15,9 +15,10 @@ MonoBehaviour:
   title: Tokyo for an Evening
   artist: Sarah, the Illstrumentalist
   genre: Sexy
-  description:
+  description: 
   labelColor: {r: 0.7, g: 0.15, b: 0.2, a: 1}
   coverColor: {r: 0.4, g: 0.1, b: 0.15, a: 1}
   moodValue: 0.5
-  musicClip: {fileID: 8300000, guid: ecf0c76bc3cc3c64bb8350d8a2e6e2fd, type: 3}
+  musicClip: {fileID: 8300000, guid: eee13b2d9192a9040865351140cee95a, type: 3}
+  musicClipPath: 
   volume: 0.7

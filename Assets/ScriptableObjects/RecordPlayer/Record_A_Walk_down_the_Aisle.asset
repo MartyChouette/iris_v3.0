@@ -15,9 +15,10 @@ MonoBehaviour:
   title: A Walk down the Aisle
   artist: baegel
   genre: Wedding
-  description:
+  description: 
   labelColor: {r: 0.9, g: 0.85, b: 0.6, a: 1}
   coverColor: {r: 0.95, g: 0.92, b: 0.85, a: 1}
   moodValue: 0.3
-  musicClip: {fileID: 8300000, guid: 0aef1d85ec33f1442aae21638a77773f, type: 3}
+  musicClip: {fileID: 8300000, guid: 63904bf431d7d6d4894afa5f526d89b9, type: 3}
+  musicClipPath: 
   volume: 0.7

@@ -19,7 +19,7 @@ MonoBehaviour:
   spillDefinition: {fileID: 11400000, guid: 48f6ed36f8cfc26439afef4f21db916c, type: 2}
   objectPrefab: {fileID: 0}
   objectScale: {x: 0.1, y: 0.1, z: 0.1}
-  objectColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  objectColor: {r: 0.7106918, g: 0.31651622, b: 0, a: 1}
   canBeDishelved: 0
   requireDateSuccess: 0
   requireDateFailure: 0
@@ -29,6 +29,7 @@ MonoBehaviour:
   requireBadFlowerTrim: 0
   requireGoodFlowerTrim: 0
   minDay: 1
+  maxDay: 0
   spawnPosition: {x: -0.9885399, y: -0.074251235, z: -0.53289324}
   spawnRotation: {x: 0, y: 0, z: 0}
   allowedAreas: 0200000000000000
