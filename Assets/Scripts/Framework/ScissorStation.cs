@@ -236,6 +236,15 @@ public class ScissorStation : MonoBehaviour
     private void Update()
     {
         if (isBusy) return;
+
+        // RMB while equipped → put scissors back
+        if (isEquipped && Input.GetMouseButtonDown(1))
+        {
+            if (debugLogs) Debug.Log("[ScissorStation] -> Unequip via RMB", this);
+            Unequip();
+            return;
+        }
+
         if (!Input.GetMouseButtonDown(mouseButton)) return;
 
         // Block through UI (but log so you know WHY)
