@@ -26,6 +26,11 @@ public class ContentWarningScreen : MonoBehaviour
         if (s_hasShown) return;
         s_hasShown = true;
 
+#if UNITY_EDITOR
+        // Skip in editor when playing apartment scene directly
+        if (MainMenuManager.ActiveConfig == null) return;
+#endif
+
         var go = new GameObject("ContentWarningScreen");
         DontDestroyOnLoad(go);
         go.AddComponent<ContentWarningScreen>();
