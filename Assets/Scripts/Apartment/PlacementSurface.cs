@@ -70,12 +70,11 @@ public class PlacementSurface : MonoBehaviour
         Vector3 size = localBounds.size;
         if (normalAxis == SurfaceAxis.Up)
         {
-            size.y = Mathf.Max(size.y, 0.3f);
+            size.y = Mathf.Max(size.y, 0.05f); // thin for floors/tables
         }
         else
         {
-            size.z = Mathf.Max(size.z, 0.3f);
-            // Shift trigger toward the front face so it's not buried inside the wall
+            size.z = Mathf.Max(size.z, 0.3f); // thick for walls (angled ray hits)
             center.z += localBounds.extents.z * 0.5f;
         }
 
