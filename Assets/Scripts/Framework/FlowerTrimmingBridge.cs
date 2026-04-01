@@ -324,20 +324,30 @@ public class FlowerTrimmingBridge : MonoBehaviour
         string grade = DateOutcomeCapture.LastOutcome.flowerGrade;
         DateHistory.UpdateFlowerResult(resultScore, resultDays, grade);
 
-        // TODO: Living plant spawning disabled for vertical slice — re-enable later
-        // // Spawn living plant in apartment (if score earned any days alive)
-        // if (resultDays > 0 && LivingFlowerPlantManager.Instance != null)
-        // {
-        //     string charName = DateOutcomeCapture.LastOutcome.characterName;
-        //     LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays, trimmedVisual);
-        // }
-        // else if (trimmedVisual != null)
-        // {
-        //     // No days alive — discard the snapshot
-        //     UnityEngine.Object.Destroy(trimmedVisual);
-        // }
+        // Scale down the trimmed flower to apartment pot size
         if (trimmedVisual != null)
+        {
+            // Normalize to a consistent small size (0.15m tall fits a pot)
+            var bounds = CalculateBounds(trimmedVisual);
+            float maxDim = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+            if (maxDim > 0.01f)
+            {
+                float targetSize = 0.15f;
+                float scale = targetSize / maxDim;
+                trimmedVisual.transform.localScale = Vector3.one * scale;
+            }
+        }
+
+        // Spawn living plant in apartment
+        if (resultDays > 0 && LivingFlowerPlantManager.Instance != null)
+        {
+            string charName = DateOutcomeCapture.LastOutcome.characterName;
+            LivingFlowerPlantManager.Instance.SpawnPlant(charName, resultDays, trimmedVisual);
+        }
+        else if (trimmedVisual != null)
+        {
             UnityEngine.Object.Destroy(trimmedVisual);
+        }
 
         // NOTE: Apartment camera is restored by DayPhaseManager after its fade-to-black,
         // not here — restoring here would cause a brief flash before the DPM fade starts.
@@ -358,6 +368,17 @@ public class FlowerTrimmingBridge : MonoBehaviour
 
         Debug.Log($"[FlowerTrimmingBridge] Trimming complete. Scene={sceneName}, " +
                   $"Score={resultScore}, Days={resultDays}, GameOver={resultGameOver}");
+    }
+
+    private static Bounds CalculateBounds(GameObject go)
+    {
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return new Bounds(go.transform.position, Vector3.one * 0.1f);
+
+        var bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
+        return bounds;
     }
 
     // ── Runtime UI helpers ─────────────────────────────────────────────

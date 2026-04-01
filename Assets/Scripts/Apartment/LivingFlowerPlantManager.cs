@@ -125,6 +125,10 @@ public class LivingFlowerPlantManager : MonoBehaviour
 
         MakePlaceable(plantGO);
 
+        // Make it waterable like other apartment plants
+        if (plantGO.GetComponent<WaterablePlant>() == null)
+            plantGO.AddComponent<WaterablePlant>();
+
         _activePlants.Add(plant);
 
         // Feed MoodMachine
