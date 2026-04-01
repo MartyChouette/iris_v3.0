@@ -301,23 +301,8 @@ public class FlowerTrimmingBridge : MonoBehaviour
         if (doneButtonCanvas != null)
             Destroy(doneButtonCanvas);
 
-        // Show a Continue button so the player can read their score at their own pace
-        bool continueClicked = false;
-        var continueCanvas = CreateContinueButton(() => continueClicked = true);
-
-        // Minimum 1.5s so the player can read the score before Continue appears
-        yield return new WaitForSecondsRealtime(1.5f);
-        if (continueCanvas != null)
-        {
-            var btn = continueCanvas.GetComponentInChildren<Button>();
-            if (btn != null) btn.interactable = true;
-        }
-
-        while (!continueClicked)
-            yield return null;
-
-        if (continueCanvas != null)
-            Destroy(continueCanvas);
+        // Brief pause then silently continue — no score UI
+        yield return new WaitForSecondsRealtime(1f);
 
         // Snapshot the trimmed flower visuals BEFORE unloading the scene
         GameObject trimmedVisual = null;
