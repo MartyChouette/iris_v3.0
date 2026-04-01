@@ -79,6 +79,10 @@ public class PairableItem : MonoBehaviour
         bool partnerHeld = ObjectGrabber.HeldObject != null
             && ObjectGrabber.HeldObject.gameObject == _specificPartner.gameObject;
 
+        if (Input.GetKeyDown(KeyCode.F7))
+            Debug.Log($"[PairableItem] '{name}' partner='{_specificPartner?.name}' partnerHeld={partnerHeld} " +
+                      $"heldObj='{ObjectGrabber.HeldObject?.name ?? "null"}' renderer={(_renderer != null ? "OK" : "NULL")} isPaired={_isPaired}");
+
         if (partnerHeld && _renderer != null)
         {
             if (!_originalColorCaptured)
