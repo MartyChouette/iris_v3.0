@@ -290,6 +290,11 @@ public class FlowerTrimmingBridge : MonoBehaviour
         if (cutter != null)
             cutter.InvalidateCache();
 
+        // Disable grading UI — we silently judge and fade back to apartment
+        var gradingUI = UnityEngine.Object.FindFirstObjectByType<FlowerGradingUI>();
+        if (gradingUI != null)
+            gradingUI.gameObject.SetActive(false);
+
         // Signal that the scene is loaded and ready for play
         IsSceneReady = true;
 

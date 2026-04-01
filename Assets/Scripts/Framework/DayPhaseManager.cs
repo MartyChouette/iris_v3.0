@@ -918,6 +918,12 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
+        // 8b. Wait for flower scene to fully unload before showing apartment
+        while (bridge != null && bridge.IsSceneReady)
+            yield return null;
+        // Extra frame for cleanup
+        yield return null;
+
         // 9. Restore apartment camera while screen is fully black
         if (bridge != null)
             bridge.RestoreApartmentCamera();
