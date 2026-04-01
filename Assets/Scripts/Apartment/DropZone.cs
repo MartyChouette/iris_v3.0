@@ -69,7 +69,14 @@ public class DropZone : MonoBehaviour
             // Name match (home zone or alt)
             if (!string.IsNullOrEmpty(_zoneName)
                 && (held.HomeZoneName == _zoneName || held.AltHomeZoneName == _zoneName))
-                _playerHoldingMatch = true;
+            {
+                // Shoes must be paired to place at the shoe station
+                var pairable = held.GetComponent<PairableItem>();
+                if (pairable != null && pairable.Mode == PairableItem.PairMode.SpecificPartner)
+                    _playerHoldingMatch = pairable.IsPaired;
+                else
+                    _playerHoldingMatch = true;
+            }
 
             // Any trash item highlights destroy-on-deposit zones (mirrors ObjectGrabber logic)
             if (!_playerHoldingMatch && _destroyOnDeposit && held.Category == ItemCategory.Trash)

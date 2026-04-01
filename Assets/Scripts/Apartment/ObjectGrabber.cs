@@ -507,6 +507,17 @@ public class ObjectGrabber : MonoBehaviour
                 // Trash items are always accepted by trash cans
                 if (!matchesHome && _held.Category == ItemCategory.Trash && zone.DestroyOnDeposit)
                     matchesHome = true;
+                // Shoes must be paired before placing at their home station
+                if (matchesHome)
+                {
+                    var pairable = _held.GetComponent<PairableItem>();
+                    if (pairable != null && pairable.Mode == PairableItem.PairMode.SpecificPartner && !pairable.IsPaired)
+                    {
+                        Debug.Log("[ObjectGrabber] Shoe must be paired before placing at station.");
+                        return; // block placement
+                    }
+                }
+
                 if (matchesHome)
                 {
                     _heldRb.constraints = _originalConstraints;
