@@ -203,6 +203,7 @@ public class ApartmentManager : MonoBehaviour
 
         ResetZoom();
         UpdateUI();
+        BuildZoomIndicator();
     }
 
     private void OnDestroy()
@@ -438,6 +439,7 @@ public class ApartmentManager : MonoBehaviour
 
                 // Re-clamp pan so it doesn't exceed the new zoom's limit
                 ClampPanOffset();
+                UpdateZoomIndicator();
             }
         }
 
@@ -556,6 +558,71 @@ public class ApartmentManager : MonoBehaviour
             _navLeftLabel.transform.parent.gameObject.SetActive(false);
         if (_navRightLabel != null)
             _navRightLabel.transform.parent.gameObject.SetActive(false);
+    }
+
+    // ── Zoom Indicator (minimal UI) ──────────────────────────────────
+
+    private UnityEngine.UI.Image[] _zoomTicks;
+    private static readonly Color TickActive = new Color(1f, 1f, 1f, 0.9f);
+    private static readonly Color TickInactive = new Color(1f, 1f, 1f, 0.2f);
+
+    private void BuildZoomIndicator()
+    {
+        if (_zoomSteps == null || _zoomSteps.Length == 0) return;
+
+        var canvasGO = new GameObject("ZoomIndicator");
+        canvasGO.transform.SetParent(transform, false);
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 10;
+        var scaler = canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
+        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        int count = _zoomSteps.Length;
+        _zoomTicks = new UnityEngine.UI.Image[count];
+        float tickH = 12f;
+        float tickW = 3f;
+        float gap = 6f;
+        float totalH = count * tickH + (count - 1) * gap;
+        float startY = -totalH * 0.5f;
+
+        for (int i = 0; i < count; i++)
+        {
+            var tickGO = new GameObject($"Tick_{i}");
+            tickGO.transform.SetParent(canvasGO.transform, false);
+            var rt = tickGO.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(1f, 0.5f);
+            rt.anchoredPosition = new Vector2(-20f, startY + i * (tickH + gap));
+            rt.sizeDelta = new Vector2(tickW, tickH);
+
+            var img = tickGO.AddComponent<UnityEngine.UI.Image>();
+            img.color = TickInactive;
+            img.raycastTarget = false;
+            _zoomTicks[i] = img;
+        }
+
+        UpdateZoomIndicator();
+    }
+
+    private void UpdateZoomIndicator()
+    {
+        if (_zoomTicks == null) return;
+        for (int i = 0; i < _zoomTicks.Length; i++)
+        {
+            if (_zoomTicks[i] == null) continue;
+            // Invert so bottom = zoomed out, top = zoomed in
+            int visualIdx = _zoomTicks.Length - 1 - i;
+            _zoomTicks[i].color = (visualIdx == _currentZoomStep) ? TickActive : TickInactive;
+
+            // Active tick is slightly wider
+            var rt = _zoomTicks[i].rectTransform;
+            rt.sizeDelta = (visualIdx == _currentZoomStep)
+                ? new Vector2(6f, 12f)
+                : new Vector2(3f, 12f);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────
