@@ -82,6 +82,9 @@ public class CleaningManager : MonoBehaviour
     /// <summary>The surface currently under the cursor, or null.</summary>
     public CleanableSurface HoveredSurface => _hoveredSurface;
 
+    /// <summary>True while the player is click-holding to scrub a stain (3D sponge visible).</summary>
+    public bool IsScrubbing => _hoveredSurface != null && _spongeVisual != null && _spongeVisual.gameObject.activeSelf;
+
     /// <summary>All surfaces in the scene.</summary>
     public CleanableSurface[] Surfaces => _surfaces;
 

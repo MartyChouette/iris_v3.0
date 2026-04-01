@@ -211,6 +211,13 @@ public class GlobalCursorManager : MonoBehaviour
 
         if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
 
+        // Hide cursor while actively scrubbing (3D sponge is visible instead)
+        if (CleaningManager.Instance != null && CleaningManager.Instance.IsScrubbing)
+        {
+            ApplyCursor(CursorType.Default);
+            return;
+        }
+
         // If cursor is over UI (buttons, panels, etc.), use default cursor
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
