@@ -942,6 +942,7 @@ public class ObjectGrabber : MonoBehaviour
 
     private void UpdateScrollInput()
     {
+        // RMB = rotate around Y (turn)
         bool rotatePressed = UnityEngine.InputSystem.Mouse.current != null
             && UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame;
         if (!rotatePressed
@@ -949,17 +950,34 @@ public class ObjectGrabber : MonoBehaviour
             && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
             rotatePressed = true;
 
-        if (!rotatePressed) return;
-
-        float angle = scrollRotateStep;
-
-        if (_isOnWall)
+        if (rotatePressed)
         {
-            _wallRotation += angle;
+            float angle = scrollRotateStep;
+            if (_isOnWall)
+                _wallRotation += angle;
+            else
+                _held.transform.Rotate(0f, angle, 0f, Space.World);
         }
-        else
+
+        // Shift+RMB or Mouse Back Button (3) = flip upright/flat
+        bool flipPressed = Input.GetMouseButtonDown(3); // mouse back/thumb button
+        if (!flipPressed)
         {
-            _held.transform.Rotate(0f, angle, 0f, Space.World);
+            flipPressed = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                       && Input.GetMouseButtonDown(1);
+        }
+
+        if (flipPressed)
+        {
+            // Toggle between standing (upright) and lying flat
+            Vector3 euler = _held.transform.eulerAngles;
+            float xAngle = Mathf.DeltaAngle(euler.x, 0f);
+            bool isUpright = Mathf.Abs(xAngle) < 45f;
+
+            if (isUpright)
+                _held.transform.Rotate(90f, 0f, 0f, Space.Self); // lay flat
+            else
+                _held.transform.rotation = Quaternion.Euler(0f, euler.y, 0f); // stand up
         }
     }
 
