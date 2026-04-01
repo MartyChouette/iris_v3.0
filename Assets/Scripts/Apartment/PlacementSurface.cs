@@ -120,17 +120,19 @@ public class PlacementSurface : MonoBehaviour
         local[a] = Mathf.Clamp(local[a], min[a] + marginA, max[a] - marginA);
         local[b] = Mathf.Clamp(local[b], min[b] + marginB, max[b] - marginB);
 
-        // For walls, pick the face the camera is looking at (stable, no flicker).
-        // For tables/shelves, always use the top face.
+        // For walls, pick the face the camera can see.
+        // Uses dot product between wall normal and camera→wall direction
+        // so it's stable regardless of camera height or angle.
         bool frontFace = true;
         if (IsVertical)
         {
             if (viewOrigin.HasValue)
             {
-                // Camera-relative: which side of the wall is the camera on?
-                Vector3 localCam = transform.InverseTransformPoint(viewOrigin.Value);
-                float center = localBounds.center[n];
-                frontFace = localCam[n] >= center;
+                // Which face does the camera see? Check if camera is on the
+                // positive-normal side of the wall surface (world space).
+                Vector3 wallCenter = transform.TransformPoint(localBounds.center);
+                Vector3 camToWall = wallCenter - viewOrigin.Value;
+                frontFace = Vector3.Dot(camToWall, SurfaceNormal) < 0f;
             }
             else
             {
