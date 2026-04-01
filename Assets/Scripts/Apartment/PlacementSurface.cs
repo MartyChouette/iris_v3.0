@@ -69,14 +69,9 @@ public class PlacementSurface : MonoBehaviour
         Vector3 center = localBounds.center;
         Vector3 size = localBounds.size;
         if (normalAxis == SurfaceAxis.Up)
-        {
-            size.y = Mathf.Max(size.y, 0.05f); // thin for floors/tables
-        }
+            size.y = Mathf.Max(size.y, 0.05f);
         else
-        {
-            size.z = Mathf.Max(size.z, 0.3f); // thick for walls (angled ray hits)
-            center.z += localBounds.extents.z * 0.5f;
-        }
+            size.z = Mathf.Max(size.z, 0.15f); // slightly thicker for walls so angled rays hit
 
         box.center = center;
         box.size = size;
