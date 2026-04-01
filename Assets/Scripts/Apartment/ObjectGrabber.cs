@@ -940,28 +940,26 @@ public class ObjectGrabber : MonoBehaviour
 
     private void UpdateScrollInput()
     {
-        bool rotatePressed = UnityEngine.InputSystem.Mouse.current != null
-            && UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame;
-        if (!rotatePressed
-            && UnityEngine.InputSystem.Gamepad.current != null
-            && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
-            rotatePressed = true;
-
-        if (!rotatePressed) return;
-
-        float angle = scrollRotateStep;
-
-        if (_isOnWall)
-        {
-            // Wall items: rotate around surface normal (forward axis)
-            _wallRotation += angle;
-        }
-        else
-        {
-            // Table items: rotate around Y axis
-            // Transform.Rotate bypasses FreezeRotation constraints
-            _held.transform.Rotate(0f, angle, 0f, Space.World);
-        }
+        // Object rotation disabled for now
+        // bool rotatePressed = UnityEngine.InputSystem.Mouse.current != null
+        //     && UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame;
+        // if (!rotatePressed
+        //     && UnityEngine.InputSystem.Gamepad.current != null
+        //     && UnityEngine.InputSystem.Gamepad.current.rightShoulder.wasPressedThisFrame)
+        //     rotatePressed = true;
+        //
+        // if (!rotatePressed) return;
+        //
+        // float angle = scrollRotateStep;
+        //
+        // if (_isOnWall)
+        // {
+        //     _wallRotation += angle;
+        // }
+        // else
+        // {
+        //     _held.transform.Rotate(0f, angle, 0f, Space.World);
+        // }
     }
 
     // ── Helper: half-extent along a normal ────────────────────────────
