@@ -211,9 +211,39 @@ public class GlobalCursorManager : MonoBehaviour
         }
         if (_cachedCamera == null) { ApplyCursor(CursorType.Default); return; }
 
-        // F7 debug: log grab state
+        // F7 debug: log grab state + wall placement info
         if (Input.GetKeyDown(KeyCode.F7))
+        {
             Debug.Log($"[GlobalCursorManager] HeldObject={ObjectGrabber.HeldObject?.name ?? "null"} IsHolding={ObjectGrabber.IsHoldingObject}");
+            Debug.Log($"[GlobalCursorManager] CurrentSurface={ObjectGrabber.CurrentSurface?.name ?? "null"} " +
+                      $"IsVertical={ObjectGrabber.CurrentSurface?.IsVertical}");
+
+            // Log all wall-mountable items and their last placed surface
+            foreach (var p in PlaceableObject.All)
+            {
+                if (p.CanWallMount)
+                    Debug.Log($"[WallDebug] '{p.name}' state={p.CurrentState} lastSurface={p.LastPlacedSurface?.name ?? "none"} pos={p.transform.position}");
+            }
+
+            // Log what the surface raycast is hitting right now
+            var debugCam = Camera.main;
+            if (debugCam != null)
+            {
+                Vector2 mp = IrisInput.CursorPosition;
+                Ray debugRay = debugCam.ScreenPointToRay(mp);
+                int surfLayer = LayerMask.GetMask("Surfaces");
+                var debugHits = Physics.RaycastAll(debugRay, 100f, surfLayer);
+                Debug.Log($"[WallDebug] Surface raycast hits: {debugHits.Length} (layer mask={surfLayer})");
+                for (int i = 0; i < debugHits.Length; i++)
+                {
+                    var h = debugHits[i];
+                    var surf = h.collider.GetComponentInParent<PlacementSurface>();
+                    Debug.Log($"[WallDebug]   hit[{i}]: '{h.collider.name}' layer={h.collider.gameObject.layer} " +
+                              $"dist={h.distance:F2} isTrigger={h.collider.isTrigger} " +
+                              $"surface={surf?.name ?? "null"} isVertical={surf?.IsVertical}");
+                }
+            }
+        }
 
         if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
 
