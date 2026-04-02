@@ -95,8 +95,10 @@ public class CameraTestController : MonoBehaviour
     }
 
     [Header("Visibility")]
+#pragma warning disable 0414
     [Tooltip("How many preset buttons to show (hides the rest). 0 = show all.")]
     [SerializeField] private int _visiblePresetCount = 2;
+#pragma warning restore 0414
 
     private void Start()
     {

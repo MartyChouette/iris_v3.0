@@ -17,8 +17,7 @@ public class MusicDirector : MonoBehaviour
     [Tooltip("Song that plays on the main menu and through loading. Assign via inspector.")]
     [SerializeField] private AudioClip _menuSong;
 
-    [Tooltip("Resources path fallback if _menuSong is not assigned (e.g. 'Music/ES_Evening Wind-Down - Sarah, the Illstrumentalist').")]
-    [SerializeField] private string _menuSongPath = "Music/ES_Les Artistes - Eva Hummingbird";
+    // _menuSongPath removed — music moved out of Resources. Assign _menuSong directly.
 
     [Tooltip("Volume for menu song (before master/music multipliers).")]
     [SerializeField] private float _menuSongVolume = 0.5f;
