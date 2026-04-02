@@ -534,11 +534,11 @@ public class ApartmentManager : MonoBehaviour
         Debug.Log($"[ApartmentManager] Browsing: {area.areaName}");
     }
 
-    /// <summary>Navigate to the previous area. Called by UI button.</summary>
-    public void NavigateLeft() => CycleArea(-1);
+    /// <summary>Navigate to the previous area. Called by UI button. Disabled for now.</summary>
+    public void NavigateLeft() { }
 
-    /// <summary>Navigate to the next area. Called by UI button.</summary>
-    public void NavigateRight() => CycleArea(1);
+    /// <summary>Navigate to the next area. Called by UI button. Disabled for now.</summary>
+    public void NavigateRight() { }
 
     // ──────────────────────────────────────────────────────────────
     // UI
