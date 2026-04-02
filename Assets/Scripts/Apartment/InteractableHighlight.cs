@@ -230,7 +230,8 @@ public class InteractableHighlight : MonoBehaviour
             s_cachedFresnelShader = Shader.Find("Iris/HighlightFresnel");
 
         EnsureSharedMaterials();
-        SwapToPSXLit();
+        // SwapToPSXLit disabled — was corrupting shared materials and causing stuck highlights
+        // SwapToPSXLit();
 
         _baseMaterialArrays = new Material[_renderers.Length][];
         for (int i = 0; i < _renderers.Length; i++)
