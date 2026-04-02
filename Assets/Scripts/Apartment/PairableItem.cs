@@ -62,11 +62,17 @@ public class PairableItem : MonoBehaviour
     public PairMode Mode => _pairMode;
     public PairableItem SpecificPartner => _specificPartner;
 
+    private Color _baseColor; // the true original color, captured once in Awake
+
     private void Awake()
     {
         _placeable = GetComponent<PlaceableObject>();
         _renderer = GetComponentInChildren<Renderer>();
         _pulseMPB = new MaterialPropertyBlock();
+
+        // Capture the TRUE base color once — never changes
+        if (_renderer != null && _renderer.sharedMaterial != null)
+            _baseColor = _renderer.sharedMaterial.color;
     }
 
     private void Update()
@@ -96,18 +102,13 @@ public class PairableItem : MonoBehaviour
 
         if (shouldPulse)
         {
-            if (!_originalColorCaptured)
-            {
-                _originalColor = _renderer.material.color;
-                _originalColorCaptured = true;
-            }
-
+            _originalColorCaptured = true;
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _partnerPulseSpeed * Mathf.PI * 2f);
-            _renderer.material.color = Color.Lerp(_originalColor, _partnerPulseColor, pulse);
+            _renderer.material.color = Color.Lerp(_baseColor, _partnerPulseColor, pulse);
         }
         else if (_originalColorCaptured)
         {
-            _renderer.material.color = _originalColor;
+            _renderer.material.color = _baseColor;
             _originalColorCaptured = false;
         }
     }
@@ -143,21 +144,22 @@ public class PairableItem : MonoBehaviour
     /// </summary>
     public void OnPutDown()
     {
-        // Restore material color if it was pulsing
-        if (_originalColorCaptured && _renderer != null)
-        {
-            _renderer.material.color = _originalColor;
-            _originalColorCaptured = false;
-        }
+        // Always restore to true base color
+        RestoreBaseColor();
+        _originalColorCaptured = false;
 
-        if (!_partnerHighlightActive) return;
-        if (_specificPartner == null) return;
-
-        var partnerHL = _specificPartner.GetComponent<InteractableHighlight>();
-        if (partnerHL != null)
-            partnerHL.SetHighlighted(false);
+        // Also restore partner's color
+        if (_specificPartner != null)
+            _specificPartner.RestoreBaseColor();
 
         _partnerHighlightActive = false;
+    }
+
+    /// <summary>Force renderer back to the original Awake color.</summary>
+    public void RestoreBaseColor()
+    {
+        if (_renderer != null)
+            _renderer.material.color = _baseColor;
     }
 
     /// <summary>
@@ -283,18 +285,22 @@ public class PairableItem : MonoBehaviour
 
         _pairPulseActive = true;
 
-        Color original = _renderer.material.color;
         Color flash = _partnerPulseColor;
         float duration = 0.5f;
 
-        for (float t = 0f; t < duration; t += Time.deltaTime)
+        // Two pulses so it's clearly visible
+        for (int p = 0; p < 2; p++)
         {
-            float blend = Mathf.Sin(t / duration * Mathf.PI);
-            _renderer.material.color = Color.Lerp(original, flash, blend);
-            yield return null;
+            for (float t = 0f; t < duration; t += Time.deltaTime)
+            {
+                float blend = Mathf.Sin(t / duration * Mathf.PI);
+                _renderer.material.color = Color.Lerp(_baseColor, flash, blend);
+                yield return null;
+            }
         }
 
-        _renderer.material.color = original;
+        // Always restore to true base color
+        _renderer.material.color = _baseColor;
         _pairPulseActive = false;
         _originalColorCaptured = false;
     }
