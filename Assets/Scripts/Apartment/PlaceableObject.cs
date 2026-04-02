@@ -656,6 +656,11 @@ public class PlaceableObject : MonoBehaviour
             Destroy(_silhouetteGO);
             _silhouetteGO = null;
         }
+        if (_silhouetteMat != null)
+        {
+            Destroy(_silhouetteMat);
+            _silhouetteMat = null;
+        }
     }
 
     // ── Safety: drop visibility check ─────────────────────────────────
