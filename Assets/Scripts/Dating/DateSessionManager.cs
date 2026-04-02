@@ -575,30 +575,37 @@ public class DateSessionManager : MonoBehaviour
     private static void SpawnReactionParticles(Vector3 position, ReactionType reaction)
     {
         var go = new GameObject("ReactionParticles");
-        go.transform.position = position;
+        // Position above the item so particles are clearly visible
+        go.transform.position = position + Vector3.up * 0.15f;
 
         var ps = go.AddComponent<ParticleSystem>();
         var main = ps.main;
-        main.duration = 1.5f;
-        main.loop = false;
-        main.startLifetime = 1.2f;
-        main.startSpeed = 0.8f;
-        main.startSize = 0.08f;
-        main.gravityModifier = -0.3f; // float upward
-        main.maxParticles = 12;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.stopAction = ParticleSystemStopAction.Destroy;
 
-        // Color based on reaction
         if (reaction == ReactionType.Like)
         {
-            main.startColor = new Color(0.95f, 0.4f, 0.5f); // soft pink/red hearts
+            main.duration = 2.5f;
+            main.loop = false;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.5f, 2.5f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.4f, 1.2f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.14f);
+            main.gravityModifier = -0.4f; // float upward
+            main.maxParticles = 30;
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                new Color(1f, 0.45f, 0.55f),    // hot pink
+                new Color(1f, 0.7f, 0.75f));     // soft pink
         }
         else if (reaction == ReactionType.Dislike)
         {
-            main.startColor = new Color(0.45f, 0.45f, 0.5f, 0.6f); // muted grey
-            main.startSize = 0.05f;
-            main.maxParticles = 6;
+            main.duration = 1.5f;
+            main.loop = false;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 1.2f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.06f);
+            main.gravityModifier = 0.1f; // sink slightly
+            main.maxParticles = 8;
+            main.startColor = new Color(0.4f, 0.4f, 0.45f, 0.5f);
         }
         else
         {
@@ -606,41 +613,75 @@ public class DateSessionManager : MonoBehaviour
             return;
         }
 
-        // Emission — one burst
+        // Emission — multiple bursts for juiciness
         var emission = ps.emission;
         emission.rateOverTime = 0f;
-        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, reaction == ReactionType.Like ? 8 : 4) });
+        if (reaction == ReactionType.Like)
+        {
+            emission.SetBursts(new[]
+            {
+                new ParticleSystem.Burst(0f, 12),
+                new ParticleSystem.Burst(0.3f, 8),
+                new ParticleSystem.Burst(0.6f, 6),
+            });
+        }
+        else
+        {
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 5) });
+        }
 
-        // Shape — small sphere around the item
+        // Shape — spread around the item
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Sphere;
-        shape.radius = 0.15f;
+        shape.radius = reaction == ReactionType.Like ? 0.2f : 0.1f;
 
-        // Size over lifetime — grow then shrink
+        // Size over lifetime — pop in, hold, fade out
         var sol = ps.sizeOverLifetime;
         sol.enabled = true;
         sol.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-            new Keyframe(0f, 0.5f),
-            new Keyframe(0.3f, 1f),
-            new Keyframe(1f, 0f)
+            new Keyframe(0f, 0.2f),
+            new Keyframe(0.15f, 1.2f),  // pop!
+            new Keyframe(0.4f, 1f),     // hold
+            new Keyframe(1f, 0f)        // fade
         ));
 
-        // Color over lifetime — fade out
+        // Color over lifetime — bright start, gentle fade
         var col = ps.colorOverLifetime;
         col.enabled = true;
         var gradient = new Gradient();
         gradient.SetKeys(
             new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
-            new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) }
+            new[] {
+                new GradientAlphaKey(0f, 0f),
+                new GradientAlphaKey(1f, 0.1f),
+                new GradientAlphaKey(1f, 0.5f),
+                new GradientAlphaKey(0f, 1f)
+            }
         );
         col.color = gradient;
 
-        // Use default particle material
+        // Rotation for visual variety
+        var rot = ps.rotationOverLifetime;
+        rot.enabled = true;
+        rot.z = new ParticleSystem.MinMaxCurve(-1f, 1f);
+
+        // Velocity — slight random spread
+        var vel = ps.velocityOverLifetime;
+        vel.enabled = true;
+        vel.x = new ParticleSystem.MinMaxCurve(-0.15f, 0.15f);
+        vel.z = new ParticleSystem.MinMaxCurve(-0.15f, 0.15f);
+
+        // Material
         var renderer = go.GetComponent<ParticleSystemRenderer>();
-        renderer.material = new Material(Shader.Find("Particles/Standard Unlit")
-                                      ?? Shader.Find("Universal Render Pipeline/Particles/Unlit"));
-        renderer.material.SetFloat("_Surface", 1f); // transparent
-        renderer.material.SetFloat("_Blend", 0f);
+        var shader = Shader.Find("Particles/Standard Unlit")
+                  ?? Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader != null)
+        {
+            var mat = new Material(shader);
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 0f);
+            renderer.material = mat;
+        }
 
         ps.Play();
     }
