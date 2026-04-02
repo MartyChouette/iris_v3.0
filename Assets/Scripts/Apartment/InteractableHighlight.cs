@@ -375,12 +375,9 @@ public class InteractableHighlight : MonoBehaviour
 
     private void RebuildMaterials()
     {
-        // When visuals are suppressed, always show base materials only
+        // When visuals are suppressed, do nothing — don't touch materials at all
         if (s_suppressVisuals)
-        {
-            StripOverlayMaterials();
             return;
-        }
 
         int extraCount = (_interactActive ? 1 : 0)
                        + (_displayActive ? 1 : 0)

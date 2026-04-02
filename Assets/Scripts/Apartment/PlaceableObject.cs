@@ -800,12 +800,7 @@ public class PlaceableObject : MonoBehaviour
     private void RestoreMaterial()
     {
         if (_instanceMat != null)
-        {
             _instanceMat.color = _originalColor;
-            // Also re-assign to renderer in case it got a rogue instance
-            if (_renderer != null)
-                _renderer.material = _instanceMat;
-        }
     }
 
     /// <summary>Public version for external systems (PairableItem) to force color restore.</summary>
