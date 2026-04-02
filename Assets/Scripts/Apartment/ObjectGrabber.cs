@@ -823,7 +823,10 @@ public class ObjectGrabber : MonoBehaviour
 
         if (_held != null)
         {
-            // Stop partner highlight flash
+            // Always restore material to base color (clears brightness boost)
+            _held.ForceRestoreMaterial();
+
+            // Stop partner highlight flash + restore partner color
             var pairable = _held.GetComponent<PairableItem>();
             if (pairable != null) pairable.OnPutDown();
 
