@@ -544,6 +544,7 @@ public class PlaceableObject : MonoBehaviour
 
         SetCollidersEnabled(true);
         RestoreMaterial();
+        DestroySilhouette();
 
         if (_rb != null)
         {
@@ -585,6 +586,7 @@ public class PlaceableObject : MonoBehaviour
         CurrentState = State.Resting;
         SetCollidersEnabled(true);
         RestoreMaterial();
+        DestroySilhouette();
 
         // Check if we ended up somewhere the player can't see
         StartCoroutine(CheckVisibilityAfterDrop());
