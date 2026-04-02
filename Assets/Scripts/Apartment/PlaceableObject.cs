@@ -331,8 +331,12 @@ public class PlaceableObject : MonoBehaviour
     {
         _renderer = GetComponent<Renderer>();
         if (_renderer == null) _renderer = GetComponentInChildren<Renderer>();
-        // No instance material — shared material stays untouched.
-        // _instanceMat and _originalColor kept for compatibility but not used for color changes.
+        if (_renderer != null && _renderer.sharedMaterial != null)
+        {
+            _instanceMat = new Material(_renderer.sharedMaterial);
+            _renderer.material = _instanceMat;
+            _originalColor = _instanceMat.color;
+        }
 
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
@@ -826,7 +830,8 @@ public class PlaceableObject : MonoBehaviour
 
     private void RestoreMaterial()
     {
-        // No-op: brightness boost removed, material stays at _originalColor always
+        if (_instanceMat != null)
+            _instanceMat.color = _originalColor;
     }
 
     /// <summary>Public version for external systems (PairableItem) to force color restore.</summary>
