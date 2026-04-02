@@ -32,13 +32,13 @@ public class CleanableSurface : MonoBehaviour
 
     [Header("Stain Visibility")]
     [Tooltip("Apply PSX glitch shader to the stain to make it visually noticeable.")]
-    [SerializeField] private bool _useGlitch = true;
+    [SerializeField] private bool _useGlitch = false;
 
     [Tooltip("Glitch intensity on the stain (0-1).")]
     [SerializeField, Range(0f, 1f)] private float _glitchIntensity = 0.3f;
 
     [Tooltip("Add a pulsing glow border around the stain.")]
-    [SerializeField] private bool _usePulseGlow = true;
+    [SerializeField] private bool _usePulseGlow = false;
 
     [Tooltip("Pulse glow color.")]
     [SerializeField] private Color _pulseColor = new Color(1f, 0.9f, 0.6f, 0.5f);
