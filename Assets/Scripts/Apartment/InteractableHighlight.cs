@@ -199,6 +199,11 @@ public class InteractableHighlight : MonoBehaviour
     private void Awake()
     {
         _renderers = GetComponentsInChildren<Renderer>();
+
+        // When visuals are suppressed, skip ALL material setup.
+        // The component only exists for the static registry (cursor detection).
+        if (s_suppressVisuals) return;
+
         if (_renderers.Length == 0) return;
 
         // Cache shaders from serialized refs or Shader.Find fallback
@@ -230,8 +235,6 @@ public class InteractableHighlight : MonoBehaviour
             s_cachedFresnelShader = Shader.Find("Iris/HighlightFresnel");
 
         EnsureSharedMaterials();
-        // SwapToPSXLit disabled — was corrupting shared materials and causing stuck highlights
-        // SwapToPSXLit();
 
         _baseMaterialArrays = new Material[_renderers.Length][];
         for (int i = 0; i < _renderers.Length; i++)
