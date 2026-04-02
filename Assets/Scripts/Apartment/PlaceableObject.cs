@@ -330,6 +330,7 @@ public class PlaceableObject : MonoBehaviour
     private void Awake()
     {
         _renderer = GetComponent<Renderer>();
+        if (_renderer == null) _renderer = GetComponentInChildren<Renderer>();
         if (_renderer != null && _renderer.sharedMaterial != null)
         {
             _instanceMat = new Material(_renderer.sharedMaterial);
