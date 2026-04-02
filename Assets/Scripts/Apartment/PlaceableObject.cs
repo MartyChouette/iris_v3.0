@@ -811,6 +811,17 @@ public class PlaceableObject : MonoBehaviour
         RestoreMaterial();
     }
 
+    /// <summary>Set instance material color directly (for PairableItem pulse). Returns false if no instance material.</summary>
+    public bool SetInstanceColor(Color color)
+    {
+        if (_instanceMat == null) return false;
+        _instanceMat.color = color;
+        return true;
+    }
+
+    /// <summary>The original base color captured in Awake.</summary>
+    public Color OriginalColor => _originalColor;
+
     /// <summary>
     /// Override the instance material's shader and properties from a source material.
     /// Call AFTER Awake (which creates _instanceMat) and BEFORE InteractableHighlight

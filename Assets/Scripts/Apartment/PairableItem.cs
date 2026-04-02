@@ -107,11 +107,16 @@ public class PairableItem : MonoBehaviour
         {
             _originalColorCaptured = true;
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _partnerPulseSpeed * Mathf.PI * 2f);
-            _renderer.material.color = Color.Lerp(_baseColor, _partnerPulseColor, pulse);
+            Color c = Color.Lerp(_baseColor, _partnerPulseColor, pulse);
+            if (_placeable == null || !_placeable.SetInstanceColor(c))
+                _renderer.material.color = c; // fallback
         }
         else if (_originalColorCaptured)
         {
-            _renderer.material.color = _baseColor;
+            if (_placeable != null)
+                _placeable.ForceRestoreMaterial();
+            else
+                _renderer.material.color = _baseColor;
             _originalColorCaptured = false;
         }
     }
@@ -306,13 +311,18 @@ public class PairableItem : MonoBehaviour
             for (float t = 0f; t < duration; t += Time.deltaTime)
             {
                 float blend = Mathf.Sin(t / duration * Mathf.PI);
-                _renderer.material.color = Color.Lerp(_baseColor, flash, blend);
+                Color c = Color.Lerp(_baseColor, flash, blend);
+                if (_placeable == null || !_placeable.SetInstanceColor(c))
+                    _renderer.material.color = c;
                 yield return null;
             }
         }
 
         // Always restore to true base color
-        _renderer.material.color = _baseColor;
+        if (_placeable != null)
+            _placeable.ForceRestoreMaterial();
+        else
+            _renderer.material.color = _baseColor;
         _pairPulseActive = false;
         _originalColorCaptured = false;
     }
