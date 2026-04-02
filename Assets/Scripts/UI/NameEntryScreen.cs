@@ -186,17 +186,20 @@ public class NameEntryScreen : MonoBehaviour
         }
 
         // Demo mode: skip name entry, use default name
-        // In editor without ActiveConfig, also skip (direct apartment play)
-        bool skipNameEntry = MainMenuManager.ActiveConfig != null;
-#if UNITY_EDITOR
-        skipNameEntry = true;
-#endif
-        if (skipNameEntry)
+        if (MainMenuManager.ActiveConfig != null)
         {
-            Debug.Log("[NameEntryScreen] Skipping name entry — auto-confirming default name.");
+            Debug.Log("[NameEntryScreen] Demo mode — auto-confirming default name.");
             OnConfirm();
             return;
         }
+
+#if UNITY_EDITOR
+        // Editor direct play — just hide the canvas and do nothing.
+        // DayPhaseManager starts in Exploration, apartment is ready.
+        if (_canvas != null)
+            _canvas.gameObject.SetActive(false);
+        return;
+#endif
 
         // Fade out menu music as the player enters their name
         if (MusicDirector.Instance != null)
