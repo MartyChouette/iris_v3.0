@@ -115,6 +115,19 @@ public class DateSessionManager : MonoBehaviour
     [Tooltip("Runs the entrance judgments (music, perfume, outfit, cleanliness).")]
     [SerializeField] private EntranceJudgmentSequence _entranceJudgments;
 
+    [Header("Phase 2 Highlights")]
+    [Tooltip("Renderer on the fridge to pulse during drink phase.")]
+    [SerializeField] private Renderer _fridgeHighlightRenderer;
+
+    [Tooltip("Renderer on the drink station/counter to pulse during drink phase.")]
+    [SerializeField] private Renderer _drinkStationHighlightRenderer;
+
+    [Tooltip("Pulse color for Phase 2 interactive objects.")]
+    [SerializeField] private Color _phase2PulseColor = new Color(1f, 0.9f, 0.6f, 0.5f);
+
+    [Tooltip("Pulse speed for Phase 2 highlights.")]
+    [SerializeField] private float _phase2PulseSpeed = 1.5f;
+
     [Header("Events")]
     public UnityEvent<DatePersonalDefinition> OnDateSessionStarted;
     public UnityEvent<float> OnAffectionChanged;
@@ -156,6 +169,9 @@ public class DateSessionManager : MonoBehaviour
     private float _arrivalTimer;
     private bool _arrivalTimerActive;
     private readonly List<AccumulatedReaction> _accumulatedReactions = new();
+    private Coroutine _phase2PulseCoroutine;
+    private Color _fridgeOrigColor;
+    private Color _drinkOrigColor;
 
     // ──────────────────────────────────────────────────────────────
     // Public API
@@ -352,6 +368,9 @@ public class DateSessionManager : MonoBehaviour
         NemaController.Instance?.MoveToDatePhase(DatePhase.BackgroundJudging);
         _moodCheckTimer = 0f;
 
+        // Start pulsing fridge + drink station
+        StartPhase2Pulse();
+
         // Teleport NPC to kitchen
         Vector3 kitchenPos = kitchenStandPoint != null ? kitchenStandPoint.position
             : new Vector3(-4f, 0f, -4.5f);
@@ -378,6 +397,8 @@ public class DateSessionManager : MonoBehaviour
 
     private IEnumerator TransitionToPhase3()
     {
+        StopPhase2Pulse();
+
         var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
 
         // Pre-transition NPC dialogue
@@ -498,6 +519,51 @@ public class DateSessionManager : MonoBehaviour
     /// Get the visual center of an object using renderer bounds.
     /// Falls back to transform.position if no renderer found.
     /// </summary>
+    // ── Phase 2 highlight pulse ──────────────────────────────────
+
+    private void StartPhase2Pulse()
+    {
+        if (_phase2PulseCoroutine != null) StopCoroutine(_phase2PulseCoroutine);
+
+        if (_fridgeHighlightRenderer != null)
+            _fridgeOrigColor = _fridgeHighlightRenderer.material.color;
+        if (_drinkStationHighlightRenderer != null)
+            _drinkOrigColor = _drinkStationHighlightRenderer.material.color;
+
+        _phase2PulseCoroutine = StartCoroutine(Phase2PulseLoop());
+    }
+
+    private void StopPhase2Pulse()
+    {
+        if (_phase2PulseCoroutine != null)
+        {
+            StopCoroutine(_phase2PulseCoroutine);
+            _phase2PulseCoroutine = null;
+        }
+
+        if (_fridgeHighlightRenderer != null)
+            _fridgeHighlightRenderer.material.color = _fridgeOrigColor;
+        if (_drinkStationHighlightRenderer != null)
+            _drinkStationHighlightRenderer.material.color = _drinkOrigColor;
+    }
+
+    private IEnumerator Phase2PulseLoop()
+    {
+        while (true)
+        {
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _phase2PulseSpeed * Mathf.PI * 2f);
+
+            if (_fridgeHighlightRenderer != null)
+                _fridgeHighlightRenderer.material.color = Color.Lerp(_fridgeOrigColor, _phase2PulseColor, pulse);
+            if (_drinkStationHighlightRenderer != null)
+                _drinkStationHighlightRenderer.material.color = Color.Lerp(_drinkOrigColor, _phase2PulseColor, pulse);
+
+            yield return null;
+        }
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────
+
     private static Vector3 GetVisualCenter(Transform t)
     {
         var renderer = t.GetComponentInChildren<Renderer>();
