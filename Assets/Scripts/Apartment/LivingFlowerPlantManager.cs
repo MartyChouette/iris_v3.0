@@ -137,6 +137,10 @@ public class LivingFlowerPlantManager : MonoBehaviour
         Debug.Log($"[LivingFlowerPlantManager] Spawned plant from {characterName} " +
                   $"({daysAlive} days) at {slot.position}" +
                   (trimmedVisual != null ? " [trimmed flower visual]" : " [procedural]"));
+
+        // Temporary build-visible confirmation (remove later)
+        if (CaptionDisplay.Instance != null)
+            CaptionDisplay.Show($"Flower from {characterName} placed ({daysAlive} days)", 3f);
     }
 
     /// <summary>Called by GameClock.OnDayStarted event each morning.</summary>
