@@ -186,9 +186,14 @@ public class NameEntryScreen : MonoBehaviour
         }
 
         // Demo mode: skip name entry, use default name
-        if (MainMenuManager.ActiveConfig != null)
+        // In editor without ActiveConfig, also skip (direct apartment play)
+        bool skipNameEntry = MainMenuManager.ActiveConfig != null;
+#if UNITY_EDITOR
+        skipNameEntry = true;
+#endif
+        if (skipNameEntry)
         {
-            Debug.Log("[NameEntryScreen] Demo mode — auto-confirming default name.");
+            Debug.Log("[NameEntryScreen] Skipping name entry — auto-confirming default name.");
             OnConfirm();
             return;
         }
