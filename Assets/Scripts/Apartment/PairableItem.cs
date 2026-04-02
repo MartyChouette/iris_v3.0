@@ -85,10 +85,13 @@ public class PairableItem : MonoBehaviour
 
         if (held != null && held.gameObject != gameObject)
         {
-            if (_pairMode == PairMode.SpecificPartner && _specificPartner != null)
+            if (_pairMode == PairMode.SpecificPartner)
             {
-                // Shoes: pulse if partner is held
-                shouldPulse = !_isPaired && held.gameObject == _specificPartner.gameObject;
+                // Shoes: pulse if partner is held (check both directions)
+                var heldPair = held.GetComponent<PairableItem>();
+                bool isMyPartner = _specificPartner != null && held.gameObject == _specificPartner.gameObject;
+                bool iAmTheirPartner = heldPair != null && heldPair.SpecificPartner == this;
+                shouldPulse = !_isPaired && (isMyPartner || iAmTheirPartner);
             }
             else if (_pairMode == PairMode.AnyOfCategory && _placeable != null)
             {
