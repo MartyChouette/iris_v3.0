@@ -266,25 +266,41 @@ public class CleanableSurface : MonoBehaviour
 
     void Update()
     {
-        if (_wetAlpha == null) return;
-
         // Evaporate wetness
-        float decay = _evaporationRate * Time.deltaTime * 255f;
-        if (decay > 0f)
+        if (_wetAlpha != null)
         {
-            for (int i = 0; i < _wetAlpha.Length; i++)
+            float decay = _evaporationRate * Time.deltaTime * 255f;
+            if (decay > 0f)
             {
-                if (_wetAlpha[i] == 0) continue;
-                int newVal = Mathf.Max(0, _wetAlpha[i] - Mathf.RoundToInt(decay));
-                _wetAlpha[i] = (byte)newVal;
-                _wetDirty = true;
+                for (int i = 0; i < _wetAlpha.Length; i++)
+                {
+                    if (_wetAlpha[i] == 0) continue;
+                    int newVal = Mathf.Max(0, _wetAlpha[i] - Mathf.RoundToInt(decay));
+                    _wetAlpha[i] = (byte)newVal;
+                    _wetDirty = true;
+                }
+            }
+
+            if (_wetDirty)
+            {
+                RebuildWetTexture();
+                _wetDirty = false;
             }
         }
 
-        if (_wetDirty)
+        // Pulse glow animation
+        if (_pulseGlowMat != null && _pulseGlowGO != null && _pulseGlowGO.activeSelf)
         {
-            RebuildWetTexture();
-            _wetDirty = false;
+            if (IsFullyClean)
+            {
+                RemoveStainVisibility();
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
+            Color c = _pulseColor;
+            c.a = _pulseColor.a * pulse;
+            _pulseGlowMat.color = c;
         }
     }
 
@@ -507,23 +523,6 @@ public class CleanableSurface : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        // Pulse glow animation
-        if (_pulseGlowMat != null && _pulseGlowGO != null && _pulseGlowGO.activeSelf)
-        {
-            if (IsFullyClean)
-            {
-                RemoveStainVisibility();
-                return;
-            }
-
-            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
-            Color c = _pulseColor;
-            c.a = _pulseColor.a * pulse;
-            _pulseGlowMat.color = c;
-        }
-    }
 
     private void OnDisable()
     {
