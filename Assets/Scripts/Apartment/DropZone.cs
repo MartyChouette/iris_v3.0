@@ -78,8 +78,9 @@ public class DropZone : MonoBehaviour
                     _playerHoldingMatch = true;
             }
 
-            // Any trash item highlights destroy-on-deposit zones (mirrors ObjectGrabber logic)
-            if (!_playerHoldingMatch && _destroyOnDeposit && held.Category == ItemCategory.Trash)
+            // Trash and Dish items highlight destroy-on-deposit zones (mirrors ObjectGrabber logic)
+            if (!_playerHoldingMatch && _destroyOnDeposit
+                && (held.Category == ItemCategory.Trash || held.Category == ItemCategory.Dish))
                 _playerHoldingMatch = true;
         }
 

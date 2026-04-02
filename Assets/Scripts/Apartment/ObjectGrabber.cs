@@ -504,8 +504,9 @@ public class ObjectGrabber : MonoBehaviour
             {
                 bool matchesHome = (!string.IsNullOrEmpty(_held.HomeZoneName) && zone.ZoneName == _held.HomeZoneName)
                     || (!string.IsNullOrEmpty(_held.AltHomeZoneName) && zone.ZoneName == _held.AltHomeZoneName);
-                // Trash items are always accepted by trash cans
-                if (!matchesHome && _held.Category == ItemCategory.Trash && zone.DestroyOnDeposit)
+                // Trash and Dish items are always accepted by destroy-on-deposit zones
+                if (!matchesHome && zone.DestroyOnDeposit
+                    && (_held.Category == ItemCategory.Trash || _held.Category == ItemCategory.Dish))
                     matchesHome = true;
                 // Shoes must be paired before placing at their home station
                 if (matchesHome)
