@@ -331,12 +331,8 @@ public class PlaceableObject : MonoBehaviour
     {
         _renderer = GetComponent<Renderer>();
         if (_renderer == null) _renderer = GetComponentInChildren<Renderer>();
-        if (_renderer != null && _renderer.sharedMaterial != null)
-        {
-            _instanceMat = new Material(_renderer.sharedMaterial);
-            _renderer.material = _instanceMat;
-            _originalColor = _instanceMat.color;
-        }
+        // No instance material — shared material stays untouched.
+        // _instanceMat and _originalColor kept for compatibility but not used for color changes.
 
         _lastValidPosition = transform.position;
         _lastValidRotation = transform.rotation;
