@@ -615,7 +615,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -1147,6 +1147,7 @@ MonoBehaviour:
   _itemDescription: A blue ceramic vase.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -3195,7 +3196,7 @@ GameObject:
   - component: {fileID: 206099560}
   - component: {fileID: 206099559}
   m_Layer: 15
-  m_Name: Single_Medium_Book (2)
+  m_Name: Single_Medium_Book The Dead Letter Love 3 of 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3231,17 +3232,18 @@ MonoBehaviour:
   heldBrightness: 1.4
   respawnDelay: 0.5
   _itemCategory: 7
-  _homeZoneName: 
+  _homeZoneName: Living Room
   _altHomeZoneName: 
-  _itemDescription: 
+  _itemDescription: The Dead Letter Love 3 of 3
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
-  _canBeDishelved: 0
+  _canBeDishelved: 1
   _dishevelAngle: 25
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
-  _startDishelved: 0
+  _startDishelved: 1
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
   _useSpawnAsHome: 0
@@ -4683,6 +4685,11 @@ MonoBehaviour:
   _wetRenderer: {fileID: 784346201}
   _evaporationRate: 0.02
   _wetColor: {r: 0.5, g: 0.7, b: 1, a: 0.4}
+  _useGlitch: 1
+  _glitchIntensity: 0.3
+  _usePulseGlow: 1
+  _pulseColor: {r: 1, g: 0.9, b: 0.6, a: 0.5}
+  _pulseSpeed: 1.5
   OnFullyClean:
     m_PersistentCalls:
       m_Calls: []
@@ -5079,6 +5086,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 1
   wallOnly: 1
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -5393,6 +5401,11 @@ MonoBehaviour:
   _wetRenderer: {fileID: 1728403584}
   _evaporationRate: 0.02
   _wetColor: {r: 0.5, g: 0.7, b: 1, a: 0.4}
+  _useGlitch: 1
+  _glitchIntensity: 0.3
+  _usePulseGlow: 1
+  _pulseColor: {r: 1, g: 0.9, b: 0.6, a: 0.5}
+  _pulseSpeed: 1.5
   OnFullyClean:
     m_PersistentCalls:
       m_Calls: []
@@ -7552,7 +7565,7 @@ GameObject:
   - component: {fileID: 478580143}
   - component: {fileID: 478580142}
   m_Layer: 15
-  m_Name: Single_Medium_Book (1)
+  m_Name: Single_Medium_Book The Dead Letter Love 2 of 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7566,13 +7579,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 478580140}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.49999985, z: 0.5, w: 0.5000002}
-  m_LocalPosition: {x: 1.406, y: 1.562, z: 3.818}
+  m_LocalRotation: {x: 0.6374218, y: 0.32546967, z: -0.30419555, w: 0.6286717}
+  m_LocalPosition: {x: -2.2913635, y: 1.593, z: 4.8280983}
   m_LocalScale: {x: 2.267133, y: 6.429288, z: 9.139097}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450653414306598}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 88.136, y: 138.8, z: 85.915}
 --- !u!114 &478580142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7588,17 +7601,18 @@ MonoBehaviour:
   heldBrightness: 1.4
   respawnDelay: 0.5
   _itemCategory: 7
-  _homeZoneName: 
+  _homeZoneName: Living Room
   _altHomeZoneName: 
-  _itemDescription: 
+  _itemDescription: The Dead Letter Love 2 of 3
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
-  _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
-  _hasDisheveledPose: 0
-  _startDishelved: 0
+  _disheveledRotation: {x: 0.25340444, y: 0.660141, z: -0.660141, w: 0.25340444}
+  _hasDisheveledPose: 1
+  _startDishelved: 1
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
   _useSpawnAsHome: 0
@@ -8759,6 +8773,7 @@ MonoBehaviour:
   _itemDescription: A virtual pet keychain.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -9020,6 +9035,118 @@ Material:
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
+--- !u!1 &536507473
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 536507477}
+  - component: {fileID: 536507476}
+  - component: {fileID: 536507475}
+  - component: {fileID: 536507474}
+  m_Layer: 0
+  m_Name: Cube (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &536507474
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536507473}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &536507475
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536507473}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &536507476
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536507473}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &536507477
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536507473}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.794, y: 0.374, z: 1.788}
+  m_LocalScale: {x: 0.8, y: 0.15, z: 0.75}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!21 &540018040
 Material:
   serializedVersion: 8
@@ -9519,6 +9646,7 @@ MonoBehaviour:
   _itemDescription: Last month's gardening magazine.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -10325,6 +10453,9 @@ MonoBehaviour:
   _wallLayer:
     serializedVersion: 2
     m_Bits: 1
+  _barrierLayer:
+    serializedVersion: 2
+    m_Bits: 2147483648
   _pickupSFX: {fileID: 8300000, guid: db75e3c39a484fb49af982426713784b, type: 3}
   _placeSFX: {fileID: 8300000, guid: db75e3c39a484fb49af982426713784b, type: 3}
   maxTetherDistance: 3
@@ -10983,6 +11114,7 @@ MonoBehaviour:
   _itemDescription: Heavy black boots.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -11622,6 +11754,11 @@ MonoBehaviour:
   _wetRenderer: {fileID: 1631866658}
   _evaporationRate: 0.02
   _wetColor: {r: 0.5, g: 0.7, b: 1, a: 0.4}
+  _useGlitch: 1
+  _glitchIntensity: 0.3
+  _usePulseGlow: 1
+  _pulseColor: {r: 1, g: 0.9, b: 0.6, a: 0.5}
+  _pulseSpeed: 1.5
   OnFullyClean:
     m_PersistentCalls:
       m_Calls: []
@@ -14281,6 +14418,73 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f320233276e84ed4faccdc3da234aada, type: 3}
   m_PrefabInstance: {fileID: 791409197}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &793028991
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 793028992}
+  - component: {fileID: 793028994}
+  - component: {fileID: 793028993}
+  m_Layer: 31
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &793028992
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793028991}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4865064391556736290}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &793028993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793028991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8fc5a357df53f4d88917c61ffb9b10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemBarrier
+  _drawer: {fileID: 8897240367097547896}
+--- !u!65 &793028994
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793028991}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 2147483648
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 32768
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.3, y: 0.1, z: 0.2}
+  m_Center: {x: 0, y: 0.1, z: 0}
 --- !u!1 &793432654
 GameObject:
   m_ObjectHideFlags: 0
@@ -14555,7 +14759,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -15477,6 +15681,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 1
   wallOnly: 1
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -15668,6 +15873,7 @@ MonoBehaviour:
   _itemDescription: A ceramic mug, slightly chipped.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -16046,6 +16252,7 @@ MonoBehaviour:
   _itemDescription: Yellow cartridge.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -16375,6 +16582,7 @@ MonoBehaviour:
   _itemDescription: Hand-built Gunpla model.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -17216,6 +17424,118 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 949826740}
   m_CullTransparentMesh: 1
+--- !u!1 &962892776
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 962892780}
+  - component: {fileID: 962892779}
+  - component: {fileID: 962892778}
+  - component: {fileID: 962892777}
+  m_Layer: 0
+  m_Name: Cube (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &962892777
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 962892776}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &962892778
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 962892776}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &962892779
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 962892776}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &962892780
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 962892776}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.794, y: 0.374, z: 0.286}
+  m_LocalScale: {x: 0.8, y: 0.15, z: 0.75}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &964711507
 GameObject:
   m_ObjectHideFlags: 0
@@ -17883,6 +18203,7 @@ MonoBehaviour:
   _itemDescription: Nema's beat-up sneakers.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -19758,6 +20079,118 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1090933810}
   m_CullTransparentMesh: 1
+--- !u!1 &1097472275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1097472279}
+  - component: {fileID: 1097472278}
+  - component: {fileID: 1097472277}
+  - component: {fileID: 1097472276}
+  m_Layer: 0
+  m_Name: Cube (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &1097472276
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097472275}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1097472277
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097472275}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1097472278
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097472275}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1097472279
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097472275}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.794, y: 0.374, z: 1.038}
+  m_LocalScale: {x: 0.8, y: 0.15, z: 0.75}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &1101547016
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -20234,6 +20667,11 @@ MonoBehaviour:
   _wetRenderer: {fileID: 1975706341}
   _evaporationRate: 0.02
   _wetColor: {r: 0.5, g: 0.7, b: 1, a: 0.4}
+  _useGlitch: 1
+  _glitchIntensity: 0.3
+  _usePulseGlow: 1
+  _pulseColor: {r: 1, g: 0.9, b: 0.6, a: 0.5}
+  _pulseSpeed: 1.5
   OnFullyClean:
     m_PersistentCalls:
       m_Calls: []
@@ -20718,6 +21156,73 @@ Transform:
   m_Children: []
   m_Father: {fileID: 801454412}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1189253359
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1189253360}
+  - component: {fileID: 1189253362}
+  - component: {fileID: 1189253361}
+  m_Layer: 31
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1189253360
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189253359}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7967766326164156205}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1189253361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189253359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8fc5a357df53f4d88917c61ffb9b10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemBarrier
+  _drawer: {fileID: 8482381504948712423}
+--- !u!65 &1189253362
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189253359}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 2147483648
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 32768
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.3, y: 0.1, z: 0.2}
+  m_Center: {x: 0, y: 0.1, z: 0}
 --- !u!1 &1192554159
 GameObject:
   m_ObjectHideFlags: 0
@@ -22624,6 +23129,7 @@ MonoBehaviour:
   _itemDescription: A well-worn yoyo.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -23881,6 +24387,7 @@ MonoBehaviour:
   _itemDescription: Fuzzy house slippers.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -25468,7 +25975,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -25917,6 +26424,11 @@ MonoBehaviour:
   _wetRenderer: {fileID: 734106244}
   _evaporationRate: 0.02
   _wetColor: {r: 0.5, g: 0.7, b: 1, a: 0.4}
+  _useGlitch: 1
+  _glitchIntensity: 0.3
+  _usePulseGlow: 1
+  _pulseColor: {r: 1, g: 0.9, b: 0.6, a: 0.5}
+  _pulseSpeed: 1.5
   OnFullyClean:
     m_PersistentCalls:
       m_Calls: []
@@ -26792,6 +27304,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 945406885}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1493448978
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1493448979}
+  m_Layer: 0
+  m_Name: Blanket
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1493448979
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1493448978}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.62608, y: 0.05, z: 2.00629}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1494097777
 GameObject:
@@ -27679,6 +28222,7 @@ MonoBehaviour:
   _itemDescription: Blue cartridge.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -27890,6 +28434,7 @@ MonoBehaviour:
   _itemDescription: Heavy black boots.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -28300,6 +28845,73 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &1563242497
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1563242498}
+  - component: {fileID: 1563242500}
+  - component: {fileID: 1563242499}
+  m_Layer: 31
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1563242498
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1563242497}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1398618388395661653}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1563242499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1563242497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8fc5a357df53f4d88917c61ffb9b10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemBarrier
+  _drawer: {fileID: 2050809773375271795}
+--- !u!65 &1563242500
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1563242497}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 2147483648
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 32768
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.3, y: 0.1, z: 0.2}
+  m_Center: {x: 0, y: 0.1, z: 0}
 --- !u!1 &1563546260
 GameObject:
   m_ObjectHideFlags: 0
@@ -30297,6 +30909,11 @@ MonoBehaviour:
   _wetRenderer: {fileID: 143464928}
   _evaporationRate: 0.02
   _wetColor: {r: 0.5, g: 0.7, b: 1, a: 0.4}
+  _useGlitch: 1
+  _glitchIntensity: 0.3
+  _usePulseGlow: 1
+  _pulseColor: {r: 1, g: 0.9, b: 0.6, a: 0.5}
+  _pulseSpeed: 1.5
   OnFullyClean:
     m_PersistentCalls:
       m_Calls: []
@@ -32086,6 +32703,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 1
   wallOnly: 1
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -32705,6 +33323,7 @@ MonoBehaviour:
   _itemDescription: A handheld game console.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -33367,6 +33986,7 @@ MonoBehaviour:
   _itemDescription: Nema's beat-up sneakers.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -34264,6 +34884,7 @@ MonoBehaviour:
   _itemDescription: Red cartridge.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -37031,6 +37652,7 @@ MonoBehaviour:
   _itemDescription: Fuzzy house slippers.
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -38431,7 +39053,8 @@ Transform:
   m_LocalPosition: {x: 0.0065702624, y: 0.010000056, z: 0.009199998}
   m_LocalScale: {x: -0.01691884, y: -0.09002428, z: -0.063155875}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1563242498}
   m_Father: {fileID: 3003624080352437713}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1424288785593879696
@@ -41606,6 +42229,7 @@ MonoBehaviour:
   _itemDescription: Stem & Leaf
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -42157,7 +42781,7 @@ GameObject:
   - component: {fileID: 8226558599481057029}
   - component: {fileID: 8226558599481057028}
   m_Layer: 15
-  m_Name: Single_Medium_Book
+  m_Name: Single_Medium_BookThe Dead Letter Love 1 of 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -42487,6 +43111,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -43217,7 +43842,8 @@ Transform:
   m_LocalPosition: {x: -0.00031196515, y: 0.010000056, z: 0.009199998}
   m_LocalScale: {x: -0.01691884, y: -0.09002428, z: -0.063155875}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 793028992}
   m_Father: {fileID: 3003624080352437713}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &4876933053673605882
@@ -43651,6 +44277,7 @@ MonoBehaviour:
   _itemDescription: Root Beer Blues
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -44259,6 +44886,7 @@ MonoBehaviour:
   _itemDescription: Petal Rain
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -44423,6 +45051,7 @@ MonoBehaviour:
   _itemDescription: Record 6
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -44525,6 +45154,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -44573,7 +45203,7 @@ Transform:
   m_GameObject: {fileID: 5444727772679788217}
   serializedVersion: 2
   m_LocalRotation: {x: -0.79205483, y: 0.14037195, z: 0.19856629, w: 0.5599253}
-  m_LocalPosition: {x: -0.351, y: 1.6635559, z: 8.872}
+  m_LocalPosition: {x: -0.031, y: 1.6635559, z: 8.871}
   m_LocalScale: {x: 15.652501, y: 17.240662, z: 34.46326}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44688,6 +45318,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -45013,6 +45644,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -45140,6 +45772,7 @@ MonoBehaviour:
   _itemDescription: Wilt Season
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -45357,7 +45990,8 @@ Transform:
   m_LocalPosition: {x: -0.006873268, y: 0.010000056, z: 0.009199998}
   m_LocalScale: {x: -0.01691884, y: -0.09002428, z: -0.063155875}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1189253360}
   m_Father: {fileID: 3003624080352437713}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &7991704402354374369
@@ -45395,6 +46029,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -45639,17 +46274,18 @@ MonoBehaviour:
   heldBrightness: 1.4
   respawnDelay: 0.5
   _itemCategory: 7
-  _homeZoneName: 
+  _homeZoneName: Living Room
   _altHomeZoneName: 
-  _itemDescription: 
+  _itemDescription: The Dead Letter Love 1 of 3
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
-  _canBeDishelved: 0
+  _canBeDishelved: 1
   _dishevelAngle: 25
   _disheveledRotation: {x: 0, y: 0, z: 0, w: 1}
   _hasDisheveledPose: 0
-  _startDishelved: 0
+  _startDishelved: 1
   _pickupSFXOverride: {fileID: 0}
   _placeSFXOverride: {fileID: 0}
   _useSpawnAsHome: 0
@@ -46559,6 +47195,7 @@ MonoBehaviour:
   _itemDescription: 
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 0
   _dishevelAngle: 25
@@ -46688,6 +47325,7 @@ MonoBehaviour:
   _itemDescription: Night Bloom
   canWallMount: 0
   wallOnly: 0
+  _gridSizeMultiplier: 1
   crookedAngleRange: 12
   _canBeDishelved: 1
   _dishevelAngle: 25
@@ -46874,3 +47512,7 @@ SceneRoots:
   - {fileID: 816911120}
   - {fileID: 648395201}
   - {fileID: 239956989}
+  - {fileID: 1493448979}
+  - {fileID: 962892780}
+  - {fileID: 1097472279}
+  - {fileID: 536507477}

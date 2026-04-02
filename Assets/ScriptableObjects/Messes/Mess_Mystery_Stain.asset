@@ -28,9 +28,9 @@ MonoBehaviour:
   requireReactionTag: 
   requireBadFlowerTrim: 0
   requireGoodFlowerTrim: 0
-  minDay: 1
+  minDay: 0
   maxDay: 0
-  spawnPosition: {x: 0, y: 0.007869497, z: -1.1344267}
+  spawnPosition: {x: 0, y: -0.01, z: -0.83}
   spawnRotation: {x: 0, y: 0, z: 0}
   allowedAreas: 0000000001000000
   weight: 1
