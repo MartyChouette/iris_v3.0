@@ -507,9 +507,9 @@ public class PlaceableObject : MonoBehaviour
         // Disable colliders so held object doesn't block raycasts or knock items
         SetCollidersEnabled(false);
 
-        // Brightness boost disabled — context cursor handles held-item feedback
-        // if (_instanceMat != null)
-        //     _instanceMat.color = _originalColor * heldBrightness;
+        // Brightness boost to show item is selected/held
+        if (_instanceMat != null)
+            _instanceMat.color = _originalColor * heldBrightness;
 
         if (_validationCoroutine != null)
         {
