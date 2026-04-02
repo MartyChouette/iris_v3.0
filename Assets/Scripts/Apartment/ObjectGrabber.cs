@@ -676,6 +676,9 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb.constraints = _originalConstraints;
         _heldRb.linearVelocity = Vector3.zero;
 
+        // Restore held item brightness before pairing
+        _held.ForceRestoreMaterial();
+
         // Snap pair
         clickedPairable.SnapPair(heldPairable);
 
