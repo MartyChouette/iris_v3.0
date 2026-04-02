@@ -17,7 +17,7 @@ MonoBehaviour:
   category: 2
   messType: 1
   spillDefinition: {fileID: 0}
-  objectPrefab: {fileID: 0}
+  objectPrefab: {fileID: 1569306593251601377, guid: 923b8a0648ff8fd48a2cbc101c86a43b, type: 3}
   objectScale: {x: 0.06, y: 0.2, z: 0.06}
   objectColor: {r: 1, g: 0, b: 0.6610732, a: 1}
   canBeDishelved: 0
