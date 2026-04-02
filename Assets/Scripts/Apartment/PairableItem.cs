@@ -187,8 +187,9 @@ public class PairableItem : MonoBehaviour
     {
         if (held == null) return;
 
-        // Stop partner highlight since we're pairing now
+        // Stop partner highlight pulse on both items before snapping
         held.OnPutDown();
+        OnPutDown();
 
         _isPaired = true;
         held._isPaired = true;
@@ -201,6 +202,9 @@ public class PairableItem : MonoBehaviour
             AudioManager.Instance?.PlaySFX(held._snapSound);
 
         // Pulse both items to confirm the pairing
+        // Re-cache renderer in case it was lost
+        if (_renderer == null) _renderer = GetComponentInChildren<Renderer>();
+        if (held._renderer == null) held._renderer = held.GetComponentInChildren<Renderer>();
         StartCoroutine(RunPairPulse());
         held.StartCoroutine(held.RunPairPulse());
 
