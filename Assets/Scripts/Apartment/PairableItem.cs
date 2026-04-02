@@ -158,8 +158,17 @@ public class PairableItem : MonoBehaviour
     /// <summary>Force renderer back to the original Awake color.</summary>
     public void RestoreBaseColor()
     {
-        if (_renderer != null)
+        if (_renderer == null) return;
+
+        // Use PlaceableObject's instance material if available (avoids creating a second instance)
+        if (_placeable != null)
+        {
+            _placeable.ForceRestoreMaterial();
+        }
+        else
+        {
             _renderer.material.color = _baseColor;
+        }
     }
 
     /// <summary>

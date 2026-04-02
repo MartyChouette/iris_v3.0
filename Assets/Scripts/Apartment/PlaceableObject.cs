@@ -804,6 +804,12 @@ public class PlaceableObject : MonoBehaviour
             _instanceMat.color = _originalColor;
     }
 
+    /// <summary>Public version for external systems (PairableItem) to force color restore.</summary>
+    public void ForceRestoreMaterial()
+    {
+        RestoreMaterial();
+    }
+
     /// <summary>
     /// Override the instance material's shader and properties from a source material.
     /// Call AFTER Awake (which creates _instanceMat) and BEFORE InteractableHighlight
