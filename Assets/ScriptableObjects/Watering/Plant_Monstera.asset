@@ -22,7 +22,9 @@ MonoBehaviour:
   idealWaterLevel: 0.8
   waterTolerance: 0.05
   pourRate: 0.15
-  foamRateMultiplier: 2.8
+  foamRateMultiplier: 1.8
+  targetOscSpeed: 0.5
+  targetOscAmplitude: 0.15
   foamSettleRate: 0.2
   absorptionRate: 0.06
   baseScore: 100
