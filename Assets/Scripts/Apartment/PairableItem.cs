@@ -108,15 +108,11 @@ public class PairableItem : MonoBehaviour
             _originalColorCaptured = true;
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _partnerPulseSpeed * Mathf.PI * 2f);
             Color c = Color.Lerp(_baseColor, _partnerPulseColor, pulse);
-            if (_placeable == null || !_placeable.SetInstanceColor(c))
-                _renderer.material.color = c; // fallback
+            SetColor(c);
         }
         else if (_originalColorCaptured)
         {
-            if (_placeable != null)
-                _placeable.ForceRestoreMaterial();
-            else
-                _renderer.material.color = _baseColor;
+            RestoreColor();
             _originalColorCaptured = false;
         }
     }
@@ -152,13 +148,15 @@ public class PairableItem : MonoBehaviour
     /// </summary>
     public void OnPutDown()
     {
-        // Always restore to true base color
-        RestoreBaseColor();
+        RestoreColor();
         _originalColorCaptured = false;
 
         // Also restore partner's color
         if (_specificPartner != null)
-            _specificPartner.RestoreBaseColor();
+        {
+            _specificPartner.RestoreColor();
+            _specificPartner._originalColorCaptured = false;
+        }
 
         _partnerHighlightActive = false;
     }
@@ -166,16 +164,33 @@ public class PairableItem : MonoBehaviour
     /// <summary>Force renderer back to the original Awake color.</summary>
     public void RestoreBaseColor()
     {
-        if (_renderer == null) return;
+        RestoreColor();
+    }
 
-        // Use PlaceableObject's instance material if available (avoids creating a second instance)
-        if (_placeable != null)
+    // ── Single path for ALL color writes (never touch _renderer.material directly) ──
+
+    private void SetColor(Color c)
+    {
+        if (_placeable != null && _placeable.SetInstanceColor(c)) return;
+        // Last resort — no PlaceableObject
+        if (_renderer != null && _renderer.sharedMaterial != null)
         {
-            _placeable.ForceRestoreMaterial();
+            var mpb = new MaterialPropertyBlock();
+            _renderer.GetPropertyBlock(mpb);
+            mpb.SetColor("_BaseColor", c);
+            mpb.SetColor("_Color", c);
+            _renderer.SetPropertyBlock(mpb);
         }
-        else
+    }
+
+    private void RestoreColor()
+    {
+        if (_placeable != null) { _placeable.ForceRestoreMaterial(); return; }
+        // Last resort
+        if (_renderer != null && _renderer.sharedMaterial != null)
         {
-            _renderer.material.color = _baseColor;
+            var mpb = new MaterialPropertyBlock();
+            _renderer.SetPropertyBlock(mpb); // clear all overrides
         }
     }
 
@@ -311,18 +326,13 @@ public class PairableItem : MonoBehaviour
             for (float t = 0f; t < duration; t += Time.deltaTime)
             {
                 float blend = Mathf.Sin(t / duration * Mathf.PI);
-                Color c = Color.Lerp(_baseColor, flash, blend);
-                if (_placeable == null || !_placeable.SetInstanceColor(c))
-                    _renderer.material.color = c;
+                SetColor(Color.Lerp(_baseColor, flash, blend));
                 yield return null;
             }
         }
 
         // Always restore to true base color
-        if (_placeable != null)
-            _placeable.ForceRestoreMaterial();
-        else
-            _renderer.material.color = _baseColor;
+        RestoreColor();
         _pairPulseActive = false;
         _originalColorCaptured = false;
     }
