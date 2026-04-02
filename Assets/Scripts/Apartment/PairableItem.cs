@@ -118,26 +118,12 @@ public class PairableItem : MonoBehaviour
     /// </summary>
     public void OnPickedUp()
     {
-        if (_isPaired && _pairedChild != null)
+        if (!_isPaired)
         {
-            if (_pairMode == PairMode.AnyOfCategory)
-            {
-                // Plates: break the stack on pickup so you grab one at a time
-                var childCol = _pairedChild.GetComponent<Collider>();
-                if (childCol != null) childCol.enabled = true;
-                if (_pairedChild._placeable != null) _pairedChild._placeable.enabled = true;
-
-                _pairedChild.transform.SetParent(null);
-                _pairedChild._isPaired = false;
-                _pairedChild = null;
-                _isPaired = false;
-            }
-            // SpecificPartner (shoes): stay paired, move as a unit
+            _isPaired = false; // redundant but clear
         }
-        else
-        {
-            _isPaired = false;
-        }
+        // Both SpecificPartner (shoes) and AnyOfCategory (plates):
+        // stay paired, pick up the whole group as a unit.
 
         // Flash partner highlight for unpaired shoes
         if (!_isPaired && _pairMode == PairMode.SpecificPartner
