@@ -30,32 +30,9 @@ public class CleanableSurface : MonoBehaviour
     [Tooltip("Tint colour for spray wetness.")]
     [SerializeField] private Color _wetColor = new Color(0.5f, 0.7f, 1f, 0.4f);
 
-    [Header("Stain Visibility")]
-    [Tooltip("Apply PSX glitch shader to the stain to make it visually noticeable.")]
-    [SerializeField] private bool _useGlitch = false;
-
-    [Tooltip("Glitch intensity on the stain (0-1).")]
-    [SerializeField, Range(0f, 1f)] private float _glitchIntensity = 0.3f;
-
-    [Tooltip("Add a pulsing glow border around the stain.")]
-    [SerializeField] private bool _usePulseGlow = false;
-
-    [Tooltip("Pulse glow color.")]
-    [SerializeField] private Color _pulseColor = new Color(1f, 0.9f, 0.6f, 0.5f);
-
-    [Tooltip("Pulse speed (Hz).")]
-    [SerializeField] private float _pulseSpeed = 1.5f;
-
     [Header("Events")]
     [Tooltip("Fires once when the surface is >= 95% clean.")]
     public UnityEvent OnFullyClean;
-
-    // Stain visibility
-    private GameObject _pulseGlowGO;
-    private Renderer _pulseGlowRenderer;
-    private Material _pulseGlowMat;
-    private Shader _originalDirtShader;
-    private bool _glitchApplied;
 
     // Dirt texture
     private Texture2D _dirtTex;
@@ -252,7 +229,6 @@ public class CleanableSurface : MonoBehaviour
             GenerateDirtTexture();
             GenerateWetTexture();
         }
-        ApplyStainVisibility();
     }
 
     private void ExpandCollider()
@@ -288,20 +264,6 @@ public class CleanableSurface : MonoBehaviour
             }
         }
 
-        // Pulse glow animation
-        if (_pulseGlowMat != null && _pulseGlowGO != null && _pulseGlowGO.activeSelf)
-        {
-            if (IsFullyClean)
-            {
-                RemoveStainVisibility();
-                return;
-            }
-
-            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
-            Color c = _pulseColor;
-            c.a = _pulseColor.a * pulse;
-            _pulseGlowMat.color = c;
-        }
     }
 
     void OnDestroy()
@@ -462,70 +424,4 @@ public class CleanableSurface : MonoBehaviour
         rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
     }
 
-    // ── Stain Visibility (glitch + pulse glow) ──────────────────────
-
-    private void ApplyStainVisibility()
-    {
-        // Glitch shader on dirt renderer
-        if (_useGlitch && _dirtRenderer != null && !_glitchApplied)
-        {
-            var glitchShader = Shader.Find("Iris/PSXLitGlitch");
-            if (glitchShader != null)
-            {
-                var mat = _dirtRenderer.material;
-                _originalDirtShader = mat.shader;
-                mat.shader = glitchShader;
-                mat.SetFloat("_GlitchIntensity", _glitchIntensity);
-                _glitchApplied = true;
-            }
-        }
-
-        // Pulse glow border (quad slightly larger than the stain)
-        if (_usePulseGlow && _pulseGlowGO == null)
-        {
-            _pulseGlowGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            _pulseGlowGO.name = "StainPulseGlow";
-            Object.Destroy(_pulseGlowGO.GetComponent<Collider>());
-            _pulseGlowGO.transform.SetParent(transform, false);
-            _pulseGlowGO.transform.localPosition = new Vector3(0f, 0.001f, 0f);
-            _pulseGlowGO.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _pulseGlowGO.transform.localScale = Vector3.one * 1.15f; // slightly bigger than stain
-
-            _pulseGlowRenderer = _pulseGlowGO.GetComponent<Renderer>();
-            var shader = Shader.Find("Sprites/Default");
-            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
-            _pulseGlowMat = new Material(shader);
-            _pulseGlowMat.color = _pulseColor;
-            _pulseGlowMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + 1;
-            _pulseGlowRenderer.material = _pulseGlowMat;
-            _pulseGlowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        }
-    }
-
-    private void RemoveStainVisibility()
-    {
-        if (_glitchApplied && _dirtRenderer != null && _originalDirtShader != null)
-        {
-            _dirtRenderer.material.shader = _originalDirtShader;
-            _glitchApplied = false;
-        }
-
-        if (_pulseGlowGO != null)
-        {
-            Destroy(_pulseGlowGO);
-            _pulseGlowGO = null;
-        }
-
-        if (_pulseGlowMat != null)
-        {
-            Destroy(_pulseGlowMat);
-            _pulseGlowMat = null;
-        }
-    }
-
-
-    private void OnDisable()
-    {
-        RemoveStainVisibility();
-    }
 }
