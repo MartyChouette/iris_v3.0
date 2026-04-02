@@ -799,11 +799,7 @@ public class PlaceableObject : MonoBehaviour
 
     private void RestoreMaterial()
     {
-        if (_instanceMat != null)
-        {
-            Debug.Log($"[PlaceableObject] RestoreMaterial '{name}': current={_instanceMat.color} restoring to={_originalColor}");
-            _instanceMat.color = _originalColor;
-        }
+        // No-op: brightness boost removed, material stays at _originalColor always
     }
 
     /// <summary>Public version for external systems (PairableItem) to force color restore.</summary>
