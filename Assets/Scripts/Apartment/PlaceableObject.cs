@@ -649,6 +649,9 @@ public class PlaceableObject : MonoBehaviour
         silRend.receiveShadows = false;
     }
 
+    /// <summary>Remove the silhouette overlay. Called on place, drop, and pair.</summary>
+    public void ForceDestroySilhouette() => DestroySilhouette();
+
     private void DestroySilhouette()
     {
         if (_silhouetteGO != null)

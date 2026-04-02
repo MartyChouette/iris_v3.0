@@ -676,8 +676,9 @@ public class ObjectGrabber : MonoBehaviour
         _heldRb.constraints = _originalConstraints;
         _heldRb.linearVelocity = Vector3.zero;
 
-        // Restore held item brightness before pairing
+        // Clean up held item visuals before pairing
         _held.ForceRestoreMaterial();
+        _held.ForceDestroySilhouette();
 
         // Snap pair
         clickedPairable.SnapPair(heldPairable);
@@ -823,8 +824,9 @@ public class ObjectGrabber : MonoBehaviour
 
         if (_held != null)
         {
-            // Always restore material to base color (clears brightness boost)
+            // Always clean up held item visuals
             _held.ForceRestoreMaterial();
+            _held.ForceDestroySilhouette();
 
             // Stop partner highlight flash + restore partner color
             var pairable = _held.GetComponent<PairableItem>();
