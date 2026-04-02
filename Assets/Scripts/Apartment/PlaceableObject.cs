@@ -364,7 +364,7 @@ public class PlaceableObject : MonoBehaviour
     /// Lazy-init silhouette material and mesh on first pickup (not Awake).
     /// Avoids 2 material allocations + Shader.Find + GO creation per object at scene load.
     /// </summary>
-    private void EnsureSilhouette()
+    public void EnsureSilhouette()
     {
         if (_silhouetteMat != null) return;
 
@@ -473,6 +473,14 @@ public class PlaceableObject : MonoBehaviour
 
         // Lazy-init silhouette on first pickup (deferred from scene load)
         EnsureSilhouette();
+
+        // Also silhouette all paired/stacked children
+        foreach (Transform child in transform)
+        {
+            var childPlaceable = child.GetComponent<PlaceableObject>();
+            if (childPlaceable != null)
+                childPlaceable.EnsureSilhouette();
+        }
 
         // If we were stored in a drawer, notify the drawer
         var drawer = GetComponentInParent<DrawerController>();
@@ -649,8 +657,19 @@ public class PlaceableObject : MonoBehaviour
         silRend.receiveShadows = false;
     }
 
-    /// <summary>Remove the silhouette overlay. Called on place, drop, and pair.</summary>
-    public void ForceDestroySilhouette() => DestroySilhouette();
+    /// <summary>Remove the silhouette overlay on this item and all children. Called on place, drop, and pair.</summary>
+    public void ForceDestroySilhouette()
+    {
+        DestroySilhouette();
+
+        // Also destroy silhouettes on paired/stacked children
+        foreach (Transform child in transform)
+        {
+            var childPlaceable = child.GetComponent<PlaceableObject>();
+            if (childPlaceable != null)
+                childPlaceable.ForceDestroySilhouette();
+        }
+    }
 
     private void DestroySilhouette()
     {
