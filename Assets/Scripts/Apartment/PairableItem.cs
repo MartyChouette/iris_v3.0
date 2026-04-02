@@ -72,17 +72,30 @@ public class PairableItem : MonoBehaviour
     private void Update()
     {
         if (_pairPulseActive) return;
-        if (_pairMode != PairMode.SpecificPartner || _specificPartner == null) return;
         if (_renderer == null) return;
 
-        // Check if our partner is currently being held
-        bool partnerHeld = !_isPaired
-            && ObjectGrabber.HeldObject != null
-            && ObjectGrabber.HeldObject.gameObject == _specificPartner.gameObject;
+        bool shouldPulse = false;
+        var held = ObjectGrabber.HeldObject;
 
-        if (partnerHeld)
+        if (held != null && held.gameObject != gameObject)
         {
-            // Capture original color once (from the material, not MPB — more reliable)
+            if (_pairMode == PairMode.SpecificPartner && _specificPartner != null)
+            {
+                // Shoes: pulse if partner is held
+                shouldPulse = !_isPaired && held.gameObject == _specificPartner.gameObject;
+            }
+            else if (_pairMode == PairMode.AnyOfCategory && _placeable != null)
+            {
+                // Plates: pulse if held item is same category
+                var heldPairable = held.GetComponent<PairableItem>();
+                shouldPulse = heldPairable != null
+                    && heldPairable.Mode == PairMode.AnyOfCategory
+                    && held.Category == _placeable.Category;
+            }
+        }
+
+        if (shouldPulse)
+        {
             if (!_originalColorCaptured)
             {
                 _originalColor = _renderer.material.color;
@@ -144,6 +157,13 @@ public class PairableItem : MonoBehaviour
     /// </summary>
     public void OnPutDown()
     {
+        // Restore material color if it was pulsing
+        if (_originalColorCaptured && _renderer != null)
+        {
+            _renderer.material.color = _originalColor;
+            _originalColorCaptured = false;
+        }
+
         if (!_partnerHighlightActive) return;
         if (_specificPartner == null) return;
 
