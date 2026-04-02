@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Spill_Mud_Splash
   m_EditorClassIdentifier: Assembly-CSharp::SpillDefinition
   spillType: 0
-  spillColor: {r: 0.3, g: 0.22, b: 0.12, a: 1}
+  spillColor: {r: 0.29803923, g: 0.12156861, b: 0.14899985, a: 1}
   coverage: 0.7
   seed: 49
   textureSize: 128

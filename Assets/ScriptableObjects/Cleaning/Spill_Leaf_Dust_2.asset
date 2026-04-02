@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Spill_Leaf_Dust_2
   m_EditorClassIdentifier: Assembly-CSharp::SpillDefinition
   spillType: 0
-  spillColor: {r: 0.3, g: 0.34, b: 0.24, a: 1}
+  spillColor: {r: 0.37106913, g: 0.1341916, b: 0.1647144, a: 1}
   coverage: 0.55
   seed: 215
   textureSize: 256
