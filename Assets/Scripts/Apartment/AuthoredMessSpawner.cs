@@ -387,6 +387,7 @@ public class AuthoredMessSpawner : MonoBehaviour
 
         public void SetString(string fieldName, string value)
         {
+            if (_target == null) return;
             var field = _target.GetType().GetField(fieldName,
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (field != null) field.SetValue(_target, value);
@@ -394,6 +395,7 @@ public class AuthoredMessSpawner : MonoBehaviour
 
         public void SetBool(string fieldName, bool value)
         {
+            if (_target == null) return;
             var field = _target.GetType().GetField(fieldName,
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (field != null) field.SetValue(_target, value);
