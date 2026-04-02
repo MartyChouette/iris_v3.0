@@ -67,12 +67,9 @@ public class MusicDirector : MonoBehaviour
     /// </summary>
     public void PlayMenuSong()
     {
-        if (_menuSong == null && !string.IsNullOrEmpty(_menuSongPath))
-            _menuSong = Resources.Load<AudioClip>(_menuSongPath);
-
         if (_menuSong == null)
         {
-            Debug.LogWarning("[MusicDirector] No menu song — assign _menuSong in Inspector or set _menuSongPath.");
+            Debug.LogWarning("[MusicDirector] No menu song — assign _menuSong in Inspector.");
             return;
         }
         if (AudioManager.Instance == null) return;
