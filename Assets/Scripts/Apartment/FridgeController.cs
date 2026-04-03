@@ -83,8 +83,16 @@ public class FridgeController : MonoBehaviour
     {
         if (DayPhaseManager.Instance != null && !DayPhaseManager.Instance.IsInteractionPhase) return;
 
+        // Fridge door only opens during Phase 2 (drink making)
+        bool isDrinkPhase = DateSessionManager.Instance != null
+            && DateSessionManager.Instance.CurrentDatePhase == DateSessionManager.DatePhase.BackgroundJudging;
+
         // Start blink guide when drink phase begins and fridge is closed
-        UpdateBlinkGuide();
+        if (isDrinkPhase)
+            UpdateBlinkGuide();
+
+        // Block door interaction outside Phase 2
+        if (!isDrinkPhase) return;
 
         if (_state != DoorState.Closed && _state != DoorState.Open) return;
         if (IrisInput.Instance == null || !IrisInput.Instance.Click.WasPressedThisFrame()) return;
