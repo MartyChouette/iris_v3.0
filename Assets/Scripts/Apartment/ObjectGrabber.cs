@@ -500,8 +500,16 @@ public class ObjectGrabber : MonoBehaviour
             }
         }
 
-        // Must be over a surface to place
-        if (_currentSurface == null) return;
+        // No surface — check if clicking near a DropZone directly (fridge, etc.)
+        if (_currentSurface == null)
+        {
+            if (TryDepositAtNearbyZone())
+            {
+                ConsumeClick();
+                return;
+            }
+            return;
+        }
 
         // ── DropZone check ──
         // Check current surface first, then search ALL surfaces with DropZones
@@ -849,6 +857,40 @@ public class ObjectGrabber : MonoBehaviour
                 count++;
         }
         return count;
+    }
+
+    /// <summary>
+    /// Try to deposit the held item at the nearest DropZone when not over a PlacementSurface.
+    /// Used for fridge, trash can, etc. that don't have placement surfaces.
+    /// </summary>
+    private bool TryDepositAtNearbyZone()
+    {
+        if (_held == null) return false;
+
+        // Raycast to see what we clicked on
+        Vector2 screenPos = IrisInput.CursorPosition;
+        Ray ray = cam.ScreenPointToRay(screenPos);
+        if (!Physics.Raycast(ray, out RaycastHit hit, 100f)) return false;
+
+        // Check the hit object and its parents for a DropZone
+        var zone = hit.collider.GetComponent<DropZone>();
+        if (zone == null) zone = hit.collider.GetComponentInParent<DropZone>();
+        if (zone == null) return false;
+
+        // Check if the held item matches this zone
+        bool matches = (!string.IsNullOrEmpty(_held.HomeZoneName) && zone.ZoneName == _held.HomeZoneName)
+                    || (!string.IsNullOrEmpty(_held.AltHomeZoneName) && zone.ZoneName == _held.AltHomeZoneName);
+        if (!matches) return false;
+
+        // Deposit
+        _held.ForceRestoreMaterial();
+        _held.ForceDestroySilhouette();
+        var item = _held;
+        ClearHeld();
+        zone.RegisterDeposit(item);
+        PlayPlaceSFX(item);
+        Debug.Log($"[ObjectGrabber] Deposited {item.name} at zone '{zone.ZoneName}'");
+        return true;
     }
 
     private void PlayPlaceSFX(PlaceableObject obj)

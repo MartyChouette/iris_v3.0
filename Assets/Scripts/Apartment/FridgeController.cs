@@ -95,12 +95,7 @@ public class FridgeController : MonoBehaviour
         if (isDrinkPhase)
             UpdateBlinkGuide();
 
-        // Check for item deposit (works ANY time, not just Phase 2)
-        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame()
-            && ObjectGrabber.IsHoldingObject && !ObjectGrabber.ClickConsumedThisFrame)
-        {
-            TryAcceptHeldItem();
-        }
+        // Item deposit is handled by ObjectGrabber's DropZone proximity search
 
         // Block door interaction outside Phase 2
         if (!isDrinkPhase) return;
