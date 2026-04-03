@@ -35,6 +35,13 @@ public class PlaceableObject : MonoBehaviour
     [Tooltip("Short description shown when picked up (leave empty to use object name).")]
     [SerializeField] private string _itemDescription = "";
 
+    [Header("Smell / Aging")]
+    [Tooltip("Base smell per day left out. Milk=0.5, Trash=0.2, Dish=0.1, General=0.")]
+    [SerializeField] private float _smellPerDay;
+
+    [Tooltip("Days this item has been left out (not at home). Increases each morning.")]
+    [SerializeField] private int _daysLeftOut;
+
     [Header("Surface Restrictions")]
     [Tooltip("If true, this object can be placed on vertical (wall) surfaces.")]
     [SerializeField] private bool canWallMount;
@@ -362,6 +369,141 @@ public class PlaceableObject : MonoBehaviour
     {
         if (_startDishelved)
             Dishevel();
+
+        // Subscribe to day-start for smell aging
+        if (GameClock.Instance != null)
+            GameClock.Instance.OnDayStarted.AddListener(OnNewDay);
+
+        // Auto-set smell per day based on category if not manually set
+        if (_smellPerDay <= 0f)
+        {
+            switch (_itemCategory)
+            {
+                case ItemCategory.Trash: _smellPerDay = 0.2f; break;
+                case ItemCategory.Dish:  _smellPerDay = 0.1f; break;
+                default: _smellPerDay = 0f; break;
+            }
+            // Milk cartons (HomeZoneName = "Fridge") smell fast
+            if (_homeZoneName == "Fridge") _smellPerDay = 0.5f;
+        }
+    }
+
+    private void OnNewDay()
+    {
+        if (this == null) return; // destroyed
+
+        // Only age items NOT at home
+        if (IsAtHome) return;
+
+        // Skip items that don't smell
+        if (_smellPerDay <= 0f) return;
+
+        _daysLeftOut++;
+        float totalSmell = _smellPerDay * _daysLeftOut;
+
+        // Update ReactableTag smell
+        var tag = GetComponent<ReactableTag>();
+        if (tag != null)
+            tag.SmellAmount = totalSmell;
+
+        // Show/update stink lines when smell is noticeable
+        if (totalSmell >= 0.3f)
+            EnsureStinkLines(totalSmell);
+    }
+
+    /// <summary>Reset aging when item is put away (placed at home or deposited).</summary>
+    public void ResetSmellAging()
+    {
+        _daysLeftOut = 0;
+        var tag = GetComponent<ReactableTag>();
+        if (tag != null) tag.SmellAmount = 0f;
+        DestroyStinkLines();
+    }
+
+    // ── Stink Lines (wavy particles rising from smelly items) ──
+
+    private GameObject _stinkLinesGO;
+
+    private void EnsureStinkLines(float intensity)
+    {
+        if (_stinkLinesGO == null)
+        {
+            _stinkLinesGO = new GameObject("StinkLines");
+            _stinkLinesGO.transform.SetParent(transform);
+            _stinkLinesGO.transform.localPosition = Vector3.up * 0.1f;
+
+            var ps = _stinkLinesGO.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.loop = true;
+            main.startLifetime = 1.5f;
+            main.startSpeed = 0.15f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.02f, 0.05f);
+            main.gravityModifier = -0.1f;
+            main.maxParticles = 15;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startColor = new Color(0.6f, 0.7f, 0.3f, 0.4f); // sickly green
+
+            var emission = ps.emission;
+            emission.rateOverTime = 3f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.05f;
+
+            var sol = ps.sizeOverLifetime;
+            sol.enabled = true;
+            sol.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, 0.5f),
+                new Keyframe(0.5f, 1f),
+                new Keyframe(1f, 0.3f)
+            ));
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(new Color(0.6f, 0.7f, 0.3f), 0f), new GradientColorKey(new Color(0.5f, 0.6f, 0.2f), 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.5f, 0.3f), new GradientAlphaKey(0f, 1f) }
+            );
+            col.color = gradient;
+
+            // Wavy motion
+            var vel = ps.velocityOverLifetime;
+            vel.enabled = true;
+            vel.x = new ParticleSystem.MinMaxCurve(-0.05f, 0.05f);
+            vel.z = new ParticleSystem.MinMaxCurve(-0.05f, 0.05f);
+
+            var renderer = _stinkLinesGO.GetComponent<ParticleSystemRenderer>();
+            var shader = Shader.Find("Particles/Standard Unlit")
+                      ?? Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (shader != null)
+            {
+                renderer.material = new Material(shader);
+                renderer.material.SetFloat("_Surface", 1f);
+            }
+        }
+
+        // Scale intensity with smell
+        var stinkPS = _stinkLinesGO.GetComponent<ParticleSystem>();
+        if (stinkPS != null)
+        {
+            var em = stinkPS.emission;
+            em.rateOverTime = Mathf.Lerp(2f, 10f, Mathf.Clamp01(intensity / 1.5f));
+
+            var m = stinkPS.main;
+            m.startSize = new ParticleSystem.MinMaxCurve(
+                Mathf.Lerp(0.02f, 0.04f, intensity),
+                Mathf.Lerp(0.04f, 0.08f, intensity));
+        }
+    }
+
+    private void DestroyStinkLines()
+    {
+        if (_stinkLinesGO != null)
+        {
+            Destroy(_stinkLinesGO);
+            _stinkLinesGO = null;
+        }
     }
 
     /// <summary>
@@ -460,6 +602,9 @@ public class PlaceableObject : MonoBehaviour
         if (_instanceMat != null) Destroy(_instanceMat);
         if (_silhouetteMat != null) Destroy(_silhouetteMat);
         if (_silhouetteGO != null) Destroy(_silhouetteGO);
+        DestroyStinkLines();
+        if (GameClock.Instance != null)
+            GameClock.Instance.OnDayStarted.RemoveListener(OnNewDay);
     }
 
     // ── Grabbed / Released ────────────────────────────────────────────
@@ -547,7 +692,10 @@ public class PlaceableObject : MonoBehaviour
             {
                 if ((!string.IsNullOrEmpty(_homeZoneName) && zone.ZoneName == _homeZoneName)
                     || (!string.IsNullOrEmpty(_altHomeZoneName) && zone.ZoneName == _altHomeZoneName))
+                {
                     IsAtHome = true;
+                    ResetSmellAging();
+                }
             }
         }
 
