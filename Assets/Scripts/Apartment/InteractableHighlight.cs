@@ -200,7 +200,10 @@ public class InteractableHighlight : MonoBehaviour
     {
         _renderers = GetComponentsInChildren<Renderer>();
 
-        // When visuals are suppressed, skip ALL material setup.
+        // Always swap standard shaders to PSXLit (visual style, not highlight related)
+        SwapToPSXLit();
+
+        // When visuals are suppressed, skip highlight material setup.
         // The component only exists for the static registry (cursor detection).
         if (s_suppressVisuals) return;
 
