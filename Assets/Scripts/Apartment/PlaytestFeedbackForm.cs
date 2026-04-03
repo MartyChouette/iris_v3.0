@@ -83,6 +83,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
     private TMP_InputField _positiveField;
     private TMP_InputField _negativeField;
     private TMP_InputField _bugField;
+    private TMP_InputField _testerNameField;
     private Image[][] _starImages;       // [question][star]
     private int[] _selectedRatings;      // [question] = 0-5
     private TextMeshProUGUI _confirmText;
@@ -213,6 +214,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         _currentPayload.feedbackPositive = _positiveField.text;
         _currentPayload.feedbackNegative = _negativeField.text;
         _currentPayload.bugReport = _bugField.text;
+        _currentPayload.testerName = _testerNameField != null ? _testerNameField.text : "";
 
         _submittedThisSession = true;
         SaveFeedback(_currentPayload);
@@ -366,6 +368,8 @@ public class PlaytestFeedbackForm : MonoBehaviour
             fields.Add(("Frustrating", payload.feedbackNegative, false));
         if (!string.IsNullOrEmpty(payload.bugReport))
             fields.Add(("Bugs Noted", payload.bugReport, false));
+        if (!string.IsNullOrEmpty(payload.testerName))
+            fields.Add(("Tester", payload.testerName, true));
 
         string sessionShort = "?";
         if (!string.IsNullOrEmpty(payload.sessionId) && payload.sessionId.Length >= 8)
@@ -398,7 +402,7 @@ public class PlaytestFeedbackForm : MonoBehaviour
         {
             p.sessionId = s_sessionId;
             p.timestamp = DateTime.UtcNow.ToString("o"); // ISO 8601
-            p.buildVersion = Application.version;
+            p.buildVersion = GameVersion.Display;
             p.playTimeSeconds = Time.realtimeSinceStartup;
             p.currentDay = GameClock.Instance != null ? GameClock.Instance.CurrentDay : -1;
             p.currentPhase = DayPhaseManager.Instance != null
@@ -553,6 +557,11 @@ public class PlaytestFeedbackForm : MonoBehaviour
             new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
         _bugField = AddInputField(scrollContent, "BugField", yPos, 70f, "Type here...");
         yPos -= 80f;
+
+        yPos = AddLabel(scrollContent, "NameLabel", "Your name (optional — for credits as a tester)", 17f, yPos, 24f,
+            new Color(0.7f, 0.7f, 0.68f), TextAlignmentOptions.Left);
+        _testerNameField = AddInputField(scrollContent, "TesterNameField", yPos, 40f, "Your name...");
+        yPos -= 50f;
 
         // ── Confirm text ──
         var confirmGO = MakeChild(scrollContent, "ConfirmText");

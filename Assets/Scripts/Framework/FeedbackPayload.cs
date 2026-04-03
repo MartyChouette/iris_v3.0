@@ -18,6 +18,7 @@ public class FeedbackPayload
     public string feedbackPositive;
     public string feedbackNegative;
     public string bugReport;
+    public string testerName;          // optional — for credits
 
     // ── Auto-telemetry (gathered on form open) ──
     public string sessionId;

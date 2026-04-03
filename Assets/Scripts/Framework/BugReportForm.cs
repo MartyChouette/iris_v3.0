@@ -209,7 +209,7 @@ public class BugReportForm : MonoBehaviour
             var fields = new List<(string name, string value, bool inline)>
             {
                 ("Severity", severity, true),
-                ("Build", Application.version, true),
+                ("Build", GameVersion.Display, true),
                 ("Play Time", $"{Time.realtimeSinceStartup / 60f:F1} min", true),
             };
 
@@ -269,7 +269,7 @@ public class BugReportForm : MonoBehaviour
         sb.AppendLine("{");
         sb.AppendLine($"  \"timestamp\": \"{DateTime.UtcNow:o}\",");
         sb.AppendLine($"  \"sessionId\": \"{s_sessionId}\",");
-        sb.AppendLine($"  \"buildVersion\": \"{Application.version}\",");
+        sb.AppendLine($"  \"buildVersion\": \"{GameVersion.Display}\",");
         sb.AppendLine($"  \"severity\": \"{severity}\",");
         sb.AppendLine($"  \"description\": \"{EscapeJsonValue(desc)}\",");
         sb.AppendLine($"  \"reproSteps\": \"{EscapeJsonValue(repro)}\",");
