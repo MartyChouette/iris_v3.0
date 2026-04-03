@@ -78,10 +78,14 @@ public class DropZone : MonoBehaviour
                     _playerHoldingMatch = true;
             }
 
-            // Trash and Dish items highlight destroy-on-deposit zones (mirrors ObjectGrabber logic)
-            if (!_playerHoldingMatch && _destroyOnDeposit
-                && (held.Category == ItemCategory.Trash || held.Category == ItemCategory.Dish))
-                _playerHoldingMatch = true;
+            // Trash highlights trash cans (zone name "TrashCan"), dishes highlight sink (zone name "Sink")
+            if (!_playerHoldingMatch && _destroyOnDeposit)
+            {
+                if (held.Category == ItemCategory.Trash && _zoneName == "TrashCan")
+                    _playerHoldingMatch = true;
+                else if (held.Category == ItemCategory.Dish && _zoneName == "Sink")
+                    _playerHoldingMatch = true;
+            }
         }
 
         // Toggle renderer — Color.clear on opaque materials renders as a dark rectangle,
