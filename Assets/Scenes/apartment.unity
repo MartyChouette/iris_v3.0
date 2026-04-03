@@ -1020,6 +1020,38 @@ PrefabInstance:
       value: Fridge
       objectReference: {fileID: 0}
     - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homePosition.x
+      value: 1.5940895
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homePosition.y
+      value: 0.95199996
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homePosition.z
+      value: -2.3484478
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homeRotation.w
+      value: 0.49942005
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homeRotation.x
+      value: -0.49942014
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homeRotation.y
+      value: -0.50057924
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homeRotation.z
+      value: -0.50057936
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _useSpawnAsHome
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: _placeSFXOverride
       value: 
       objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
@@ -1149,6 +1181,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: A blue ceramic vase.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -3275,6 +3309,8 @@ MonoBehaviour:
   _homeZoneName: Living Room
   _altHomeZoneName: 
   _itemDescription: The Dead Letter Love 3 of 3
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -5119,6 +5155,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 1
   wallOnly: 1
   _gridSizeMultiplier: 1
@@ -5385,6 +5423,7 @@ MonoBehaviour:
   _zoneName: Fridge
   _destroyOnDeposit: 1
   _zoneRenderer: {fileID: 334944755}
+  _hideRendererWhenInactive: 1
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
   _depositSFX: {fileID: 0}
@@ -7654,6 +7693,8 @@ MonoBehaviour:
   _homeZoneName: Living Room
   _altHomeZoneName: 
   _itemDescription: The Dead Letter Love 2 of 3
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -8684,6 +8725,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: A virtual pet keychain.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -9557,6 +9600,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Last month's gardening magazine.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -11025,6 +11070,8 @@ MonoBehaviour:
   _homeZoneName: ShoeRack
   _altHomeZoneName: 
   _itemDescription: Heavy black boots.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -12305,6 +12352,7 @@ MonoBehaviour:
   _wallOcclusionLayer:
     serializedVersion: 2
     m_Bits: 0
+  _depositZone: {fileID: 334944758}
   _interiorLight: {fileID: 280605119}
   _openSFX: {fileID: 8300000, guid: 46429371c45e68544905e670818702b6, type: 3}
   _closeSFX: {fileID: 8300000, guid: 8eadf142ff60df04980d55aa8ba41e09, type: 3}
@@ -15363,6 +15411,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 1
   wallOnly: 1
   _gridSizeMultiplier: 1
@@ -15555,6 +15605,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: A ceramic mug, slightly chipped.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -15743,6 +15795,7 @@ MonoBehaviour:
   _zoneName: TrashCan
   _destroyOnDeposit: 1
   _zoneRenderer: {fileID: 910334822}
+  _hideRendererWhenInactive: 1
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
   _depositSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
@@ -15934,6 +15987,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Yellow cartridge.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -16264,6 +16319,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Hand-built Gunpla model.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -16769,7 +16826,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 937516492}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -16834,6 +16891,7 @@ MonoBehaviour:
   _zoneName: Sink
   _destroyOnDeposit: 1
   _zoneRenderer: {fileID: 937516494}
+  _hideRendererWhenInactive: 1
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
   _depositSFX: {fileID: 8300000, guid: 333b86038c1426f4eaee8d980538bd21, type: 3}
@@ -17995,6 +18053,8 @@ MonoBehaviour:
   _homeZoneName: ShoeRack
   _altHomeZoneName: 
   _itemDescription: Nema's beat-up sneakers.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -18763,6 +18823,7 @@ MonoBehaviour:
   _zoneName: ShoeRack
   _destroyOnDeposit: 0
   _zoneRenderer: {fileID: 1053943096}
+  _hideRendererWhenInactive: 1
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
   _depositSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
@@ -18792,7 +18853,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1053943092}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -20966,6 +21027,7 @@ MonoBehaviour:
   _zoneName: CoffeeTable
   _destroyOnDeposit: 0
   _zoneRenderer: {fileID: 0}
+  _hideRendererWhenInactive: 1
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
   _depositSFX: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
@@ -22817,6 +22879,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: A well-worn yoyo.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -24075,6 +24139,8 @@ MonoBehaviour:
   _homeZoneName: ShoeRack
   _altHomeZoneName: 
   _itemDescription: Fuzzy house slippers.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -27355,7 +27421,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -28018,6 +28084,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Blue cartridge.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -28230,6 +28298,8 @@ MonoBehaviour:
   _homeZoneName: ShoeRack
   _altHomeZoneName: 
   _itemDescription: Heavy black boots.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -29444,7 +29514,7 @@ Transform:
   m_GameObject: {fileID: 1592586868}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.45714274, y: 0.05555557, z: 0.42857167}
+  m_LocalPosition: {x: 0.456, y: 0.05555557, z: 0.522}
   m_LocalScale: {x: 0.03, y: 0.15, z: 0.03}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -32361,6 +32431,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 1
   wallOnly: 1
   _gridSizeMultiplier: 1
@@ -32981,6 +33053,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: A handheld game console.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -33644,6 +33718,8 @@ MonoBehaviour:
   _homeZoneName: ShoeRack
   _altHomeZoneName: 
   _itemDescription: Nema's beat-up sneakers.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -34405,6 +34481,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Red cartridge.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -37209,6 +37287,8 @@ MonoBehaviour:
   _homeZoneName: ShoeRack
   _altHomeZoneName: 
   _itemDescription: Fuzzy house slippers.
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -41786,6 +41866,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Stem & Leaf
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -41826,7 +41908,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &2292339034119131268
 MonoBehaviour:
@@ -42725,6 +42807,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -43602,7 +43686,7 @@ Transform:
   m_GameObject: {fileID: 4459947875849690792}
   serializedVersion: 2
   m_LocalRotation: {x: -0.49997348, y: 0, z: -0, w: 0.8660407}
-  m_LocalPosition: {x: 4.433, y: 1.4422463, z: 8.658}
+  m_LocalPosition: {x: 4.433, y: 1.086, z: 8.658}
   m_LocalScale: {x: 6.732378, y: 0.5562848, z: 8.815685}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -43897,6 +43981,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Root Beer Blues
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -43937,7 +44023,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &5558298820962645061
 MonoBehaviour:
@@ -44542,6 +44628,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Petal Rain
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -44582,7 +44670,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &6151023684486888933
 MonoBehaviour:
@@ -44707,6 +44795,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Record 6
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -44747,7 +44837,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &6243451016124370460
 MonoBehaviour:
@@ -44810,6 +44900,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -44877,7 +44969,7 @@ Transform:
   m_GameObject: {fileID: 5444727772679788217}
   serializedVersion: 2
   m_LocalRotation: {x: -0.79205483, y: 0.14037195, z: 0.19856629, w: 0.5599253}
-  m_LocalPosition: {x: -0.031, y: 1.6635559, z: 8.871}
+  m_LocalPosition: {x: -0.031, y: 1.452, z: 8.755}
   m_LocalScale: {x: 15.652501, y: 17.240662, z: 34.46326}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44990,6 +45082,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -45148,7 +45242,7 @@ Transform:
   m_GameObject: {fileID: 1574461734533599521}
   serializedVersion: 2
   m_LocalRotation: {x: -9.553427e-16, y: -0.000000021855694, z: 1, w: 0.00000004371139}
-  m_LocalPosition: {x: -13.98, y: 2.916123, z: 2.39}
+  m_LocalPosition: {x: -1.89, y: 0.43, z: 2.36}
   m_LocalScale: {x: 283.05386, y: 214.34128, z: 8.580448}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -45168,11 +45262,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AreaWallFade
   _areaDissolves:
   - areaIndex: 0
-    dissolveAmount: 0.984
+    dissolveAmount: 0.174
   - areaIndex: 1
-    dissolveAmount: 0.984
+    dissolveAmount: 0.172
   - areaIndex: 2
-    dissolveAmount: 0.984
+    dissolveAmount: 0.147
 --- !u!1 &6940932630015012401
 GameObject:
   m_ObjectHideFlags: 0
@@ -45316,6 +45410,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -45413,6 +45509,7 @@ MonoBehaviour:
   _zoneName: Sink
   _destroyOnDeposit: 1
   _zoneRenderer: {fileID: 1261706600208835465}
+  _hideRendererWhenInactive: 1
   _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
   _pulseSpeed: 2
   _depositSFX: {fileID: 8300000, guid: 333b86038c1426f4eaee8d980538bd21, type: 3}
@@ -45463,6 +45560,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Wilt Season
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -45503,7 +45602,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &7758307918097530553
 MonoBehaviour:
@@ -45720,6 +45819,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -45970,6 +46071,8 @@ MonoBehaviour:
   _homeZoneName: Living Room
   _altHomeZoneName: 
   _itemDescription: The Dead Letter Love 1 of 3
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -46886,6 +46989,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: 
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -47016,6 +47121,8 @@ MonoBehaviour:
   _homeZoneName: 
   _altHomeZoneName: 
   _itemDescription: Night Bloom
+  _smellPerDay: 0
+  _daysLeftOut: 0
   canWallMount: 0
   wallOnly: 0
   _gridSizeMultiplier: 1
@@ -47056,7 +47163,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &9151970196485579312
 MonoBehaviour:
