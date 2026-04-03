@@ -40,6 +40,7 @@ public class WallOcclusionFader : MonoBehaviour
     private readonly RaycastHit[] _hitBuffer = new RaycastHit[32];
 
     private readonly HashSet<Renderer> _exemptThisFrame = new();
+    private readonly Dictionary<Renderer, Collider[]> _colliderCache = new();
 
     private static readonly int DissolveID = Shader.PropertyToID("_DissolveAmount");
     private int _lastAreaIndex = -1;
@@ -297,10 +298,14 @@ public class WallOcclusionFader : MonoBehaviour
     /// When a wall is sufficiently dissolved, its colliders are disabled
     /// so pickup/cleaning raycasts pass through to items behind it.
     /// </summary>
-    private static void SetWallCollider(Renderer rend, bool enabled)
+    private void SetWallCollider(Renderer rend, bool enabled)
     {
         if (rend == null) return;
-        var colliders = rend.GetComponentsInParent<Collider>();
+        if (!_colliderCache.TryGetValue(rend, out var colliders))
+        {
+            colliders = rend.GetComponentsInParent<Collider>();
+            _colliderCache[rend] = colliders;
+        }
         for (int i = 0; i < colliders.Length; i++)
         {
             if (colliders[i] != null)

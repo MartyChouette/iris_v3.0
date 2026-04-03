@@ -900,25 +900,35 @@ public class ObjectGrabber : MonoBehaviour
         var hits = Physics.RaycastAll(ray, 100f, surfaceLayer);
         if (hits.Length > 0)
         {
-            // Sort by distance so we prefer nearer valid surfaces
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            // Linear pass: find nearest valid surface without sorting
+            float bestDist = float.MaxValue;
+            int bestIndex = -1;
+            PlacementSurface bestSurface = null;
 
             for (int h = 0; h < hits.Length; h++)
             {
+                if (hits[h].distance >= bestDist) continue;
                 var surface = hits[h].collider.GetComponentInParent<PlacementSurface>();
                 bool surfaceValid = surface != null
                     && (!surface.IsVertical || _held.CanWallMount)
                     && (surface.IsVertical || !_held.WallOnly);
                 if (!surfaceValid) continue;
 
-                _currentSurface = surface;
-                _lastValidSurface = surface;
-                _isOnWall = surface.IsVertical;
+                bestDist = hits[h].distance;
+                bestIndex = h;
+                bestSurface = surface;
+            }
 
-                var hitResult = surface.ProjectOntoSurface(hits[h].point, cam.transform.position);
+            if (bestIndex >= 0)
+            {
+                _currentSurface = bestSurface;
+                _lastValidSurface = bestSurface;
+                _isOnWall = bestSurface.IsVertical;
+
+                var hitResult = bestSurface.ProjectOntoSurface(hits[bestIndex].point, cam.transform.position);
                 float eGrid = gridSize * (_held != null ? _held.GridSizeMultiplier : 1f);
                 Vector3 pos = _gridSnap
-                    ? surface.SnapToGrid(hitResult.worldPosition, eGrid, cam.transform.position)
+                    ? bestSurface.SnapToGrid(hitResult.worldPosition, eGrid, cam.transform.position)
                     : hitResult.worldPosition;
 
                 float halfExtent = GetHeldHalfExtentAlongNormal(hitResult.surfaceNormal);
@@ -935,7 +945,6 @@ public class ObjectGrabber : MonoBehaviour
                     _held.AlignToWall(hitResult.surfaceNormal, _wallRotation);
 
                 foundSurface = true;
-                break;
             }
         }
 

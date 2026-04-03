@@ -10,6 +10,9 @@ using UnityEngine;
 /// </summary>
 public class EntranceJudgmentSequence : MonoBehaviour
 {
+    // ── Cached WaitForSeconds to avoid per-yield allocations ──
+    private static readonly WaitForSeconds s_wait25 = new WaitForSeconds(2.5f);
+
     [Header("Timing")]
     [Tooltip("Seconds to pause before the first judgment.")]
     [SerializeField] private float _preJudgmentPause = 1.0f;
@@ -73,7 +76,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
         {
             string noMusicLine = s_noMusicLines[UnityEngine.Random.Range(0, s_noMusicLines.Length)];
             reactionUI?.ShowText(noMusicLine, 2f);
-            yield return new WaitForSeconds(2.5f);
+            yield return s_wait25;
         }
         if (_alwaysPositive) musicReaction = ReactionType.Like;
         reactionUI?.ShowLabeledReaction(musicReaction, "Your Music");
@@ -126,7 +129,7 @@ public class EntranceJudgmentSequence : MonoBehaviour
             if (!string.IsNullOrEmpty(dirtyLine))
             {
                 reactionUI?.ShowText(dirtyLine, 2f);
-                yield return new WaitForSeconds(2.5f);
+                yield return s_wait25;
             }
         }
         if (_alwaysPositive) cleanReaction = ReactionType.Like;

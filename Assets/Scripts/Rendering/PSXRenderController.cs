@@ -111,6 +111,7 @@ public class PSXRenderController : MonoBehaviour
     [SerializeField] private Shader _psxLitShaderRef;
     private Shader _psxLitShader;
     private readonly Dictionary<Material, Shader> _originalShaders = new Dictionary<Material, Shader>();
+    private Renderer[] _cachedRenderers;
     private static readonly HashSet<string> s_swappableShaders = new HashSet<string>
     {
         "Universal Render Pipeline/Lit",
@@ -289,7 +290,9 @@ public class PSXRenderController : MonoBehaviour
     {
         if (_psxLitShader == null) return;
 
-        var renderers = FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        if (_cachedRenderers == null)
+            _cachedRenderers = FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        var renderers = _cachedRenderers;
         int swapped = 0;
         foreach (var r in renderers)
         {

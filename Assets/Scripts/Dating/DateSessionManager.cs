@@ -14,6 +14,15 @@ public class DateSessionManager : MonoBehaviour
 {
     public static DateSessionManager Instance { get; private set; }
 
+    // ── Cached WaitForSeconds to avoid per-yield allocations ──
+    private static readonly WaitForSeconds s_wait03 = new WaitForSeconds(0.3f);
+    private static readonly WaitForSeconds s_wait05 = new WaitForSeconds(0.5f);
+    private static readonly WaitForSeconds s_wait1  = new WaitForSeconds(1f);
+    private static readonly WaitForSeconds s_wait2  = new WaitForSeconds(2f);
+    private static readonly WaitForSeconds s_wait25 = new WaitForSeconds(2.5f);
+    private static readonly WaitForSeconds s_wait3  = new WaitForSeconds(3f);
+    private static readonly WaitForSeconds s_wait35 = new WaitForSeconds(3.5f);
+
     public enum SessionState { Idle, WaitingForArrival, DateInProgress, DateEnding }
 
     /// <summary>
@@ -349,7 +358,7 @@ public class DateSessionManager : MonoBehaviour
         // Pre-transition NPC dialogue
         string preLine = s_prePhase2Lines[UnityEngine.Random.Range(0, s_prePhase2Lines.Length)];
         reactionUI?.ShowText(preLine, 2.0f);
-        yield return new WaitForSeconds(2.5f);
+        yield return s_wait25;
 
         // Fade out
         if (ScreenFade.Instance != null)
@@ -388,7 +397,7 @@ public class DateSessionManager : MonoBehaviour
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
 
         // Post-transition NPC dialogue
-        yield return new WaitForSeconds(0.5f);
+        yield return s_wait05;
         string postLine = s_postPhase2Lines[UnityEngine.Random.Range(0, s_postPhase2Lines.Length)];
         reactionUI?.ShowText(postLine, 2.0f);
 
@@ -404,7 +413,7 @@ public class DateSessionManager : MonoBehaviour
         // Pre-transition NPC dialogue
         string preLine = s_prePhase3Lines[UnityEngine.Random.Range(0, s_prePhase3Lines.Length)];
         reactionUI?.ShowText(preLine, 2.0f);
-        yield return new WaitForSeconds(2.5f);
+        yield return s_wait25;
 
         // Fade out
         if (ScreenFade.Instance != null)
@@ -438,10 +447,10 @@ public class DateSessionManager : MonoBehaviour
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
 
         // Post-transition NPC dialogue
-        yield return new WaitForSeconds(0.5f);
+        yield return s_wait05;
         string postLine = s_postPhase3Lines[UnityEngine.Random.Range(0, s_postPhase3Lines.Length)];
         reactionUI?.ShowText(postLine, 2.0f);
-        yield return new WaitForSeconds(2.5f);
+        yield return s_wait25;
 
         Debug.Log("[DateSessionManager] Phase 3: Instant reveal — evaluating all apartment items.");
 
@@ -449,7 +458,7 @@ public class DateSessionManager : MonoBehaviour
         yield return StartCoroutine(RevealAllReactions());
 
         // Brief pause, then end the date
-        yield return new WaitForSeconds(2f);
+        yield return s_wait2;
         StartCoroutine(RunEndSequence());
     }
 
@@ -489,7 +498,7 @@ public class DateSessionManager : MonoBehaviour
             Debug.Log($"[DateSessionManager] Reveal: {tag.DisplayName} → {reaction}");
 
             // Stagger for visual clarity
-            yield return new WaitForSeconds(0.3f);
+            yield return s_wait03;
         }
 
         // Also evaluate cleanliness as a whole-room judgment
@@ -506,7 +515,7 @@ public class DateSessionManager : MonoBehaviour
                         : "It's a bit messy...";
                     reactionUI.ShowText(cleanText, 2f);
                 }
-                yield return new WaitForSeconds(1f);
+                yield return s_wait1;
             }
         }
     }
@@ -781,24 +790,24 @@ public class DateSessionManager : MonoBehaviour
     {
         var reactionUI = _dateCharacterGO?.GetComponent<DateReactionUI>();
 
-        yield return new WaitForSeconds(1f);
+        yield return s_wait1;
 
         if (_affection >= _revealFailThreshold)
         {
             if (reactionUI != null)
             {
                 reactionUI.ShowText("I had a wonderful time...", 3f);
-                yield return new WaitForSeconds(3.5f);
+                yield return s_wait35;
 
                 if (_affection >= _flowerAffectionThreshold)
                 {
                     reactionUI.ShowText("Here... I brought you something.", 3f);
-                    yield return new WaitForSeconds(3.5f);
+                    yield return s_wait35;
                 }
                 else
                 {
                     reactionUI.ShowText("See you around.", 2.5f);
-                    yield return new WaitForSeconds(3f);
+                    yield return s_wait3;
                 }
             }
             SucceedDate();
@@ -808,9 +817,9 @@ public class DateSessionManager : MonoBehaviour
             if (reactionUI != null)
             {
                 reactionUI.ShowText("I think I should go...", 3f);
-                yield return new WaitForSeconds(3.5f);
+                yield return s_wait35;
                 reactionUI.ShowText("Goodnight.", 2.5f);
-                yield return new WaitForSeconds(3f);
+                yield return s_wait3;
             }
             FailDate();
         }
