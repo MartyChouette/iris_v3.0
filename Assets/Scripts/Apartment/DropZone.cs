@@ -26,6 +26,9 @@ public class DropZone : MonoBehaviour
     [Tooltip("Renderer for the zone highlight quad.")]
     [SerializeField] private Renderer _zoneRenderer;
 
+    [Tooltip("If true, the renderer is a dedicated highlight (hidden when inactive). If false, it's a shared mesh like a fridge door (always visible, color pulses only).")]
+    [SerializeField] private bool _hideRendererWhenInactive = true;
+
     [Tooltip("Active pulse color (matching item held).")]
     [SerializeField] private Color _activeColor = new Color(0.4f, 0.9f, 1.0f, 0.55f);
 
@@ -61,8 +64,9 @@ public class DropZone : MonoBehaviour
                 _originalColor = _instanceMat.color;
                 _zoneRenderer.material = _instanceMat;
             }
-            // Start hidden — only show when player holds a matching item
-            _zoneRenderer.enabled = false;
+            // Dedicated highlights start hidden; shared meshes stay visible
+            if (_hideRendererWhenInactive)
+                _zoneRenderer.enabled = false;
         }
     }
 
@@ -97,7 +101,6 @@ public class DropZone : MonoBehaviour
             }
         }
 
-        // Pulse the zone renderer color when matching, restore when not
         if (_playerHoldingMatch)
         {
             if (!_zoneRenderer.enabled)
@@ -111,9 +114,18 @@ public class DropZone : MonoBehaviour
         }
         else if (_pulsing)
         {
-            // Restore original color — don't disable the renderer (it might be a visible mesh)
-            if (_instanceMat != null)
-                _instanceMat.color = _originalColor;
+            if (_hideRendererWhenInactive)
+            {
+                // Dedicated highlight quad — hide it
+                if (_zoneRenderer.enabled)
+                    _zoneRenderer.enabled = false;
+            }
+            else
+            {
+                // Shared mesh (fridge door etc.) — restore color, keep visible
+                if (_instanceMat != null)
+                    _instanceMat.color = _originalColor;
+            }
         }
         _pulsing = _playerHoldingMatch;
     }
