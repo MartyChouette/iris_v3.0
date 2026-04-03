@@ -167,6 +167,13 @@ public class ObjectGrabber : MonoBehaviour
     public static bool ClickConsumedThisFrame { get; private set; }
     private static int s_lastConsumedFrame = -1;
 
+    /// <summary>Force-release the held item without placing. Used by FridgeController deposit.</summary>
+    public static void ForceReleaseHeld()
+    {
+        if (s_instance != null && s_instance._held != null)
+            s_instance.ClearHeld();
+    }
+
     private PlaceableObject _held;
     private Rigidbody _heldRb;
     private Vector3 _grabTarget;

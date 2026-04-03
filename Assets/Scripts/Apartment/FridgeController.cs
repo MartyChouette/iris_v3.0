@@ -30,6 +30,10 @@ public class FridgeController : MonoBehaviour
     [Tooltip("Layer mask for walls that can block fridge clicks (prevents clicking through walls).")]
     [SerializeField] private LayerMask _wallOcclusionLayer;
 
+    [Header("Item Deposit")]
+    [Tooltip("DropZone for accepting items (milk cartons). Assign the DropZone on this GO or a child.")]
+    [SerializeField] private DropZone _depositZone;
+
     [Header("Light")]
     [Tooltip("Point light inside the fridge — on when open, off when closed.")]
     [SerializeField] private Light _interiorLight;
@@ -91,6 +95,13 @@ public class FridgeController : MonoBehaviour
         if (isDrinkPhase)
             UpdateBlinkGuide();
 
+        // Check for item deposit (works ANY time, not just Phase 2)
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame()
+            && ObjectGrabber.IsHoldingObject && !ObjectGrabber.ClickConsumedThisFrame)
+        {
+            TryAcceptHeldItem();
+        }
+
         // Block door interaction outside Phase 2
         if (!isDrinkPhase) return;
 
@@ -136,6 +147,34 @@ public class FridgeController : MonoBehaviour
             Debug.Log("[FridgeController] Fridge clicked — closing door.");
             StartCoroutine(CloseDoorSequence());
         }
+    }
+
+    private void TryAcceptHeldItem()
+    {
+        var held = ObjectGrabber.HeldObject;
+        if (held == null) return;
+
+        // Check if held item's home zone matches the fridge's DropZone
+        var zone = _depositZone;
+        if (zone == null) zone = GetComponent<DropZone>();
+        if (zone == null) zone = GetComponentInChildren<DropZone>();
+        if (zone == null) return;
+
+        bool matches = (!string.IsNullOrEmpty(held.HomeZoneName) && zone.ZoneName == held.HomeZoneName)
+                    || (!string.IsNullOrEmpty(held.AltHomeZoneName) && zone.ZoneName == held.AltHomeZoneName);
+        if (!matches) return;
+
+        // Raycast to make sure player clicked on the fridge
+        if (_mainCamera == null) return;
+        Vector2 mousePos = IrisInput.CursorPosition;
+        var ray = _mainCamera.ScreenPointToRay(mousePos);
+        if (!Physics.Raycast(ray, out var hit, 20f, _fridgeLayer)) return;
+
+        // Accept the item — release from grabber, then deposit (shrink+destroy)
+        ObjectGrabber.ForceReleaseHeld();
+        zone.RegisterDeposit(held);
+        ObjectGrabber.ConsumeClickExternal();
+        Debug.Log($"[FridgeController] Accepted {held.name} into fridge.");
     }
 
     private IEnumerator OpenDoorSequence()
