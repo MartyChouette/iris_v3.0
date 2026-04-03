@@ -497,9 +497,28 @@ public class ObjectGrabber : MonoBehaviour
         if (_currentSurface == null) return;
 
         // ── DropZone check ──
-        // If surface has a DropZone matching the held item's home or alt zone, route through it
+        // Check current surface AND all overlapping surfaces for a matching DropZone
         {
-            var zone = _currentSurface.GetComponent<DropZone>();
+            DropZone zone = _currentSurface.GetComponent<DropZone>();
+
+            // If current surface has no DropZone, search nearby surfaces
+            if (zone == null)
+            {
+                var allSurfaces = PlacementSurface.All;
+                for (int i = 0; i < allSurfaces.Count; i++)
+                {
+                    var s = allSurfaces[i];
+                    if (s == null || s == _currentSurface) continue;
+                    var z = s.GetComponent<DropZone>();
+                    if (z == null) continue;
+                    if (s.ContainsWorldPoint(_grabTarget))
+                    {
+                        zone = z;
+                        break;
+                    }
+                }
+            }
+
             if (zone != null)
             {
                 bool matchesHome = (!string.IsNullOrEmpty(_held.HomeZoneName) && zone.ZoneName == _held.HomeZoneName)
