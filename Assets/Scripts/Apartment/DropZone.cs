@@ -44,7 +44,9 @@ public class DropZone : MonoBehaviour
     public int DepositCount { get; private set; }
 
     private Material _instanceMat;
+    private Color _originalColor;
     private bool _playerHoldingMatch;
+    private bool _pulsing;
 
     private void Start()
     {
@@ -56,6 +58,7 @@ public class DropZone : MonoBehaviour
             if (_zoneRenderer.sharedMaterial != null)
             {
                 _instanceMat = new Material(_zoneRenderer.sharedMaterial);
+                _originalColor = _instanceMat.color;
                 _zoneRenderer.material = _instanceMat;
             }
             // Start hidden — only show when player holds a matching item
@@ -94,8 +97,7 @@ public class DropZone : MonoBehaviour
             }
         }
 
-        // Toggle renderer — Color.clear on opaque materials renders as a dark rectangle,
-        // so we disable the renderer entirely when no matching item is held.
+        // Pulse the zone renderer color when matching, restore when not
         if (_playerHoldingMatch)
         {
             if (!_zoneRenderer.enabled)
@@ -104,14 +106,16 @@ public class DropZone : MonoBehaviour
             if (_instanceMat != null)
             {
                 float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * _pulseSpeed * Mathf.PI * 2f);
-                _instanceMat.color = Color.Lerp(_activeColor * 0.6f, _activeColor, pulse);
+                _instanceMat.color = Color.Lerp(_originalColor, _activeColor, pulse);
             }
         }
-        else
+        else if (_pulsing)
         {
-            if (_zoneRenderer.enabled)
-                _zoneRenderer.enabled = false;
+            // Restore original color — don't disable the renderer (it might be a visible mesh)
+            if (_instanceMat != null)
+                _instanceMat.color = _originalColor;
         }
+        _pulsing = _playerHoldingMatch;
     }
 
     /// <summary>
