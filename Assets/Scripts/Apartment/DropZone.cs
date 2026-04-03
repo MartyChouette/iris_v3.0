@@ -8,6 +8,12 @@ using UnityEngine;
 /// </summary>
 public class DropZone : MonoBehaviour
 {
+    // ── Static registry ──
+    private static readonly System.Collections.Generic.List<DropZone> s_all = new();
+    public static System.Collections.Generic.IReadOnlyList<DropZone> All => s_all;
+    private void OnEnable() => s_all.Add(this);
+    private void OnDisable() => s_all.Remove(this);
+
     [Header("Identity")]
     [Tooltip("Name that PlaceableObject.HomeZoneName must match.")]
     [SerializeField] private string _zoneName = "";

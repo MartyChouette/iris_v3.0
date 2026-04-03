@@ -510,20 +510,18 @@ public class ObjectGrabber : MonoBehaviour
                     zone = _currentSurface.GetComponentInChildren<DropZone>();
             }
 
-            // Still nothing — search all placement surfaces for one whose bounds contain the grab point
+            // Still nothing — search ALL DropZones by proximity (covers fridge, sink, etc.)
             if (zone == null)
             {
                 float bestDist = float.MaxValue;
-                var allSurfaces = PlacementSurface.All;
-                for (int i = 0; i < allSurfaces.Count; i++)
+                var allZones = DropZone.All;
+                for (int i = 0; i < allZones.Count; i++)
                 {
-                    var s = allSurfaces[i];
-                    if (s == null || s == _currentSurface) continue;
-                    var z = s.GetComponent<DropZone>();
+                    var z = allZones[i];
                     if (z == null) continue;
 
-                    float dist = Vector3.Distance(s.transform.position, _grabTarget);
-                    if (dist < 1.5f && dist < bestDist) // within 1.5m
+                    float dist = Vector3.Distance(z.transform.position, _grabTarget);
+                    if (dist < 2f && dist < bestDist)
                     {
                         bestDist = dist;
                         zone = z;
