@@ -246,8 +246,12 @@ public class PairableItem : MonoBehaviour
         var heldRb = held.GetComponent<Rigidbody>();
         if (heldRb != null)
         {
+            if (!heldRb.isKinematic)
+            {
+                heldRb.linearVelocity = Vector3.zero;
+                heldRb.angularVelocity = Vector3.zero;
+            }
             heldRb.isKinematic = true;
-            heldRb.linearVelocity = Vector3.zero;
         }
 
         // Find the topmost item in the stack to parent onto
