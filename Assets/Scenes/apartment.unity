@@ -1016,6 +1016,10 @@ PrefabInstance:
       value: milk box_unused (1)
       objectReference: {fileID: 0}
     - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
+      propertyPath: _homeZoneName
+      value: Fridge
+      objectReference: {fileID: 0}
+    - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: _placeSFXOverride
       value: 
       objectReference: {fileID: 8300000, guid: c284ad04b9782384d9a44b855673afe0, type: 3}
@@ -5248,6 +5252,7 @@ GameObject:
   - component: {fileID: 334944756}
   - component: {fileID: 334944755}
   - component: {fileID: 334944754}
+  - component: {fileID: 334944758}
   m_Layer: 25
   m_Name: FridgeDoor
   m_TagString: Untagged
@@ -5365,6 +5370,25 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 334944752}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &334944758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334944752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae5e024b17e99df4c9c4d82b5f1efda6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropZone
+  _zoneName: Fridge
+  _destroyOnDeposit: 1
+  _zoneRenderer: {fileID: 334944755}
+  _activeColor: {r: 0.4, g: 0.9, b: 1, a: 0.55}
+  _pulseSpeed: 2
+  _depositSFX: {fileID: 0}
+  _trashSFX: {fileID: 0}
 --- !u!1 &339434366
 GameObject:
   m_ObjectHideFlags: 0
@@ -43345,7 +43369,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: _homeZoneName
-      value: Kitchen
+      value: Fridge
       objectReference: {fileID: 0}
     - target: {fileID: 2757564868447354530, guid: b37889ec1493de446bcfaf827b964767, type: 3}
       propertyPath: _useSpawnAsHome
