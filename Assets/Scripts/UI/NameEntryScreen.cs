@@ -151,6 +151,16 @@ public class NameEntryScreen : MonoBehaviour
 
     private void Start()
     {
+#if UNITY_EDITOR
+        // Editor direct play — skip everything, just hide canvas
+        if (MainMenuManager.ActiveConfig == null)
+        {
+            if (_canvas != null)
+                _canvas.gameObject.SetActive(false);
+            return;
+        }
+#endif
+
         // If save exists for active slot, skip name entry — restore and resume mid-day
         if (SaveManager.HasSave(SaveManager.ActiveSlot))
         {
@@ -193,13 +203,7 @@ public class NameEntryScreen : MonoBehaviour
             return;
         }
 
-#if UNITY_EDITOR
-        // Editor direct play — just hide the canvas and do nothing.
-        // DayPhaseManager starts in Exploration, apartment is ready.
-        if (_canvas != null)
-            _canvas.gameObject.SetActive(false);
-        return;
-#endif
+        // (Editor direct play handled at top of Start)
 
         // Fade out menu music as the player enters their name
         if (MusicDirector.Instance != null)
