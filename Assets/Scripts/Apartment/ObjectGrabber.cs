@@ -497,13 +497,23 @@ public class ObjectGrabber : MonoBehaviour
         if (_currentSurface == null) return;
 
         // ── DropZone check ──
-        // Check current surface AND all overlapping surfaces for a matching DropZone
+        // Check current surface first, then search ALL surfaces with DropZones
         {
             DropZone zone = _currentSurface.GetComponent<DropZone>();
 
-            // If current surface has no DropZone, search nearby surfaces
+            // If current surface has no DropZone, search all surfaces with DropZones
             if (zone == null)
             {
+                // Check parent chain (sink might be parent/child of counter)
+                zone = _currentSurface.GetComponentInParent<DropZone>();
+                if (zone == null)
+                    zone = _currentSurface.GetComponentInChildren<DropZone>();
+            }
+
+            // Still nothing — search all placement surfaces for one whose bounds contain the grab point
+            if (zone == null)
+            {
+                float bestDist = float.MaxValue;
                 var allSurfaces = PlacementSurface.All;
                 for (int i = 0; i < allSurfaces.Count; i++)
                 {
@@ -511,10 +521,12 @@ public class ObjectGrabber : MonoBehaviour
                     if (s == null || s == _currentSurface) continue;
                     var z = s.GetComponent<DropZone>();
                     if (z == null) continue;
-                    if (s.ContainsWorldPoint(_grabTarget))
+
+                    float dist = Vector3.Distance(s.transform.position, _grabTarget);
+                    if (dist < 1.5f && dist < bestDist) // within 1.5m
                     {
+                        bestDist = dist;
                         zone = z;
-                        break;
                     }
                 }
             }
