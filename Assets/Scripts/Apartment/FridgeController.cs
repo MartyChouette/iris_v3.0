@@ -56,6 +56,9 @@ public class FridgeController : MonoBehaviour
     private Coroutine _blinkCoroutine;
     private InteractableHighlight _highlight;
 
+    private float _rejectCooldown;
+    private const float RejectCooldownDuration = 5f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -97,8 +100,35 @@ public class FridgeController : MonoBehaviour
 
         // Item deposit is handled by ObjectGrabber's DropZone proximity search
 
-        // Block door interaction outside Phase 2
-        if (!isDrinkPhase) return;
+        if (_rejectCooldown > 0f)
+            _rejectCooldown -= Time.deltaTime;
+
+        // Outside drink phase: show rejection text if player clicks the fridge
+        // (but not if they're depositing an item — ObjectGrabber handles that)
+        if (!isDrinkPhase)
+        {
+            if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame()
+                && !ObjectGrabber.IsHoldingObject && !ObjectGrabber.ClickConsumedThisFrame
+                && _rejectCooldown <= 0f && _mainCamera != null)
+            {
+                Vector2 mousePos = IrisInput.CursorPosition;
+                var ray = _mainCamera.ScreenPointToRay(mousePos);
+                if (Physics.Raycast(ray, out var hit, 20f, _fridgeLayer))
+                {
+                    // Wall occlusion — don't show if clicking through a wall
+                    bool blocked = _wallOcclusionLayer.value != 0
+                        && Physics.Raycast(ray, out var wallHit, 20f, _wallOcclusionLayer)
+                        && wallHit.distance < hit.distance;
+
+                    if (!blocked)
+                    {
+                        PickupDescriptionHUD.Instance?.Show("I don't want anything right now.");
+                        _rejectCooldown = RejectCooldownDuration;
+                    }
+                }
+            }
+            return;
+        }
 
         if (_state != DoorState.Closed && _state != DoorState.Open) return;
         if (IrisInput.Instance == null || !IrisInput.Instance.Click.WasPressedThisFrame()) return;
