@@ -19,7 +19,7 @@ public class GlobalCursorManager : MonoBehaviour
 {
     public static GlobalCursorManager Instance { get; private set; }
 
-    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge, Grab }
+    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge, Grab, Scissors }
 
     // ── Cursor textures ──
     private Texture2D _interactCursor;
@@ -30,6 +30,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Texture2D _drinkCursor;
     private Texture2D _spongeCursor;
     private Texture2D _grabCursor;
+    private Texture2D _scissorsCursor;
 
     private Vector2 _interactHotSpot;
     private Vector2 _wateringHotSpot;
@@ -38,6 +39,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Vector2 _drawerHotSpot;
     private Vector2 _drinkHotSpot;
     private Vector2 _spongeHotSpot;
+    private Vector2 _scissorsHotSpot;
     private Vector2 _grabHotSpot;
 
     // ── State ──
@@ -168,6 +170,9 @@ public class GlobalCursorManager : MonoBehaviour
 
         _grabCursor = LoadOrGenerate("grab", GenGrab(S));
         _grabHotSpot = center;
+
+        _scissorsCursor = LoadOrGenerate("scissors", GenScissors(S));
+        _scissorsHotSpot = center;
     }
 
     /// <summary>
@@ -290,6 +295,7 @@ public class GlobalCursorManager : MonoBehaviour
         if (Has<DrawerController>(go))     return CursorType.Drawer;
         if (Has<SimpleDrinkManager>(go))   return CursorType.Drink;
         if (Has<CleanableSurface>(go))     return CursorType.Sponge;
+        if (Has<ScissorStation>(go))      return CursorType.Scissors;
         if (Has<InteractableHighlight>(go)
          || Has<PlaceableObject>(go)
          || Has<RecordSlot>(go)
@@ -323,6 +329,7 @@ public class GlobalCursorManager : MonoBehaviour
             case CursorType.Drink:    Cursor.SetCursor(_drinkCursor, _drinkHotSpot, CursorMode.Auto); break;
             case CursorType.Sponge:   Cursor.SetCursor(_spongeCursor, _spongeHotSpot, CursorMode.Auto); break;
             case CursorType.Grab:     Cursor.SetCursor(_grabCursor, _grabHotSpot, CursorMode.Auto); break;
+            case CursorType.Scissors: Cursor.SetCursor(_scissorsCursor, _scissorsHotSpot, CursorMode.Auto); break;
             case CursorType.Interact: Cursor.SetCursor(_interactCursor, _interactHotSpot, CursorMode.Auto); break;
             default:                  Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); break;
         }
@@ -652,6 +659,55 @@ public class GlobalCursorManager : MonoBehaviour
         FillRect(px, s, 10, 6, 24, 12, skin);
         for (int x = 10; x <= 24; x++) Set(px, s, x, 6, dark);
         for (int y = 6; y <= 12; y++) { Set(px, s, 9, y, dark); Set(px, s, 25, y, dark); }
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Scissors (open scissors icon) ──────────────────────────
+    private static Texture2D GenScissors(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var blade = new Color32(190, 195, 200, 255);   // steel
+        var dark  = new Color32(130, 135, 140, 255);    // edge
+        var hndl  = new Color32(80, 60, 50, 255);       // handle
+        var pivot = new Color32(160, 165, 170, 255);    // pivot screw
+
+        // Top blade (angled upper-right)
+        DrawLine(px, s, 16, 16, 26, 28, blade);
+        DrawLine(px, s, 15, 16, 25, 28, blade);
+        DrawLine(px, s, 17, 16, 27, 28, dark);
+
+        // Bottom blade (angled lower-right)
+        DrawLine(px, s, 16, 16, 26, 4, blade);
+        DrawLine(px, s, 15, 16, 25, 4, blade);
+        DrawLine(px, s, 17, 16, 27, 4, dark);
+
+        // Pivot point
+        FillRect(px, s, 14, 14, 18, 18, pivot);
+
+        // Top handle (loop upper-left)
+        for (int y = 20; y <= 28; y++)
+        {
+            int xl = 4 + (28 - y) / 2;
+            int xr = 14;
+            Set(px, s, xl, y, hndl);
+            Set(px, s, xr, y, hndl);
+        }
+        for (int x = 4; x <= 14; x++) { Set(px, s, x, 28, hndl); Set(px, s, x, 20, hndl); }
+
+        // Bottom handle (loop lower-left)
+        for (int y = 4; y <= 12; y++)
+        {
+            int xl = 4 + (y - 4) / 2;
+            int xr = 14;
+            Set(px, s, xl, y, hndl);
+            Set(px, s, xr, y, hndl);
+        }
+        for (int x = 4; x <= 14; x++) { Set(px, s, x, 4, hndl); Set(px, s, x, 12, hndl); }
 
         tex.SetPixels32(px);
         tex.Apply();
