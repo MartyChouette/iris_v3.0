@@ -37,7 +37,7 @@ public class CurvedWorldGrid : MonoBehaviour
         _renderer = GetComponent<Renderer>();
         if (_renderer == null)
         {
-            Debug.LogWarning("[CurvedWorldGrid] No Renderer found.");
+            enabled = false;
             return;
         }
 
