@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -119,7 +120,28 @@ public class SimplePauseMenu : MonoBehaviour
     private void DoQuitToMenu()
     {
         _isPaused = false;
+        StartCoroutine(QuitToMenuSequence());
+    }
+
+    private IEnumerator QuitToMenuSequence()
+    {
+        // Restore time scale so audio/fade coroutines progress
         TimeScaleManager.ClearAll();
+
+        // 1. Fade all game audio down while screen fades to black
+        AudioManager.Instance?.StopAmbience();
+        AudioManager.Instance?.StopWeather();
+        AudioManager.Instance?.StopMusic(0.8f);
+
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(0.8f);
+        else
+            yield return new WaitForSecondsRealtime(0.8f);
+
+        // 2. Start menu music while still black — it fades up on the menu
+        MusicDirector.Instance?.PlayMenuSong();
+
+        // 3. Load menu scene
         SceneManager.LoadScene(0);
     }
 

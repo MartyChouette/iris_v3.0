@@ -362,7 +362,7 @@ public class AudioManager : MonoBehaviour
 
         while (t < time && IsValid(musicSource))
         {
-            t += Time.deltaTime;
+            t += Time.unscaledDeltaTime;
             musicSource.volume = Mathf.Lerp(start, 0f, t / time);
             yield return null;
         }

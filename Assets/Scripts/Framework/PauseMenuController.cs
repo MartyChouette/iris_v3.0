@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
@@ -200,8 +201,24 @@ public class PauseMenuController : MonoBehaviour
             return;
         }
 
+        StartCoroutine(QuitToMenuSequence(mainMenuSceneName));
+    }
+
+    private IEnumerator QuitToMenuSequence(string sceneName)
+    {
         TimeScaleManager.ClearAll();
-        SceneManager.LoadScene(mainMenuSceneName);
+
+        AudioManager.Instance?.StopAmbience();
+        AudioManager.Instance?.StopWeather();
+        AudioManager.Instance?.StopMusic(0.8f);
+
+        if (ScreenFade.Instance != null)
+            yield return ScreenFade.Instance.FadeOut(0.8f);
+        else
+            yield return new WaitForSecondsRealtime(0.8f);
+
+        MusicDirector.Instance?.PlayMenuSong();
+        SceneManager.LoadScene(sceneName);
     }
 
     public void ShowOptionsPanel()
