@@ -930,6 +930,10 @@ public class DayPhaseManager : MonoBehaviour
 
         // 10. Clean up state while still black (skip GoToBed to avoid redundant fades)
         _currentPhase = DayPhase.Evening;
+
+        // Restore audio levels — FlowerTrimming ducked music to 10%
+        AudioManager.Instance?.UnduckMusic(0.5f);
+        AudioManager.Instance?.SetNonMusicMix(1f, 0.5f);
         DateSessionManager.Instance?.EndDate();
         FridgeController.Instance?.ForceClose();
         SimpleDrinkManager.Instance?.HideRecipePanel();

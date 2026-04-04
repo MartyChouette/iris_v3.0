@@ -220,6 +220,10 @@ public class DateSessionManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Unsubscribe from character events if still alive
+        if (_dateCharacter != null)
+            _dateCharacter.OnReaction -= HandleCharacterReaction;
+
         if (Instance == this) Instance = null;
     }
 
@@ -270,13 +274,17 @@ public class DateSessionManager : MonoBehaviour
         _affection = 0f;
         OnAffectionChanged?.Invoke(_affection);
 
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Scheduled date with {date.characterName}. Waiting for prep phase to end.");
+#endif
     }
 
     /// <summary>Called when the arrival timer expires — triggers phone ring or direct arrival.</summary>
     private void TriggerDateArrival()
     {
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] {_currentDate?.characterName} is arriving!");
+#endif
 
         if (PhoneController.Instance != null)
             PhoneController.Instance.StartRinging();
@@ -335,7 +343,9 @@ public class DateSessionManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
 
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Phase 1: Arrival — entrance judgments for {_currentDate.characterName}.");
+#endif
 
         // Run entrance judgments (NPC is already at judgment point)
         if (_entranceJudgments != null && _currentDate != null)
@@ -401,7 +411,9 @@ public class DateSessionManager : MonoBehaviour
         string postLine = s_postPhase2Lines[UnityEngine.Random.Range(0, s_postPhase2Lines.Length)];
         reactionUI?.ShowText(postLine, 2.0f);
 
+#if UNITY_EDITOR
         Debug.Log("[DateSessionManager] Phase 2: Kitchen — player makes drink, NPC watches.");
+#endif
     }
 
     private IEnumerator TransitionToPhase3()
@@ -452,7 +464,9 @@ public class DateSessionManager : MonoBehaviour
         reactionUI?.ShowText(postLine, 2.0f);
         yield return s_wait25;
 
+#if UNITY_EDITOR
         Debug.Log("[DateSessionManager] Phase 3: Instant reveal — evaluating all apartment items.");
+#endif
 
         // Reveal all reactions at once with staggered heart particles
         yield return StartCoroutine(RevealAllReactions());
@@ -495,7 +509,9 @@ public class DateSessionManager : MonoBehaviour
             // Spawn particles at the item's visual center (not pivot)
             SpawnReactionParticles(GetVisualCenter(tag.transform), reaction);
 
+#if UNITY_EDITOR
             Debug.Log($"[DateSessionManager] Reveal: {tag.DisplayName} → {reaction}");
+#endif
 
             // Stagger for visual clarity
             yield return s_wait03;
@@ -722,7 +738,9 @@ public class DateSessionManager : MonoBehaviour
             AudioManager.Instance.PlaySFX(dislikeSFX);
 
         OnAffectionChanged?.Invoke(_affection);
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Reaction: {type} (delta={delta:+0.0;-0.0}) → Affection: {_affection:F1}");
+#endif
 
         // Continuous bail-out: if affection drops too low at any point, date fails immediately
         CheckBailOut();
@@ -735,7 +753,9 @@ public class DateSessionManager : MonoBehaviour
         if (_state != SessionState.DateInProgress) return;
         if (_affection < _bailOutThreshold)
         {
+#if UNITY_EDITOR
             Debug.Log($"[DateSessionManager] Affection {_affection:F1} below bail-out threshold {_bailOutThreshold} — date fails!");
+#endif
             FailDate();
         }
     }
@@ -750,7 +770,9 @@ public class DateSessionManager : MonoBehaviour
 
         ApplyReaction(reactionType, magnitude);
 
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Drink received: {recipe?.drinkName} (score={score}) → {reactionType}");
+#endif
 
         // Fail check after drink
         if (CheckPhaseFailAndExit(_bgJudgingFailThreshold)) return;
@@ -779,7 +801,9 @@ public class DateSessionManager : MonoBehaviour
     {
         if (_affection < threshold)
         {
+#if UNITY_EDITOR
             Debug.Log($"[DateSessionManager] Affection {_affection:F1} < {threshold} — date failed!");
+#endif
             FailDate();
             return true;
         }
@@ -832,7 +856,9 @@ public class DateSessionManager : MonoBehaviour
         string failedPhaseName = _datePhase.ToString();
         _state = SessionState.DateEnding;
         _datePhase = DatePhase.None;
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Date FAILED at {failedPhaseName} with {_currentDate?.characterName}. Affection: {_affection:F1}");
+#endif
 
         DateOutcomeCapture.Capture(_currentDate, _affection, false, _accumulatedReactions);
 
@@ -866,7 +892,9 @@ public class DateSessionManager : MonoBehaviour
 
     private IEnumerator SucceedDateSequence()
     {
+#if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Date SUCCEEDED with {_currentDate?.characterName}. Affection: {_affection:F1}");
+#endif
 
         DateOutcomeCapture.Capture(_currentDate, _affection, true, _accumulatedReactions);
 
@@ -926,7 +954,10 @@ public class DateSessionManager : MonoBehaviour
     private void DismissCharacter()
     {
         if (_dateCharacter != null)
+        {
+            _dateCharacter.OnReaction -= HandleCharacterReaction;
             _dateCharacter.Dismiss();
+        }
 
         if (_dateCharacterGO != null)
             Destroy(_dateCharacterGO);

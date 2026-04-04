@@ -19,6 +19,7 @@ namespace Iris.Camera
         private const int PriorityInactive = 0;
 
         private CinemachineCamera _activeCamera;
+        private CinemachineCamera[] _allCameras;
 
         private void Awake()
         {
@@ -36,6 +37,14 @@ namespace Iris.Camera
 
             if (brain == null)
                 Debug.LogError("[HorrorCameraManager] No CinemachineBrain found in scene.");
+
+            _allCameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
+        }
+
+        /// <summary>Refresh the cached camera list (call after spawning/destroying cameras).</summary>
+        public void RefreshCameraCache()
+        {
+            _allCameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
         }
 
         private void OnDestroy()
@@ -71,9 +80,10 @@ namespace Iris.Camera
             }
 
             // Lower all cameras, raise the target
-            var allCams = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
-            foreach (var c in allCams)
-                c.Priority = PriorityInactive;
+            if (_allCameras == null)
+                _allCameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
+            foreach (var c in _allCameras)
+                if (c != null) c.Priority = PriorityInactive;
 
             cam.Priority = PriorityActive;
             _activeCamera = cam;

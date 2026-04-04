@@ -79,7 +79,9 @@ public class CoffeeTableDelivery : MonoBehaviour
         // Notify DateSessionManager
         DateSessionManager.Instance?.ReceiveDrink(recipe, score);
 
+#if UNITY_EDITOR
         Debug.Log($"[CoffeeTableDelivery] Delivered {recipe?.drinkName ?? "drink"} (score={score})");
+#endif
     }
 
     /// <summary>Remove the current drink from the table.</summary>

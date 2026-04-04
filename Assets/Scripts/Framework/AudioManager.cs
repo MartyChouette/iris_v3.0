@@ -55,6 +55,7 @@ public class AudioManager : MonoBehaviour
     // SFX auto-cutoff: fades SFX source to silence after this many seconds (0 = disabled)
     private float _sfxCutoffTime;
     private Coroutine _sfxCutoffRoutine;
+    private float _sfxBaseVolume = 1f;
 
     private void Awake()
     {
@@ -183,7 +184,22 @@ public class AudioManager : MonoBehaviour
     private void ScheduleSFXCutoff()
     {
         if (_sfxCutoffTime <= 0f) return;
-        if (_sfxCutoffRoutine != null) StopCoroutine(_sfxCutoffRoutine);
+
+        // Restore volume to known baseline before rescheduling — prevents
+        // interrupted fades from ratcheting the volume down over time.
+        if (_sfxCutoffRoutine != null)
+        {
+            StopCoroutine(_sfxCutoffRoutine);
+            if (IsValid(sfxSource))
+                sfxSource.volume = _sfxBaseVolume;
+        }
+        else
+        {
+            // Capture baseline on first schedule (clean state)
+            if (IsValid(sfxSource))
+                _sfxBaseVolume = sfxSource.volume;
+        }
+
         _sfxCutoffRoutine = StartCoroutine(SFXCutoffRoutine(_sfxCutoffTime));
     }
 
@@ -198,13 +214,12 @@ public class AudioManager : MonoBehaviour
         yield return new WaitForSeconds(fadeStart);
 
         if (!IsValid(sfxSource)) yield break;
-        float startVol = sfxSource.volume;
         float elapsed = 0f;
 
         while (elapsed < fadeDuration && IsValid(sfxSource))
         {
             elapsed += Time.unscaledDeltaTime;
-            sfxSource.volume = Mathf.Lerp(startVol, 0f, elapsed / fadeDuration);
+            sfxSource.volume = Mathf.Lerp(_sfxBaseVolume, 0f, elapsed / fadeDuration);
             yield return null;
         }
 
@@ -212,7 +227,7 @@ public class AudioManager : MonoBehaviour
         if (IsValid(sfxSource))
         {
             sfxSource.Stop();
-            sfxSource.volume = startVol;
+            sfxSource.volume = _sfxBaseVolume;
         }
         _sfxCutoffRoutine = null;
     }
