@@ -111,14 +111,14 @@ public class FridgeController : MonoBehaviour
                 && !ObjectGrabber.IsHoldingObject && !ObjectGrabber.ClickConsumedThisFrame
                 && _rejectCooldown <= 0f && _mainCamera != null)
             {
-                Vector2 mousePos = IrisInput.CursorPosition;
-                var ray = _mainCamera.ScreenPointToRay(mousePos);
-                if (Physics.Raycast(ray, out var hit, 20f, _fridgeLayer))
+                Vector2 rejectMousePos = IrisInput.CursorPosition;
+                var rejectRay = _mainCamera.ScreenPointToRay(rejectMousePos);
+                if (Physics.Raycast(rejectRay, out var rejectHit, 20f, _fridgeLayer))
                 {
                     // Wall occlusion — don't show if clicking through a wall
                     bool blocked = _wallOcclusionLayer.value != 0
-                        && Physics.Raycast(ray, out var wallHit, 20f, _wallOcclusionLayer)
-                        && wallHit.distance < hit.distance;
+                        && Physics.Raycast(rejectRay, out var rejectWallHit, 20f, _wallOcclusionLayer)
+                        && rejectWallHit.distance < rejectHit.distance;
 
                     if (!blocked)
                     {
