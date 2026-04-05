@@ -298,6 +298,23 @@ public class DrawerController : MonoBehaviour
     /// <summary>The interior PlacementSurface, if any.</summary>
     public PlacementSurface InteriorSurface => _interiorSurface;
 
+    /// <summary>Count items currently on the interior surface (for capacity enforcement).</summary>
+    public int InteriorItemCount
+    {
+        get
+        {
+            if (_interiorSurface == null) return 0;
+            int count = 0;
+            var all = PlaceableObject.All;
+            for (int i = 0; i < all.Count; i++)
+                if (all[i].LastPlacedSurface == _interiorSurface) count++;
+            return count;
+        }
+    }
+
+    /// <summary>True if the cubby interior has room for another item.</summary>
+    public bool HasInteriorCapacity => InteriorItemCount < _maxCapacity;
+
     /// <summary>
     /// Find the DrawerController that owns the given surface as its interior.
     /// Returns null if no drawer claims it.

@@ -638,6 +638,14 @@ public class ObjectGrabber : MonoBehaviour
             rot = _held.HomeRotation;
         }
 
+        // Cubby capacity check — reject placement if cubby is full
+        var capacityCubby = DrawerController.FindByInteriorSurface(_currentSurface);
+        if (capacityCubby != null && !capacityCubby.HasInteriorCapacity)
+        {
+            PickupDescriptionHUD.Instance?.Show("No room in here.");
+            return;
+        }
+
         // Restore constraints before placement configures the rigidbody
         _heldRb.constraints = _originalConstraints;
         _heldRb.linearVelocity = Vector3.zero;
@@ -648,13 +656,13 @@ public class ObjectGrabber : MonoBehaviour
         var bookItem = _held.GetComponent<BookItem>();
         if (bookItem != null) bookItem.OnBookPlaced(_currentSurface);
 
-        // Cubby privacy: items placed on a closed cubby's interior surface become private
+        // Cubby privacy: items placed on a closed cubby's interior surface become private.
+        // Items placed anywhere else become public (clears stale privacy from previous location).
         var cubbyDrawer = DrawerController.FindByInteriorSurface(_currentSurface);
-        if (cubbyDrawer != null && cubbyDrawer.IsInteriorAndClosed(_currentSurface))
-        {
-            var tag = _held.GetComponent<ReactableTag>();
-            if (tag != null) tag.IsPrivate = true;
-        }
+        bool inClosedCubby = cubbyDrawer != null && cubbyDrawer.IsInteriorAndClosed(_currentSurface);
+        var privTag = _held.GetComponent<ReactableTag>();
+        if (privTag != null)
+            privTag.IsPrivate = inClosedCubby;
 
         OnObjectPlaced?.Invoke(_held);
         PlayPlaceSFX(_held);
