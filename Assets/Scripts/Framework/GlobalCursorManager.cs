@@ -21,7 +21,7 @@ public class GlobalCursorManager : MonoBehaviour
 
     private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge, Grab, Scissors }
 
-    // ── Cursor textures (full opacity + faded variant) ──
+    // ── Cursor source textures ──
     private Texture2D _interactCursor;
     private Texture2D _wateringCursor;
     private Texture2D _fridgeCursor;
@@ -31,16 +31,6 @@ public class GlobalCursorManager : MonoBehaviour
     private Texture2D _spongeCursor;
     private Texture2D _grabCursor;
     private Texture2D _scissorsCursor;
-
-    private Texture2D _interactCursorFaded;
-    private Texture2D _wateringCursorFaded;
-    private Texture2D _fridgeCursorFaded;
-    private Texture2D _phoneCursorFaded;
-    private Texture2D _drawerCursorFaded;
-    private Texture2D _drinkCursorFaded;
-    private Texture2D _spongeCursorFaded;
-    private Texture2D _grabCursorFaded;
-    private Texture2D _scissorsCursorFaded;
 
     private Vector2 _interactHotSpot;
     private Vector2 _wateringHotSpot;
@@ -52,12 +42,30 @@ public class GlobalCursorManager : MonoBehaviour
     private Vector2 _scissorsHotSpot;
     private Vector2 _grabHotSpot;
 
-    // ── State ──
-    private CursorType _currentType = CursorType.Default;
-    private bool _isFaded;
+    // ── Smooth fade state ──
+    // Source pixel data per cursor (indexed by CursorType enum)
+    private Color32[][] _sourcePixels;
+    private Texture2D _workingTex;       // single reusable 32x32 texture
+    private Color32[] _workingPixels;    // reusable pixel buffer
+
+    private CursorType _desiredType = CursorType.Default;   // what raycast wants
+    private CursorType _displayedType = CursorType.Default;  // what's currently shown
+    private float _currentAlpha;         // 0 = invisible, 1 = full
+    private float _targetAlpha;
     private float _hoverTimer;
-    private const float FadeDelay = 2f;
-    private const float FadedAlpha = 0.45f;
+    private byte _lastAlphaByte = 255;   // avoid redundant Apply()
+
+    private const float FadeInSpeed  = 7f;    // ~0.14s to full
+    private const float FadeOutSpeed = 5f;    // ~0.20s to zero
+    private const float HoverFadeSpeed = 3f;  // ~0.18s to settle at half
+    private const float HoverFadeDelay = 2f;  // seconds before hover-fade begins
+    private const float HoverFadedAlpha = 0.45f;
+
+    /// <summary>Current cursor opacity (0-1). Read by CursorWorldShadow.</summary>
+    public float CurrentAlpha => _currentAlpha;
+
+    /// <summary>True when showing a context cursor (not default/grab).</summary>
+    public bool IsContextCursor => _displayedType != CursorType.Default && _displayedType != CursorType.Grab;
 
     private Camera _cachedCamera;
     private float _cameraRefetchTimer;
@@ -189,31 +197,30 @@ public class GlobalCursorManager : MonoBehaviour
         _scissorsCursor = LoadOrGenerate("scissors", GenScissors(S));
         _scissorsHotSpot = center;
 
-        // Pre-generate half-transparent variants for hover fade
-        _interactCursorFaded  = MakeFadedCopy(_interactCursor);
-        _wateringCursorFaded  = MakeFadedCopy(_wateringCursor);
-        _fridgeCursorFaded    = MakeFadedCopy(_fridgeCursor);
-        _phoneCursorFaded     = MakeFadedCopy(_phoneCursor);
-        _drawerCursorFaded    = MakeFadedCopy(_drawerCursor);
-        _drinkCursorFaded     = MakeFadedCopy(_drinkCursor);
-        _spongeCursorFaded    = MakeFadedCopy(_spongeCursor);
-        _grabCursorFaded      = MakeFadedCopy(_grabCursor);
-        _scissorsCursorFaded  = MakeFadedCopy(_scissorsCursor);
+        // Cache source pixels for smooth alpha blending
+        int typeCount = System.Enum.GetValues(typeof(CursorType)).Length;
+        _sourcePixels = new Color32[typeCount][];
+        CachePixels(CursorType.Interact, _interactCursor);
+        CachePixels(CursorType.Watering, _wateringCursor);
+        CachePixels(CursorType.Fridge,   _fridgeCursor);
+        CachePixels(CursorType.Phone,    _phoneCursor);
+        CachePixels(CursorType.Drawer,   _drawerCursor);
+        CachePixels(CursorType.Drink,    _drinkCursor);
+        CachePixels(CursorType.Sponge,   _spongeCursor);
+        CachePixels(CursorType.Grab,     _grabCursor);
+        CachePixels(CursorType.Scissors, _scissorsCursor);
+
+        // Single reusable working texture for alpha blending
+        _workingTex = new Texture2D(S, S, TextureFormat.RGBA32, false);
+        _workingTex.filterMode = FilterMode.Point;
+        _workingPixels = new Color32[S * S];
+        _proceduralTextures.Add(_workingTex);
     }
 
-    /// <summary>Create a copy with all pixel alphas scaled down for a see-through cursor.</summary>
-    private Texture2D MakeFadedCopy(Texture2D source)
+    private void CachePixels(CursorType type, Texture2D tex)
     {
-        if (source == null) return null;
-        var faded = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
-        faded.filterMode = FilterMode.Point;
-        var px = source.GetPixels32();
-        for (int i = 0; i < px.Length; i++)
-            px[i].a = (byte)(px[i].a * FadedAlpha);
-        faded.SetPixels32(px);
-        faded.Apply();
-        _proceduralTextures.Add(faded);
-        return faded;
+        if (tex != null)
+            _sourcePixels[(int)type] = tex.GetPixels32();
     }
 
     /// <summary>
@@ -358,40 +365,115 @@ public class GlobalCursorManager : MonoBehaviour
 
     private void ApplyCursor(CursorType type)
     {
-        if (type != _currentType)
+        _desiredType = type;
+        float dt = Time.unscaledDeltaTime;
+
+        // Grab cursor: immediate, no fade
+        if (type == CursorType.Grab)
         {
-            _currentType = type;
-            _hoverTimer = 0f;
-            _isFaded = false;
-            SetCursorTexture(type, faded: false);
-        }
-        else if (!_isFaded && type != CursorType.Default && type != CursorType.Grab)
-        {
-            // Tick hover timer — fade context cursors after sustained hover
-            _hoverTimer += Time.unscaledDeltaTime;
-            if (_hoverTimer >= FadeDelay)
+            if (_displayedType != CursorType.Grab)
             {
-                _isFaded = true;
-                SetCursorTexture(type, faded: true);
+                _displayedType = CursorType.Grab;
+                _currentAlpha = 1f;
+                _targetAlpha = 1f;
+                _hoverTimer = 0f;
+                Cursor.SetCursor(_grabCursor, _grabHotSpot, CursorMode.Auto);
             }
+            return;
         }
+
+        // Switching to a new context cursor
+        if (type != CursorType.Default && type != _displayedType)
+        {
+            _displayedType = type;
+            _currentAlpha = (_displayedType == CursorType.Default) ? 0f : _currentAlpha;
+            _targetAlpha = 1f;
+            _hoverTimer = 0f;
+        }
+
+        // Desired is Default → fade out whatever is displayed
+        if (type == CursorType.Default && _displayedType != CursorType.Default)
+        {
+            _targetAlpha = 0f;
+            _hoverTimer = 0f;
+        }
+
+        // Desired matches displayed → tick hover timer for sustained-hover fade
+        if (type != CursorType.Default && type == _displayedType && _targetAlpha >= 1f)
+        {
+            _hoverTimer += dt;
+            if (_hoverTimer >= HoverFadeDelay)
+                _targetAlpha = HoverFadedAlpha;
+        }
+
+        // Lerp alpha toward target
+        if (!Mathf.Approximately(_currentAlpha, _targetAlpha))
+        {
+            float speed;
+            if (_targetAlpha > _currentAlpha)
+                speed = (_targetAlpha >= 1f) ? FadeInSpeed : HoverFadeSpeed;
+            else
+                speed = (_targetAlpha <= 0f) ? FadeOutSpeed : HoverFadeSpeed;
+
+            _currentAlpha = Mathf.MoveTowards(_currentAlpha, _targetAlpha, speed * dt);
+        }
+
+        // Fade-out complete → switch to OS default
+        if (_currentAlpha <= 0.001f && _displayedType != CursorType.Default)
+        {
+            _displayedType = CursorType.Default;
+            _currentAlpha = 0f;
+            _lastAlphaByte = 0;
+            Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+            return;
+        }
+
+        // Nothing to render
+        if (_displayedType == CursorType.Default)
+        {
+            if (_lastAlphaByte != 0)
+            {
+                _lastAlphaByte = 0;
+                Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+            }
+            return;
+        }
+
+        // Apply alpha to working texture (only when byte-level alpha changes)
+        byte alphaByte = (byte)(Mathf.Clamp01(_currentAlpha) * 255f);
+        if (alphaByte == _lastAlphaByte) return;
+        _lastAlphaByte = alphaByte;
+
+        var src = _sourcePixels[(int)_displayedType];
+        if (src == null) return;
+
+        for (int i = 0; i < src.Length; i++)
+        {
+            _workingPixels[i] = src[i];
+            _workingPixels[i].a = (byte)(src[i].a * alphaByte / 255);
+        }
+        _workingTex.SetPixels32(_workingPixels);
+        _workingTex.Apply();
+
+        Vector2 hotSpot = GetHotSpot(_displayedType);
+        Cursor.SetCursor(_workingTex, hotSpot, CursorMode.Auto);
     }
 
-    private void SetCursorTexture(CursorType type, bool faded)
+    private Vector2 GetHotSpot(CursorType type)
     {
-        switch (type)
+        return type switch
         {
-            case CursorType.Watering: Cursor.SetCursor(faded ? _wateringCursorFaded : _wateringCursor, _wateringHotSpot, CursorMode.Auto); break;
-            case CursorType.Fridge:   Cursor.SetCursor(faded ? _fridgeCursorFaded : _fridgeCursor, _fridgeHotSpot, CursorMode.Auto); break;
-            case CursorType.Phone:    Cursor.SetCursor(faded ? _phoneCursorFaded : _phoneCursor, _phoneHotSpot, CursorMode.Auto); break;
-            case CursorType.Drawer:   Cursor.SetCursor(faded ? _drawerCursorFaded : _drawerCursor, _drawerHotSpot, CursorMode.Auto); break;
-            case CursorType.Drink:    Cursor.SetCursor(faded ? _drinkCursorFaded : _drinkCursor, _drinkHotSpot, CursorMode.Auto); break;
-            case CursorType.Sponge:   Cursor.SetCursor(faded ? _spongeCursorFaded : _spongeCursor, _spongeHotSpot, CursorMode.Auto); break;
-            case CursorType.Grab:     Cursor.SetCursor(_grabCursor, _grabHotSpot, CursorMode.Auto); break;
-            case CursorType.Scissors: Cursor.SetCursor(faded ? _scissorsCursorFaded : _scissorsCursor, _scissorsHotSpot, CursorMode.Auto); break;
-            case CursorType.Interact: Cursor.SetCursor(faded ? _interactCursorFaded : _interactCursor, _interactHotSpot, CursorMode.Auto); break;
-            default:                  Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); break;
-        }
+            CursorType.Interact => _interactHotSpot,
+            CursorType.Watering => _wateringHotSpot,
+            CursorType.Fridge   => _fridgeHotSpot,
+            CursorType.Phone    => _phoneHotSpot,
+            CursorType.Drawer   => _drawerHotSpot,
+            CursorType.Drink    => _drinkHotSpot,
+            CursorType.Sponge   => _spongeHotSpot,
+            CursorType.Grab     => _grabHotSpot,
+            CursorType.Scissors => _scissorsHotSpot,
+            _ => Vector2.zero
+        };
     }
 
     // ══════════════════════════════════════════════════════════════

@@ -43,6 +43,7 @@ public class CursorWorldShadow : MonoBehaviour
 
     private CursorContext _cursorContext;
     private Texture2D _activeTexture;
+    private float _baseShadowAlpha;
 
     private void Awake()
     {
@@ -94,11 +95,12 @@ public class CursorWorldShadow : MonoBehaviour
         _shadowRenderer.receiveShadows = false;
 
         _shadowQuad.SetActive(false);
+        _baseShadowAlpha = _shadowMat.GetColor("_ShadowColor").a;
     }
 
     private void SyncCursorTexture()
     {
-        // Try to find CursorContext each frame until found
+        // Try to find CursorContext each frame until found (flower scene fallback)
         if (_cursorContext == null)
             _cursorContext = FindAnyObjectByType<CursorContext>();
 
@@ -122,6 +124,14 @@ public class CursorWorldShadow : MonoBehaviour
         {
             _shadowMat.SetFloat("_UseTexture", 0f);
         }
+
+        // Sync shadow alpha with GlobalCursorManager's smooth fade
+        float cursorAlpha = 1f;
+        if (GlobalCursorManager.Instance != null && GlobalCursorManager.Instance.IsContextCursor)
+            cursorAlpha = GlobalCursorManager.Instance.CurrentAlpha;
+        var sc = _shadowMat.GetColor("_ShadowColor");
+        sc.a = _baseShadowAlpha * cursorAlpha;
+        _shadowMat.SetColor("_ShadowColor", sc);
     }
 
     private void Update()
