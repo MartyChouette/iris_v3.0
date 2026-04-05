@@ -43,6 +43,9 @@ public class ReactableTag : MonoBehaviour
         }
     }
 
+    /// <summary>Fired when IsPrivate changes. Args: (ReactableTag tag, bool isPrivate).</summary>
+    public static event System.Action<ReactableTag, bool> OnPrivacyChanged;
+
     public bool IsPrivate
     {
         get => isPrivate;
@@ -51,6 +54,7 @@ public class ReactableTag : MonoBehaviour
             if (isPrivate == value) return;
             isPrivate = value;
             UpdateDisplayHighlight();
+            OnPrivacyChanged?.Invoke(this, isPrivate);
         }
     }
 
