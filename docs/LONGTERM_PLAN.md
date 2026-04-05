@@ -310,10 +310,10 @@ Each date character brings a specific flower. The flower trimming score determin
 | Camera Presets | CameraPresetDefinition, CameraTestController, CameraPresetDefinitionEditor (gizmos + capture) |
 | Context Cursors | GlobalCursorManager (9 types, alpha bank fade), CursorFadeSettings SO, CursorWorldShadow, PourCursorOverlay |
 | Visibility | VisibilityEyeIndicator, ReactableTag.OnPrivacyChanged, DrawerController.OnDrawerPrivacyChanged |
-| Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController (cubby storage + privacy + capacity) |
+| Bookcase Station | BookVolume, PerfumeBottle, DrawerController (cubby storage + privacy + capacity) |
 | Dating Loop | DateSessionManager (3-phase), GameClock, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, DayPhaseManager |
 | Newspaper | NewspaperManager (button-based), NewspaperAdSlot, DayManager, NewspaperSurface |
-| Mechanics | SimpleDrinkManager, CleaningManager, WateringManager, PourDragHelper (shared drag-to-pour), MirrorMakeupManager, RecordPlayerManager |
+| Mechanics | SimpleDrinkManager, CleaningManager, WateringManager, PourDragHelper (shared drag-to-pour), MirrorMakeupManager, RecordSlot/RecordItem |
 
 ### Creating a New Flower Level (Quick Start)
 1. Import your flower model into the scene

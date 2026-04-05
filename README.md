@@ -121,7 +121,7 @@ Assets/
 ├── Editor/                 # Scene builders and editor tools
 │   ├── FlowerAutoSetup     # Auto-wiring wizard for new flowers
 │   ├── ApartmentSceneBuilder # Generates full apartment hub scene
-│   ├── CredenzaSetup          # Editor tool for credenza furniture setup
+│   ├── FloorSurfaceSetup      # Editor tool for floor placement surface
 │   ├── SettingsPanelBuilder  # Generates settings panel prefab
 │   └── ...SceneBuilder     # 10+ scene builders for each mechanic
 ├── Scripts/
