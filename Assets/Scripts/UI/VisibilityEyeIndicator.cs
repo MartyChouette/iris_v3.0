@@ -44,6 +44,15 @@ public class VisibilityEyeIndicator : MonoBehaviour
         public float totalLife;
     }
 
+    /// <summary>Auto-spawn if not present in scene.</summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoSpawn()
+    {
+        if (Instance != null) return;
+        var go = new GameObject("VisibilityEyeIndicator");
+        go.AddComponent<VisibilityEyeIndicator>();
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
