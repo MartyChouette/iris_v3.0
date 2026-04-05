@@ -526,7 +526,10 @@ public class PlaceableObject : MonoBehaviour
             _silhouetteMat = new Material(s_silhouetteShader);
             _silhouetteMat.SetFloat("_Surface", 1f);
             _silhouetteMat.SetFloat("_Blend", 0f);
-            _silhouetteMat.SetInt("_ZTest", (int)CompareFunction.Greater);
+            _silhouetteMat.SetFloat("_ZWrite", 0f);
+            _silhouetteMat.SetFloat("_ZTest", (float)CompareFunction.Always);
+            _silhouetteMat.SetOverrideTag("RenderType", "Transparent");
+            _silhouetteMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             _silhouetteMat.renderQueue = 3100;
         }
 
@@ -663,6 +666,9 @@ public class PlaceableObject : MonoBehaviour
         // Disable colliders so held object doesn't block raycasts or knock items
         SetCollidersEnabled(false);
 
+        // Render held object on top of all scene geometry so it's always visible
+        SetRenderOnTop(true);
+
         // Held-item feedback handled by grab cursor — no material color change
 
         if (_validationCoroutine != null)
@@ -703,6 +709,7 @@ public class PlaceableObject : MonoBehaviour
         transform.rotation = rotation;
 
         SetCollidersEnabled(true);
+        SetRenderOnTop(false);
         RestoreMaterial();
         DestroySilhouette();
 
@@ -745,6 +752,7 @@ public class PlaceableObject : MonoBehaviour
     {
         CurrentState = State.Resting;
         SetCollidersEnabled(true);
+        SetRenderOnTop(false);
         RestoreMaterial();
         DestroySilhouette();
 
@@ -971,6 +979,36 @@ public class PlaceableObject : MonoBehaviour
             transform.localScale = Vector3.Lerp(fromScale, toScale, t);
             transform.position = Vector3.Lerp(fromPos, toPos, t);
             yield return null;
+        }
+    }
+
+    // ── Render on top (held items always visible) ─────────────────────
+
+    private int _savedRenderQueue = -1;
+
+    private void SetRenderOnTop(bool onTop)
+    {
+        if (_instanceMat == null) return;
+
+        if (onTop)
+        {
+            _savedRenderQueue = _instanceMat.renderQueue;
+            _instanceMat.SetFloat("_ZTest", (float)CompareFunction.Always);
+            _instanceMat.renderQueue = 4000;
+        }
+        else
+        {
+            _instanceMat.SetFloat("_ZTest", (float)CompareFunction.LessEqual);
+            if (_savedRenderQueue >= 0)
+                _instanceMat.renderQueue = _savedRenderQueue;
+        }
+
+        // Also apply to paired/stacked children
+        foreach (Transform child in transform)
+        {
+            var childPlaceable = child.GetComponent<PlaceableObject>();
+            if (childPlaceable != null)
+                childPlaceable.SetRenderOnTop(onTop);
         }
     }
 

@@ -66,6 +66,9 @@ public class DrawerController : MonoBehaviour
 
     private void Awake()
     {
+        // Guard against stale serialized 0 (field added after component existed in scene)
+        if (_maxCapacity <= 0) _maxCapacity = 3;
+
         _closedPosition = transform.localPosition;
         _closedRotation = transform.localRotation;
 

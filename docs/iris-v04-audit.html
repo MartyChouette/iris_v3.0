@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iris v0.4 — Stability & Market Audit</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --surface3: #222233;
+    --border: #2a2a3d;
+    --text: #e2e2f0;
+    --text-dim: #8888a0;
+    --text-muted: #555570;
+    --accent: #c084fc;
+    --accent2: #818cf8;
+    --accent3: #f472b6;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --cyan: #22d3ee;
+    --rose: #fb7185;
+    --iris-gradient: linear-gradient(135deg, #7c3aed 0%, #c084fc 50%, #f472b6 100%);
+    --danger-gradient: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
+    --success-gradient: linear-gradient(135deg, #059669 0%, #4ade80 100%);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    padding: 80px 40px 60px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.08) 0%, transparent 60%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  .hero h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    background: var(--iris-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.03em;
+    position: relative;
+  }
+  .hero .version {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-top: 12px;
+    position: relative;
+  }
+  .hero .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    margin-top: 16px;
+    font-weight: 300;
+    position: relative;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+
+  @media (max-width: 1024px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+  }
+
+  section { margin-bottom: 48px; }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--surface3);
+    color: var(--text-dim);
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: rgba(192,132,252,0.3); transform: translateY(-2px); }
+  .card h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .card .big-number {
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .card .unit {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .card .sub {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .glow-purple .big-number { color: var(--accent); }
+  .glow-blue .big-number { color: var(--accent2); }
+  .glow-pink .big-number { color: var(--accent3); }
+  .glow-green .big-number { color: var(--green); }
+  .glow-amber .big-number { color: var(--amber); }
+  .glow-red .big-number { color: var(--red); }
+  .glow-cyan .big-number { color: var(--cyan); }
+
+  /* ── Stat bar ── */
+  .stat-bar { margin: 14px 0; }
+  .stat-bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+  }
+  .stat-bar-header .label { color: var(--text-dim); }
+  .stat-bar-header .value { font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .stat-bar-track {
+    height: 8px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+    width: 0;
+  }
+  .fill-purple { background: var(--iris-gradient); }
+  .fill-green { background: var(--success-gradient); }
+  .fill-red { background: var(--danger-gradient); }
+  .fill-amber { background: linear-gradient(135deg, #d97706, #fbbf24); }
+  .fill-cyan { background: linear-gradient(135deg, #0891b2, #22d3ee); }
+  .fill-pink { background: linear-gradient(135deg, #db2777, #f472b6); }
+
+  /* ── Chart containers ── */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .chart-wrap h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .chart-wrap canvas { width: 100% !important; }
+
+  /* ── Comp table ── */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .comp-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(42,42,61,0.5);
+    vertical-align: middle;
+  }
+  .comp-table tr:hover td { background: rgba(124,58,237,0.04); }
+  .comp-table .title-cell {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .comp-table .revenue {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tag-green { background: rgba(74,222,128,0.12); color: var(--green); }
+  .tag-amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .tag-red { background: rgba(248,113,113,0.12); color: var(--red); }
+  .tag-purple { background: rgba(192,132,252,0.12); color: var(--accent); }
+  .tag-cyan { background: rgba(34,211,238,0.12); color: var(--cyan); }
+  .tag-pink { background: rgba(244,114,182,0.12); color: var(--accent3); }
+
+  /* ── Risk matrix ── */
+  .risk-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(42,42,61,0.4);
+  }
+  .risk-row:last-child { border-bottom: none; }
+  .risk-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .risk-high { background: rgba(248,113,113,0.15); }
+  .risk-med { background: rgba(251,191,36,0.15); }
+  .risk-low { background: rgba(74,222,128,0.15); }
+  .risk-row .risk-name { font-weight: 600; font-size: 0.9rem; }
+  .risk-row .risk-desc { font-size: 0.8rem; color: var(--text-dim); }
+
+  /* ── Priority stack ── */
+  .priority-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .priority-item:hover { border-color: rgba(192,132,252,0.3); }
+  .priority-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .p-critical { background: rgba(248,113,113,0.2); color: var(--red); }
+  .p-high { background: rgba(251,191,36,0.2); color: var(--amber); }
+  .p-med { background: rgba(192,132,252,0.2); color: var(--accent); }
+  .priority-item .p-title { font-weight: 600; font-size: 0.95rem; }
+  .priority-item .p-why { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── Verdict banner ── */
+  .verdict-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .verdict-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--iris-gradient);
+  }
+  .verdict-banner h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    background: var(--iris-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .verdict-banner p {
+    max-width: 700px;
+    margin: 0 auto;
+    color: var(--text-dim);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .verdict-banner .verdict-cta {
+    margin-top: 24px;
+    display: inline-block;
+    background: var(--iris-gradient);
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    text-decoration: none;
+  }
+
+  /* ── Scenario cards ── */
+  .scenario-card {
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .scenario-card h4 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .scenario-card .sc-range {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .scenario-card .sc-detail {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .sc-pessimistic h4 { color: var(--red); }
+  .sc-pessimistic .sc-range { color: var(--red); }
+  .sc-moderate h4 { color: var(--amber); }
+  .sc-moderate .sc-range { color: var(--amber); }
+  .sc-optimistic h4 { color: var(--green); }
+  .sc-optimistic .sc-range { color: var(--green); }
+
+  /* ── Funding table ── */
+  .funding-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 100px 1fr;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(42,42,61,0.4);
+    font-size: 0.85rem;
+    align-items: center;
+  }
+  .funding-row:last-child { border-bottom: none; }
+  .funding-header {
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .funding-name { font-weight: 600; }
+  .funding-amount { font-family: 'JetBrains Mono', monospace; color: var(--green); }
+
+  /* ── Likelihood meter ── */
+  .likelihood {
+    display: flex;
+    gap: 3px;
+  }
+  .likelihood-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--surface3);
+  }
+  .likelihood-dot.filled-green { background: var(--green); }
+  .likelihood-dot.filled-amber { background: var(--amber); }
+  .likelihood-dot.filled-red { background: var(--red); }
+
+  /* ── Gauge ── */
+  .gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+  }
+  .gauge-svg { width: 200px; height: 120px; }
+  .gauge-label {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-top: 8px;
+  }
+  .gauge-sublabel {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  /* ── Scrolling ticker ── */
+  .ticker-wrap {
+    overflow: hidden;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    margin-bottom: 48px;
+  }
+  .ticker {
+    display: flex;
+    gap: 48px;
+    animation: scroll 30s linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .ticker span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .ticker .tk-label { color: var(--text-dim); font-weight: 600; }
+  .ticker .tk-val { color: var(--accent); }
+  .ticker .tk-sep { color: var(--border); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 40px 24px 60px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── Animate on scroll ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Cut list ── */
+  .cut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(42,42,61,0.4);
+    font-size: 0.85rem;
+  }
+  .cut-item:last-child { border-bottom: none; }
+  .cut-action { font-weight: 600; }
+
+  /* ── Team Size ── */
+  .team-person {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 16px;
+  }
+  .team-person:hover { border-color: rgba(192,132,252,0.3); }
+  .team-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    font-weight: 800;
+  }
+  .team-person .tp-name { font-weight: 700; font-size: 0.95rem; }
+  .team-person .tp-roles { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+  .team-person .tp-load { margin-top: 10px; }
+
+  .load-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    margin: 2px 3px 2px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .lc-code { background: rgba(192,132,252,0.15); color: var(--accent); }
+  .lc-art { background: rgba(244,114,182,0.15); color: var(--accent3); }
+  .lc-design { background: rgba(129,140,248,0.15); color: var(--accent2); }
+  .lc-audio { background: rgba(34,211,238,0.15); color: var(--cyan); }
+  .lc-biz { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .lc-qa { background: rgba(74,222,128,0.15); color: var(--green); }
+  .lc-prod { background: rgba(248,113,113,0.15); color: var(--red); }
+
+  /* ── Team comparison table ── */
+  .team-comp-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px 1fr;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(42,42,61,0.4);
+    font-size: 0.85rem;
+    align-items: center;
+  }
+  .team-comp-row:last-child { border-bottom: none; }
+  .team-comp-header {
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .team-size-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .tsb-current { color: var(--accent); }
+  .tsb-ideal { color: var(--green); }
+  .tsb-over { color: var(--red); }
+
+  /* ── Overload meter ── */
+  .overload-track {
+    height: 24px;
+    background: var(--surface3);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+  }
+  .overload-seg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    transition: width 1.5s cubic-bezier(0.22,1,0.36,1);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .overload-marker {
+    position: absolute;
+    top: -6px;
+    width: 2px;
+    height: 36px;
+    background: var(--text);
+    border-radius: 1px;
+  }
+  .overload-marker-label {
+    position: absolute;
+    top: -20px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  /* ── Trajectory timeline ── */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-node {
+    position: relative;
+    padding: 16px 0 16px 20px;
+  }
+  .tl-node::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 22px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+  }
+  .tl-node.tl-now::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 8px rgba(192,132,252,0.5); }
+  .tl-node.tl-danger::before { border-color: var(--red); background: var(--red); box-shadow: 0 0 8px rgba(248,113,113,0.4); }
+  .tl-node.tl-good::before { border-color: var(--green); background: var(--green); }
+  .tl-node .tl-date { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+  .tl-node .tl-title { font-weight: 700; font-size: 0.92rem; margin-top: 2px; }
+  .tl-node .tl-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── Problem comparison cards ── */
+  .problem-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    border-top: 3px solid transparent;
+  }
+  .problem-card h4 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+  .problem-card ul {
+    list-style: none;
+    font-size: 0.82rem;
+    line-height: 2;
+    color: var(--text-dim);
+  }
+  .pc-under { border-top-color: var(--amber); }
+  .pc-under h4 { color: var(--amber); }
+  .pc-ideal { border-top-color: var(--green); }
+  .pc-ideal h4 { color: var(--green); }
+  .pc-over { border-top-color: var(--red); }
+  .pc-over h4 { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<header class="hero">
+  <h1>Iris</h1>
+  <div class="version">v0.4.0 — DEMO BUILD</div>
+  <p class="subtitle">Stability &bull; Market Position &bull; Funding Runway &bull; Competitive Analysis</p>
+</header>
+
+<!-- ═══════════ TICKER ═══════════ -->
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════ TOP-LINE METRICS ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Project Snapshot <span class="badge">Current State</span></div>
+  <div class="grid-4" id="top-cards"></div>
+</section>
+
+<!-- ═══════════ SYSTEM COMPLETION ═══════════ -->
+<section class="reveal">
+  <div class="section-title">System Completion <span class="badge">Vertical Slice Readiness</span></div>
+  <div class="grid-2">
+    <div class="chart-wrap">
+      <h3>Core Systems Progress</h3>
+      <div id="system-bars"></div>
+    </div>
+    <div class="chart-wrap">
+      <h3>Codebase Breakdown</h3>
+      <canvas id="codebaseChart" height="280"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ DEV VELOCITY ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Development Velocity <span class="badge">Commits / Day</span></div>
+  <div class="chart-wrap">
+    <h3>Sprint Activity — Feb to Apr 2026</h3>
+    <canvas id="velocityChart" height="100"></canvas>
+  </div>
+</section>
+
+<!-- ═══════════ MARKET COMPARISON ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Market Comparables <span class="badge">Competitive Landscape</span></div>
+  <div class="chart-wrap" style="overflow-x:auto;">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Genre Overlap</th>
+          <th>Price</th>
+          <th>Est. Revenue</th>
+          <th>Team</th>
+          <th>Key Takeaway</th>
+        </tr>
+      </thead>
+      <tbody id="comp-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ MARKET POSITION RADAR ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Market Positioning <span class="badge">Iris vs Comparables</span></div>
+  <div class="grid-2">
+    <div class="chart-wrap">
+      <h3>Competitive Dimensions</h3>
+      <canvas id="radarChart" height="300"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h3>Revenue vs Price — Comparable Titles</h3>
+      <canvas id="bubbleChart" height="300"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ GENRE TREND ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Genre Health <span class="badge">Cozy Horror / Narrative Indie</span></div>
+  <div class="grid-3">
+    <div class="card glow-green">
+      <h3>Genre Trend</h3>
+      <div class="big-number">Growing</div>
+      <div class="sub">"Cozy horror" established post-Dredge. High demand, moderate supply.</div>
+    </div>
+    <div class="card glow-amber">
+      <h3>Steam Releases / Year</h3>
+      <div class="big-number">~15K</div>
+      <div class="sub">Discoverability is the #1 challenge. A clear hook is non-negotiable.</div>
+    </div>
+    <div class="card glow-cyan">
+      <h3>Iris's Niche Gap</h3>
+      <div class="big-number">Open</div>
+      <div class="sub">No existing title combines domestic sim + slow-burn serial killer horror.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FUNDING RUNWAY ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Funding Runway <span class="badge">$25K — $40K Budget</span></div>
+  <div class="grid-2">
+    <div class="chart-wrap">
+      <h3>Monthly Burn Rate</h3>
+      <canvas id="burnChart" height="260"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h3>Runway Duration</h3>
+      <canvas id="runwayChart" height="260"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FUNDING SOURCES ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Funding Sources <span class="badge">Ranked by Viability</span></div>
+  <div class="chart-wrap">
+    <div class="funding-row funding-header">
+      <span>Source</span><span>Amount</span><span>Likelihood</span><span>Notes</span>
+    </div>
+    <div id="funding-list"></div>
+  </div>
+</section>
+
+<!-- ═══════════ STEAM LAUNCH SCENARIOS ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Steam Launch Projections <span class="badge">At $14.99 Price Point</span></div>
+  <div class="grid-3">
+    <div class="scenario-card sc-pessimistic">
+      <h4>Pessimistic</h4>
+      <div class="sc-range">$2.6K — $10K</div>
+      <div class="sc-detail">2,000 — 5,000 wishlists<br>200 — 750 launch week sales<br>No press, organic only</div>
+    </div>
+    <div class="scenario-card sc-moderate">
+      <h4>Moderate</h4>
+      <div class="sc-range">$11K — $30K</div>
+      <div class="sc-detail">7,000 — 15,000 wishlists<br>840 — 2,250 launch week sales<br>Some press + streamer coverage</div>
+    </div>
+    <div class="scenario-card sc-optimistic">
+      <h4>Optimistic</h4>
+      <div class="sc-range">$31K — $97K</div>
+      <div class="sc-detail">20,000 — 50,000 wishlists<br>2,400 — 7,500 launch week sales<br>Viral trailer / major press</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ WISHLIST PROJECTION ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Wishlist Accumulation Model <span class="badge">Coming Soon → Launch</span></div>
+  <div class="chart-wrap">
+    <h3>Projected Wishlists Over Time (3 Scenarios)</h3>
+    <canvas id="wishlistChart" height="110"></canvas>
+  </div>
+</section>
+
+<!-- ═══════════ RISK MATRIX ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Risk Assessment <span class="badge">Stability Threats</span></div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Critical Risks</h3>
+      <div id="risk-list"></div>
+    </div>
+    <div class="chart-wrap">
+      <h3>Risk Impact vs Likelihood</h3>
+      <canvas id="riskChart" height="280"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TEAM SIZE ANALYSIS ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Team Size Analysis <span class="badge">2 People vs Reality</span></div>
+  <div class="grid-2">
+    <div class="chart-wrap">
+      <h3>Comparable Titles — Team Size vs Revenue</h3>
+      <canvas id="teamRevenueChart" height="300"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h3>Ideal Team Composition for Iris's Scope</h3>
+      <canvas id="idealTeamChart" height="300"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TASK LOAD DISTRIBUTION ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Task Load Distribution <span class="badge">Who Does What</span></div>
+  <div class="grid-2">
+    <div>
+      <div class="team-person">
+        <div class="team-avatar" style="background:rgba(192,132,252,0.2);color:var(--accent);">P1</div>
+        <div>
+          <div class="tp-name">Programmer / Creative Lead</div>
+          <div class="tp-roles">Architecture, gameplay, systems, tools, CI, UI code, audio integration, testing</div>
+          <div class="tp-load">
+            <span class="load-chip lc-code">Engine 30%</span>
+            <span class="load-chip lc-code">Gameplay 25%</span>
+            <span class="load-chip lc-design">Design 15%</span>
+            <span class="load-chip lc-qa">QA 10%</span>
+            <span class="load-chip lc-audio">Audio 5%</span>
+            <span class="load-chip lc-biz">Biz 10%</span>
+            <span class="load-chip lc-prod">Prod 5%</span>
+          </div>
+        </div>
+      </div>
+      <div class="team-person">
+        <div class="team-avatar" style="background:rgba(244,114,182,0.2);color:var(--accent3);">P2</div>
+        <div>
+          <div class="tp-name">Artist / Shared Creative</div>
+          <div class="tp-roles">3D models, textures, UI art, VFX, animation, marketing assets, social media</div>
+          <div class="tp-load">
+            <span class="load-chip lc-art">3D Art 35%</span>
+            <span class="load-chip lc-art">UI Art 15%</span>
+            <span class="load-chip lc-art">VFX 10%</span>
+            <span class="load-chip lc-art">Animation 15%</span>
+            <span class="load-chip lc-biz">Marketing 15%</span>
+            <span class="load-chip lc-design">Design 10%</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:4px;">
+        <h3>Workload Saturation (per person)</h3>
+        <div class="stat-bar">
+          <div class="stat-bar-header">
+            <span class="label">Programmer — current load</span>
+            <span class="value" style="color:var(--red);">175%</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill fill-red" data-width="100" style="width:0;"></div>
+          </div>
+        </div>
+        <div class="stat-bar">
+          <div class="stat-bar-header">
+            <span class="label">Artist — current load</span>
+            <span class="value" style="color:var(--amber);">140%</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill fill-amber" data-width="100" style="width:0;"></div>
+          </div>
+        </div>
+        <div class="sub" style="margin-top:12px;font-size:0.82rem;color:var(--text-dim);">
+          Both members are running well over 100% capacity. At 175%, the programmer is filling
+          ~7 distinct roles. Burnout risk is extreme — 54-commit days are a symptom.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="chart-wrap">
+        <h3>Jobs per Person — Iris vs Ideal Staffing</h3>
+        <canvas id="jobsChart" height="260"></canvas>
+      </div>
+      <div class="card" style="margin-top:24px;">
+        <h3>Role Gap Analysis</h3>
+        <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.8;">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span><span class="load-chip lc-prod">Producer</span> Missing</span>
+            <span class="tag tag-red">No one tracks scope/schedule</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span><span class="load-chip lc-audio">Sound Designer</span> Missing</span>
+            <span class="tag tag-amber">Programmer fills gap part-time</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span><span class="load-chip lc-qa">QA Tester</span> Missing</span>
+            <span class="tag tag-amber">Devs self-test (15% coverage)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span><span class="load-chip lc-biz">Marketing</span> Missing</span>
+            <span class="tag tag-red">No one builds audience</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;">
+            <span><span class="load-chip lc-code">DevOps/CI</span> Missing</span>
+            <span class="tag tag-amber">Manual builds only</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TEAM SIZE COMPARISON ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Team Size — Problems at Each Scale <span class="badge">Under / Ideal / Over</span></div>
+  <div class="grid-3">
+    <div class="problem-card pc-under">
+      <h4>2 People (Current) — Understaffed</h4>
+      <ul>
+        <li>- Every person fills 5-7 roles</li>
+        <li>- Context-switching kills deep work</li>
+        <li>- One illness = 50% team loss</li>
+        <li>- No QA = bugs ship undetected</li>
+        <li>- No marketing = zero audience growth</li>
+        <li>- Burnout inevitable at current pace</li>
+        <li>- 12-18 month timeline to ship</li>
+        <li>- Demo crashes go uncaught</li>
+      </ul>
+    </div>
+    <div class="problem-card pc-ideal">
+      <h4>4-5 People — Right-Sized</h4>
+      <ul>
+        <li>+ Programmer focuses on code only</li>
+        <li>+ Dedicated artist, no biz distractions</li>
+        <li>+ Part-time QA catches demo crashes</li>
+        <li>+ Part-time producer tracks scope</li>
+        <li>+ Sound design gets proper attention</li>
+        <li>+ Marketing starts building wishlists</li>
+        <li>+ 6-9 month timeline to ship</li>
+        <li>+ Bus factor improves to 3+</li>
+      </ul>
+    </div>
+    <div class="problem-card pc-over">
+      <h4>8+ People — Overstaffed</h4>
+      <ul>
+        <li>- Burn rate hits $30-50K/month</li>
+        <li>- Communication overhead explodes</li>
+        <li>- Funding runway drops to 1-2 months</li>
+        <li>- Management overhead needs a producer</li>
+        <li>- Decision paralysis on creative vision</li>
+        <li>- Revenue split reduces per-person ROI</li>
+        <li>- Scope creep accelerates ("we have people")</li>
+        <li>- Indie agility destroyed</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FINANCING + TEAM TRAJECTORY ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Financing Trajectory by Team Size <span class="badge">Runway vs Headcount</span></div>
+  <div class="grid-2">
+    <div class="chart-wrap">
+      <h3>Monthly Burn Rate by Team Size</h3>
+      <canvas id="burnByTeamChart" height="280"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h3>Runway Depletion — $40K Budget</h3>
+      <canvas id="runwayByTeamChart" height="280"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FINANCING TIMELINE ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Project Trajectory <span class="badge">Financing + Milestones</span></div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Critical Path Timeline</h3>
+      <div class="timeline">
+        <div class="tl-node tl-now">
+          <div class="tl-date">APR 2026 — NOW</div>
+          <div class="tl-title">v0.4 Demo Exists</div>
+          <div class="tl-desc">Playable 2-day loop. Horror layer missing. 62K LOC. 2 people at 175% capacity.</div>
+        </div>
+        <div class="tl-node tl-danger">
+          <div class="tl-date">MAY — JUN 2026</div>
+          <div class="tl-title">Danger Zone — Build or Die</div>
+          <div class="tl-desc">Must implement disappearance + souvenirs. Apply for Epic MegaGrants. Steam Coming Soon page.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-date">JUL — AUG 2026</div>
+          <div class="tl-title">Grant Window + Convention Push</div>
+          <div class="tl-desc">Epic MegaGrants deadline. Gamescom / PAX West. Need polished 7-min demo + trailer.</div>
+        </div>
+        <div class="tl-node tl-danger">
+          <div class="tl-date">SEP 2026</div>
+          <div class="tl-title">Funding Decision Point</div>
+          <div class="tl-desc">If no grant/publisher: $25-40K exhausted. Project stalls or goes nights-and-weekends.</div>
+        </div>
+        <div class="tl-node tl-good">
+          <div class="tl-date">OCT — DEC 2026 (if funded)</div>
+          <div class="tl-title">Vertical Slice Completion</div>
+          <div class="tl-desc">With funding: hire 1-2 contractors. Complete horror layer. Polish. Wishlist accumulation.</div>
+        </div>
+        <div class="tl-node tl-good">
+          <div class="tl-date">Q1 2027 (if funded)</div>
+          <div class="tl-title">Early Access or Launch</div>
+          <div class="tl-desc">Full 7-day loop. Multiple dates. Horror payoff. Target 10K+ wishlists.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="chart-wrap" style="margin-bottom:24px;">
+        <h3>Cumulative Investment Required</h3>
+        <canvas id="investmentChart" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h3>Break-Even Scenarios</h3>
+        <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.8;">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span>At $14.99, break even on $40K</span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--green);">~3,800 units</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span>At $14.99, break even on $100K (w/ funding)</span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--amber);">~9,500 units</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(42,42,61,0.4);">
+            <span>At $14.99, break even on $200K (publisher)</span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--red);">~19,100 units</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;">
+            <span>Strange Horticulture sold (est.)</span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--accent);">~100K-230K units</span>
+          </div>
+        </div>
+        <div class="sub" style="margin-top:14px;">
+          Steam takes 30%. After platform cut, $14.99 yields ~$10.49/unit.
+          Publisher deals typically take another 30-50% of net, dropping per-unit to $5.25-7.35.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ HIRING PRIORITY ═══════════ -->
+<section class="reveal">
+  <div class="section-title">If You Get Funding — Hire Order <span class="badge">Maximum Impact per Dollar</span></div>
+  <div class="grid-4">
+    <div class="card glow-green">
+      <h3>Hire #1</h3>
+      <div class="big-number" style="font-size:1.6rem;">QA / Generalist</div>
+      <div class="sub">Part-time contract. Catches crashes before publishers see them. Frees 10% of programmer time. $2-3K/mo.</div>
+    </div>
+    <div class="card glow-amber">
+      <h3>Hire #2</h3>
+      <div class="big-number" style="font-size:1.6rem;">Sound Designer</div>
+      <div class="sub">Contract per-deliverable. Audio is 50% of atmosphere in a horror game. $3-5K total for demo audio.</div>
+    </div>
+    <div class="card glow-cyan">
+      <h3>Hire #3</h3>
+      <div class="big-number" style="font-size:1.6rem;">Marketing / Community</div>
+      <div class="sub">Part-time. Builds wishlist pipeline while devs build game. Social + trailer + presskit. $1.5-3K/mo.</div>
+    </div>
+    <div class="card glow-purple">
+      <h3>Hire #4</h3>
+      <div class="big-number" style="font-size:1.6rem;">2nd Programmer</div>
+      <div class="sub">Only if funded >$100K. Horror layer + polish. Risky: onboarding 62K LOC codebase takes 2-4 weeks.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CRITICAL PATH ═══════════ -->
+<section class="reveal">
+  <div class="section-title">Critical Path to Fundability <span class="badge">Priority Stack</span></div>
+  <div class="grid-2">
+    <div>
+      <div id="priority-list"></div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Recommended Cuts / Deferrals</h3>
+        <div id="cut-list"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STRENGTHS / WEAKNESSES ═══════════ -->
+<section class="reveal">
+  <div class="section-title">SWOT Overview <span class="badge">Strategic Position</span></div>
+  <div class="grid-2">
+    <div class="card" style="border-left: 3px solid var(--green);">
+      <h3 style="color:var(--green)">Strengths</h3>
+      <ul style="list-style:none;font-size:0.88rem;line-height:2;">
+        <li>+ Unique hook no competitor occupies</li>
+        <li>+ 62K LOC — mechanically deep for 2-person team</li>
+        <li>+ Clean architecture, data-driven design</li>
+        <li>+ 15-setting accessibility suite signals professionalism</li>
+        <li>+ PSX aesthetic = low art cost, high distinctiveness</li>
+        <li>+ Playable demo exists right now</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--red);">
+      <h3 style="color:var(--red)">Vulnerabilities</h3>
+      <ul style="list-style:none;font-size:0.88rem;line-height:2;">
+        <li>- Horror USP is 0% implemented</li>
+        <li>- Scope is 2x what 2 people can ship unfunded</li>
+        <li>- No Steam page, no trailer, no social following</li>
+        <li>- $25-40K buys only 4-6 months</li>
+        <li>- 15% test coverage — demo crash risk</li>
+        <li>- 45 parked scripts = unresolved technical debt</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ VERDICT ═══════════ -->
+<section class="reveal">
+  <div class="verdict-banner">
+    <h2>Build the Disappearance.</h2>
+    <p>
+      The horror twist is Iris's entire market identity. Every funding application,
+      publisher pitch, trailer beat, and press headline depends on the moment a player
+      realizes what Nema has been doing. The simulation half is solid. The horror half
+      — dates vanishing, souvenirs accumulating, newspaper ads going silent — is what
+      turns "another dating sim" into "the game where you slowly realize you're a serial killer."
+      <strong>Ship that, and the rest is execution.</strong>
+    </p>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  Iris v0.4 Audit &mdash; Raspberry Rum Studio &mdash; Generated April 2026<br>
+  Data sourced from codebase analysis, production documents, and indie market benchmarks
+</footer>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- JS — All data & chart rendering below      -->
+<!-- ═══════════════════════════════════════════ -->
+<script>
+// ── Chart.js defaults ──
+Chart.defaults.color = '#8888a0';
+Chart.defaults.borderColor = 'rgba(42,42,61,0.6)';
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding = 16;
+
+// ── Colors ──
+const C = {
+  purple: '#c084fc', blue: '#818cf8', pink: '#f472b6',
+  green: '#4ade80', red: '#f87171', amber: '#fbbf24',
+  cyan: '#22d3ee', rose: '#fb7185',
+  purpleA: 'rgba(192,132,252,', blueA: 'rgba(129,140,248,',
+  pinkA: 'rgba(244,114,182,', greenA: 'rgba(74,222,128,',
+  redA: 'rgba(248,113,113,', amberA: 'rgba(251,191,36,',
+  cyanA: 'rgba(34,211,238,',
+};
+
+// ══════════════ TICKER ══════════════
+const tickerData = [
+  ['LOC', '62,424'], ['Files', '821'], ['Systems', '14 Major'],
+  ['Tests', '1,599 LOC'], ['Version', 'v0.4.0'], ['Team', '2 People'],
+  ['Budget', '$25-40K'], ['Runway', '4-6 Months'], ['Price Target', '$14.99'],
+  ['Wishlists Needed', '10,000+'], ['Genre', 'Cozy Horror'], ['Platform', 'PC'],
+];
+const tickerEl = document.getElementById('ticker');
+let tickerHTML = '';
+for (let r = 0; r < 2; r++) {
+  tickerData.forEach(([l, v]) => {
+    tickerHTML += `<span><span class="tk-label">${l}</span> <span class="tk-val">${v}</span></span><span class="tk-sep">&bull;</span>`;
+  });
+}
+tickerEl.innerHTML = tickerHTML;
+
+// ══════════════ TOP CARDS ══════════════
+const topCards = [
+  { title: 'Lines of Code', value: '62.4K', unit: 'LOC', sub: '821 C# files across 14 major systems', cls: 'glow-purple' },
+  { title: 'Dev Velocity', value: '22', unit: 'commits/day peak', sub: 'Bursty sprints — 54 commits on Apr 1', cls: 'glow-blue' },
+  { title: 'Test Coverage', value: '~15%', unit: '', sub: '8 test files, 1,599 LOC — prototype-level', cls: 'glow-amber' },
+  { title: 'Horror USP Built', value: '0%', unit: '', sub: 'Disappearances, souvenirs, couch scene — all unbuilt', cls: 'glow-red' },
+];
+const topCardsEl = document.getElementById('top-cards');
+topCards.forEach(c => {
+  topCardsEl.innerHTML += `
+    <div class="card ${c.cls}">
+      <h3>${c.title}</h3>
+      <div class="big-number">${c.value}<span class="unit">${c.unit}</span></div>
+      <div class="sub">${c.sub}</div>
+    </div>`;
+});
+
+// ══════════════ SYSTEM BARS ══════════════
+const systems = [
+  { name: 'Apartment Hub', pct: 90, fill: 'fill-green' },
+  { name: 'Bookcase Station', pct: 95, fill: 'fill-green' },
+  { name: 'Camera System', pct: 95, fill: 'fill-green' },
+  { name: 'MoodMachine', pct: 95, fill: 'fill-green' },
+  { name: 'Flower Trimming', pct: 90, fill: 'fill-green' },
+  { name: 'Dating Loop', pct: 75, fill: 'fill-amber' },
+  { name: 'Accessibility', pct: 100, fill: 'fill-purple' },
+  { name: 'Audio Infrastructure', pct: 80, fill: 'fill-amber' },
+  { name: 'Save System', pct: 70, fill: 'fill-amber' },
+  { name: 'Horror Layer', pct: 0, fill: 'fill-red' },
+  { name: 'Marketing Assets', pct: 0, fill: 'fill-red' },
+  { name: 'Steam Presence', pct: 0, fill: 'fill-red' },
+];
+const sysBarsEl = document.getElementById('system-bars');
+systems.forEach(s => {
+  sysBarsEl.innerHTML += `
+    <div class="stat-bar">
+      <div class="stat-bar-header">
+        <span class="label">${s.name}</span>
+        <span class="value">${s.pct}%</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill ${s.fill}" data-width="${s.pct}"></div>
+      </div>
+    </div>`;
+});
+
+// ══════════════ CODEBASE DONUT ══════════════
+new Chart(document.getElementById('codebaseChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Framework', 'Apartment', 'Mechanics', 'Dating', 'UI', 'Mesh Cutter', 'Game Logic', 'Interaction', 'Rendering', 'Other'],
+    datasets: [{
+      data: [12540, 12844, 7209, 6940, 5778, 5143, 4058, 3068, 1380, 3464],
+      backgroundColor: [
+        C.purple, C.blue, C.pink, C.green, C.amber,
+        C.cyan, C.rose, '#a78bfa', '#6ee7b7', '#94a3b8'
+      ],
+      borderWidth: 0,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    cutout: '62%',
+    plugins: {
+      legend: { position: 'right', labels: { padding: 10, font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} LOC`
+        }
+      }
+    }
+  }
+});
+
+// ══════════════ VELOCITY CHART ══════════════
+new Chart(document.getElementById('velocityChart'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'Feb 20','Feb 21','Feb 22','Feb 23','Feb 24','Feb 25','Feb 26','Feb 27','Feb 28',
+      'Mar 1','Mar 2','Mar 3','Mar 4','Mar 5','','','','','','','','','','','','Mar 16','','','','',
+      'Mar 31','Apr 1','Apr 2','Apr 3','Apr 4','Apr 5'
+    ],
+    datasets: [{
+      label: 'Commits',
+      data: [
+        22,25,28,30,26,31,24,27,23,
+        18,15,23,12,8,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,
+        46,54,38,28,18,9
+      ],
+      backgroundColor: ctx => {
+        const v = ctx.raw;
+        if (v >= 40) return C.pink;
+        if (v >= 20) return C.purple;
+        if (v > 0) return 'rgba(192,132,252,0.4)';
+        return 'rgba(42,42,61,0.3)';
+      },
+      borderRadius: 3,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: { label: ctx => `${ctx.raw} commits` }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 9 } } },
+      y: { beginAtZero: true, title: { display: true, text: 'Commits' } }
+    }
+  }
+});
+
+// ══════════════ COMP TABLE ══════════════
+const comps = [
+  { title: 'Strange Horticulture', genre: 'Occult Plant Shop', tag: 'tag-purple', price: '$12.99', rev: '$1-3M', team: '2-3', takeaway: 'Cozy + mystery. Plant loop. Atmosphere sells.' },
+  { title: 'Dredge', genre: 'Fishing + Cosmic Horror', tag: 'tag-green', price: '$24.99', rev: '$10M+', team: '~12', takeaway: 'Genre-defining "cozy horror." Addictive loop.' },
+  { title: 'Sucker for Love', genre: 'Dating + Lovecraft', tag: 'tag-pink', price: '$9.99', rev: '$500K-1M', team: 'Small', takeaway: 'Comedy horror. Streamable. Meme-friendly.' },
+  { title: 'Coffee Talk', genre: 'Drink-making Conversation', tag: 'tag-cyan', price: '$12.99', rev: '$2-5M', team: 'Small', takeaway: 'Lo-fi vibes, great writing, cult following.' },
+  { title: 'Unpacking', genre: 'Domestic Life Sim', tag: 'tag-amber', price: '$19.99', rev: '$5M+', team: '3', takeaway: 'Pure env. storytelling. No text, huge emotion.' },
+  { title: 'Boyfriend Dungeon', genre: 'Dating + Action', tag: 'tag-pink', price: '$19.99', rev: '$1-2M', team: '~8', takeaway: 'Dual-loop innovation. Controversy = free press.' },
+  { title: 'A Short Hike', genre: 'Emotional Indie', tag: 'tag-green', price: '$7.99', rev: '$1-2M', team: '1', takeaway: 'Tiny scope, huge heart. Festival darling.' },
+  { title: 'Iris (projected)', genre: 'Dating + Serial Killer Horror', tag: 'tag-purple', price: '$14.99', rev: '???', team: '2', takeaway: 'Unique niche. Horror USP must be built to validate.' },
+];
+const compBody = document.getElementById('comp-body');
+comps.forEach(c => {
+  const isIris = c.title.startsWith('Iris');
+  compBody.innerHTML += `
+    <tr style="${isIris ? 'background:rgba(124,58,237,0.06);' : ''}">
+      <td class="title-cell">${c.title}</td>
+      <td><span class="tag ${c.tag}">${c.genre}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;">${c.price}</td>
+      <td class="revenue">${c.rev}</td>
+      <td>${c.team}</td>
+      <td style="color:var(--text-dim);font-size:0.8rem;">${c.takeaway}</td>
+    </tr>`;
+});
+
+// ══════════════ RADAR CHART ══════════════
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ['Mechanical Depth', 'Narrative Hook', 'Visual Identity', 'Accessibility', 'Market Readiness', 'Horror Delivery'],
+    datasets: [
+      {
+        label: 'Iris v0.4',
+        data: [9, 9, 7, 10, 2, 0],
+        borderColor: C.purple,
+        backgroundColor: C.purpleA + '0.15)',
+        pointBackgroundColor: C.purple,
+        borderWidth: 2,
+      },
+      {
+        label: 'Strange Horticulture',
+        data: [6, 7, 8, 5, 9, 7],
+        borderColor: C.green,
+        backgroundColor: C.greenA + '0.08)',
+        pointBackgroundColor: C.green,
+        borderWidth: 1.5,
+      },
+      {
+        label: 'Dredge',
+        data: [8, 8, 9, 6, 10, 9],
+        borderColor: C.cyan,
+        backgroundColor: C.cyanA + '0.08)',
+        pointBackgroundColor: C.cyan,
+        borderWidth: 1.5,
+      }
+    ]
+  },
+  options: {
+    scales: {
+      r: {
+        beginAtZero: true,
+        max: 10,
+        grid: { color: 'rgba(42,42,61,0.6)' },
+        pointLabels: { font: { size: 11 } },
+        ticks: { display: false },
+      }
+    },
+    plugins: { legend: { position: 'bottom' } }
+  }
+});
+
+// ══════════════ BUBBLE CHART ══════════════
+new Chart(document.getElementById('bubbleChart'), {
+  type: 'bubble',
+  data: {
+    datasets: [
+      { label: 'Strange Horticulture', data: [{ x: 13, y: 2, r: 12 }], backgroundColor: C.purpleA + '0.6)' },
+      { label: 'Dredge', data: [{ x: 25, y: 10, r: 22 }], backgroundColor: C.cyanA + '0.6)' },
+      { label: 'Sucker for Love', data: [{ x: 10, y: 0.75, r: 8 }], backgroundColor: C.pinkA + '0.6)' },
+      { label: 'Coffee Talk', data: [{ x: 13, y: 3.5, r: 14 }], backgroundColor: C.amberA + '0.6)' },
+      { label: 'Unpacking', data: [{ x: 20, y: 5, r: 16 }], backgroundColor: C.greenA + '0.6)' },
+      { label: 'Boyfriend Dungeon', data: [{ x: 20, y: 1.5, r: 10 }], backgroundColor: C.blueA + '0.6)' },
+      { label: 'A Short Hike', data: [{ x: 8, y: 1.5, r: 10 }], backgroundColor: C.greenA + '0.4)' },
+      { label: 'Iris (target)', data: [{ x: 15, y: 0, r: 6 }], backgroundColor: C.redA + '0.8)', borderColor: C.red, borderWidth: 2 },
+    ]
+  },
+  options: {
+    scales: {
+      x: { title: { display: true, text: 'Price ($)' }, min: 5, max: 30 },
+      y: { title: { display: true, text: 'Est. Revenue ($M)' }, min: -0.5, max: 12 },
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: $${ctx.raw.x} / $${ctx.raw.y}M rev`
+        }
+      }
+    }
+  }
+});
+
+// ══════════════ BURN RATE CHART ══════════════
+new Chart(document.getElementById('burnChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Living Costs', 'Tools & Services', 'Marketing', 'Contingency'],
+    datasets: [
+      {
+        label: 'Low Estimate',
+        data: [4000, 100, 200, 0],
+        backgroundColor: C.purpleA + '0.5)',
+        borderRadius: 4,
+      },
+      {
+        label: 'High Estimate',
+        data: [6000, 200, 500, 500],
+        backgroundColor: C.pinkA + '0.5)',
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: {
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}/mo` } }
+    },
+    scales: {
+      x: { title: { display: true, text: '$ / Month' }, beginAtZero: true },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ══════════════ RUNWAY CHART ══════════════
+new Chart(document.getElementById('runwayChart'), {
+  type: 'line',
+  data: {
+    labels: ['Month 0', 'Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6', 'Month 7', 'Month 8', 'Month 9'],
+    datasets: [
+      {
+        label: '$25K (high burn)',
+        data: [25000, 18300, 11600, 4900, 0, null, null, null, null, null],
+        borderColor: C.red,
+        backgroundColor: C.redA + '0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+      },
+      {
+        label: '$25K (low burn)',
+        data: [25000, 20700, 16400, 12100, 7800, 3500, 0, null, null, null],
+        borderColor: C.amber,
+        backgroundColor: C.amberA + '0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+      },
+      {
+        label: '$40K (high burn)',
+        data: [40000, 33300, 26600, 19900, 13200, 6500, 0, null, null, null],
+        borderColor: C.purple,
+        backgroundColor: C.purpleA + '0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+      },
+      {
+        label: '$40K (low burn)',
+        data: [40000, 35700, 31400, 27100, 22800, 18500, 14200, 9900, 5600, 1300],
+        borderColor: C.green,
+        backgroundColor: C.greenA + '0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+      }
+    ]
+  },
+  options: {
+    plugins: {
+      tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}` : '' } }
+    },
+    scales: {
+      y: { title: { display: true, text: 'Remaining ($)' }, beginAtZero: true },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ══════════════ FUNDING SOURCES ══════════════
+const fundingSources = [
+  { name: 'Epic MegaGrants', amount: '$5K-500K', likelihood: 3, color: 'amber', notes: 'Strong fit. Needs playable demo. Jun-Sep window.' },
+  { name: 'Canada Council (Explore)', amount: '$5K-60K', likelihood: 3, color: 'amber', notes: 'Thesis angle helps. "Digital art" framing.' },
+  { name: 'Ontario Creates', amount: '$50K-150K', likelihood: 2, color: 'amber', notes: 'Requires Ontario incorporation.' },
+  { name: 'Weird Ghosts', amount: 'Mentorship + $$', likelihood: 3, color: 'amber', notes: 'If team qualifies. Canadian studio focus.' },
+  { name: 'Indie Fund', amount: 'Investment', likelihood: 2, color: 'red', notes: 'Recoupable. Needs market validation.' },
+  { name: 'Publisher Advance', amount: '$50K-500K', likelihood: 1, color: 'red', notes: 'Need complete VS + trailer. Low at current stage.' },
+  { name: 'Kickstarter', amount: 'Variable', likelihood: 3, color: 'amber', notes: '"Cozy horror" has audience. Need trailer first.' },
+  { name: 'Unity for Humanity', amount: '$25K', likelihood: 1, color: 'red', notes: 'Social impact angle weak for this concept.' },
+];
+const fundingList = document.getElementById('funding-list');
+fundingSources.forEach(f => {
+  let dots = '';
+  for (let i = 0; i < 5; i++) {
+    dots += `<div class="likelihood-dot ${i < f.likelihood ? 'filled-' + f.color : ''}"></div>`;
+  }
+  fundingList.innerHTML += `
+    <div class="funding-row">
+      <span class="funding-name">${f.name}</span>
+      <span class="funding-amount">${f.amount}</span>
+      <span><div class="likelihood">${dots}</div></span>
+      <span style="color:var(--text-dim);font-size:0.82rem;">${f.notes}</span>
+    </div>`;
+});
+
+// ══════════════ WISHLIST PROJECTION ══════════════
+const months = ['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Launch'];
+function wishlistCurve(final, months) {
+  const pts = [];
+  for (let i = 0; i < months; i++) {
+    pts.push(Math.round(final * (1 - Math.exp(-3 * i / (months - 1)))));
+  }
+  return pts;
+}
+new Chart(document.getElementById('wishlistChart'), {
+  type: 'line',
+  data: {
+    labels: months,
+    datasets: [
+      {
+        label: 'Pessimistic (3,500)',
+        data: wishlistCurve(3500, 13),
+        borderColor: C.red,
+        backgroundColor: C.redA + '0.05)',
+        fill: true, tension: 0.4, pointRadius: 3,
+      },
+      {
+        label: 'Moderate (12,000)',
+        data: wishlistCurve(12000, 13),
+        borderColor: C.amber,
+        backgroundColor: C.amberA + '0.05)',
+        fill: true, tension: 0.4, pointRadius: 3,
+      },
+      {
+        label: 'Optimistic (35,000)',
+        data: wishlistCurve(35000, 13),
+        borderColor: C.green,
+        backgroundColor: C.greenA + '0.05)',
+        fill: true, tension: 0.4, pointRadius: 3,
+      }
+    ]
+  },
+  options: {
+    plugins: {
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label.split('(')[0]}: ${ctx.raw.toLocaleString()} wishlists` } },
+      annotation: {
+        annotations: {
+          line1: {
+            type: 'line', yMin: 10000, yMax: 10000,
+            borderColor: 'rgba(192,132,252,0.4)', borderDash: [6, 4], borderWidth: 1,
+            label: { display: true, content: 'Sustainable threshold (10K)', position: 'end', font: { size: 10 } }
+          }
+        }
+      }
+    },
+    scales: {
+      y: { title: { display: true, text: 'Cumulative Wishlists' }, beginAtZero: true },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ══════════════ RISK MATRIX ══════════════
+const risks = [
+  { name: 'Horror USP unbuilt', desc: 'The entire marketing hook has 0% implementation. Cannot pitch, demo, or trailer without it.', level: 'high', icon: '!!' },
+  { name: 'Scope exceeds capacity', desc: 'VS-1 through VS-5 is 12-18 months of work for 2 people without funding.', level: 'high', icon: '!!' },
+  { name: '45 parked scripts', desc: 'Unresolved tech debt. Decision needed: commit or cut.', level: 'med', icon: '!' },
+  { name: 'No CI/CD pipeline', desc: 'Manual builds only. One bad commit = hours lost.', level: 'med', icon: '!' },
+  { name: 'Demo crash risk', desc: '15% test coverage. Crash at publisher meeting or on stream = death sentence.', level: 'med', icon: '!' },
+  { name: 'Funding gap', desc: '$25-40K buys 4-6 months. If funding doesn\'t land in window, project stalls.', level: 'high', icon: '!!' },
+  { name: 'No marketing presence', desc: 'No Steam page, trailer, or social following. Wishlist clock hasn\'t started.', level: 'med', icon: '!' },
+  { name: 'Team burnout', desc: '54-commit days are unsustainable. Protect weekends.', level: 'med', icon: '!' },
+];
+const riskList = document.getElementById('risk-list');
+risks.forEach(r => {
+  riskList.innerHTML += `
+    <div class="risk-row">
+      <div class="risk-icon risk-${r.level}">${r.icon}</div>
+      <div>
+        <div class="risk-name">${r.name}</div>
+        <div class="risk-desc">${r.desc}</div>
+      </div>
+    </div>`;
+});
+
+// Risk scatter
+new Chart(document.getElementById('riskChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'Risks',
+      data: [
+        { x: 9, y: 10, label: 'Horror USP' },
+        { x: 8, y: 8, label: 'Scope' },
+        { x: 5, y: 5, label: 'Parked Scripts' },
+        { x: 4, y: 6, label: 'No CI/CD' },
+        { x: 6, y: 8, label: 'Demo Crash' },
+        { x: 7, y: 9, label: 'Funding Gap' },
+        { x: 7, y: 6, label: 'No Marketing' },
+        { x: 6, y: 7, label: 'Burnout' },
+      ],
+      backgroundColor: ctx => {
+        if (!ctx.raw) return C.amber;
+        const s = ctx.raw.x * ctx.raw.y;
+        if (s > 60) return C.redA + '0.7)';
+        if (s > 30) return C.amberA + '0.7)';
+        return C.greenA + '0.7)';
+      },
+      pointRadius: ctx => {
+        if (!ctx.raw) return 8;
+        return 4 + (ctx.raw.x * ctx.raw.y) / 10;
+      },
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.raw.label}: Likelihood ${ctx.raw.x}/10, Impact ${ctx.raw.y}/10`
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Likelihood' }, min: 0, max: 10, grid: { color: 'rgba(42,42,61,0.4)' } },
+      y: { title: { display: true, text: 'Impact' }, min: 0, max: 10, grid: { color: 'rgba(42,42,61,0.4)' } },
+    }
+  }
+});
+
+// ══════════════ PRIORITY STACK ══════════════
+const priorities = [
+  { num: 1, cls: 'p-critical', title: 'Date Disappearance Mechanic', why: 'The USP. Without it, this is "another dating sim." Every pitch depends on this.' },
+  { num: 2, cls: 'p-critical', title: 'Souvenir System', why: 'Visual proof of the horror — items accumulate on shelves. Environmental storytelling.' },
+  { num: 3, cls: 'p-critical', title: 'Couch Win Scene', why: 'The payoff moment for trailers and demos. Cuddling + scissors behind back.' },
+  { num: 4, cls: 'p-high', title: 'Photo Intro Sequence', why: 'First impression / tone setter. Camera pose, B&W, newspaper.' },
+  { num: 5, cls: 'p-high', title: 'Perfect Pour Mechanic', why: 'Core loop polish — shared by watering and drink making.' },
+  { num: 6, cls: 'p-med', title: 'Convention Demo Mode', why: '7-minute timed demo for any show floor or publisher meeting.' },
+];
+const prioList = document.getElementById('priority-list');
+priorities.forEach(p => {
+  prioList.innerHTML += `
+    <div class="priority-item">
+      <div class="priority-num ${p.cls}">${p.num}</div>
+      <div>
+        <div class="p-title">${p.title}</div>
+        <div class="p-why">${p.why}</div>
+      </div>
+    </div>`;
+});
+
+// ══════════════ CUT LIST ══════════════
+const cuts = [
+  { name: 'Mail system / time gates', action: 'Defer', tag: 'tag-amber' },
+  { name: 'Bathroom mirror scene', action: 'Cut from VS', tag: 'tag-red' },
+  { name: 'Disco ball / Nema dance', action: 'Cut', tag: 'tag-red' },
+  { name: 'Blanket foldable', action: 'Defer', tag: 'tag-amber' },
+  { name: '45 parked scripts', action: 'Audit & Decide', tag: 'tag-purple' },
+  { name: 'Phase 2/3 date reworks', action: 'Simplify for demo', tag: 'tag-amber' },
+];
+const cutList = document.getElementById('cut-list');
+cuts.forEach(c => {
+  cutList.innerHTML += `
+    <div class="cut-item">
+      <span>${c.name}</span>
+      <span class="tag ${c.tag} cut-action">${c.action}</span>
+    </div>`;
+});
+
+// ══════════════ TEAM SIZE vs REVENUE ══════════════
+new Chart(document.getElementById('teamRevenueChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'Comparable Titles',
+      data: [
+        { x: 1, y: 1.5, label: 'A Short Hike' },
+        { x: 2, y: 2, label: 'Strange Horticulture' },
+        { x: 3, y: 5, label: 'Unpacking' },
+        { x: 3, y: 3.5, label: 'Coffee Talk' },
+        { x: 4, y: 0.75, label: 'Sucker for Love' },
+        { x: 8, y: 1.5, label: 'Boyfriend Dungeon' },
+        { x: 12, y: 10, label: 'Dredge' },
+        { x: 15, y: 7.5, label: 'Spiritfarer' },
+      ],
+      pointBackgroundColor: ctx => {
+        if (!ctx.raw) return C.blue;
+        return [C.green, C.purple, C.green, C.cyan, C.pink, C.blue, C.cyan, C.amber][ctx.dataIndex];
+      },
+      pointRadius: ctx => {
+        if (!ctx.raw) return 8;
+        return 6 + ctx.raw.y;
+      },
+    },
+    {
+      label: 'Iris (current)',
+      data: [{ x: 2, y: 0, label: 'Iris v0.4' }],
+      pointBackgroundColor: C.red,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 10,
+      pointStyle: 'star',
+    },
+    {
+      label: 'Iris (target zone)',
+      data: [{ x: 4, y: 2, label: 'Iris ideal' }],
+      pointBackgroundColor: C.greenA + '0.5)',
+      pointBorderColor: C.green,
+      pointBorderWidth: 2,
+      pointRadius: 14,
+      pointStyle: 'crossRot',
+    }]
+  },
+  options: {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.raw.label}: ${ctx.raw.x} people, $${ctx.raw.y}M rev`
+        }
+      },
+      legend: { position: 'bottom', labels: { font: { size: 10 } } }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Team Size (people)' }, min: 0, max: 18 },
+      y: { title: { display: true, text: 'Est. Revenue ($M)' }, min: -0.5, max: 12 },
+    }
+  }
+});
+
+// ══════════════ IDEAL TEAM COMPOSITION ══════════════
+new Chart(document.getElementById('idealTeamChart'), {
+  type: 'polarArea',
+  data: {
+    labels: ['Lead Programmer', 'Artist / Animator', 'Sound Designer (contract)', 'QA / Generalist (PT)', 'Marketing (PT)'],
+    datasets: [{
+      data: [1, 1, 0.5, 0.5, 0.5],
+      backgroundColor: [
+        C.purpleA + '0.6)', C.pinkA + '0.6)', C.cyanA + '0.6)',
+        C.greenA + '0.6)', C.amberA + '0.6)',
+      ],
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { position: 'right', labels: { font: { size: 11 }, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const v = ctx.raw;
+            return ` ${ctx.label}: ${v >= 1 ? 'Full-time' : 'Part-time / Contract'}`;
+          }
+        }
+      }
+    },
+    scales: {
+      r: {
+        ticks: { display: false },
+        grid: { color: 'rgba(42,42,61,0.4)' },
+      }
+    }
+  }
+});
+
+// ══════════════ JOBS PER PERSON ══════════════
+new Chart(document.getElementById('jobsChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Programming', 'Art / Animation', 'Game Design', 'Sound / Music', 'QA / Testing', 'Marketing / Biz', 'Production Mgmt', 'DevOps / CI'],
+    datasets: [
+      {
+        label: 'Iris (2 people)',
+        data: [1, 1, 0.5, 0.3, 0.2, 0.1, 0, 0.1],
+        backgroundColor: C.purpleA + '0.6)',
+        borderRadius: 3,
+      },
+      {
+        label: 'Ideal (4-5 people)',
+        data: [1, 1, 0.5, 0.5, 0.5, 0.5, 0.3, 0.2],
+        backgroundColor: C.greenA + '0.6)',
+        borderRadius: 3,
+      },
+      {
+        label: 'Needed (1.0 = full coverage)',
+        data: [1, 1, 0.5, 0.5, 0.5, 0.5, 0.3, 0.3],
+        backgroundColor: C.amberA + '0.15)',
+        borderColor: C.amber,
+        borderWidth: 1,
+        borderDash: [4, 4],
+        borderRadius: 3,
+      }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const pct = Math.round(ctx.raw * 100);
+            return ` ${ctx.dataset.label}: ${pct}% staffed`;
+          }
+        }
+      },
+      legend: { position: 'bottom', labels: { font: { size: 10 } } }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Coverage (1.0 = fully staffed)' },
+        min: 0, max: 1.1,
+        ticks: { callback: v => Math.round(v * 100) + '%' }
+      },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ══════════════ BURN BY TEAM SIZE ══════════════
+new Chart(document.getElementById('burnByTeamChart'), {
+  type: 'bar',
+  data: {
+    labels: ['2 people\n(current)', '3 people\n(+QA PT)', '4 people\n(+sound)', '5 people\n(+marketing)', '8 people\n(overstaffed)'],
+    datasets: [
+      {
+        label: 'Living Costs',
+        data: [5000, 6500, 8500, 10500, 20000],
+        backgroundColor: C.purpleA + '0.6)',
+        borderRadius: 3,
+      },
+      {
+        label: 'Contractor Fees',
+        data: [0, 2000, 5000, 6500, 8000],
+        backgroundColor: C.pinkA + '0.6)',
+        borderRadius: 3,
+      },
+      {
+        label: 'Tools + Marketing + Overhead',
+        data: [300, 500, 800, 2000, 5000],
+        backgroundColor: C.amberA + '0.6)',
+        borderRadius: 3,
+      }
+    ]
+  },
+  options: {
+    plugins: {
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.raw.toLocaleString()}/mo` } },
+      legend: { position: 'bottom' }
+    },
+    scales: {
+      x: { grid: { display: false }, stacked: true },
+      y: {
+        title: { display: true, text: '$ / Month' },
+        stacked: true,
+        beginAtZero: true,
+        ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' }
+      }
+    }
+  }
+});
+
+// ══════════════ RUNWAY BY TEAM SIZE ══════════════
+const teamRunwayData = {
+  '2 people ($5.3K/mo)': { burn: 5300, color: C.green, colorA: C.greenA },
+  '3 people ($9K/mo)': { burn: 9000, color: C.amber, colorA: C.amberA },
+  '5 people ($19K/mo)': { burn: 19000, color: C.red, colorA: C.redA },
+  '8 people ($33K/mo)': { burn: 33000, color: C.rose, colorA: 'rgba(251,113,133,' },
+};
+const runwayMonths = ['Month 0','Month 1','Month 2','Month 3','Month 4','Month 5','Month 6','Month 7','Month 8'];
+const runwayDatasets = Object.entries(teamRunwayData).map(([label, d]) => {
+  const pts = [];
+  let bal = 40000;
+  for (let i = 0; i < 9; i++) {
+    if (bal < 0) { pts.push(null); continue; }
+    pts.push(bal);
+    bal -= d.burn;
+  }
+  return {
+    label,
+    data: pts,
+    borderColor: d.color,
+    backgroundColor: d.colorA + '0.08)',
+    fill: true,
+    tension: 0.3,
+    pointRadius: 3,
+  };
+});
+new Chart(document.getElementById('runwayByTeamChart'), {
+  type: 'line',
+  data: { labels: runwayMonths, datasets: runwayDatasets },
+  options: {
+    plugins: {
+      tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}` : '' } },
+      legend: { position: 'bottom', labels: { font: { size: 10 } } }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: 'Remaining ($)' },
+        beginAtZero: true,
+        ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ══════════════ CUMULATIVE INVESTMENT ══════════════
+new Chart(document.getElementById('investmentChart'), {
+  type: 'line',
+  data: {
+    labels: ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'],
+    datasets: [
+      {
+        label: '2 people (self-funded)',
+        data: [0, 5300, 10600, 15900, 21200, 26500, 31800, 37100, 42400, 47700, 53000, 58300],
+        borderColor: C.purple,
+        backgroundColor: C.purpleA + '0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+      },
+      {
+        label: '4 people (grant-funded)',
+        data: [0, 14300, 28600, 42900, 57200, 71500, 85800, 100100, 114400, 128700, 143000, 157300],
+        borderColor: C.amber,
+        backgroundColor: C.amberA + '0.05)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+      },
+      {
+        label: 'Budget ceiling ($40K)',
+        data: [40000,40000,40000,40000,40000,40000,40000,40000,40000,40000,40000,40000],
+        borderColor: C.redA + '0.5)',
+        borderDash: [6, 4],
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: false,
+      },
+      {
+        label: 'With $100K grant (applied Jun)',
+        data: [0,5300,10600,15900,21200,26500,31800,37100,42400,47700,53000,58300].map((v,i) => i >= 4 ? v : null),
+        borderColor: C.greenA + '0.6)',
+        borderDash: [4, 4],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+      }
+    ]
+  },
+  options: {
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: { callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}` : '' } }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: 'Cumulative Spend ($)' },
+        beginAtZero: true,
+        ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ══════════════ SCROLL REVEAL + BAR ANIMATION ══════════════
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // animate bars inside
+      entry.target.querySelectorAll('.stat-bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

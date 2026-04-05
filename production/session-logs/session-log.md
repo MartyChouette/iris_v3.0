@@ -530,3 +530,215 @@ CLAUDE.md
 ProjectSettings/DynamicsManager.asset
 ---
 
+## Session End: 20260405_092353
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+---
+
+## Session End: 20260405_092506
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_104947
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_105450
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_110153
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_111115
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+Assets/Scripts/Bookcase/DrawerController.cs
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_113414
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+Assets/Scripts/Bookcase/DrawerController.cs
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_113506
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Bookcase/DrawerController.cs
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_113954
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Bookcase/DrawerController.cs
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_114305
+### Commits
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/Apt_Setup.unity
+Assets/Scenes/Apt_Setup.unity.meta
+Assets/Scenes/apartment.unity
+Assets/Scenes/apartment_prototype.unity
+Assets/Scenes/apartment_prototype.unity.meta
+Assets/Scenes/mainmenu.unity
+Assets/Scenes/mainmenu.unity.meta
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Bookcase/DrawerController.cs
+production/session-logs/session-log.md
+---
+
