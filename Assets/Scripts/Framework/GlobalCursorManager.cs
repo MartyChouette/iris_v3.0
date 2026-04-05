@@ -43,17 +43,16 @@ public class GlobalCursorManager : MonoBehaviour
     private Vector2 _grabHotSpot;
 
     // ── Smooth fade state ──
-    // Source pixel data per cursor (indexed by CursorType enum)
-    private Color32[][] _sourcePixels;
-    private Texture2D _workingTex;       // single reusable 32x32 texture
-    private Color32[] _workingPixels;    // reusable pixel buffer
+    // Pre-baked alpha ramp: _alphaBank[cursorType][step] where step 0=transparent, Steps-1=full
+    private const int AlphaSteps = 16;
+    private Texture2D[][] _alphaBank;
 
     private CursorType _desiredType = CursorType.Default;   // what raycast wants
     private CursorType _displayedType = CursorType.Default;  // what's currently shown
     private float _currentAlpha;         // 0 = invisible, 1 = full
     private float _targetAlpha;
     private float _hoverTimer;
-    private byte _lastAlphaByte = 255;   // avoid redundant Apply()
+    private int _lastStep = -1;          // avoid redundant SetCursor calls
 
     private const float FadeInSpeed  = 7f;    // ~0.14s to full
     private const float FadeOutSpeed = 5f;    // ~0.20s to zero
@@ -197,30 +196,44 @@ public class GlobalCursorManager : MonoBehaviour
         _scissorsCursor = LoadOrGenerate("scissors", GenScissors(S));
         _scissorsHotSpot = center;
 
-        // Cache source pixels for smooth alpha blending
+        // Pre-bake alpha ramp for each cursor type
         int typeCount = System.Enum.GetValues(typeof(CursorType)).Length;
-        _sourcePixels = new Color32[typeCount][];
-        CachePixels(CursorType.Interact, _interactCursor);
-        CachePixels(CursorType.Watering, _wateringCursor);
-        CachePixels(CursorType.Fridge,   _fridgeCursor);
-        CachePixels(CursorType.Phone,    _phoneCursor);
-        CachePixels(CursorType.Drawer,   _drawerCursor);
-        CachePixels(CursorType.Drink,    _drinkCursor);
-        CachePixels(CursorType.Sponge,   _spongeCursor);
-        CachePixels(CursorType.Grab,     _grabCursor);
-        CachePixels(CursorType.Scissors, _scissorsCursor);
-
-        // Single reusable working texture for alpha blending
-        _workingTex = new Texture2D(S, S, TextureFormat.RGBA32, false);
-        _workingTex.filterMode = FilterMode.Point;
-        _workingPixels = new Color32[S * S];
-        _proceduralTextures.Add(_workingTex);
+        _alphaBank = new Texture2D[typeCount][];
+        BakeAlphaRamp(CursorType.Interact, _interactCursor);
+        BakeAlphaRamp(CursorType.Watering, _wateringCursor);
+        BakeAlphaRamp(CursorType.Fridge,   _fridgeCursor);
+        BakeAlphaRamp(CursorType.Phone,    _phoneCursor);
+        BakeAlphaRamp(CursorType.Drawer,   _drawerCursor);
+        BakeAlphaRamp(CursorType.Drink,    _drinkCursor);
+        BakeAlphaRamp(CursorType.Sponge,   _spongeCursor);
+        BakeAlphaRamp(CursorType.Scissors, _scissorsCursor);
+        // Grab doesn't fade — no bank needed
     }
 
-    private void CachePixels(CursorType type, Texture2D tex)
+    private void BakeAlphaRamp(CursorType type, Texture2D source)
     {
-        if (tex != null)
-            _sourcePixels[(int)type] = tex.GetPixels32();
+        if (source == null) return;
+        var srcPx = source.GetPixels32();
+        int w = source.width, h = source.height;
+        var ramp = new Texture2D[AlphaSteps];
+
+        for (int step = 0; step < AlphaSteps; step++)
+        {
+            float alpha = (float)step / (AlphaSteps - 1);
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+            var px = new Color32[srcPx.Length];
+            for (int i = 0; i < srcPx.Length; i++)
+            {
+                px[i] = srcPx[i];
+                px[i].a = (byte)(srcPx[i].a * alpha);
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            _proceduralTextures.Add(tex);
+            ramp[step] = tex;
+        }
+        _alphaBank[(int)type] = ramp;
     }
 
     /// <summary>
@@ -377,6 +390,7 @@ public class GlobalCursorManager : MonoBehaviour
                 _currentAlpha = 1f;
                 _targetAlpha = 1f;
                 _hoverTimer = 0f;
+                _lastStep = -1;
                 Cursor.SetCursor(_grabCursor, _grabHotSpot, CursorMode.Auto);
             }
             return;
@@ -389,6 +403,7 @@ public class GlobalCursorManager : MonoBehaviour
             _currentAlpha = (_displayedType == CursorType.Default) ? 0f : _currentAlpha;
             _targetAlpha = 1f;
             _hoverTimer = 0f;
+            _lastStep = -1;
         }
 
         // Desired is Default → fade out whatever is displayed
@@ -423,7 +438,7 @@ public class GlobalCursorManager : MonoBehaviour
         {
             _displayedType = CursorType.Default;
             _currentAlpha = 0f;
-            _lastAlphaByte = 0;
+            _lastStep = -1;
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             return;
         }
@@ -431,47 +446,24 @@ public class GlobalCursorManager : MonoBehaviour
         // Nothing to render
         if (_displayedType == CursorType.Default)
         {
-            if (_lastAlphaByte != 0)
+            if (_lastStep != -1)
             {
-                _lastAlphaByte = 0;
+                _lastStep = -1;
                 Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             }
             return;
         }
 
-        // Apply alpha to working texture (only when byte-level alpha changes)
-        byte alphaByte = (byte)(Mathf.Clamp01(_currentAlpha) * 255f);
-        if (alphaByte == _lastAlphaByte) return;
-        _lastAlphaByte = alphaByte;
+        // Look up pre-baked texture at the nearest alpha step
+        int step = Mathf.Clamp(Mathf.RoundToInt(_currentAlpha * (AlphaSteps - 1)), 0, AlphaSteps - 1);
+        if (step == _lastStep) return;
+        _lastStep = step;
 
-        var src = _sourcePixels[(int)_displayedType];
-        if (src == null) return;
-
-        // Resize working texture/buffer if source cursor is a different size
-        int side = (int)Mathf.Sqrt(src.Length);
-        if (_workingPixels == null || _workingPixels.Length != src.Length)
-        {
-            _workingPixels = new Color32[src.Length];
-            if (_workingTex.width != side || _workingTex.height != side)
-            {
-                _proceduralTextures.Remove(_workingTex);
-                Destroy(_workingTex);
-                _workingTex = new Texture2D(side, side, TextureFormat.RGBA32, false);
-                _workingTex.filterMode = FilterMode.Point;
-                _proceduralTextures.Add(_workingTex);
-            }
-        }
-
-        for (int i = 0; i < src.Length; i++)
-        {
-            _workingPixels[i] = src[i];
-            _workingPixels[i].a = (byte)(src[i].a * alphaByte / 255);
-        }
-        _workingTex.SetPixels32(_workingPixels);
-        _workingTex.Apply();
+        var bank = _alphaBank[(int)_displayedType];
+        if (bank == null) return;
 
         Vector2 hotSpot = GetHotSpot(_displayedType);
-        Cursor.SetCursor(_workingTex, hotSpot, CursorMode.Auto);
+        Cursor.SetCursor(bank[step], hotSpot, CursorMode.Auto);
     }
 
     private Vector2 GetHotSpot(CursorType type)
