@@ -42,7 +42,7 @@ public class MidDateActionWatcher : MonoBehaviour
     private void OnEnable()
     {
         CleaningManager.OnWipeStarted += OnInteraction;
-        ObjectGrabber.OnObjectPlaced += OnInteraction;
+        ObjectGrabber.OnObjectPlaced += OnPlacedInteraction;
         RecordSlot.OnRecordChanged += OnInteraction;
         PerfumeBottle.OnPerfumeSprayed += OnInteraction;
     }
@@ -50,10 +50,12 @@ public class MidDateActionWatcher : MonoBehaviour
     private void OnDisable()
     {
         CleaningManager.OnWipeStarted -= OnInteraction;
-        ObjectGrabber.OnObjectPlaced -= OnInteraction;
+        ObjectGrabber.OnObjectPlaced -= OnPlacedInteraction;
         RecordSlot.OnRecordChanged -= OnInteraction;
         PerfumeBottle.OnPerfumeSprayed -= OnInteraction;
     }
+
+    private void OnPlacedInteraction(PlaceableObject _) => OnInteraction();
 
     private void OnDestroy()
     {

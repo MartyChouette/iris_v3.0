@@ -146,8 +146,8 @@ public class ObjectGrabber : MonoBehaviour
     private bool _isEnabled;
     private bool _gridSnap = true;
 
-    /// <summary>Fired after an object is placed on a surface.</summary>
-    public static event System.Action OnObjectPlaced;
+    /// <summary>Fired after an object is placed on a surface. Arg: the placed object.</summary>
+    public static event System.Action<PlaceableObject> OnObjectPlaced;
 
     private static ObjectGrabber s_instance;
 
@@ -656,7 +656,7 @@ public class ObjectGrabber : MonoBehaviour
             if (tag != null) tag.IsPrivate = true;
         }
 
-        OnObjectPlaced?.Invoke();
+        OnObjectPlaced?.Invoke(_held);
         PlayPlaceSFX(_held);
 
         // DropZone deposit (non-destroy — item stays placed on surface)

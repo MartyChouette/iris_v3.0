@@ -80,6 +80,16 @@ public class VisibilityEyeIndicator : MonoBehaviour
         ReactableTag.OnPrivacyChanged -= OnPrivacyChanged;
     }
 
+    private void Start()
+    {
+        // Remove auto-spawned duplicate if user placed one manually
+        if (Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
+
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
@@ -89,32 +99,13 @@ public class VisibilityEyeIndicator : MonoBehaviour
         if (_closedEyeTex != null) Destroy(_closedEyeTex);
     }
 
-    private void OnItemPlaced()
+    private void OnItemPlaced(PlaceableObject placed)
     {
-        // Find the item that was just placed (most recently held)
-        // ObjectGrabber clears _held before firing, so check all PlaceableObjects
-        // for the one in Placed state closest to the cursor
-        if (_cam == null) _cam = Camera.main;
-        if (_cam == null) return;
+        if (placed == null) return;
 
-        Vector2 cursorScreen = IrisInput.CursorPosition;
-        Ray ray = _cam.ScreenPointToRay(cursorScreen);
-
-        PlaceableObject best = null;
-        float bestDist = float.MaxValue;
-        var all = PlaceableObject.All;
-        for (int i = 0; i < all.Count; i++)
-        {
-            if (all[i].CurrentState != PlaceableObject.State.Placed) continue;
-            float d = Vector3.Cross(ray.direction, all[i].transform.position - ray.origin).magnitude;
-            if (d < bestDist) { bestDist = d; best = all[i]; }
-        }
-
-        if (best == null) return;
-
-        var tag = best.GetComponent<ReactableTag>();
+        var tag = placed.GetComponent<ReactableTag>();
         bool isPrivate = tag != null && tag.IsPrivate;
-        ShowIcon(best.transform, isPrivate);
+        ShowIcon(placed.transform, isPrivate);
     }
 
     private void OnPrivacyChanged(ReactableTag tag, bool isPrivate)
