@@ -581,9 +581,9 @@ public class ApartmentManager : MonoBehaviour
 
         int count = _zoomSteps.Length;
         _zoomTicks = new UnityEngine.UI.Image[count];
-        float tickH = 12f;
-        float tickW = 3f;
-        float gap = 6f;
+        float tickH = 60f;
+        float tickW = 15f;
+        float gap = 10f;
         float totalH = count * tickH + (count - 1) * gap;
         float startY = -totalH * 0.5f;
 
@@ -595,7 +595,7 @@ public class ApartmentManager : MonoBehaviour
             rt.anchorMin = new Vector2(1f, 0.5f);
             rt.anchorMax = new Vector2(1f, 0.5f);
             rt.pivot = new Vector2(1f, 0.5f);
-            rt.anchoredPosition = new Vector2(-20f, startY + i * (tickH + gap));
+            rt.anchoredPosition = new Vector2(-30f, startY + i * (tickH + gap));
             rt.sizeDelta = new Vector2(tickW, tickH);
 
             var img = tickGO.AddComponent<UnityEngine.UI.Image>();
@@ -620,8 +620,8 @@ public class ApartmentManager : MonoBehaviour
             // Active tick is slightly wider
             var rt = _zoomTicks[i].rectTransform;
             rt.sizeDelta = (visualIdx == _currentZoomStep)
-                ? new Vector2(6f, 12f)
-                : new Vector2(3f, 12f);
+                ? new Vector2(24f, 60f)
+                : new Vector2(15f, 60f);
         }
     }
 

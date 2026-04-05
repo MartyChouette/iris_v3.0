@@ -586,11 +586,17 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
 
-        // 12. Flash visibility eyes on all items so the player sees what the date can notice
-        yield return new WaitForSeconds(0.5f);
+        // 12. Epic phase title drop over the live scene
+        string dayLabel = GameClock.Instance != null
+            ? $"Day {GameClock.Instance.CurrentDay}"
+            : "Exploration";
+        if (PhaseTitleDrop.Instance != null)
+            yield return PhaseTitleDrop.Instance.Show(dayLabel);
+
+        // 13. Flash visibility eyes on all items so the player sees what the date can notice
         VisibilityEyeIndicator.Instance?.FlashAllItems();
 
-        // 13. Start preparation countdown
+        // 14. Start preparation countdown
         StartPrepTimer();
     }
 
@@ -914,11 +920,18 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration * 2f);
 
-        // 7. Wait for the player to finish trimming
+        // 7b. Fade music back up now that the scene is visible
+        AudioManager.Instance?.UnduckMusic(1.5f);
+
+        // 8. Wait for the player to finish trimming
         while (!trimmingComplete)
             yield return null;
 
-        // 8. Fade to black
+        // 9. Fade music down before leaving flower scene
+        AudioManager.Instance?.DuckMusic(0f, 0.8f);
+        yield return new WaitForSecondsRealtime(0.3f);
+
+        // 10. Fade to black
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeOut(_fadeDuration);
 
