@@ -24,6 +24,9 @@ public class RecordDefinition : ScriptableObject
     [Tooltip("Color of the record sleeve/cover.")]
     public Color coverColor = Color.white;
 
+    [Tooltip("Album art texture. Applied to the record sleeve face, scaled to fit.")]
+    public Texture2D albumArt;
+
     [Header("Mood Machine")]
     [Tooltip("Mood value this record pushes toward (0 = sunny, 1 = stormy).")]
     [Range(0f, 1f)]

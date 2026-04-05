@@ -22,6 +22,7 @@ public class RecordItem : MonoBehaviour
 
     private Vector3 _homePosition;
     private Quaternion _homeRotation;
+    private Material _artMat;
 
     private void Awake()
     {
@@ -33,6 +34,34 @@ public class RecordItem : MonoBehaviour
         var placeable = GetComponent<PlaceableObject>();
         if (placeable != null)
             placeable.ConfigureHome(useSpawnAsHome: true);
+
+        ApplyAlbumArt();
+    }
+
+    private void OnDestroy()
+    {
+        if (_artMat != null)
+            Destroy(_artMat);
+    }
+
+    /// <summary>
+    /// Apply album art texture to the record's renderer, scaled to fit.
+    /// Creates an instance material so each record can have its own art.
+    /// </summary>
+    private void ApplyAlbumArt()
+    {
+        if (_definition == null || _definition.albumArt == null) return;
+
+        var rend = GetComponent<Renderer>();
+        if (rend == null) rend = GetComponentInChildren<Renderer>();
+        if (rend == null) return;
+
+        _artMat = new Material(rend.sharedMaterial);
+        _artMat.mainTexture = _definition.albumArt;
+        _artMat.mainTextureScale = Vector2.one;
+        _artMat.mainTextureOffset = Vector2.zero;
+        _artMat.color = Color.white;
+        rend.material = _artMat;
     }
 
     /// <summary>
