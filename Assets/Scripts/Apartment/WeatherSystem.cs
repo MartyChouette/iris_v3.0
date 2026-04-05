@@ -140,7 +140,10 @@ public class WeatherSystem : MonoBehaviour
         CurrentOvercast      = Mathf.Lerp(overcastA, overcastB, t);
 
         // Update displayed state (nearest keyframe)
+        var prevWeather = CurrentWeather;
         CurrentWeather = t < 0.5f ? stateA : stateB;
+        if (CurrentWeather != prevWeather)
+            NemaWeatherDialogue.ReactToWeather(CurrentWeather);
 
         // Feed mood (lerped)
         float mood = Mathf.Lerp(moodA, moodB, t);
@@ -322,6 +325,9 @@ public class WeatherSystem : MonoBehaviour
 
         // Push to NatureBox shader
         PushToNatureBox(cloudDensity, horizonFog, snowCap);
+
+        // Nema comments on weather
+        NemaWeatherDialogue.ReactToWeather(state);
     }
 
     private void PushToNatureBox(float cloudDensity, float horizonFog, float snowCap)

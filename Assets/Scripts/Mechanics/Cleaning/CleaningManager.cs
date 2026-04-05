@@ -52,6 +52,7 @@ public class CleaningManager : MonoBehaviour
     private CleanableSurface _hoveredSurface;
     private float _sfxCooldown;
     private bool _allCleanFired;
+    private static bool s_hasCleanedFirstStain;
     private bool _wasPressingLastFrame;
     private const float SFX_COOLDOWN = 0.15f;
 
@@ -358,6 +359,7 @@ public class CleaningManager : MonoBehaviour
             Debug.Log("[CleaningManager] All surfaces clean!");
             if (AudioManager.Instance != null && allCleanSFX != null)
                 AudioManager.Instance.PlaySFX(allCleanSFX);
+            DialoguePortraitBox.Instance?.Say("Look at this place shine!", 2.5f);
         }
     }
 
@@ -370,6 +372,13 @@ public class CleaningManager : MonoBehaviour
         // SFX
         if (AudioManager.Instance != null && _stainCompleteSFX != null)
             AudioManager.Instance.PlaySFX(_stainCompleteSFX);
+
+        // First stain voice line
+        if (!s_hasCleanedFirstStain)
+        {
+            s_hasCleanedFirstStain = true;
+            DialoguePortraitBox.Instance?.Say("There, much better!", 2f);
+        }
 
         // Sparkle VFX
         SpawnSparkle(pos);

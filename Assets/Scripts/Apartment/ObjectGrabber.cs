@@ -372,6 +372,20 @@ public class ObjectGrabber : MonoBehaviour
                 return;
             }
 
+            // Check for Nema click — open personality/wellbeing panel (non-date only)
+            var nema = hit.collider.GetComponent<NemaController>();
+            if (nema == null) nema = hit.collider.GetComponentInParent<NemaController>();
+            if (nema != null)
+            {
+                if (DayPhaseManager.Instance == null
+                    || DayPhaseManager.Instance.CurrentPhase != DayPhaseManager.DayPhase.DateInProgress)
+                {
+                    NemaProfilePanel.Instance?.Open();
+                    ConsumeClick();
+                    return;
+                }
+            }
+
             // Check for light switch click
             var lightSwitch = hit.collider.GetComponent<LightSwitch>();
             if (lightSwitch == null)

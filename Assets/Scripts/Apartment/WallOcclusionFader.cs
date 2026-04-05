@@ -79,11 +79,15 @@ public class WallOcclusionFader : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    private float _camRefreshTimer;
+
     private void LateUpdate()
     {
-        if (_cam == null)
+        _camRefreshTimer -= Time.deltaTime;
+        if (_cam == null || _camRefreshTimer <= 0f)
         {
             _cam = Camera.main;
+            _camRefreshTimer = 0.5f;
             if (_cam == null) return;
         }
 

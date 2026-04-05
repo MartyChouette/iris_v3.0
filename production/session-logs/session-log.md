@@ -1701,3 +1701,117 @@ a63b514 release leaves below cut plane when stem is virtually cut
 6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
 ---
 
+## Session End: 20260405_150455
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+---
+
+## Session End: 20260405_151858
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_152009
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_152025
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_152151
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_152353
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_153239
+### Commits
+7499719 add missing .meta files + scene/asset updates from Inspector changes
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+### Uncommitted Changes
+Assets/Scripts/Apartment/ObjectGrabber.cs
+Assets/Scripts/Apartment/WallOcclusionFader.cs
+Assets/Scripts/Bookcase/DrawerController.cs
+Assets/Scripts/Framework/AudioManager.cs
+production/session-logs/session-log.md
+---
+

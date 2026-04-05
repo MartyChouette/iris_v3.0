@@ -299,6 +299,14 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
         // Deliver drink to coffee table
         CoffeeTableDelivery.Instance?.DeliverDrink(_activeRecipe, _activeRecipe.liquidColor, lastScore);
 
+        // Voice reaction to drink quality
+        if (lastScore >= 80)
+            DialoguePortraitBox.Instance?.Say("Mmm, that's delicious!", 2.5f);
+        else if (lastScore >= 40)
+            DialoguePortraitBox.Instance?.Say("Not bad... interesting choice.", 2.5f);
+        else
+            DialoguePortraitBox.Instance?.Say("Um... what did you put in this?", 2.5f);
+
         CurrentState = State.Scoring;
         _scoreTimer = _scoreDisplayTime;
 

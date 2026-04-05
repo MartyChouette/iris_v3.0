@@ -90,6 +90,10 @@ public class AudioManager : MonoBehaviour
     private void OnDestroy()
     {
         AccessibilitySettings.OnSettingsChanged -= ApplyVolumeSettings;
+        if (_nonMusicFadeRoutine != null) StopCoroutine(_nonMusicFadeRoutine);
+        if (_sfxCutoffRoutine != null) StopCoroutine(_sfxCutoffRoutine);
+        if (_musicFadeCoroutine != null) StopCoroutine(_musicFadeCoroutine);
+        if (_duckRoutine != null) StopCoroutine(_duckRoutine);
         if (Instance == this)
             Instance = null;
     }

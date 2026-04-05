@@ -61,8 +61,14 @@ public class DrawerController : MonoBehaviour
     // Smell aggregation — drawer's own ReactableTag proxies stored items' smell
     private ReactableTag _drawerTag;
 
+    private Coroutine _slideRoutine;
+
     private void OnEnable() { s_all.Add(this); }
-    private void OnDisable() { s_all.Remove(this); }
+    private void OnDisable()
+    {
+        s_all.Remove(this);
+        if (_slideRoutine != null) { StopCoroutine(_slideRoutine); _slideRoutine = null; }
+    }
 
     private void Awake()
     {
@@ -149,13 +155,13 @@ public class DrawerController : MonoBehaviour
     public void Open()
     {
         if (CurrentState != State.Closed) return;
-        StartCoroutine(SlideRoutine(true));
+        _slideRoutine = StartCoroutine(SlideRoutine(true));
     }
 
     public void Close()
     {
         if (CurrentState != State.Open) return;
-        StartCoroutine(SlideRoutine(false));
+        _slideRoutine = StartCoroutine(SlideRoutine(false));
     }
 
     private IEnumerator SlideRoutine(bool opening)

@@ -489,8 +489,20 @@ public class DateSessionManager : MonoBehaviour
         Debug.Log("[DateSessionManager] Phase 3: Instant reveal — evaluating all apartment items.");
 #endif
 
+        // Pre-reveal commentary
+        DialoguePortraitBox.Instance?.Say("Let me take a look around...", 2.5f);
+        yield return s_wait25;
+
         // Reveal all reactions at once with staggered heart particles
         yield return StartCoroutine(RevealAllReactions());
+
+        // Post-reveal commentary based on affection
+        if (_affection >= 0.7f)
+            DialoguePortraitBox.Instance?.Say("I love what you've done here.", 3f);
+        else if (_affection >= 0.4f)
+            DialoguePortraitBox.Instance?.Say("Not bad... there's potential.", 3f);
+        else
+            DialoguePortraitBox.Instance?.Say("We can work on this...", 3f);
 
         // Brief pause, then end the date
         yield return s_wait2;

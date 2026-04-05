@@ -67,6 +67,8 @@ public class WateringManager : MonoBehaviour
 
     private PlantDefinition _activePlant;
     private bool _overflowSFXPlayed;
+    private bool _shownNearlyFull;
+    private static bool s_hasWateredOnce;
     private float _scoreTimer;
     private float _pourTime;
 
@@ -176,6 +178,14 @@ public class WateringManager : MonoBehaviour
         if (_pot != null)
             _pot.TargetLevel = def.idealWaterLevel;
         CurrentState = State.Pouring;
+        _shownNearlyFull = false;
+
+        // First-time watering hint
+        if (!s_hasWateredOnce)
+        {
+            s_hasWateredOnce = true;
+            DialoguePortraitBox.Instance?.Say("Click and hold to pour. Let go when the pot's full!", 4f);
+        }
 
         // Lock the pour overlay to the watering cursor so it matches the hover seamlessly
         if (PourCursorOverlay.Instance != null && GlobalCursorManager.Instance != null)
@@ -209,12 +219,20 @@ public class WateringManager : MonoBehaviour
             if (_pot != null && dragRate > 0f)
                 _pot.Pour(Time.deltaTime * dragRate);
 
+            // Nearly full hint (once per pour)
+            if (_pot != null && !_shownNearlyFull && _pot.WaterLevel >= 0.7f)
+            {
+                _shownNearlyFull = true;
+                DialoguePortraitBox.Instance?.Say("Getting close...", 1.5f);
+            }
+
             // Overflow SFX (play once)
             if (_pot != null && _pot.Overflowed && !_overflowSFXPlayed)
             {
                 if (AudioManager.Instance != null && overflowSFX != null)
                     AudioManager.Instance.PlaySFX(overflowSFX);
                 _overflowSFXPlayed = true;
+                DialoguePortraitBox.Instance?.Say("Oops, a little too much!", 2f);
             }
         }
         else
@@ -267,6 +285,10 @@ public class WateringManager : MonoBehaviour
             AudioManager.Instance.PlaySFX(perfectSFX);
         else if (!isPerfect && lastScore < 30 && failSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(failSFX);
+
+        // Voice reaction
+        if (!_pot.Overflowed && fillDist <= 0.15f)
+            DialoguePortraitBox.Instance?.Say("Perfect! That's just right.", 2f);
 
         CurrentState = State.Scoring;
         _scoreTimer = _scoreDisplayTime;
