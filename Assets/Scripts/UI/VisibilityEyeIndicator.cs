@@ -18,6 +18,13 @@ public class VisibilityEyeIndicator : MonoBehaviour
     [Tooltip("Seconds for the fade-out.")]
     [SerializeField] private float _fadeDuration = 1.5f;
 
+    [Header("Easing")]
+    [Tooltip("Fade-in curve (0→1 over hold duration). X = time normalized, Y = alpha.")]
+    [SerializeField] private AnimationCurve _fadeInCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    [Tooltip("Fade-out curve (0→1 over fade duration). X = time normalized, Y = alpha (1=opaque, 0=gone).")]
+    [SerializeField] private AnimationCurve _fadeOutCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+
     [Header("Layout")]
     [Tooltip("Offset from the item's center (world units).")]
     [SerializeField] private Vector3 _offset = new Vector3(0.15f, 0.15f, 0f);
@@ -187,12 +194,19 @@ public class VisibilityEyeIndicator : MonoBehaviour
             icon.go.transform.rotation = _cam.transform.rotation;
             icon.go.transform.localScale = Vector3.one * _iconSize;
 
-            // Fade
-            float alpha = 1f;
-            if (icon.timer > _holdDuration)
+            // Fade: curve-driven fade-in during hold, curve-driven fade-out after
+            float alpha;
+            if (icon.timer <= _holdDuration)
             {
-                float fadeT = (icon.timer - _holdDuration) / _fadeDuration;
-                alpha = 1f - Mathf.Clamp01(fadeT);
+                // Fade-in phase
+                float t = _holdDuration > 0f ? Mathf.Clamp01(icon.timer / _holdDuration) : 1f;
+                alpha = _fadeInCurve.Evaluate(t);
+            }
+            else
+            {
+                // Fade-out phase
+                float t = _fadeDuration > 0f ? Mathf.Clamp01((icon.timer - _holdDuration) / _fadeDuration) : 1f;
+                alpha = _fadeOutCurve.Evaluate(t);
             }
             var c = icon.sr.color;
             c.a = alpha;

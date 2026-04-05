@@ -52,13 +52,11 @@ public class GlobalCursorManager : MonoBehaviour
     private float _currentAlpha;         // 0 = invisible, 1 = full
     private float _targetAlpha;
     private float _hoverTimer;
+    private float _fadeProgress;         // 0-1 normalized progress of current fade
     private int _lastStep = -1;          // avoid redundant SetCursor calls
 
-    private const float FadeInSpeed  = 7f;    // ~0.14s to full
-    private const float FadeOutSpeed = 5f;    // ~0.20s to zero
-    private const float HoverFadeSpeed = 3f;  // ~0.18s to settle at half
-    private const float HoverFadeDelay = 2f;  // seconds before hover-fade begins
-    private const float HoverFadedAlpha = 0.45f;
+    // Tuning — loaded from Resources or uses defaults
+    private CursorFadeSettings _fadeSettings;
 
     /// <summary>Current cursor opacity (0-1). Read by CursorWorldShadow.</summary>
     public float CurrentAlpha => _currentAlpha;
@@ -115,6 +113,14 @@ public class GlobalCursorManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // Load fade settings from Resources (create via Iris > Cursor Fade Settings)
+        _fadeSettings = Resources.Load<CursorFadeSettings>("CursorFadeSettings");
+        if (_fadeSettings == null)
+        {
+            _fadeSettings = ScriptableObject.CreateInstance<CursorFadeSettings>();
+        }
+
         LoadCursorTextures();
         Debug.Log($"[GlobalCursorManager] Awake — interact={(_interactCursor != null ? "OK" : "NULL")}, " +
                   $"watering={(_wateringCursor != null ? "OK" : "NULL")}, " +
@@ -432,41 +438,60 @@ public class GlobalCursorManager : MonoBehaviour
         // Grab is handled by Update (cursor hidden while holding) — should not reach here
         if (type == CursorType.Grab) return;
 
-        // Switching to a new context cursor
+        // Switching to a new context cursor → start fade-in
         if (type != CursorType.Default && type != _displayedType)
         {
             _displayedType = type;
-            _currentAlpha = (_displayedType == CursorType.Default) ? 0f : _currentAlpha;
+            _fadeProgress = 0f;
             _targetAlpha = 1f;
             _hoverTimer = 0f;
             _lastStep = -1;
         }
 
-        // Desired is Default → fade out whatever is displayed
-        if (type == CursorType.Default && _displayedType != CursorType.Default)
+        // Desired is Default → start fade-out
+        if (type == CursorType.Default && _displayedType != CursorType.Default && _targetAlpha > 0f)
         {
+            _fadeProgress = 0f;
             _targetAlpha = 0f;
             _hoverTimer = 0f;
         }
 
         // Desired matches displayed → tick hover timer for sustained-hover fade
-        if (type != CursorType.Default && type == _displayedType && _targetAlpha >= 1f)
+        if (type != CursorType.Default && type == _displayedType
+            && Mathf.Approximately(_currentAlpha, 1f))
         {
             _hoverTimer += dt;
-            if (_hoverTimer >= HoverFadeDelay)
-                _targetAlpha = HoverFadedAlpha;
+            if (_hoverTimer >= _fadeSettings.hoverDelay && _targetAlpha >= 1f)
+            {
+                _fadeProgress = 0f;
+                _targetAlpha = _fadeSettings.hoverFadedAlpha;
+            }
         }
 
-        // Lerp alpha toward target
-        if (!Mathf.Approximately(_currentAlpha, _targetAlpha))
+        // Curve-driven alpha toward target
+        if (!Mathf.Approximately(_fadeProgress, 1f))
         {
-            float speed;
-            if (_targetAlpha > _currentAlpha)
-                speed = (_targetAlpha >= 1f) ? FadeInSpeed : HoverFadeSpeed;
-            else
-                speed = (_targetAlpha <= 0f) ? FadeOutSpeed : HoverFadeSpeed;
+            float duration;
+            AnimationCurve curve;
 
-            _currentAlpha = Mathf.MoveTowards(_currentAlpha, _targetAlpha, speed * dt);
+            if (_targetAlpha >= 1f)
+                { duration = _fadeSettings.fadeInDuration; curve = _fadeSettings.fadeInCurve; }
+            else if (_targetAlpha <= 0f)
+                { duration = _fadeSettings.fadeOutDuration; curve = _fadeSettings.fadeOutCurve; }
+            else
+                { duration = _fadeSettings.hoverFadeDuration; curve = _fadeSettings.hoverFadeCurve; }
+
+            float speed = duration > 0f ? 1f / duration : 100f;
+            _fadeProgress = Mathf.MoveTowards(_fadeProgress, 1f, speed * dt);
+
+            // Curve maps 0→1 progress to 0→1 blend factor
+            float blend = curve != null ? curve.Evaluate(_fadeProgress) : _fadeProgress;
+
+            // Interpolate from start alpha to target alpha
+            float startAlpha = (_targetAlpha >= 1f) ? 0f
+                             : (_targetAlpha <= 0f) ? 1f
+                             : 1f; // hover fade: from full to hoverFadedAlpha
+            _currentAlpha = Mathf.Lerp(startAlpha, _targetAlpha, blend);
         }
 
         // Fade-out complete → switch to OS default
