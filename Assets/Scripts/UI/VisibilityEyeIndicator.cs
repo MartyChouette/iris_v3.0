@@ -103,9 +103,11 @@ public class VisibilityEyeIndicator : MonoBehaviour
     {
         if (placed == null) return;
 
+        // Only show for items that the date can react to
         var tag = placed.GetComponent<ReactableTag>();
-        bool isPrivate = tag != null && tag.IsPrivate;
-        ShowIcon(placed.transform, isPrivate);
+        if (tag == null) return;
+
+        ShowIcon(placed.transform, tag.IsPrivate);
     }
 
     private void OnDrawerChanged(DrawerController drawer, bool isClosed, PlaceableObject[] items)

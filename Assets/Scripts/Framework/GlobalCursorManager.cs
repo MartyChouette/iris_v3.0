@@ -329,7 +329,27 @@ public class GlobalCursorManager : MonoBehaviour
             }
         }
 
-        if (ObjectGrabber.IsHoldingObject) { ApplyCursor(CursorType.Grab); return; }
+        // While holding an item, hide the cursor entirely — the held object is the feedback
+        if (ObjectGrabber.IsHoldingObject)
+        {
+            if (_displayedType != CursorType.Grab)
+            {
+                _displayedType = CursorType.Grab;
+                _currentAlpha = 0f;
+                _targetAlpha = 0f;
+                _hoverTimer = 0f;
+                _lastStep = -1;
+                Cursor.visible = false;
+            }
+            return;
+        }
+        else if (_displayedType == CursorType.Grab)
+        {
+            // Just released — restore cursor visibility
+            Cursor.visible = true;
+            _displayedType = CursorType.Default;
+            _lastStep = -1;
+        }
 
         // Hide cursor while actively scrubbing (3D sponge is visible instead)
         if (CleaningManager.Instance != null && CleaningManager.Instance.IsScrubbing)
@@ -409,20 +429,8 @@ public class GlobalCursorManager : MonoBehaviour
         _desiredType = type;
         float dt = Time.unscaledDeltaTime;
 
-        // Grab cursor: immediate, no fade
-        if (type == CursorType.Grab)
-        {
-            if (_displayedType != CursorType.Grab)
-            {
-                _displayedType = CursorType.Grab;
-                _currentAlpha = 1f;
-                _targetAlpha = 1f;
-                _hoverTimer = 0f;
-                _lastStep = -1;
-                Cursor.SetCursor(_grabCursor, _grabHotSpot, CursorMode.Auto);
-            }
-            return;
-        }
+        // Grab is handled by Update (cursor hidden while holding) — should not reach here
+        if (type == CursorType.Grab) return;
 
         // Switching to a new context cursor
         if (type != CursorType.Default && type != _displayedType)
