@@ -99,6 +99,22 @@ public class VisibilityEyeIndicator : MonoBehaviour
         if (_closedEyeTex != null) Destroy(_closedEyeTex);
     }
 
+    /// <summary>
+    /// Flash the open/closed eye on every active ReactableTag in the scene.
+    /// Call once at exploration start to show the player what the date can see.
+    /// </summary>
+    public void FlashAllItems()
+    {
+        var all = ReactableTag.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var tag = all[i];
+            if (tag == null || !tag.gameObject.activeInHierarchy) continue;
+            if (!tag.IsActive) continue;
+            ShowIcon(tag.transform, tag.IsPrivate);
+        }
+    }
+
     private void OnItemPlaced(PlaceableObject placed)
     {
         if (placed == null) return;

@@ -586,7 +586,11 @@ public class DayPhaseManager : MonoBehaviour
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(_fadeDuration);
 
-        // 12. Start preparation countdown
+        // 12. Flash visibility eyes on all items so the player sees what the date can notice
+        yield return new WaitForSeconds(0.5f);
+        VisibilityEyeIndicator.Instance?.FlashAllItems();
+
+        // 13. Start preparation countdown
         StartPrepTimer();
     }
 
