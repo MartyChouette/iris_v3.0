@@ -66,6 +66,24 @@ public class GlobalCursorManager : MonoBehaviour
     /// <summary>True when showing a context cursor (not default/grab).</summary>
     public bool IsContextCursor => _displayedType != CursorType.Default && _displayedType != CursorType.Grab;
 
+    /// <summary>Returns the full-opacity source texture for the current cursor type. Used by PourCursorOverlay.</summary>
+    public Texture2D GetCurrentCursorTexture()
+    {
+        return _displayedType switch
+        {
+            CursorType.Interact => _interactCursor,
+            CursorType.Watering => _wateringCursor,
+            CursorType.Fridge   => _fridgeCursor,
+            CursorType.Phone    => _phoneCursor,
+            CursorType.Drawer   => _drawerCursor,
+            CursorType.Drink    => _drinkCursor,
+            CursorType.Sponge   => _spongeCursor,
+            CursorType.Grab     => _grabCursor,
+            CursorType.Scissors => _scissorsCursor,
+            _ => null
+        };
+    }
+
     private Camera _cachedCamera;
     private float _cameraRefetchTimer;
 
@@ -346,6 +364,13 @@ public class GlobalCursorManager : MonoBehaviour
                 desired = type;
                 break;
             }
+        }
+
+        // During pour drag, the PourCursorOverlay handles the visual cursor
+        if (PourDragHelper.IsDragging)
+        {
+            _desiredType = desired;
+            return;
         }
 
         ApplyCursor(desired);

@@ -177,6 +177,8 @@ public class WateringManager : MonoBehaviour
             _pot.TargetLevel = def.idealWaterLevel;
         CurrentState = State.Pouring;
 
+        PourDragHelper.Begin();
+
         Debug.Log($"[WateringManager] Pouring: {def.plantName}");
     }
 
@@ -199,8 +201,10 @@ public class WateringManager : MonoBehaviour
 
         if (_clickAction.IsPressed())
         {
-            if (_pot != null)
-                _pot.Pour(Time.deltaTime);
+            float dragRate = PourDragHelper.UpdateDrag();
+
+            if (_pot != null && dragRate > 0f)
+                _pot.Pour(Time.deltaTime * dragRate);
 
             // Overflow SFX (play once)
             if (_pot != null && _pot.Overflowed && !_overflowSFXPlayed)
@@ -213,6 +217,7 @@ public class WateringManager : MonoBehaviour
         else
         {
             // Mouse released → finish pouring
+            PourDragHelper.End();
             if (_pot != null)
                 _pot.StopPouring();
 

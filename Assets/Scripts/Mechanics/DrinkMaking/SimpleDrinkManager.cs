@@ -198,6 +198,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
                 if (Physics.Raycast(ray, out RaycastHit hit, 100f, _glassLayer))
                 {
                     _pourStarted = true;
+                    PourDragHelper.Begin();
                     // Disable glass glow now that the player found it
                     var glass = Object.FindAnyObjectByType<GlassController>();
                     if (glass != null) glass.DisableGlow();
@@ -209,12 +210,13 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
 
         if (IrisInput.Instance != null && IrisInput.Instance.Click.IsPressed())
         {
+            float dragRate = PourDragHelper.UpdateDrag();
             float dt = Time.deltaTime;
             float rate = _activeRecipe != null ? _activeRecipe.pourRate : 0.15f;
             float foamMult = _activeRecipe != null ? _activeRecipe.foamRateMultiplier : 1.3f;
 
-            _fillLevel += rate * dt;
-            _foamLevel += rate * foamMult * dt;
+            _fillLevel += rate * dragRate * dt;
+            _foamLevel += rate * dragRate * foamMult * dt;
 
             // Clamp fill
             if (_fillLevel > 1f)
@@ -247,6 +249,7 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
             // Mouse released after pouring began → score
             if (IrisInput.Instance != null && IrisInput.Instance.Click.WasReleasedThisFrame() && _fillLevel > 0f)
             {
+                PourDragHelper.End();
                 CalculateScore();
             }
         }
