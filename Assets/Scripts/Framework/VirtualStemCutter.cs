@@ -183,6 +183,9 @@ public class VirtualStemCutter : MonoBehaviour
         // ----- 8. Notify stem runtime -----
         stem.ApplyCutFromPlane(worldPoint, worldNormal);
 
+        // ----- 9. Release leaves on the falling side of the cut -----
+        ReleaseLeavesBelowCut(stem, worldPoint, worldNormal);
+
         if (debugLogs)
         {
             float angle = stem.GetCurrentCutAngleDeg(Vector3.up);
@@ -191,6 +194,43 @@ public class VirtualStemCutter : MonoBehaviour
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// After a virtual stem cut, release any leaves whose attachment points
+    /// are on the falling side of the cut plane.
+    /// </summary>
+    private void ReleaseLeavesBelowCut(FlowerStemRuntime stem, Vector3 cutPoint, Vector3 cutNormal)
+    {
+        Vector3 anchorPos = stem.StemAnchor != null
+            ? stem.StemAnchor.position : stem.transform.position;
+        float anchorSide = Vector3.Dot(anchorPos - cutPoint, cutNormal);
+
+        // Degenerate cut right at the anchor — skip
+        if (Mathf.Abs(anchorSide) < 0.001f) return;
+
+        var markers = stem.transform.root.GetComponentsInChildren<LeafAttachmentMarker>();
+
+        foreach (var marker in markers)
+        {
+            if (marker.owningLeaf == null || !marker.owningLeaf.isAttached) continue;
+
+            float leafSide = Vector3.Dot(marker.transform.position - cutPoint, cutNormal);
+
+            // Same side as crown anchor → keep attached
+            if ((anchorSide * leafSide) >= 0f) continue;
+
+            // Leaf is on the falling side → release it
+            var tether = marker.owningLeaf.xyJoint;
+            if (tether != null)
+                tether.ForceBreak("Stem cut below attachment", isAuthoredPhysics: true);
+            else
+                marker.owningLeaf.MarkDetached("Stem cut below attachment",
+                    FlowerPartRuntime.DetachReason.PlayerCut, permanent: true);
+
+            if (debugLogs)
+                Debug.Log($"[VirtualStemCutter] Released leaf '{marker.owningLeaf.PartId}' — below cut plane", marker);
+        }
     }
 
     // ----------------------------------------------------------------

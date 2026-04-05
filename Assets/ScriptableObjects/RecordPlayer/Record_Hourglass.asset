@@ -15,9 +15,11 @@ MonoBehaviour:
   title: hourglass
   artist: baegel
   genre: Lo-fi
-  description: "I always listen to this when I need to think.. or not."
+  description: I always listen to this when I need to think.. or not.
   labelColor: {r: 0.5, g: 0.4, b: 0.7, a: 1}
   coverColor: {r: 0.85, g: 0.8, b: 0.95, a: 1}
+  albumArt: {fileID: 2800000, guid: 0bd2c2f12b3125849b146674ba584673, type: 3}
   moodValue: 0.35
   musicClip: {fileID: 8300000, guid: 16f49400c683b274cb117739d2f4363d, type: 3}
+  musicClipPath: 
   volume: 0.7

@@ -18,6 +18,7 @@ MonoBehaviour:
   description: 
   labelColor: {r: 0.9, g: 0.85, b: 0.6, a: 1}
   coverColor: {r: 0.95, g: 0.92, b: 0.85, a: 1}
+  albumArt: {fileID: 2800000, guid: 5450ced0b42412544a15916a031967bb, type: 3}
   moodValue: 0.3
   musicClip: {fileID: 8300000, guid: 63904bf431d7d6d4894afa5f526d89b9, type: 3}
   musicClipPath: 

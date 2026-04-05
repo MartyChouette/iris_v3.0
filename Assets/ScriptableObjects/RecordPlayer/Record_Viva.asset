@@ -15,10 +15,12 @@ MonoBehaviour:
   title: Viva
   artist: dreem
   genre: DnB
-  description: "The deep waves of my favorite Drum and Bass. Iris bought me. I
-    dont think she actually liked it."
+  description: The deep waves of my favorite Drum and Bass. Iris bought me. I dont
+    think she actually liked it.
   labelColor: {r: 0.2, g: 0.4, b: 0.9, a: 1}
   coverColor: {r: 0.15, g: 0.25, b: 0.6, a: 1}
+  albumArt: {fileID: 2800000, guid: f7d409debc17e4c44bea9cab0ad2bfca, type: 3}
   moodValue: 0.4
   musicClip: {fileID: 8300000, guid: bf7d3df5a495be74f81178600d3be0f2, type: 3}
+  musicClipPath: 
   volume: 0.7
