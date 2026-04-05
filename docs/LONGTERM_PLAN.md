@@ -2,7 +2,7 @@
 
 **Project:** Iris v3.0 - Contemplative Flower Trimming Game (Thesis)
 **Engine:** Unity 6.0.3 with URP
-**Last Updated:** February 25, 2026
+**Last Updated:** April 5, 2026
 **Forked from:** Iris v2.0
 
 ---
@@ -270,6 +270,20 @@ Each date character brings a specific flower. The flower trimming score determin
 - [x] **Item pairing system** — `PairableItem` component. Shoes: SpecificPartner mode, SideBySide snap. Dishes/Bowls: AnyOfCategory mode, Stacked snap. ObjectGrabber intercepts click-while-holding to pair. Per-item snap offset, snap sound. Coat removed from ItemCategory, Bowl added.
 - [x] **Discord playtest reporting** — `BugReportForm` (F9) + `PlaytestFeedbackForm` (F8) Discord webhook integration. JPEG screenshots, game state telemetry, crash log tail. `DiscordWebhookConfig` SO in Resources. Uses `System.Net.Http.HttpClient` (Unity 6 curl HTTP/2 workaround).
 
+### Phase 14: UX Polish Pass (Done — April 2026)
+- [x] **Drag-to-pour mechanic** — Click to start, pull mouse down to control pour rate. Quadratic ease-in. Cursor rotates to show tilt. `PourDragHelper` shared by WateringManager + SimpleDrinkManager. `PourCursorOverlay` for visual feedback.
+- [x] **Smooth context cursor fading** — Pre-baked alpha bank (16 steps per cursor). Fade in/out on hover enter/exit. Hover-fade to 45% after 2s. `CursorFadeSettings` SO with Inspector AnimationCurves. RaycastAll sorted by distance.
+- [x] **Visibility eye indicators** — World-space open/closed eye icons per item. Flash all at exploration start. Fires on placement + drawer open/close. AnimationCurve-driven fade. `VisibilityEyeIndicator` auto-spawns.
+- [x] **Cubby capacity enforcement** — `DrawerController.HasInteriorCapacity` checks item count on interior surface. ObjectGrabber rejects placement when full ("No room in here.").
+- [x] **Fridge rejection text** — "I don't want anything right now." with 5s cooldown when clicking fridge outside drink phase.
+- [x] **Quit-to-menu transition** — Fade screen + audio over 0.8s, start menu song while black, then load.
+- [x] **Cursor hidden while holding** — No grab cursor; held object IS the feedback.
+- [x] **Cursor shadow scaling** — Shadow grows with camera distance to maintain screen-space size.
+- [x] **Album art for records** — `RecordDefinition.albumArt` Texture2D field, auto-applied by RecordItem.
+- [x] **Audio loss fix** — SFX cutoff volume ratchet-down bug + music unduck after flower trimming.
+- [x] **Event leak fix** — DateSessionManager unsubscribes OnReaction before destroying date character.
+- [x] **Debug log cleanup** — 13 info-level logs wrapped in `#if UNITY_EDITOR`.
+
 ---
 
 ## Architecture Notes
@@ -290,14 +304,16 @@ Each date character brings a specific flower. The flower trimming score determin
 | Physics/Joints | XYTetherJoint, FlowerJointRebinder, SquishMove |
 | Fluids/VFX | FlowerSapController, SapParticleController, SapDecalPool |
 | UI | FlowerGradingUI, FlowerHUD_GameplayFeedback, FlowerHUD_DebugTelemetry |
-| Audio | AudioManager, JointBreakAudioResponder |
+| Audio | AudioManager (6-channel, SFX auto-cutoff), MusicDirector, JointBreakAudioResponder |
 | Data | IdealFlowerDefinition, FlowerTypeDefinition, DatePersonalDefinition, DatePreferences |
 | Apartment Hub | ApartmentManager, StationRoot, ObjectGrabber, MoodMachine, FridgeController, ApartmentAreaDefinition, InteractableHighlight |
 | Camera Presets | CameraPresetDefinition, CameraTestController, CameraPresetDefinitionEditor (gizmos + capture) |
-| Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController |
+| Context Cursors | GlobalCursorManager (9 types, alpha bank fade), CursorFadeSettings SO, CursorWorldShadow, PourCursorOverlay |
+| Visibility | VisibilityEyeIndicator, ReactableTag.OnPrivacyChanged, DrawerController.OnDrawerPrivacyChanged |
+| Bookcase Station | BookInteractionManager, BookVolume, PerfumeBottle, DrawerController (cubby storage + privacy + capacity) |
 | Dating Loop | DateSessionManager (3-phase), GameClock, PhoneController, DateCharacterController, ReactableTag, CoffeeTableDelivery, DayPhaseManager |
 | Newspaper | NewspaperManager (button-based), NewspaperAdSlot, DayManager, NewspaperSurface |
-| Mechanics | DrinkMakingManager, CleaningManager, WateringManager, MirrorMakeupManager, RecordPlayerManager |
+| Mechanics | SimpleDrinkManager, CleaningManager, WateringManager, PourDragHelper (shared drag-to-pour), MirrorMakeupManager, RecordPlayerManager |
 
 ### Creating a New Flower Level (Quick Start)
 1. Import your flower model into the scene

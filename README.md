@@ -46,8 +46,11 @@ Players live as Nema in a small apartment, dating strangers from newspaper perso
 | **Accessibility** | 15 settings across 5 categories, tabbed settings panel, captions, text scaling, reduce motion |
 | **Text Theme** | Centralized font/color/spacing via IrisTextTheme SO, auto-applied to all TMP text |
 | **PSX Rendering** | Retro shader suite: vertex snap, affine textures, pixelation, dithering (F2 toggle) |
-| **Audio** | 6-channel AudioManager (SFX, Music, Ambience, Weather, Environment, UI), MoodMachine-driven |
+| **Audio** | 6-channel AudioManager (SFX, Music, Ambience, Weather, Environment, UI), MoodMachine-driven, SFX auto-cutoff |
 | **Save System** | IrisSaveData with auto-save on quit/date end, plant records, date history |
+| **Context Cursors** | 9 context cursors (watering, fridge, phone, drawer, drink, sponge, grab, scissors, interact) with smooth fade in/out, hover-fade to 45% after 2s, pre-baked alpha bank. Tunable via CursorFadeSettings SO |
+| **Visibility Eyes** | World-space open/closed eye icons on items showing date visibility. Flash all at exploration start. AnimationCurve-driven fade. Closed cubbies show red-slashed closed eye |
+| **Drag-to-Pour** | Click to start, pull mouse down to control pour rate (quadratic ease-in). Cursor rotates to show tilt angle. Shared by watering and drink making |
 | **Mechanic Prototypes** | 10 standalone minigames (drink making, cleaning, watering, makeup, etc.) |
 
 ## Apartment Hub
@@ -127,12 +130,12 @@ Assets/
 │   ├── InteractionAndFeel/ # XYTetherJoint, SquishMove, GrabPull
 │   ├── DynamicMeshCutter/  # Mesh cutting engine + plane behaviors
 │   ├── Fluids/             # Sap particle system, decal pooling
-│   ├── UI/                 # HUD, grading, SettingsPanel, CaptionDisplay, IrisTextTheme
+│   ├── UI/                 # HUD, grading, SettingsPanel, CaptionDisplay, IrisTextTheme, VisibilityEyeIndicator, PourCursorOverlay
 │   ├── Tags/               # Marker components (StemPieceMarker, etc.)
-│   ├── Apartment/          # Hub: ApartmentManager, ObjectGrabber, MoodMachine, TidyScorer
-│   ├── Bookcase/           # PerfumeBottle, DrawerController (legacy bookcase systems retired to _Parked/)
-│   ├── Dating/             # DateSessionManager, GameClock, PhoneController, etc.
-│   ├── Mechanics/          # 10 prototype minigames (DrinkMaking, Cleaning, etc.)
+│   ├── Apartment/          # Hub: ApartmentManager, ObjectGrabber, MoodMachine, TidyScorer, CursorWorldShadow
+│   ├── Bookcase/           # PerfumeBottle, DrawerController (cubby storage + privacy gating)
+│   ├── Dating/             # DateSessionManager, GameClock, PhoneController, ReactableTag, etc.
+│   ├── Mechanics/          # DrinkMaking, Cleaning, Watering, PourDragHelper + 10 prototypes
 │   ├── Rendering/          # PSX retro rendering (PSXRenderController, PSXPostProcessFeature)
 │   └── Camera/             # HorrorCameraManager, CameraZoneTrigger
 ├── Shader/                 # PSXLit, PSXPost, RimLight

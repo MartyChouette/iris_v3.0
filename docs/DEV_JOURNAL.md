@@ -2,6 +2,146 @@
 
 ---
 
+## 2026-04-05 — Bug/Polish Pass, New Mechanics, UX Overhaul
+
+### Session Summary
+
+Large polish session: fixed audio loss after flower trimming, added drag-to-pour mechanic, visibility eye indicators, smooth cursor fading, fridge rejection text, quit-to-menu transitions, album art for records, and cubby capacity enforcement. 22 commits.
+
+---
+
+### 1. Audio Loss After Flower Trimming (Bug Fix)
+
+**Problem:** All SFX went silent on Day 2 after flower trimming.
+
+**Root causes (two):**
+- `AudioManager.SFXCutoffRoutine` had a volume ratchet-down bug: interrupted fades captured partially-faded volume as restore target. After many SFX calls, `sfxSource.volume` approached 0.
+- Music was ducked to 10% during flower trimming, then `_currentPhase = DayPhase.Evening` was set directly (bypassing `SetPhase`), so `UnduckMusic` never fired.
+
+**Fix:** Store a clean baseline volume for SFX cutoff. Explicitly restore audio levels in the flower trimming transition.
+
+**Files:** `AudioManager.cs`, `DayPhaseManager.cs`
+
+---
+
+### 2. Drag-to-Pour Mechanic (New Feature)
+
+Replaced hold-to-pour with drag-to-pour: click to start, pull mouse downward to control pour speed (quadratic ease-in for fine control at low rates), release to score.
+
+- `PourDragHelper` — static helper tracking drag distance to pour rate (0-1) and tilt angle (0-90 degrees)
+- `PourCursorOverlay` — screen-space UI cursor that rotates to show tilt, replaces hardware cursor during pour
+- Both `WateringManager` and `SimpleDrinkManager` updated
+
+**Files:** `PourDragHelper.cs` (NEW), `PourCursorOverlay.cs` (NEW), `WateringManager.cs`, `SimpleDrinkManager.cs`
+
+---
+
+### 3. Visibility Eye Indicators (New Feature)
+
+World-space eye icons showing whether the date can see each item:
+- Open eye = visible to date (public)
+- Closed eye with red slash = hidden (private, in closed cubby)
+- Flash all items at exploration start for a quick visibility snapshot
+- Icons billboard toward camera, render on top of geometry, hold then fade out
+- Inspector AnimationCurves for fade-in and fade-out easing
+
+**Files:** `VisibilityEyeIndicator.cs` (NEW), `ReactableTag.cs` (OnPrivacyChanged event), `DrawerController.cs` (OnDrawerPrivacyChanged event), `ObjectGrabber.cs` (OnObjectPlaced now passes PlaceableObject), `DayPhaseManager.cs`
+
+---
+
+### 4. Smooth Context Cursor Fading (New Feature)
+
+Context cursors (watering, fridge, sponge, etc.) now fade in/out smoothly:
+- Pre-baked alpha bank: 16 textures per cursor at discrete alpha steps
+- Fade in (~0.14s) when entering hover, fade out (~0.20s) when leaving
+- After 2s sustained hover, fades to 45% opacity so player can see underneath
+- `CursorFadeSettings` ScriptableObject for Inspector-editable animation curves
+- Cursor shadow syncs with fade alpha
+- RaycastAll hits sorted by distance so nearest interactable wins
+
+**Files:** `GlobalCursorManager.cs`, `CursorFadeSettings.cs` (NEW), `CursorWorldShadow.cs`
+
+---
+
+### 5. Cursor Hidden While Holding Items
+
+Cursor fully hidden (`Cursor.visible = false`) when holding an item. The held object following the mouse IS the feedback — no grab cursor, no sponge, nothing.
+
+**Files:** `GlobalCursorManager.cs`
+
+---
+
+### 6. Fridge Rejection Text
+
+Clicking the fridge outside drink-making phase shows "I don't want anything right now." via PickupDescriptionHUD. 5-second cooldown prevents spam. Wall occlusion respected.
+
+**Files:** `FridgeController.cs`
+
+---
+
+### 7. Quit-to-Menu Fade Transition
+
+Fade screen to black + fade out music/ambience/weather over 0.8s, start menu song while still black, then load menu scene. Both `SimplePauseMenu` and `PauseMenuController` paths covered. `AudioManager.FadeOutMusic` now uses `unscaledDeltaTime`.
+
+**Files:** `SimplePauseMenu.cs`, `PauseMenuController.cs`, `AudioManager.cs`
+
+---
+
+### 8. Album Art for Records
+
+`RecordDefinition` gets an `albumArt` Texture2D field. `RecordItem.Awake` creates an instance material and applies the art to the record mesh.
+
+**Files:** `RecordDefinition.cs`, `RecordItem.cs`
+
+---
+
+### 9. Cubby Capacity Enforcement
+
+`DrawerController.HasInteriorCapacity` property counts items on the interior surface. `ObjectGrabber` checks capacity before placement — shows "No room in here." when full.
+
+**Files:** `DrawerController.cs`, `ObjectGrabber.cs`
+
+---
+
+### 10. Misc Fixes
+
+- `DateSessionManager`: unsubscribe `OnReaction` before destroying date character (event leak)
+- `HorrorCameraManager`: cache `FindObjectsByType<CinemachineCamera>` at startup
+- `CurvedWorldGrid`: silently disable self when no Renderer (was logging warning every play)
+- Debug.Log spam: wrapped 13 info-level logs with `#if UNITY_EDITOR`
+- `CursorWorldShadow`: shadow scales with camera distance instead of shrinking when zoomed out
+- Eye accuracy: items placed on non-cubby surfaces explicitly cleared to `IsPrivate = false`
+
+---
+
+### Commits (22)
+
+| Hash | Description |
+|------|-------------|
+| `3840ce4` | fix audio loss after flower trimming + bug/perf/polish pass |
+| `5fcd66a` | add fade-to-black + music crossfade on quit to main menu |
+| `b48bb5f` | fridge rejection text |
+| `30965d8` | fix compile error in fridge reject block |
+| `24e186b` | context cursors fade to half-transparent after 2s hover |
+| `a92a51b` | silence CurvedWorldGrid warning |
+| `d8bab10` | smooth cursor fade + shadow sync |
+| `bb77c8a` | fix cursor shadow scaling |
+| `5020026` | add visibility eye indicator |
+| `5cf240d` | cursor fade: pre-bake alpha bank |
+| `ae0a492`–`b307b65` | cursor texture sizing fixes |
+| `ca42fba` | fix context cursor picking — sort RaycastAll by distance |
+| `1e220bf` | add album art support to records |
+| `69b9b95` | fix visibility eye auto-spawn |
+| `7289081` | drag-to-pour mechanic |
+| `4f19688` | fix eyes — pass placed object in event |
+| `85839db` | fix eye spam + make closed eye visible |
+| `45a997d` | hide cursor while holding + filter non-reactable eyes |
+| `6a58315` | fix eye accuracy + enforce cubby capacity |
+| `6a1860e` | flash visibility eyes at exploration start |
+| `63abaaf` | Inspector animation curves for eye + cursor fades |
+
+---
+
 ## 2026-02-25 — Scene Sync, Transition Fix, DrawerController Setup
 
 ### Session Summary
