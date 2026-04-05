@@ -447,6 +447,15 @@ public class GlobalCursorManager : MonoBehaviour
         var src = _sourcePixels[(int)_displayedType];
         if (src == null) return;
 
+        // Resize working texture/buffer if source cursor is a different size
+        int side = (int)Mathf.Sqrt(src.Length);
+        if (_workingPixels == null || _workingPixels.Length != src.Length)
+        {
+            _workingPixels = new Color32[src.Length];
+            if (_workingTex.width != side || _workingTex.height != side)
+                _workingTex.Reinitialize(side, side);
+        }
+
         for (int i = 0; i < src.Length; i++)
         {
             _workingPixels[i] = src[i];
