@@ -1688,3 +1688,16 @@ Assets/Shader/PSXPost.shader
 production/session-logs/session-log.md
 ---
 
+## Session End: 20260405_143832
+### Commits
+80da8f2 massive session: flies, weather timelines, dialogue portraits, flower snapshot fixes, tilt-shift, cursor system
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+---
+

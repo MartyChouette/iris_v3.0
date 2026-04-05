@@ -5563,6 +5563,7 @@ MonoBehaviour:
   _overcastRain: 0
   _rainyRain: 0.6
   _stormyRain: 1
+  _schedule: {fileID: 11400000, guid: 9b1a13e419d551540aad0f578b7f625c, type: 2}
   _rainAmbience: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
   _stormAmbience: {fileID: 8300000, guid: 20ddc2cdcbbdf4a4fb21aabb527872f1, type: 3}
 --- !u!4 &340865044

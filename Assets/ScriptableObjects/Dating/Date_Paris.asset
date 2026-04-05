@@ -53,10 +53,10 @@ MonoBehaviour:
     preferredMoodMin: 0.1
     preferredMoodMax: 0.4
     likedDrinks:
-    - {fileID: 11400000, guid: 94b6b0e5609a23d44a238be8a3dc1b7e, type: 2}
-    - {fileID: 11400000, guid: 6a3a5231bffc4934784c25151316ecfb, type: 2}
+    - {fileID: 11400000, guid: c4fe4fc3da70d6b47875cbf1b78e7e2d, type: 2}
+    - {fileID: 11400000, guid: 8e94fe9970229e2479b02042dad94cda, type: 2}
     dislikedDrinks:
-    - {fileID: 11400000, guid: e885f607d521d674491bc946003f6385, type: 2}
+    - {fileID: 11400000, guid: 6a3a5231bffc4934784c25151316ecfb, type: 2}
     likedOutfitTags:
     - floral
     - elegant
