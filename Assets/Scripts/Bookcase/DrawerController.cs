@@ -256,6 +256,9 @@ public class DrawerController : MonoBehaviour
 
     // ── Interior surface privacy ────────────────────────────────────
 
+    /// <summary>Fired after a drawer opens or closes. Args: (DrawerController drawer, bool isClosed, PlaceableObject[] affectedItems).</summary>
+    public static event System.Action<DrawerController, bool, PlaceableObject[]> OnDrawerPrivacyChanged;
+
     /// <summary>
     /// Toggle IsPrivate on all PlaceableObjects sitting on the interior surface.
     /// Called on open (private=false) and close (private=true).
@@ -264,14 +267,21 @@ public class DrawerController : MonoBehaviour
     {
         if (_interiorSurface == null) return;
 
+        var affected = new System.Collections.Generic.List<PlaceableObject>();
         var all = PlaceableObject.All;
         for (int i = 0; i < all.Count; i++)
         {
             if (all[i].LastPlacedSurface != _interiorSurface) continue;
             var tag = all[i].GetComponent<ReactableTag>();
             if (tag != null)
+            {
                 tag.IsPrivate = isPrivate;
+                affected.Add(all[i]);
+            }
         }
+
+        if (affected.Count > 0)
+            OnDrawerPrivacyChanged?.Invoke(this, isPrivate, affected.ToArray());
     }
 
     /// <summary>

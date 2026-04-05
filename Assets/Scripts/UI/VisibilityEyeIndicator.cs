@@ -23,7 +23,7 @@ public class VisibilityEyeIndicator : MonoBehaviour
     [SerializeField] private Vector3 _offset = new Vector3(0.15f, 0.15f, 0f);
 
     [Tooltip("World-space size of the icon.")]
-    [SerializeField] private float _iconSize = 0.08f;
+    [SerializeField] private float _iconSize = 0.12f;
 
     // ── Runtime ──
     private Texture2D _openEyeTex;
@@ -71,13 +71,13 @@ public class VisibilityEyeIndicator : MonoBehaviour
     private void OnEnable()
     {
         ObjectGrabber.OnObjectPlaced += OnItemPlaced;
-        ReactableTag.OnPrivacyChanged += OnPrivacyChanged;
+        DrawerController.OnDrawerPrivacyChanged += OnDrawerChanged;
     }
 
     private void OnDisable()
     {
         ObjectGrabber.OnObjectPlaced -= OnItemPlaced;
-        ReactableTag.OnPrivacyChanged -= OnPrivacyChanged;
+        DrawerController.OnDrawerPrivacyChanged -= OnDrawerChanged;
     }
 
     private void Start()
@@ -108,14 +108,13 @@ public class VisibilityEyeIndicator : MonoBehaviour
         ShowIcon(placed.transform, isPrivate);
     }
 
-    private void OnPrivacyChanged(ReactableTag tag, bool isPrivate)
+    private void OnDrawerChanged(DrawerController drawer, bool isClosed, PlaceableObject[] items)
     {
-        // Only show for items that are placed in the apartment (not held, not in drawers)
-        var placeable = tag.GetComponent<PlaceableObject>();
-        if (placeable == null) return;
-        if (!tag.gameObject.activeInHierarchy) return;
-
-        ShowIcon(tag.transform, isPrivate);
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (items[i] != null && items[i].gameObject.activeInHierarchy)
+                ShowIcon(items[i].transform, isClosed);
+        }
     }
 
     private void ShowIcon(Transform target, bool isPrivate)
@@ -251,19 +250,29 @@ public class VisibilityEyeIndicator : MonoBehaviour
         var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
         var px = new Color32[S * S];
 
-        var outline = new Color32(60, 55, 50, 255);
-        var lash = new Color32(80, 75, 70, 255);
+        var outline = new Color32(200, 190, 180, 255);  // bright cream so it's visible
+        var slash = new Color32(220, 80, 70, 255);       // red slash
 
-        // Closed eye — horizontal line with slight curve
-        for (int x = 2; x <= 13; x++) Set(px, S, x, 8, outline);
-        Set(px, S, 1, 8, outline); Set(px, S, 14, 8, outline);
+        // Closed eye — thick horizontal line
+        for (int x = 1; x <= 14; x++) { Set(px, S, x, 7, outline); Set(px, S, x, 8, outline); }
 
-        // Slight downward curve at edges
-        Set(px, S, 2, 7, outline); Set(px, S, 13, 7, outline);
+        // Downward curve at edges
+        Set(px, S, 1, 6, outline); Set(px, S, 2, 6, outline);
+        Set(px, S, 13, 6, outline); Set(px, S, 14, 6, outline);
 
-        // Eyelashes below the line
-        Set(px, S, 4, 7, lash); Set(px, S, 6, 6, lash); Set(px, S, 8, 6, lash);
-        Set(px, S, 10, 6, lash); Set(px, S, 12, 7, lash);
+        // Eyelashes (thicker, below the line)
+        Set(px, S, 3, 6, outline); Set(px, S, 4, 5, outline); Set(px, S, 5, 5, outline);
+        Set(px, S, 7, 5, outline); Set(px, S, 8, 5, outline);
+        Set(px, S, 10, 5, outline); Set(px, S, 11, 5, outline); Set(px, S, 12, 6, outline);
+
+        // Diagonal slash (top-left to bottom-right)
+        for (int i = 0; i < 12; i++)
+        {
+            int x = 2 + i;
+            int y = 12 - i;
+            Set(px, S, x, y, slash);
+            Set(px, S, x, y - 1, slash);
+        }
 
         tex.SetPixels32(px);
         tex.Apply();
