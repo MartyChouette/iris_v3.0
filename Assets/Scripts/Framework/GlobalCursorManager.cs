@@ -332,8 +332,11 @@ public class GlobalCursorManager : MonoBehaviour
 
         CursorType desired = CursorType.Default;
 
-        // RaycastAll so we can see through PlacementSurface triggers to the items behind them
+        // RaycastAll so we can see through PlacementSurface triggers to the items behind them.
+        // Sort by distance so the nearest interactable wins (prevents stain behind plant confusion).
         var hits = Physics.RaycastAll(ray, 100f, RaycastMask);
+        if (hits.Length > 1)
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         for (int i = 0; i < hits.Length; i++)
         {
             var go = hits[i].collider.gameObject;
