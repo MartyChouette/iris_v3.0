@@ -453,7 +453,13 @@ public class GlobalCursorManager : MonoBehaviour
         {
             _workingPixels = new Color32[src.Length];
             if (_workingTex.width != side || _workingTex.height != side)
-                _workingTex.Reinitialize(side, side);
+            {
+                _proceduralTextures.Remove(_workingTex);
+                Destroy(_workingTex);
+                _workingTex = new Texture2D(side, side, TextureFormat.RGBA32, false);
+                _workingTex.filterMode = FilterMode.Point;
+                _proceduralTextures.Add(_workingTex);
+            }
         }
 
         for (int i = 0; i < src.Length; i++)
