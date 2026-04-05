@@ -361,7 +361,12 @@ public class PlaceableObject : MonoBehaviour
         if (_homePosition == Vector3.zero)
         {
             _homePosition = transform.position;
-            _homeRotation = transform.rotation;
+            // Wall-mountable items: store a clean wall-aligned rotation as home,
+            // not the baked crooked offset from the scene builder.
+            if (canWallMount)
+                _homeRotation = CleanWallRotation(transform);
+            else
+                _homeRotation = transform.rotation;
         }
     }
 
@@ -738,6 +743,10 @@ public class PlaceableObject : MonoBehaviour
             _validationCoroutine = StartCoroutine(PlacementValidation());
         }
 
+        // Wall overlap: if two wall-mounted items overlap, apply crooked offset to both
+        if (canWallMount && surface != null && surface.IsVertical)
+            CheckWallOverlap();
+
         Debug.Log($"[PlaceableObject] {name} placed at {position} (grid={gridSnapped}, wall={surface != null && surface.IsVertical}).");
 
         // Satisfying scale bounce on placement
@@ -786,6 +795,54 @@ public class PlaceableObject : MonoBehaviour
     {
         float angle = Random.Range(-crookedAngleRange, crookedAngleRange);
         transform.rotation *= Quaternion.AngleAxis(angle, -wallNormal);
+    }
+
+    /// <summary>
+    /// Strip the crooked offset from a wall-mounted item's rotation,
+    /// returning a clean LookRotation along the wall normal with upright orientation.
+    /// </summary>
+    private static Quaternion CleanWallRotation(Transform t)
+    {
+        Vector3 forward = t.forward;
+        return Quaternion.LookRotation(forward, Vector3.up);
+    }
+
+    /// <summary>
+    /// Check if this wall item overlaps another wall item. If so, apply a crooked
+    /// offset to both — paintings placed on top of each other go askew.
+    /// </summary>
+    private void CheckWallOverlap()
+    {
+        var col = GetComponent<Collider>();
+        if (col == null) return;
+
+        Bounds myBounds = col.bounds;
+        const float overlapThreshold = 0.1f; // minimum overlap to trigger
+
+        for (int i = 0; i < s_all.Count; i++)
+        {
+            var other = s_all[i];
+            if (other == this || other == null) continue;
+            if (!other.canWallMount) continue;
+            if (other.CurrentState == State.Held) continue;
+
+            var otherCol = other.GetComponent<Collider>();
+            if (otherCol == null) continue;
+
+            Bounds otherBounds = otherCol.bounds;
+            if (!myBounds.Intersects(otherBounds)) continue;
+
+            // Verify meaningful overlap (not just touching edges)
+            Vector3 overlap = Vector3.Min(myBounds.max, otherBounds.max) - Vector3.Max(myBounds.min, otherBounds.min);
+            if (overlap.x < overlapThreshold || overlap.y < overlapThreshold) continue;
+
+            // Both go crooked
+            ApplyCrookedOffset(transform.forward);
+            other.ApplyCrookedOffset(other.transform.forward);
+
+            Debug.Log($"[PlaceableObject] Wall overlap: {name} + {other.name} — both go crooked.");
+            return; // one overlap is enough
+        }
     }
 
     // ── Silhouette overlay (see-through furniture) ────────────────────

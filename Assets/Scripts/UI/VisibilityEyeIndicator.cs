@@ -135,10 +135,19 @@ public class VisibilityEyeIndicator : MonoBehaviour
 
     private void OnDrawerChanged(DrawerController drawer, bool isClosed, PlaceableObject[] items)
     {
-        for (int i = 0; i < items.Length; i++)
+        if (isClosed && items.Length > 0)
         {
-            if (items[i] != null && items[i].gameObject.activeInHierarchy)
-                ShowIcon(items[i].transform, isClosed);
+            // Items are hidden — show closed eye on the drawer itself
+            ShowIcon(drawer.transform, true);
+        }
+        else
+        {
+            // Door opened — show open eye on each revealed item
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i] != null && items[i].gameObject.activeInHierarchy)
+                    ShowIcon(items[i].transform, false);
+            }
         }
     }
 

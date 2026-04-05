@@ -129,6 +129,10 @@ public class LivingFlowerPlantManager : MonoBehaviour
         if (plantGO.GetComponent<WaterablePlant>() == null)
             plantGO.AddComponent<WaterablePlant>();
 
+        // Lightweight breathing wobble instead of full physics joints
+        if (plantGO.GetComponent<PlantBreathingWobble>() == null)
+            plantGO.AddComponent<PlantBreathingWobble>();
+
         _activePlants.Add(plant);
 
         // Feed MoodMachine

@@ -54,7 +54,7 @@ Shader "Iris/NatureBox"
             "RenderPipeline" = "UniversalPipeline"
         }
 
-        Cull Front
+        Cull Off
         ZWrite Off
 
         Pass

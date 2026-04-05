@@ -122,7 +122,10 @@ public class FridgeController : MonoBehaviour
 
                     if (!blocked)
                     {
-                        PickupDescriptionHUD.Instance?.Show("I don't want anything right now.");
+                        if (DialoguePortraitBox.Instance != null)
+                            DialoguePortraitBox.Instance.Say("I don't want anything right now.");
+                        else
+                            PickupDescriptionHUD.Instance?.Show("I don't want anything right now.");
                         _rejectCooldown = RejectCooldownDuration;
                     }
                 }

@@ -1,0 +1,158 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+/// <summary>
+/// Spawns flies near smelly items. Handles click-to-swat detection.
+/// Scene-scoped singleton — lives in the apartment scene.
+/// Flies spawn when items have SmellAmount >= threshold (1-2 per item, 5 max).
+/// </summary>
+public class FlySpawner : MonoBehaviour
+{
+    public static FlySpawner Instance { get; private set; }
+
+    [Header("Spawning")]
+    [Tooltip("Minimum SmellAmount on a ReactableTag before flies appear.")]
+    [SerializeField] private float _smellThreshold = 0.3f;
+
+    [Tooltip("Max flies per smelly item.")]
+    [SerializeField] private int _fliesPerItem = 2;
+
+    [Tooltip("Max total flies in the scene.")]
+    [SerializeField] private int _maxFlies = 5;
+
+    [Tooltip("Seconds between spawn checks.")]
+    [SerializeField] private float _spawnInterval = 3f;
+
+    [Header("Detection")]
+    [Tooltip("Layer mask for fly click detection.")]
+    [SerializeField] private LayerMask _clickMask = ~0;
+
+    private float _spawnTimer;
+    private readonly Dictionary<ReactableTag, int> _fliesPerSource = new();
+    private Camera _cam;
+    private float _camTimer;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoSpawn()
+    {
+        if (Instance != null) return;
+        var go = new GameObject("[FlySpawner]");
+        go.AddComponent<FlySpawner>();
+    }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    private void Update()
+    {
+        // Don't spawn during trimming or menu
+        if (!IsActivePhase()) return;
+
+        // Spawn check
+        _spawnTimer -= Time.deltaTime;
+        if (_spawnTimer <= 0f)
+        {
+            _spawnTimer = _spawnInterval;
+            TrySpawnFlies();
+        }
+
+        // Click-to-swat detection
+        if (IrisInput.Instance != null && IrisInput.Instance.Click.WasPressedThisFrame())
+        {
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+                return;
+
+            // Don't swat while holding an object
+            if (ObjectGrabber.IsHoldingObject) return;
+
+            TrySwatFly();
+        }
+    }
+
+    private void TrySwatFly()
+    {
+        if (_cam == null) _cam = Camera.main;
+        if (_cam == null) return;
+
+        Vector2 screenPos = IrisInput.CursorPosition;
+        Ray ray = _cam.ScreenPointToRay(screenPos);
+
+        // Check all hits — fly might be behind another collider
+        var hits = Physics.RaycastAll(ray, 100f, _clickMask);
+        float closestDist = float.MaxValue;
+        FlyController closestFly = null;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var fly = hits[i].collider.GetComponent<FlyController>();
+            if (fly == null) continue;
+            if (hits[i].distance < closestDist)
+            {
+                closestDist = hits[i].distance;
+                closestFly = fly;
+            }
+        }
+
+        if (closestFly != null)
+        {
+            closestFly.Swat();
+            ObjectGrabber.ConsumeClickExternal();
+        }
+    }
+
+    private void TrySpawnFlies()
+    {
+        // Clean up dead entries
+        var deadKeys = new List<ReactableTag>();
+        foreach (var kvp in _fliesPerSource)
+            if (kvp.Key == null) deadKeys.Add(kvp.Key);
+        foreach (var k in deadKeys)
+            _fliesPerSource.Remove(k);
+
+        int totalFlies = FlyController.All.Count;
+        if (totalFlies >= _maxFlies) return;
+
+        var allTags = ReactableTag.All;
+        for (int i = 0; i < allTags.Count; i++)
+        {
+            if (totalFlies >= _maxFlies) break;
+
+            var tag = allTags[i];
+            if (tag == null || !tag.gameObject.activeInHierarchy) continue;
+            if (tag.SmellAmount < _smellThreshold) continue;
+
+            // Skip flies themselves
+            if (tag.GetComponent<FlyController>() != null) continue;
+
+            // Count existing flies for this source
+            _fliesPerSource.TryGetValue(tag, out int existing);
+            if (existing >= _fliesPerItem) continue;
+
+            // Spawn a fly
+            var flyGO = new GameObject($"Fly_{tag.name}");
+            var fly = flyGO.AddComponent<FlyController>();
+            fly.Init(tag.transform);
+
+            _fliesPerSource[tag] = existing + 1;
+            totalFlies++;
+        }
+    }
+
+    private bool IsActivePhase()
+    {
+        if (DayPhaseManager.Instance == null) return false;
+        var phase = DayPhaseManager.Instance.CurrentPhase;
+        return phase == DayPhaseManager.DayPhase.Exploration
+            || phase == DayPhaseManager.DayPhase.DateInProgress;
+    }
+}

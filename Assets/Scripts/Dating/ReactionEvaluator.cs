@@ -6,9 +6,18 @@ using UnityEngine;
 public static class ReactionEvaluator
 {
     /// <summary>Evaluate a reactable object against date preferences.</summary>
+    // Tags that every date universally dislikes (no config needed)
+    private static readonly string[] s_universalDislike = { "pest" };
+
     public static ReactionType EvaluateReactable(ReactableTag tag, DatePreferences prefs)
     {
         if (tag == null || prefs == null) return ReactionType.Neutral;
+
+        // Universal dislikes — pests, etc.
+        foreach (string t in tag.Tags)
+            foreach (string ud in s_universalDislike)
+                if (string.Equals(t, ud, System.StringComparison.OrdinalIgnoreCase))
+                    return ReactionType.Dislike;
 
         // Check if this is a living plant — health affects the reaction
         var plant = tag.GetComponent<LivingFlowerPlant>();

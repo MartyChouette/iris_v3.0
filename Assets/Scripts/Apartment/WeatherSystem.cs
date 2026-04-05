@@ -40,6 +40,10 @@ public class WeatherSystem : MonoBehaviour
     [SerializeField] private float _rainyRain = 0.6f;
     [SerializeField] private float _stormyRain = 1f;
 
+    [Header("Schedule")]
+    [Tooltip("Optional pre-planned weather per day. Days without entries use weighted random.")]
+    [SerializeField] private WeatherSchedule _schedule;
+
     [Header("Audio")]
     [Tooltip("Ambient loop for rain.")]
     [SerializeField] private AudioClip _rainAmbience;
@@ -51,6 +55,10 @@ public class WeatherSystem : MonoBehaviour
     public float CurrentSnowIntensity { get; private set; }
     public float CurrentLeafIntensity { get; private set; }
     public float CurrentOvercast { get; private set; }
+
+    // Timeline playback
+    private bool _timelineActive;
+    private WeatherSchedule.DayTimeline _activeTimeline;
 
     private InputAction _debugCycleAction;
 
@@ -103,14 +111,104 @@ public class WeatherSystem : MonoBehaviour
         // F3 debug cycling
         if (_debugCycleAction != null && _debugCycleAction.WasPressedThisFrame())
         {
+            _timelineActive = false; // debug override stops timeline
             int next = ((int)CurrentWeather + 1) % 6;
             ForceWeather((WeatherState)next);
         }
+
+        // Timeline playback — lerp between keyframed weather states
+        if (_timelineActive)
+            TickTimeline();
     }
 
-    /// <summary>Generate weather for a given day using weighted random.</summary>
+    private void TickTimeline()
+    {
+        float timeOfDay = GameClock.Instance != null ? GameClock.Instance.NormalizedTimeOfDay : 0.5f;
+
+        WeatherSchedule.Evaluate(_activeTimeline, timeOfDay,
+            out var stateA, out var stateB, out float t);
+
+        // Get the NatureBox values for each state and lerp between them
+        GetWeatherValues(stateA, out float rainA, out float snowA, out float leafA,
+            out float overcastA, out float cloudA, out float fogA, out float snowCapA, out float moodA);
+        GetWeatherValues(stateB, out float rainB, out float snowB, out float leafB,
+            out float overcastB, out float cloudB, out float fogB, out float snowCapB, out float moodB);
+
+        CurrentRainIntensity = Mathf.Lerp(rainA, rainB, t);
+        CurrentSnowIntensity = Mathf.Lerp(snowA, snowB, t);
+        CurrentLeafIntensity = Mathf.Lerp(leafA, leafB, t);
+        CurrentOvercast      = Mathf.Lerp(overcastA, overcastB, t);
+
+        // Update displayed state (nearest keyframe)
+        CurrentWeather = t < 0.5f ? stateA : stateB;
+
+        // Feed mood (lerped)
+        float mood = Mathf.Lerp(moodA, moodB, t);
+        if (MoodMachine.Instance != null)
+            MoodMachine.Instance.SetSource("Weather", mood);
+
+        // Push lerped values to NatureBox
+        if (NatureBoxController.Instance != null)
+        {
+            NatureBoxController.Instance.SetWeatherTargets(
+                CurrentRainIntensity, CurrentSnowIntensity, CurrentLeafIntensity,
+                CurrentOvercast, Mathf.Lerp(snowCapA, snowCapB, t),
+                Mathf.Lerp(cloudA, cloudB, t), Mathf.Lerp(fogA, fogB, t));
+        }
+    }
+
+    /// <summary>Get all weather values for a given state without applying them.</summary>
+    private void GetWeatherValues(WeatherState state,
+        out float rain, out float snow, out float leaf,
+        out float overcast, out float cloud, out float fog, out float snowCap, out float mood)
+    {
+        rain = 0f; snow = 0f; leaf = 0f; overcast = 0f;
+        cloud = 0.45f; fog = 0.35f; snowCap = 0f;
+
+        mood = state switch
+        {
+            WeatherState.Clear         => _clearMood,
+            WeatherState.Overcast      => _overcastMood,
+            WeatherState.Rainy         => _rainyMood,
+            WeatherState.Stormy        => _stormyMood,
+            WeatherState.Snowy         => _snowyMood,
+            WeatherState.FallingLeaves => _fallingLeavesMood,
+            _ => _clearMood
+        };
+
+        switch (state)
+        {
+            case WeatherState.Clear:
+                rain = _clearRain; cloud = 0.3f; fog = 0.25f; break;
+            case WeatherState.Overcast:
+                rain = _overcastRain; overcast = 0.5f; cloud = 0.75f; fog = 0.45f; break;
+            case WeatherState.Rainy:
+                rain = _rainyRain; overcast = 0.4f; cloud = 0.8f; fog = 0.5f; break;
+            case WeatherState.Stormy:
+                rain = _stormyRain; overcast = 0.8f; cloud = 0.95f; fog = 0.6f; break;
+            case WeatherState.Snowy:
+                snow = 0.8f; overcast = 0.3f; cloud = 0.65f; fog = 0.4f; snowCap = 0.9f; break;
+            case WeatherState.FallingLeaves:
+                leaf = 0.7f; cloud = 0.4f; fog = 0.3f; break;
+        }
+    }
+
+    /// <summary>Generate weather for a given day. Uses schedule timeline if available, otherwise weighted random.</summary>
     public void GenerateWeather(int day)
     {
+        // Check schedule for a timeline
+        if (_schedule != null && _schedule.TryGetTimeline(day, out var timeline) && timeline.keyframes != null && timeline.keyframes.Length > 0)
+        {
+            _activeTimeline = timeline;
+            _timelineActive = true;
+            // Set initial weather from first keyframe
+            SetWeather(timeline.keyframes[0].weather);
+            Debug.Log($"[WeatherSystem] Day {day} weather (timeline): {timeline.keyframes.Length} keyframes");
+            return;
+        }
+
+        _timelineActive = false;
+
         float total = _clearWeight + _overcastWeight + _rainyWeight
                     + _stormyWeight + _snowyWeight + _fallingLeavesWeight;
         float roll = Random.Range(0f, total);

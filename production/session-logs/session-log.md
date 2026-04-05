@@ -742,3 +742,949 @@ Assets/Scripts/Bookcase/DrawerController.cs
 production/session-logs/session-log.md
 ---
 
+## Session End: 20260405_115532
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+---
+
+## Session End: 20260405_115616
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_115838
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_120232
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_120305
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_120751
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_120817
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_120909
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_122238
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_122448
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_122950
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_123430
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_123740
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_124018
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_124816
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_125654
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_130025
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_130253
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_130626
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_131208
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_131803
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_131945
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_132210
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_132550
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_133351
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_134208
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_135521
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+85839db fix eye indicators — stop spam, make closed eye visible
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_140955
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/FridgeController.cs
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_141210
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/FridgeController.cs
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/ObjectGrabber.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateReactionUI.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_141259
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/FridgeController.cs
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/ObjectGrabber.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateReactionUI.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_141526
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/FridgeController.cs
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/ObjectGrabber.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateReactionUI.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_141725
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/FridgeController.cs
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/ObjectGrabber.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateReactionUI.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+
+## Session End: 20260405_141751
+### Commits
+e5348d1 held items render on top of scene geometry + fix broken silhouette overlay + drawer capacity guard
+a63b514 release leaves below cut plane when stem is virtually cut
+01ff3c0 flower trimming music + 5x zoom UI + epic phase title drop
+7e8b02c fix doc inaccuracies — remove parked classes, fix nonexistent CredenzaSetup ref
+815f5e9 update all docs — DEV_JOURNAL, LONGTERM_PLAN, README for April 5 session
+63abaaf add Inspector animation curves for eye + cursor fades
+6a1860e flash visibility eyes on all items at exploration start
+6a58315 fix eye accuracy + enforce cubby capacity + clear stale privacy
+45a997d hide cursor while holding items + fix eye spam on non-reactable items
+### Uncommitted Changes
+Assets/Scenes/apartment.unity
+Assets/Scripts/Apartment/FridgeController.cs
+Assets/Scripts/Apartment/LivingFlowerPlantManager.cs
+Assets/Scripts/Apartment/ObjectGrabber.cs
+Assets/Scripts/Apartment/PlaceableObject.cs
+Assets/Scripts/Apartment/WeatherSystem.cs
+Assets/Scripts/Dating/DateReactionUI.cs
+Assets/Scripts/Dating/DateSessionManager.cs
+Assets/Scripts/Dating/ReactionEvaluator.cs
+Assets/Scripts/Framework/AudioManager.cs
+Assets/Scripts/Framework/DayPhaseManager.cs
+Assets/Scripts/Framework/GameEndSummaryScreen.cs
+Assets/Scripts/Framework/GlobalCursorManager.cs
+Assets/Scripts/Framework/TrimmedFlowerSnapshot.cs
+Assets/Scripts/Mechanics/DrinkMaking/SimpleDrinkManager.cs
+Assets/Scripts/Mechanics/StemSound/StemSoundGuide.cs
+Assets/Scripts/Mechanics/Watering/WateringManager.cs
+Assets/Scripts/UI/PhaseTitleDrop.cs
+Assets/Scripts/UI/PourCursorOverlay.cs
+Assets/Scripts/UI/VisibilityEyeIndicator.cs
+Assets/Shader/NatureBox.shader
+Assets/Shader/PSXPost.shader
+production/session-logs/session-log.md
+---
+

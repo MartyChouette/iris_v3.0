@@ -104,7 +104,9 @@ public class StemSoundGuide : MonoBehaviour
         _currentVolume = Mathf.SmoothDamp(_currentVolume, targetVolume, ref _volumeVelocity, smoothTime);
 
         toneSource.pitch = _currentPitch;
-        toneSource.volume = _currentVolume;
+        // Respect global master + SFX volume
+        float globalVol = AccessibilitySettings.MasterVolume * AccessibilitySettings.SFXVolume;
+        toneSource.volume = _currentVolume * globalVol;
     }
 
     private void CreateSineClip()

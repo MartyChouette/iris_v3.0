@@ -35,11 +35,29 @@ public class PhaseTitleDrop : MonoBehaviour
     [Tooltip("Drop shadow color.")]
     [SerializeField] private Color _shadowColor = new Color(0f, 0f, 0f, 0.6f);
 
+    [Header("Tilt Shift")]
+    [Tooltip("Maximum tilt-shift blur strength during the title drop.")]
+    [SerializeField] private float _tiltShiftStrength = 1f;
+
+    [Tooltip("Focus band center (0.5 = screen center).")]
+    [SerializeField] private float _tiltShiftCenter = 0.5f;
+
+    [Tooltip("Half-width of the sharp focus band in UV space.")]
+    [SerializeField] private float _tiltShiftWidth = 0.15f;
+
+    [Tooltip("Max blur radius in texels.")]
+    [SerializeField] private float _tiltShiftRadius = 8f;
+
     private Canvas _canvas;
     private TMP_Text _titleText;
     private TMP_Text _shadowText;
     private CanvasGroup _group;
     private Coroutine _activeRoutine;
+
+    private static readonly int TiltAmountID = Shader.PropertyToID("_TiltShiftAmount");
+    private static readonly int TiltCenterID = Shader.PropertyToID("_TiltShiftCenter");
+    private static readonly int TiltWidthID  = Shader.PropertyToID("_TiltShiftWidth");
+    private static readonly int TiltRadiusID = Shader.PropertyToID("_TiltShiftRadius");
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoSpawn()
@@ -53,6 +71,7 @@ public class PhaseTitleDrop : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         BuildUI();
     }
 
@@ -89,7 +108,7 @@ public class PhaseTitleDrop : MonoBehaviour
         _shadowText.alignment = TextAlignmentOptions.Center;
         _shadowText.color = _shadowColor;
         _shadowText.fontStyle = FontStyles.Normal;
-        _shadowText.enableWordWrapping = false;
+        _shadowText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
         // Main title text
         var titleGO = new GameObject("Title");
@@ -104,7 +123,7 @@ public class PhaseTitleDrop : MonoBehaviour
         _titleText.alignment = TextAlignmentOptions.Center;
         _titleText.color = _textColor;
         _titleText.fontStyle = FontStyles.Normal;
-        _titleText.enableWordWrapping = false;
+        _titleText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
     }
 
     /// <summary>Show an epic title drop over the live scene.</summary>
@@ -121,30 +140,39 @@ public class PhaseTitleDrop : MonoBehaviour
         _titleText.text = text;
         _shadowText.text = text;
 
-        // Fade in
+        // Set tilt-shift parameters
+        Shader.SetGlobalFloat(TiltCenterID, _tiltShiftCenter);
+        Shader.SetGlobalFloat(TiltWidthID, _tiltShiftWidth);
+        Shader.SetGlobalFloat(TiltRadiusID, _tiltShiftRadius);
+
+        // Fade in (title + tilt-shift together)
         float elapsed = 0f;
         while (elapsed < _fadeInDuration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / _fadeInDuration);
             _group.alpha = _fadeInCurve.Evaluate(t);
+            Shader.SetGlobalFloat(TiltAmountID, _fadeInCurve.Evaluate(t) * _tiltShiftStrength);
             yield return null;
         }
         _group.alpha = 1f;
+        Shader.SetGlobalFloat(TiltAmountID, _tiltShiftStrength);
 
         // Hold
         yield return new WaitForSecondsRealtime(_holdDuration);
 
-        // Fade out
+        // Fade out (title + tilt-shift together)
         elapsed = 0f;
         while (elapsed < _fadeOutDuration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / _fadeOutDuration);
             _group.alpha = _fadeOutCurve.Evaluate(t);
+            Shader.SetGlobalFloat(TiltAmountID, _fadeOutCurve.Evaluate(t) * _tiltShiftStrength);
             yield return null;
         }
         _group.alpha = 0f;
+        Shader.SetGlobalFloat(TiltAmountID, 0f);
         _activeRoutine = null;
     }
 }

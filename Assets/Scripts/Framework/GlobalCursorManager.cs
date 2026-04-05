@@ -19,7 +19,7 @@ public class GlobalCursorManager : MonoBehaviour
 {
     public static GlobalCursorManager Instance { get; private set; }
 
-    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge, Grab, Scissors }
+    private enum CursorType { Default, Interact, Watering, Fridge, Phone, Drawer, Drink, Sponge, Grab, Scissors, Swatter }
 
     // ── Cursor source textures ──
     private Texture2D _interactCursor;
@@ -31,6 +31,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Texture2D _spongeCursor;
     private Texture2D _grabCursor;
     private Texture2D _scissorsCursor;
+    private Texture2D _swatterCursor;
 
     private Vector2 _interactHotSpot;
     private Vector2 _wateringHotSpot;
@@ -40,6 +41,7 @@ public class GlobalCursorManager : MonoBehaviour
     private Vector2 _drinkHotSpot;
     private Vector2 _spongeHotSpot;
     private Vector2 _scissorsHotSpot;
+    private Vector2 _swatterHotSpot;
     private Vector2 _grabHotSpot;
 
     // ── Smooth fade state ──
@@ -57,6 +59,22 @@ public class GlobalCursorManager : MonoBehaviour
 
     // Tuning — loaded from Resources or uses defaults
     private CursorFadeSettings _fadeSettings;
+
+    /// <summary>
+    /// Lock the cursor to a specific type while an interaction is active (e.g. scrubbing, watering).
+    /// While locked, ClassifyHit is skipped and the locked cursor stays visible.
+    /// Call with null to unlock.
+    /// </summary>
+    private static CursorType? s_lockedCursor;
+    public static void UnlockCursor() => s_lockedCursor = null;
+    public static bool IsCursorLocked => s_lockedCursor.HasValue;
+
+    /// <summary>Lock cursor to a specific context while an interaction is active.</summary>
+    public static void LockCursorToSponge()   => s_lockedCursor = CursorType.Sponge;
+    public static void LockCursorToWatering() => s_lockedCursor = CursorType.Watering;
+    public static void LockCursorToSwatter()  => s_lockedCursor = CursorType.Swatter;
+    public static void LockCursorToScissors() => s_lockedCursor = CursorType.Scissors;
+    public static void LockCursorToDrink()    => s_lockedCursor = CursorType.Drink;
 
     /// <summary>Current cursor opacity (0-1). Read by CursorWorldShadow.</summary>
     public float CurrentAlpha => _currentAlpha;
@@ -78,6 +96,7 @@ public class GlobalCursorManager : MonoBehaviour
             CursorType.Sponge   => _spongeCursor,
             CursorType.Grab     => _grabCursor,
             CursorType.Scissors => _scissorsCursor,
+            CursorType.Swatter  => _swatterCursor,
             _ => null
         };
     }
@@ -220,6 +239,9 @@ public class GlobalCursorManager : MonoBehaviour
         _scissorsCursor = LoadOrGenerate("scissors", GenScissors(S));
         _scissorsHotSpot = center;
 
+        _swatterCursor = LoadOrGenerate("swatter", GenSwatter(S));
+        _swatterHotSpot = center;
+
         // Pre-bake alpha ramp for each cursor type
         int typeCount = System.Enum.GetValues(typeof(CursorType)).Length;
         _alphaBank = new Texture2D[typeCount][];
@@ -231,6 +253,7 @@ public class GlobalCursorManager : MonoBehaviour
         BakeAlphaRamp(CursorType.Drink,    _drinkCursor);
         BakeAlphaRamp(CursorType.Sponge,   _spongeCursor);
         BakeAlphaRamp(CursorType.Scissors, _scissorsCursor);
+        BakeAlphaRamp(CursorType.Swatter,  _swatterCursor);
         // Grab doesn't fade — no bank needed
     }
 
@@ -364,6 +387,13 @@ public class GlobalCursorManager : MonoBehaviour
             return;
         }
 
+        // Cursor lock — active interaction holds the cursor type steady
+        if (s_lockedCursor.HasValue)
+        {
+            ApplyCursor(s_lockedCursor.Value);
+            return;
+        }
+
         // If cursor is over UI (buttons, panels, etc.), use default cursor
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
@@ -409,6 +439,7 @@ public class GlobalCursorManager : MonoBehaviour
         if (Has<PhoneController>(go))      return CursorType.Phone;
         if (Has<DrawerController>(go))     return CursorType.Drawer;
         if (Has<SimpleDrinkManager>(go))   return CursorType.Drink;
+        if (Has<FlyController>(go))         return CursorType.Swatter;
         if (Has<CleanableSurface>(go))     return CursorType.Sponge;
         if (Has<ScissorStation>(go))      return CursorType.Scissors;
         if (Has<InteractableHighlight>(go)
@@ -540,6 +571,7 @@ public class GlobalCursorManager : MonoBehaviour
             CursorType.Sponge   => _spongeHotSpot,
             CursorType.Grab     => _grabHotSpot,
             CursorType.Scissors => _scissorsHotSpot,
+            CursorType.Swatter  => _swatterHotSpot,
             _ => Vector2.zero
         };
     }
@@ -917,6 +949,39 @@ public class GlobalCursorManager : MonoBehaviour
             Set(px, s, xr, y, hndl);
         }
         for (int x = 4; x <= 14; x++) { Set(px, s, x, 4, hndl); Set(px, s, x, 12, hndl); }
+
+        tex.SetPixels32(px);
+        tex.Apply();
+        return tex;
+    }
+
+    // ── Swatter (fly swatter — mesh grid on a handle) ───────
+    private static Texture2D GenSwatter(int s)
+    {
+        var tex = MakeTex(s);
+        var px = new Color32[s * s];
+
+        var mesh  = new Color32(200, 180, 160, 255);   // beige mesh
+        var frame = new Color32(140, 120, 100, 255);    // frame edge
+        var hndl  = new Color32(100, 70, 50, 255);      // wood handle
+
+        // Swatter head — rounded rectangle (top portion)
+        FillRect(px, s, 8, 14, 24, 28, mesh);
+        // Frame border
+        for (int x = 8; x <= 24; x++) { Set(px, s, x, 14, frame); Set(px, s, x, 28, frame); }
+        for (int y = 14; y <= 28; y++) { Set(px, s, 8, y, frame); Set(px, s, 24, y, frame); }
+        // Mesh grid lines
+        for (int x = 10; x <= 22; x += 3) for (int y = 16; y <= 26; y++) Set(px, s, x, y, frame);
+        for (int y = 16; y <= 26; y += 3) for (int x = 10; x <= 22; x++) Set(px, s, x, y, frame);
+        // Rounded corners
+        Set(px, s, 8, 14, new Color32(0,0,0,0)); Set(px, s, 24, 14, new Color32(0,0,0,0));
+        Set(px, s, 8, 28, new Color32(0,0,0,0)); Set(px, s, 24, 28, new Color32(0,0,0,0));
+
+        // Handle (below the head, center)
+        FillRect(px, s, 15, 4, 17, 14, hndl);
+        // Handle grip
+        Set(px, s, 14, 4, hndl); Set(px, s, 18, 4, hndl);
+        Set(px, s, 14, 5, hndl); Set(px, s, 18, 5, hndl);
 
         tex.SetPixels32(px);
         tex.Apply();

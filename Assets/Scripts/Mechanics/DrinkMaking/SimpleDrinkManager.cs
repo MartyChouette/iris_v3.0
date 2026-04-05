@@ -198,6 +198,9 @@ public class SimpleDrinkManager : MonoBehaviour, IStationManager
                 if (Physics.Raycast(ray, out RaycastHit hit, 100f, _glassLayer))
                 {
                     _pourStarted = true;
+                    // Lock the pour overlay to the drink cursor so it matches the hover seamlessly
+                    if (PourCursorOverlay.Instance != null && GlobalCursorManager.Instance != null)
+                        PourCursorOverlay.Instance.LockTexture(GlobalCursorManager.Instance.GetCurrentCursorTexture());
                     PourDragHelper.Begin();
                     // Disable glass glow now that the player found it
                     var glass = Object.FindAnyObjectByType<GlassController>();

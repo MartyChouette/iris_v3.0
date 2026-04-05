@@ -177,6 +177,9 @@ public class WateringManager : MonoBehaviour
             _pot.TargetLevel = def.idealWaterLevel;
         CurrentState = State.Pouring;
 
+        // Lock the pour overlay to the watering cursor so it matches the hover seamlessly
+        if (PourCursorOverlay.Instance != null && GlobalCursorManager.Instance != null)
+            PourCursorOverlay.Instance.LockTexture(GlobalCursorManager.Instance.GetCurrentCursorTexture());
         PourDragHelper.Begin();
 
         Debug.Log($"[WateringManager] Pouring: {def.plantName}");

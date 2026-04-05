@@ -156,6 +156,9 @@ public class DateReactionUI : MonoBehaviour
             StopCoroutine(_activeReaction);
 
         _activeReaction = StartCoroutine(TextSequence(message, duration));
+
+        // Mirror to portrait dialogue box so Nema's face shows with her words
+        DialoguePortraitBox.Instance?.Say(message, duration);
     }
 
     private IEnumerator TextSequence(string message, float duration)

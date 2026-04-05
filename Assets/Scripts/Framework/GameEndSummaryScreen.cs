@@ -210,6 +210,7 @@ public class GameEndSummaryScreen : MonoBehaviour
     private void ReturnToMenu()
     {
         TimeScaleManager.ClearAll();
+        MusicDirector.Instance?.PlayMenuSong();
 
         // Try known main menu scene names, then fall back to build index 0
         if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu_nemahead.unity") >= 0)

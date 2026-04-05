@@ -642,7 +642,10 @@ public class ObjectGrabber : MonoBehaviour
         var capacityCubby = DrawerController.FindByInteriorSurface(_currentSurface);
         if (capacityCubby != null && !capacityCubby.HasInteriorCapacity)
         {
-            PickupDescriptionHUD.Instance?.Show("No room in here.");
+            if (DialoguePortraitBox.Instance != null)
+                DialoguePortraitBox.Instance.Say("No room in here.", 2f);
+            else
+                PickupDescriptionHUD.Instance?.Show("No room in here.");
             return;
         }
 

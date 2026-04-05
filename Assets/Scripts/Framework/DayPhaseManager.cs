@@ -457,7 +457,7 @@ public class DayPhaseManager : MonoBehaviour
                 break;
             case DayPhase.FlowerTrimming:
                 AudioManager.Instance?.DuckMusic(0.1f, 0.5f);
-                AudioManager.Instance?.SetNonMusicMix(1f, 0.5f); // SFX at full volume
+                AudioManager.Instance?.SetNonMusicMix(0.85f, 0.5f); // match apartment levels
                 StartCoroutine(FlowerTrimmingTransition());
                 break;
             case DayPhase.Evening:
@@ -1029,6 +1029,7 @@ public class DayPhaseManager : MonoBehaviour
         {
             // Fallback: return to main menu directly
             TimeScaleManager.ClearAll();
+            MusicDirector.Instance?.PlayMenuSong();
             if (SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/mainmenu_nemahead.unity") >= 0)
             {
                 SceneManager.LoadScene("mainmenu_nemahead");

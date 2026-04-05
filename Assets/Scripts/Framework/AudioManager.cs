@@ -337,10 +337,19 @@ public class AudioManager : MonoBehaviour
         musicSource.Play();
     }
 
+    private Coroutine _musicFadeCoroutine;
+    private AudioClip _fadingOutClip;
+
     public void StopMusic(float fadeTime = 0f)
     {
         if (!IsValid(musicSource)) return;
         _preDuckVolume = -1f;
+
+        if (_musicFadeCoroutine != null)
+        {
+            StopCoroutine(_musicFadeCoroutine);
+            _musicFadeCoroutine = null;
+        }
 
         if (fadeTime <= 0f)
         {
@@ -348,7 +357,8 @@ public class AudioManager : MonoBehaviour
         }
         else
         {
-            StartCoroutine(FadeOutMusic(fadeTime));
+            _fadingOutClip = musicSource.clip;
+            _musicFadeCoroutine = StartCoroutine(FadeOutMusic(fadeTime));
         }
     }
 
@@ -362,16 +372,25 @@ public class AudioManager : MonoBehaviour
 
         while (t < time && IsValid(musicSource))
         {
+            // Abort if a new clip started playing (PlayMusic was called during fade)
+            if (musicSource.clip != _fadingOutClip)
+            {
+                _musicFadeCoroutine = null;
+                yield break;
+            }
+
             t += Time.unscaledDeltaTime;
             musicSource.volume = Mathf.Lerp(start, 0f, t / time);
             yield return null;
         }
 
-        if (IsValid(musicSource))
+        if (IsValid(musicSource) && musicSource.clip == _fadingOutClip)
         {
             musicSource.Stop();
             musicSource.volume = start;
         }
+
+        _musicFadeCoroutine = null;
     }
 
     // ─── Music Duck (lower volume temporarily, then restore) ──

@@ -339,9 +339,16 @@ public class DateSessionManager : MonoBehaviour
         OnDateSessionStarted?.Invoke(_currentDate);
         OnAffectionChanged?.Invoke(_affection);
 
+        // Frame camera on entrance while still black
+        DateCameraFraming.Instance?.SnapToPhase(DatePhase.Arrival);
+
         // Fade in to reveal NPC at entrance
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        // Epic title drop over the live scene
+        if (PhaseTitleDrop.Instance != null)
+            yield return PhaseTitleDrop.Instance.Show("Impressions");
 
 #if UNITY_EDITOR
         Debug.Log($"[DateSessionManager] Phase 1: Arrival — entrance judgments for {_currentDate.characterName}.");
@@ -402,9 +409,16 @@ public class DateSessionManager : MonoBehaviour
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(phaseTransitionSFX);
 
+        // Frame camera on kitchen while still black
+        DateCameraFraming.Instance?.SnapToPhase(DatePhase.BackgroundJudging);
+
         // Fade in
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        // Epic title drop over the live scene
+        if (PhaseTitleDrop.Instance != null)
+            yield return PhaseTitleDrop.Instance.Show("Drinks");
 
         // Post-transition NPC dialogue
         yield return s_wait05;
@@ -454,9 +468,16 @@ public class DateSessionManager : MonoBehaviour
         if (phaseTransitionSFX != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(phaseTransitionSFX);
 
+        // Frame camera on couch while still black
+        DateCameraFraming.Instance?.SnapToPhase(DatePhase.Reveal);
+
         // Fade in
         if (ScreenFade.Instance != null)
             yield return ScreenFade.Instance.FadeIn(fadeDuration);
+
+        // Epic title drop over the live scene
+        if (PhaseTitleDrop.Instance != null)
+            yield return PhaseTitleDrop.Instance.Show("Warming Up");
 
         // Post-transition NPC dialogue
         yield return s_wait05;
@@ -789,6 +810,9 @@ public class DateSessionManager : MonoBehaviour
     public void EndDate()
     {
         if (_state == SessionState.Idle || _state == SessionState.DateEnding) return;
+
+        // Release date camera framing back to normal browsing
+        DateCameraFraming.Instance?.Release();
 
         if (_affection < _revealFailThreshold)
             FailDate();

@@ -10,9 +10,17 @@ public class PourCursorOverlay : MonoBehaviour
 {
     public static PourCursorOverlay Instance { get; private set; }
 
+    [Header("Scale")]
+    [Tooltip("Cursor size when not pouring (just clicked, PourRate=0).")]
+    [SerializeField] private float _minSize = 24f;
+
+    [Tooltip("Cursor size at max pour (PourRate=1).")]
+    [SerializeField] private float _maxSize = 48f;
+
     private Canvas _canvas;
     private RawImage _cursorImage;
     private RectTransform _cursorRT;
+    private Texture2D _lockedTexture;
     private bool _active;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -56,21 +64,35 @@ public class PourCursorOverlay : MonoBehaviour
         imgGO.SetActive(false);
     }
 
+    /// <summary>
+    /// Set the cursor texture for the pour overlay before dragging starts.
+    /// Call this when the player clicks a pourable item so the pour cursor
+    /// matches the hover cursor seamlessly.
+    /// </summary>
+    public void LockTexture(Texture2D tex)
+    {
+        _lockedTexture = tex;
+    }
+
     private void LateUpdate()
     {
         bool shouldShow = PourDragHelper.IsDragging;
 
         if (shouldShow && !_active)
         {
-            // Grab the current context cursor texture from GlobalCursorManager
-            var gcm = GlobalCursorManager.Instance;
-            Texture2D tex = gcm != null ? gcm.GetCurrentCursorTexture() : null;
-            if (tex != null)
+            // Use the locked texture (set before drag began) so it matches the hover cursor.
+            // Fall back to GlobalCursorManager's current texture if nothing was locked.
+            Texture2D tex = _lockedTexture;
+            if (tex == null)
             {
-                _cursorImage.texture = tex;
-                _cursorRT.sizeDelta = new Vector2(tex.width, tex.height);
+                var gcm = GlobalCursorManager.Instance;
+                tex = gcm != null ? gcm.GetCurrentCursorTexture() : null;
             }
 
+            if (tex != null)
+                _cursorImage.texture = tex;
+
+            _cursorRT.sizeDelta = new Vector2(_minSize, _minSize);
             Cursor.visible = false;
             _cursorImage.gameObject.SetActive(true);
             _active = true;
@@ -79,6 +101,7 @@ public class PourCursorOverlay : MonoBehaviour
         {
             Cursor.visible = true;
             _cursorImage.gameObject.SetActive(false);
+            _lockedTexture = null;
             _active = false;
         }
 
@@ -90,6 +113,10 @@ public class PourCursorOverlay : MonoBehaviour
         // Rotate: tilt clockwise as player drags down
         float angle = -PourDragHelper.TiltAngle;
         _cursorRT.localRotation = Quaternion.Euler(0f, 0f, angle);
+
+        // Scale with pour intensity — bigger = pouring harder
+        float size = Mathf.Lerp(_minSize, _maxSize, PourDragHelper.PourRate);
+        _cursorRT.sizeDelta = new Vector2(size, size);
 
         // Fade alpha to match the cursor manager
         float alpha = 1f;
