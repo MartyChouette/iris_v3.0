@@ -93,15 +93,15 @@ public class NemaWellbeing : MonoBehaviour
 
         // ── Romance: recent date affection ──
         float dateAffection = 0.5f;
-        if (DateHistory.RecentDates != null && DateHistory.RecentDates.Count > 0)
+        var entries = DateHistory.Entries;
+        if (entries != null && entries.Count > 0)
         {
             float total = 0f;
             int count = 0;
-            foreach (var date in DateHistory.RecentDates)
+            for (int i = entries.Count - 1; i >= 0 && count < 3; i--)
             {
-                total += date.finalAffection;
+                total += entries[i].affection;
                 count++;
-                if (count >= 3) break; // last 3 dates
             }
             dateAffection = count > 0 ? Mathf.Clamp01(total / count) : 0.5f;
         }
@@ -149,7 +149,7 @@ public class NemaWellbeing : MonoBehaviour
         }
 
         // ── Social: date count + variety ──
-        int totalDates = DateHistory.RecentDates != null ? DateHistory.RecentDates.Count : 0;
+        int totalDates = DateHistory.Entries != null ? DateHistory.Entries.Count : 0;
         social = Mathf.Clamp01(totalDates / 5f); // 5 dates = full
 
         Debug.Log($"[NemaWellbeing] Recalculated: C={comfort:F2} R={romance:F2} E={expression:F2} N={nature:F2} S={social:F2} Overall={Overall:F2}");
